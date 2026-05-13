@@ -54,7 +54,7 @@ def test_agentkit_think_routes_to_agent_management() -> None:
     session._agent_id = "agent-1"
 
     response = session.think("Injected instruction", on_thinking_action="interrupt")
-    assert response["agent_id"] == "agent-1"
+    assert response.agent_id == "agent-1"
     assert len(client.agent_management.calls) == 1
     appid, agent_id, kwargs = client.agent_management.calls[0]
     assert appid == "appid"
@@ -80,7 +80,7 @@ def test_async_agentkit_think_routes_to_agent_management() -> None:
         session._agent_id = "agent-1"
 
         response = await session.think("Injected instruction", on_thinking_action="interrupt")
-        assert response["agent_id"] == "agent-1"
+        assert response.agent_id == "agent-1"
         assert len(client.agent_management.calls) == 1
         appid, agent_id, kwargs = client.agent_management.calls[0]
         assert appid == "appid"
