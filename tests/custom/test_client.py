@@ -1,4 +1,4 @@
-from agora_agent.agentkit.agent import Agent, TurnDetectionConfig
+from agora_agent.agentkit.agent import Agent, AdvancedFeatures, InterruptionConfig, MllmTurnDetectionConfig, TurnDetectionConfig
 from agora_agent.agentkit.constants import TurnDetectionTypeValues
 import asyncio
 import warnings
@@ -139,7 +139,44 @@ def test_with_turn_detection_forwards_config() -> None:
     assert props.turn_detection == turn_detection
 
 
-def test_with_mllm_sets_legacy_enable_mllm_flag() -> None:
+def test_with_interruption_forwards_config() -> None:
+    interruption = InterruptionConfig(
+        enable=False,
+        disabled_config={"strategy": "ignore"},
+    )
+
+    props = Agent().with_interruption(interruption).to_properties(
+        channel="room",
+        token="rtc-token",
+        agent_uid="1",
+        remote_uids=["2"],
+        skip_vendor_validation=True,
+    )
+
+    assert props.interruption == interruption
+
+
+def test_mllm_turn_detection_is_forwarded_without_legacy_style() -> None:
+    mllm_turn_detection = MllmTurnDetectionConfig(
+        mode="server_vad",
+        server_vad_config={"idle_timeout_ms": 5000},
+    )
+    props = Agent().with_mllm(
+        OpenAIRealtime(api_key="openai-key", turn_detection=mllm_turn_detection)
+    ).to_properties(
+        channel="room",
+        token="rtc-token",
+        agent_uid="1",
+        remote_uids=["2"],
+    )
+
+    assert props.mllm is not None
+    assert props.mllm.vendor == "openai"
+    assert props.mllm.style is None
+    assert props.mllm.turn_detection == mllm_turn_detection
+
+
+def test_with_mllm_sets_mllm_enable_without_legacy_flag() -> None:
     agent = Agent().with_mllm(OpenAIRealtime(api_key="openai-key"))
 
     props = agent.to_properties(
@@ -151,8 +188,41 @@ def test_with_mllm_sets_legacy_enable_mllm_flag() -> None:
 
     assert props.mllm is not None
     assert props.mllm.enable is True
+    assert props.advanced_features is None
+
+
+def test_with_mllm_removes_deprecated_enable_mllm_from_existing_advanced_features() -> None:
+    agent = Agent(
+        advanced_features=AdvancedFeatures(enable_mllm=True, enable_rtm=True)
+    ).with_mllm(OpenAIRealtime(api_key="openai-key"))
+
+    props = agent.to_properties(
+        channel="room",
+        token="rtc-token",
+        agent_uid="1",
+        remote_uids=["2"],
+    )
+
+    assert props.mllm is not None
+    assert props.mllm.enable is True
     assert props.advanced_features is not None
-    assert props.advanced_features.enable_mllm is True
+    assert props.advanced_features.enable_mllm is None
+    assert props.advanced_features.enable_rtm is True
+
+
+def test_with_mllm_drops_advanced_features_when_only_deprecated_enable_mllm_was_set() -> None:
+    props = Agent(
+        advanced_features=AdvancedFeatures(enable_mllm=True)
+    ).with_mllm(OpenAIRealtime(api_key="openai-key")).to_properties(
+        channel="room",
+        token="rtc-token",
+        agent_uid="1",
+        remote_uids=["2"],
+    )
+
+    assert props.mllm is not None
+    assert props.mllm.enable is True
+    assert props.advanced_features is None
 
 
 def test_with_tools_sets_enable_tools() -> None:

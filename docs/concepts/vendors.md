@@ -12,7 +12,7 @@ All vendor classes are available from `agora_agent.agentkit.vendors`:
 
 <!-- snippet: executable -->
 ```python
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramTTS, DeepgramSTT
 ```
 
 ## LLM Vendors
@@ -50,6 +50,7 @@ Used with `agent.with_tts()`. Each TTS vendor produces audio at a specific sampl
 | `FishAudioTTS` | Fish Audio | `key`, `reference_id` | — |
 | `GroqTTS` | Groq | `key` | — |
 | `MiniMaxTTS` | MiniMax | `key` | — |
+| `DeepgramTTS` | Deepgram | `api_key`, `model` | Configurable |
 | `SarvamTTS` | Sarvam | `api_key` | — |
 
 <!-- snippet: executable -->
@@ -93,8 +94,9 @@ Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These
 
 | Class | Provider | Required Parameters |
 |---|---|---|
-| `OpenAIRealtime` | OpenAI Realtime | `api_key` |
-| `VertexAI` | Vertex AI (Gemini Live) | `model`, `project_id`, `location`, `adc_credentials_string` |
+| `OpenAIRealtime` | OpenAI Realtime | `api_key`; optional `turn_detection` |
+| `GeminiLive` | Google Gemini Live API | `api_key`, `model`; optional `turn_detection` |
+| `VertexAI` | Vertex AI (Gemini Live) | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |
 
 <!-- snippet: executable -->
 ```python

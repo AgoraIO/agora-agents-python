@@ -32,7 +32,7 @@ agent = Agent(
 | `max_history` | `int` | No | Maximum conversation history length |
 | `turn_detection` | `TurnDetectionConfig` | No | Turn detection settings |
 | `sal` | `SalConfig` | No | SAL (Speech Activity Level) configuration |
-| `advanced_features` | `Dict[str, Any]` | No | Advanced features (e.g., `{'enable_mllm': True}`) |
+| `advanced_features` | `Dict[str, Any]` | No | Advanced features (e.g., `{'enable_rtm': True}`) |
 | `parameters` | `SessionParams` | No | Additional session parameters |
 | `geofence` | `GeofenceConfig` | No | Regional access restriction |
 | `labels` | `Dict[str, str]` | No | Custom key-value labels (returned in callbacks) |
@@ -60,7 +60,7 @@ Each `with_*` method returns a **new** `Agent` instance — the original is unch
 | `with_instructions(text)` | `str` | Override the system prompt |
 | `with_greeting(text)` | `str` | Override the greeting message |
 | `with_name(name)` | `str` | Override the agent name |
-| `with_turn_detection(config)` | `TurnDetectionConfig` | Override turn detection (use `config.start_of_speech` / `config.end_of_speech` for SOS/EOS) |
+| `with_turn_detection(config)` | `TurnDetectionConfig` | Override cascading-flow SOS/EOS detection; use `with_interruption()` for interruption behavior |
 | `with_sal(config)` | `SalConfig` | Set SAL configuration |
 | `with_advanced_features(features)` | `Dict[str, Any]` | Set advanced features |
 | `with_parameters(parameters)` | `SessionParams` | Set session parameters |

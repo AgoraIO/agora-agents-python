@@ -13,21 +13,18 @@ Two MLLM vendors are supported:
 - **OpenAI Realtime** — `gpt-4o-realtime-preview` and related models
 - **Gemini Live** — direct Google AI API access for audio-native Gemini models
 
-## Required: Enable MLLM Mode
+## Enable MLLM Mode
 
-MLLM mode must be explicitly enabled via `advanced_features`:
+Call `agent.with_mllm(vendor)` to enable MLLM mode. The builder sets `mllm.enable = True` automatically.
 
 ```python
-from agora_agent.agentkit import Agent, AdvancedFeatures
+from agora_agent.agentkit import Agent
 
 agent = Agent(
     name='realtime-agent',
     instructions='You are a voice assistant.',
-    advanced_features=AdvancedFeatures(enable_mllm=True),
 )
 ```
-
-Without `AdvancedFeatures(enable_mllm=True)`, the SDK treats the session as a cascading flow and requires LLM + TTS vendors.
 
 ## OpenAI Realtime
 
@@ -35,7 +32,7 @@ Without `AdvancedFeatures(enable_mllm=True)`, the SDK treats the session as a ca
 
 ```python
 from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent, AdvancedFeatures
+from agora_agent.agentkit import Agent
 from agora_agent.agentkit.vendors import OpenAIRealtime
 
 client = Agora(
@@ -48,7 +45,6 @@ agent = (
     Agent(
         name='realtime-agent',
         instructions='You are a helpful voice assistant.',
-        advanced_features=AdvancedFeatures(enable_mllm=True),
     )
     .with_mllm(OpenAIRealtime(
         api_key='your-openai-key',
@@ -67,7 +63,7 @@ session.stop()
 ```python
 import asyncio
 from agora_agent import AsyncAgora, Area
-from agora_agent.agentkit import Agent, AdvancedFeatures
+from agora_agent.agentkit import Agent
 from agora_agent.agentkit.vendors import OpenAIRealtime
 
 async def main():
@@ -81,7 +77,6 @@ async def main():
         Agent(
             name='realtime-agent',
             instructions='You are a helpful voice assistant.',
-            advanced_features=AdvancedFeatures(enable_mllm=True),
         )
         .with_mllm(OpenAIRealtime(
             api_key='your-openai-key',
@@ -102,7 +97,7 @@ Gemini Live uses a Google AI API key:
 
 ```python
 from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent, AdvancedFeatures
+from agora_agent.agentkit import Agent
 from agora_agent.agentkit.vendors import GeminiLive
 
 client = Agora(
@@ -115,7 +110,6 @@ agent = (
     Agent(
         name='gemini-agent',
         instructions='You are a helpful multilingual assistant.',
-        advanced_features=AdvancedFeatures(enable_mllm=True),
     )
     .with_mllm(GeminiLive(
         api_key='your-google-ai-api-key',

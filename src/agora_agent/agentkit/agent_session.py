@@ -220,13 +220,10 @@ class _AgentSessionBase:
         return value
 
     def _is_mllm_mode(self) -> bool:
-        advanced_features = self._agent.advanced_features
         mllm = self._agent.mllm
         if isinstance(mllm, dict) and mllm.get("enable") is True:
             return True
-        if isinstance(advanced_features, dict):
-            return advanced_features.get("enable_mllm") is True or mllm is not None
-        return bool(getattr(advanced_features, "enable_mllm", False) or mllm is not None)
+        return mllm is not None
 
     def _build_start_properties(self, token_opts: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
         base_properties = self._agent.to_properties(

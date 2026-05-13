@@ -143,6 +143,7 @@ class Agent:
         name: typing.Optional[str] = None,
         instructions: typing.Optional[str] = None,
         turn_detection: typing.Optional[TurnDetectionConfig] = None,
+        interruption: typing.Optional[InterruptionConfig] = None,
         sal: typing.Optional[SalConfig] = None,
         advanced_features: typing.Optional[AdvancedFeatures] = None,
         parameters: typing.Optional[typing.Union[SessionParams, SessionParamsInput]] = None,
@@ -167,6 +168,7 @@ class Agent:
         self._avatar: typing.Optional[typing.Dict[str, typing.Any]] = None
         self._avatar_required_sample_rate: typing.Optional[int] = None
         self._turn_detection = turn_detection
+        self._interruption = interruption
         self._sal = sal
         self._advanced_features = advanced_features
         self._parameters = parameters
@@ -195,16 +197,20 @@ class Agent:
         new_agent = self._clone()
         new_agent._mllm = vendor.to_config()
         if isinstance(new_agent._mllm, dict):
-            new_agent._mllm.setdefault("enable", True)
-        if new_agent._advanced_features is None:
-            new_agent._advanced_features = StartAgentsRequestPropertiesAdvancedFeatures(enable_mllm=True)
-        elif isinstance(new_agent._advanced_features, dict):
-            new_agent._advanced_features = typing.cast(
-                AdvancedFeatures,
-                {**new_agent._advanced_features, "enable_mllm": True},
-            )
-        else:
-            new_agent._advanced_features = new_agent._advanced_features.model_copy(update={"enable_mllm": True})
+            new_agent._mllm["enable"] = True
+        if isinstance(new_agent._advanced_features, dict):
+            advanced_features = {key: value for key, value in new_agent._advanced_features.items() if key != "enable_mllm"}
+            new_agent._advanced_features = typing.cast(AdvancedFeatures, advanced_features) if advanced_features else None
+        elif isinstance(new_agent._advanced_features, StartAgentsRequestPropertiesAdvancedFeatures):
+            advanced_features_model = new_agent._advanced_features.model_copy(update={"enable_mllm": None})
+            if (
+                advanced_features_model.enable_rtm is None
+                and advanced_features_model.enable_sal is None
+                and advanced_features_model.enable_tools is None
+            ):
+                new_agent._advanced_features = None
+            else:
+                new_agent._advanced_features = advanced_features_model
         return new_agent
 
     def with_avatar(self, vendor: BaseAvatar) -> "Agent":
@@ -227,6 +233,12 @@ class Agent:
     def with_turn_detection(self, config: TurnDetectionConfig) -> "Agent":
         new_agent = self._clone()
         new_agent._turn_detection = config
+        return new_agent
+
+    def with_interruption(self, config: InterruptionConfig) -> "Agent":
+        """Returns a new Agent with unified interruption control configured."""
+        new_agent = self._clone()
+        new_agent._interruption = config
         return new_agent
 
     def with_instructions(self, instructions: str) -> "Agent":
@@ -253,7 +265,7 @@ class Agent:
     def with_advanced_features(self, features: AdvancedFeatures) -> "Agent":
         """Returns a new Agent with the specified advanced features configuration.
 
-        Use this to enable MLLM mode (``{"enable_mllm": True}``), RTM, and other features.
+        Use this to enable RTM and other advanced features.
         """
         new_agent = self._clone()
         new_agent._advanced_features = features
@@ -355,6 +367,10 @@ class Agent:
         return self._turn_detection
 
     @property
+    def interruption(self) -> typing.Optional[InterruptionConfig]:
+        return self._interruption
+
+    @property
     def instructions(self) -> typing.Optional[str]:
         return self._instructions
 
@@ -415,6 +431,7 @@ class Agent:
             "stt": self._stt,
             "mllm": self._mllm,
             "turn_detection": self._turn_detection,
+            "interruption": self._interruption,
             "sal": self._sal,
             "avatar": self._avatar,
             "advanced_features": self._advanced_features,
@@ -536,18 +553,8 @@ class Agent:
                 **token_kwargs,
             )
 
-        advanced_flag = (
-            self._advanced_features is not None
-            and (
-                (isinstance(self._advanced_features, dict) and self._advanced_features.get("enable_mllm") is True)
-                or (
-                    isinstance(self._advanced_features, StartAgentsRequestPropertiesAdvancedFeatures)
-                    and self._advanced_features.enable_mllm is True
-                )
-            )
-        )
         mllm_flag = isinstance(self._mllm, dict) and self._mllm.get("enable") is True
-        is_mllm_mode = bool(advanced_flag or mllm_flag or self._mllm is not None)
+        is_mllm_mode = bool(mllm_flag or self._mllm is not None)
 
         base_kwargs: typing.Dict[str, typing.Any] = {
             "channel": channel,
@@ -564,6 +571,8 @@ class Agent:
             base_kwargs["mllm"] = self._mllm
         if self._turn_detection is not None:
             base_kwargs["turn_detection"] = self._turn_detection
+        if self._interruption is not None:
+            base_kwargs["interruption"] = self._interruption
         if self._sal is not None:
             base_kwargs["sal"] = self._sal
         if self._avatar is not None:
@@ -635,6 +644,7 @@ class Agent:
         new_agent._avatar = self._avatar
         new_agent._avatar_required_sample_rate = self._avatar_required_sample_rate
         new_agent._turn_detection = self._turn_detection
+        new_agent._interruption = self._interruption
         new_agent._sal = self._sal
         new_agent._advanced_features = self._advanced_features
         new_agent._parameters = self._parameters

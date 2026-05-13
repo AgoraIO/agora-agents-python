@@ -10,7 +10,7 @@ All vendor classes are available from `agora_agent.agentkit.vendors`:
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT, OpenAIRealtime, HeyGenAvatar
+from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramTTS, DeepgramSTT, OpenAIRealtime, GeminiLive, HeyGenAvatar
 ```
 
 ---
@@ -370,6 +370,26 @@ Fixed sample rate: 24000 Hz.
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
+
+### `GeminiLive`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Google Gemini API key |
+| `model` | `str` | Yes | — | Gemini Live model name |
+| `url` | `str` | No | `None` | Custom WebSocket URL |
+| `instructions` | `str` | No | `None` | System instructions |
+| `voice` | `str` | No | `None` | Voice name |
+| `greeting_message` | `str` | No | `None` | Greeting message |
+| `failure_message` | `str` | No | `None` | Message played when the model call fails |
+| `max_history` | `int` | No | `None` | Maximum conversation history length |
+| `predefined_tools` | `List[str]` | No | `None` | Predefined tools (e.g., `["_publish_message"]`) |
+| `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `output_modalities` | `List[str]` | No | `None` | Output modalities |
+| `messages` | `List[Dict]` | No | `None` | Conversation messages |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
 ### `VertexAI`
 
@@ -389,6 +409,7 @@ Fixed sample rate: 24000 Hz.
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
 ---
 

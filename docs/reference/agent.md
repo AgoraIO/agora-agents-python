@@ -16,6 +16,7 @@ Agent(
     name: Optional[str] = None,
     instructions: Optional[str] = None,
     turn_detection: Optional[TurnDetectionConfig] = None,
+    interruption: Optional[InterruptionConfig] = None,
     sal: Optional[SalConfig] = None,
     advanced_features: Optional[Dict[str, Any]] = None,
     parameters: Optional[SessionParams] = None,
@@ -34,8 +35,9 @@ Agent(
 | `name` | `Optional[str]` | `None` | Agent name, used as default session name |
 | `instructions` | `Optional[str]` | `None` | System prompt for the LLM |
 | `turn_detection` | `Optional[TurnDetectionConfig]` | `None` | Turn detection configuration |
+| `interruption` | `Optional[InterruptionConfig]` | `None` | Unified interruption control configuration |
 | `sal` | `Optional[SalConfig]` | `None` | Speech Activity Level configuration |
-| `advanced_features` | `Optional[Dict[str, Any]]` | `None` | Advanced features dict (e.g., `{'enable_mllm': True}`) |
+| `advanced_features` | `Optional[Dict[str, Any]]` | `None` | Advanced features dict (e.g., `{'enable_rtm': True}`) |
 | `parameters` | `Optional[SessionParams]` | `None` | Additional session parameters |
 | `greeting` | `Optional[str]` | `None` | Auto-spoken greeting when agent joins |
 | `failure_message` | `Optional[str]` | `None` | Spoken on error |
@@ -81,13 +83,12 @@ agent = Agent().with_stt(DeepgramSTT(api_key='your-key', language='en-US'))
 
 ### `with_mllm(vendor: BaseMLLM) -> Agent`
 
-Set the MLLM vendor for multimodal flow. Requires `AdvancedFeatures(enable_mllm=True)`.
+Set the MLLM vendor for multimodal flow. Calling `with_mllm()` automatically sets `mllm.enable = True`.
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit import AdvancedFeatures
 from agora_agent.agentkit.vendors import OpenAIRealtime
-agent = Agent(advanced_features=AdvancedFeatures(enable_mllm=True)).with_mllm(OpenAIRealtime(api_key='your-key'))
+agent = Agent().with_mllm(OpenAIRealtime(api_key='your-key'))
 ```
 
 ### `with_avatar(vendor: BaseAvatar) -> Agent`
@@ -104,7 +105,11 @@ agent = agent.with_avatar(HeyGenAvatar(api_key='your-key', quality='medium', ago
 
 ### `with_turn_detection(config: TurnDetectionConfig) -> Agent`
 
-Override turn detection settings. Use `config.start_of_speech` and `config.end_of_speech` for the preferred SOS/EOS model.
+Override cascading-flow turn detection settings. Use `config.start_of_speech` and `config.end_of_speech` for SOS/EOS detection. Use `with_interruption()` for interruption behavior and MLLM vendor `turn_detection` for MLLM turn detection.
+
+### `with_interruption(config: InterruptionConfig) -> Agent`
+
+Configure unified interruption behavior using the top-level `interruption` object. Use this for `start_of_speech` and `keywords` interruption modes.
 
 ### `with_instructions(instructions: str) -> Agent`
 
@@ -124,7 +129,7 @@ Set SAL (Selective Attention Locking) configuration.
 
 ### `with_advanced_features(features: AdvancedFeatures) -> Agent`
 
-Set advanced features (e.g. `{'enable_mllm': True}`, `{'enable_rtm': True}`).
+Set advanced features (e.g. `{'enable_rtm': True}`).
 
 ### `with_tools(enabled: bool = True) -> Agent`
 

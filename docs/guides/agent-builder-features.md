@@ -61,7 +61,7 @@ from agora_agent.agentkit import Agent, AdvancedFeatures
 from agora_agent.agentkit.vendors import OpenAIRealtime
 
 # MLLM mode (see mllm-flow guide)
-agent = Agent(advanced_features=AdvancedFeatures(enable_mllm=True)).with_mllm(OpenAIRealtime(api_key='...'))
+agent = Agent().with_mllm(OpenAIRealtime(api_key='...'))
 
 # RTM signaling for custom data delivery
 agent = Agent(advanced_features=AdvancedFeatures(enable_rtm=True))
@@ -341,5 +341,5 @@ agent_id = session.start()
 
 - [Agent Reference](../reference/agent.md) — full API signatures
 - [Cascading Flow](./cascading-flow.md) — ASR → LLM → TTS setup
-- [MLLM Flow](./mllm-flow.md) — multimodal flow with `enable_mllm`
+- [MLLM Flow](./mllm-flow.md) — multimodal flow with `mllm.enable`
 - [Regional Routing](./regional-routing.md) — client area and geofence

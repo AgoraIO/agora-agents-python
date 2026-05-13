@@ -2,7 +2,12 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ...agents.types.start_agents_request_properties_mllm_turn_detection import (
+    StartAgentsRequestPropertiesMllmTurnDetection,
+)
 from .base import BaseMLLM
+
+MllmTurnDetectionConfig = StartAgentsRequestPropertiesMllmTurnDetection
 
 
 class OpenAIRealtimeOptions(BaseModel):
@@ -16,6 +21,7 @@ class OpenAIRealtimeOptions(BaseModel):
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
     messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
+    turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     predefined_tools: Optional[List[str]] = Field(default=None, description="Predefined tools")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
     max_history: Optional[int] = Field(default=None, description="Maximum conversation history length")
@@ -27,7 +33,6 @@ class OpenAIRealtime(BaseMLLM):
     def to_config(self) -> Dict[str, Any]:
         config: Dict[str, Any] = {
             "vendor": "openai",
-            "style": "openai",
             "api_key": self.options.api_key,
         }
 
@@ -54,6 +59,8 @@ class OpenAIRealtime(BaseMLLM):
             config["failure_message"] = self.options.failure_message
         if self.options.max_history is not None:
             config["max_history"] = self.options.max_history
+        if self.options.turn_detection is not None:
+            config["turn_detection"] = self.options.turn_detection
 
         return config
 
@@ -73,6 +80,7 @@ class VertexAIOptions(BaseModel):
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
     messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
+    turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     predefined_tools: Optional[List[str]] = Field(default=None, description="Predefined tools")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
     max_history: Optional[int] = Field(default=None, description="Maximum conversation history length")
@@ -98,7 +106,6 @@ class VertexAI(BaseMLLM):
 
         config: Dict[str, Any] = {
             "vendor": "vertexai",
-            "style": "openai",
             "params": params,
         }
 
@@ -118,6 +125,8 @@ class VertexAI(BaseMLLM):
             config["failure_message"] = self.options.failure_message
         if self.options.max_history is not None:
             config["max_history"] = self.options.max_history
+        if self.options.turn_detection is not None:
+            config["turn_detection"] = self.options.turn_detection
 
         return config
 
@@ -135,6 +144,7 @@ class GeminiLiveOptions(BaseModel):
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
     messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
+    turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     predefined_tools: Optional[List[str]] = Field(default=None, description="Predefined tools")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
     max_history: Optional[int] = Field(default=None, description="Maximum conversation history length")
@@ -155,7 +165,6 @@ class GeminiLive(BaseMLLM):
 
         config: Dict[str, Any] = {
             "vendor": "gemini",
-            "style": "openai",
             "api_key": self.options.api_key,
             "params": params,
         }
@@ -176,5 +185,7 @@ class GeminiLive(BaseMLLM):
             config["failure_message"] = self.options.failure_message
         if self.options.max_history is not None:
             config["max_history"] = self.options.max_history
+        if self.options.turn_detection is not None:
+            config["turn_detection"] = self.options.turn_detection
 
         return config
