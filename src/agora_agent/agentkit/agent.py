@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 import typing
+import typing_extensions
 
 if typing.TYPE_CHECKING:
     from .agent_session import AgentSession, AsyncAgentSession
@@ -29,6 +30,11 @@ from ..agents.types.start_agents_request_properties_parameters_silence_config im
 from ..agents.types.start_agents_request_properties_parameters_silence_config_action import StartAgentsRequestPropertiesParametersSilenceConfigAction
 from ..agents.types.start_agents_request_properties_parameters_farewell_config import StartAgentsRequestPropertiesParametersFarewellConfig
 from ..agents.types.start_agents_request_properties_parameters_data_channel import StartAgentsRequestPropertiesParametersDataChannel
+from ..agents.types.start_agents_request_properties_parameters_audio_scenario import StartAgentsRequestPropertiesParametersAudioScenario
+from ..agents.types.start_agents_request_properties_interruption import StartAgentsRequestPropertiesInterruption
+from ..agents.types.start_agents_request_properties_interruption_mode import StartAgentsRequestPropertiesInterruptionMode
+from ..agents.types.start_agents_request_properties_mllm_turn_detection import StartAgentsRequestPropertiesMllmTurnDetection
+from ..agents.types.start_agents_request_properties_mllm_turn_detection_mode import StartAgentsRequestPropertiesMllmTurnDetectionMode
 from ..agents.types.start_agents_request_properties_llm_greeting_configs import StartAgentsRequestPropertiesLlmGreetingConfigs
 from ..agents.types.start_agents_request_properties_llm_greeting_configs_mode import StartAgentsRequestPropertiesLlmGreetingConfigsMode
 from ..agents.types.start_agents_request_properties_llm_mcp_servers_item import StartAgentsRequestPropertiesLlmMcpServersItem
@@ -82,6 +88,20 @@ SilenceConfig = StartAgentsRequestPropertiesParametersSilenceConfig
 SilenceAction = StartAgentsRequestPropertiesParametersSilenceConfigAction
 FarewellConfig = StartAgentsRequestPropertiesParametersFarewellConfig
 ParametersDataChannel = StartAgentsRequestPropertiesParametersDataChannel
+ParametersAudioScenario = StartAgentsRequestPropertiesParametersAudioScenario
+InterruptionConfig = StartAgentsRequestPropertiesInterruption
+InterruptionMode = StartAgentsRequestPropertiesInterruptionMode
+MllmTurnDetectionConfig = StartAgentsRequestPropertiesMllmTurnDetection
+MllmTurnDetectionMode = StartAgentsRequestPropertiesMllmTurnDetectionMode
+
+
+class SessionParamsInput(typing_extensions.TypedDict, total=False):
+    silence_config: StartAgentsRequestPropertiesParametersSilenceConfig
+    farewell_config: StartAgentsRequestPropertiesParametersFarewellConfig
+    data_channel: StartAgentsRequestPropertiesParametersDataChannel
+    enable_metrics: bool
+    enable_error_message: bool
+    audio_scenario: ParametersAudioScenario
 
 # LLM sub-type aliases
 LlmGreetingConfigs = StartAgentsRequestPropertiesLlmGreetingConfigs
@@ -125,7 +145,7 @@ class Agent:
         turn_detection: typing.Optional[TurnDetectionConfig] = None,
         sal: typing.Optional[SalConfig] = None,
         advanced_features: typing.Optional[AdvancedFeatures] = None,
-        parameters: typing.Optional[SessionParams] = None,
+        parameters: typing.Optional[typing.Union[SessionParams, SessionParamsInput]] = None,
         greeting: typing.Optional[str] = None,
         failure_message: typing.Optional[str] = None,
         max_history: typing.Optional[int] = None,
@@ -174,6 +194,8 @@ class Agent:
     def with_mllm(self, vendor: BaseMLLM) -> "Agent":
         new_agent = self._clone()
         new_agent._mllm = vendor.to_config()
+        if isinstance(new_agent._mllm, dict):
+            new_agent._mllm.setdefault("enable", True)
         return new_agent
 
     def with_avatar(self, vendor: BaseAvatar) -> "Agent":
@@ -228,7 +250,7 @@ class Agent:
         new_agent._advanced_features = features
         return new_agent
 
-    def with_parameters(self, parameters: SessionParams) -> "Agent":
+    def with_parameters(self, parameters: typing.Union[SessionParams, SessionParamsInput]) -> "Agent":
         """Returns a new Agent with the specified session parameters.
 
         Use this to configure silence behaviour, graceful hang-up, data channel, and more.
@@ -338,7 +360,7 @@ class Agent:
         return self._advanced_features
 
     @property
-    def parameters(self) -> typing.Optional[SessionParams]:
+    def parameters(self) -> typing.Optional[typing.Union[SessionParams, SessionParamsInput]]:
         return self._parameters
 
     @property
@@ -491,13 +513,18 @@ class Agent:
                 **token_kwargs,
             )
 
-        is_mllm_mode = (
+        advanced_flag = (
             self._advanced_features is not None
             and (
                 (isinstance(self._advanced_features, dict) and self._advanced_features.get("enable_mllm") is True)
-                or (isinstance(self._advanced_features, StartAgentsRequestPropertiesAdvancedFeatures) and self._advanced_features.enable_mllm is True)
+                or (
+                    isinstance(self._advanced_features, StartAgentsRequestPropertiesAdvancedFeatures)
+                    and self._advanced_features.enable_mllm is True
+                )
             )
         )
+        mllm_flag = isinstance(self._mllm, dict) and self._mllm.get("enable") is True
+        is_mllm_mode = bool(advanced_flag or mllm_flag or self._mllm is not None)
 
         base_kwargs: typing.Dict[str, typing.Any] = {
             "channel": channel,
@@ -521,7 +548,10 @@ class Agent:
         if self._advanced_features is not None:
             base_kwargs["advanced_features"] = self._advanced_features
         if self._parameters is not None:
-            base_kwargs["parameters"] = self._parameters
+            if isinstance(self._parameters, dict):
+                base_kwargs["parameters"] = StartAgentsRequestPropertiesParameters(**self._parameters)
+            else:
+                base_kwargs["parameters"] = self._parameters
         if self._geofence is not None:
             base_kwargs["geofence"] = self._geofence
         if self._labels is not None:

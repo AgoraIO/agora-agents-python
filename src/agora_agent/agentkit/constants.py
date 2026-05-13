@@ -8,6 +8,11 @@ class DataChannel:
     RTM = "rtm"
     DATASTREAM = "datastream"
 
+class AudioScenario:
+    DEFAULT = "default"
+    CHORUS = "chorus"
+    AISERVER = "aiserver"
+
 
 # Silence action when timeout elapses: "speak" | "think"
 # (Use for parameters.silence_config.action — avoids shadowing SilenceAction type)

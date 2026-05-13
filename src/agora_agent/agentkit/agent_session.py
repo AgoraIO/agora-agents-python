@@ -206,9 +206,12 @@ class _AgentSessionBase:
 
     def _is_mllm_mode(self) -> bool:
         advanced_features = self._agent.advanced_features
+        mllm = self._agent.mllm
+        if isinstance(mllm, dict) and mllm.get("enable") is True:
+            return True
         if isinstance(advanced_features, dict):
-            return advanced_features.get("enable_mllm") is True
-        return bool(getattr(advanced_features, "enable_mllm", False))
+            return advanced_features.get("enable_mllm") is True or mllm is not None
+        return bool(getattr(advanced_features, "enable_mllm", False) or mllm is not None)
 
     def _build_start_properties(self, token_opts: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
         base_properties = self._agent.to_properties(
@@ -457,6 +460,41 @@ class AgentSession(_AgentSessionBase):
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
+    def think(
+        self,
+        text: str,
+        *,
+        on_listening_action: typing.Optional[str] = None,
+        on_thinking_action: typing.Optional[str] = None,
+        on_speaking_action: typing.Optional[str] = None,
+        interruptable: typing.Optional[bool] = None,
+        metadata: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> typing.Any:
+        """Inject a custom text instruction into the current session pipeline."""
+        if self._status != "running":
+            raise RuntimeError(f"Cannot think in {self._status} state")
+        if not self._agent_id:
+            raise RuntimeError("No agent ID available")
+
+        kwargs: typing.Dict[str, typing.Any] = {"text": text}
+        if on_listening_action is not None:
+            kwargs["on_listening_action"] = on_listening_action
+        if on_thinking_action is not None:
+            kwargs["on_thinking_action"] = on_thinking_action
+        if on_speaking_action is not None:
+            kwargs["on_speaking_action"] = on_speaking_action
+        if interruptable is not None:
+            kwargs["interruptable"] = interruptable
+        if metadata is not None:
+            kwargs["metadata"] = metadata
+
+        return self._client.agent_management.agent_think(
+            self._app_id,
+            self._agent_id,
+            request_options=self._request_options(),
+            **kwargs,
+        )
+
     def update(self, properties: typing.Any) -> None:
         """Update the agent configuration at runtime.
 
@@ -670,6 +708,41 @@ class AsyncAgentSession(_AgentSessionBase):
 
         await self._client.agents.interrupt(
             self._app_id, self._agent_id, request_options=self._request_options()
+        )
+
+    async def think(
+        self,
+        text: str,
+        *,
+        on_listening_action: typing.Optional[str] = None,
+        on_thinking_action: typing.Optional[str] = None,
+        on_speaking_action: typing.Optional[str] = None,
+        interruptable: typing.Optional[bool] = None,
+        metadata: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> typing.Any:
+        """Inject a custom text instruction into the current session pipeline."""
+        if self._status != "running":
+            raise RuntimeError(f"Cannot think in {self._status} state")
+        if not self._agent_id:
+            raise RuntimeError("No agent ID available")
+
+        kwargs: typing.Dict[str, typing.Any] = {"text": text}
+        if on_listening_action is not None:
+            kwargs["on_listening_action"] = on_listening_action
+        if on_thinking_action is not None:
+            kwargs["on_thinking_action"] = on_thinking_action
+        if on_speaking_action is not None:
+            kwargs["on_speaking_action"] = on_speaking_action
+        if interruptable is not None:
+            kwargs["interruptable"] = interruptable
+        if metadata is not None:
+            kwargs["metadata"] = metadata
+
+        return await self._client.agent_management.agent_think(
+            self._app_id,
+            self._agent_id,
+            request_options=self._request_options(),
+            **kwargs,
         )
 
     async def update(self, properties: typing.Any) -> None:
