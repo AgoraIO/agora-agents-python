@@ -169,6 +169,8 @@ def strip_inferred_preset_fields(properties: typing.Dict[str, typing.Any], infer
             if inferred_preset == _MINIMAX_MODEL_TO_PRESET.get(_normalize_model_name(params.get("model")) or ""):
                 params["model"] = None
             params["key"] = None
+            params["group_id"] = None
+            params["url"] = None
         tts = {k: v for k, v in {**tts, "params": _omit_none(params)}.items() if v is not None}
 
     return {**properties, "asr": asr, "llm": llm, "tts": tts}
