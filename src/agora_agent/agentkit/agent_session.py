@@ -2,6 +2,16 @@ import typing
 import warnings
 
 from ..core.api_error import ApiError
+from ..agent_management.types.agent_think_request_on_listening_action import (
+    AgentThinkRequestOnListeningAction,
+)
+from ..agent_management.types.agent_think_request_on_speaking_action import (
+    AgentThinkRequestOnSpeakingAction,
+)
+from ..agent_management.types.agent_think_request_on_thinking_action import (
+    AgentThinkRequestOnThinkingAction,
+)
+from ..agent_management.types.agent_think_response import AgentThinkResponse
 from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
 from .agent import Agent
 from .avatar_types import (
@@ -125,6 +135,11 @@ class _AgentSessionBase:
         waiting for agentkit method updates.
         """
         return self._client.agents
+
+    @property
+    def raw_agent_management(self) -> typing.Any:
+        """Direct access to the underlying Fern-generated AgentManagement client."""
+        return self._client.agent_management
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -464,12 +479,12 @@ class AgentSession(_AgentSessionBase):
         self,
         text: str,
         *,
-        on_listening_action: typing.Optional[str] = None,
-        on_thinking_action: typing.Optional[str] = None,
-        on_speaking_action: typing.Optional[str] = None,
+        on_listening_action: typing.Optional[AgentThinkRequestOnListeningAction] = None,
+        on_thinking_action: typing.Optional[AgentThinkRequestOnThinkingAction] = None,
+        on_speaking_action: typing.Optional[AgentThinkRequestOnSpeakingAction] = None,
         interruptable: typing.Optional[bool] = None,
         metadata: typing.Optional[typing.Dict[str, str]] = None,
-    ) -> typing.Any:
+    ) -> AgentThinkResponse:
         """Inject a custom text instruction into the current session pipeline."""
         if self._status != "running":
             raise RuntimeError(f"Cannot think in {self._status} state")
@@ -714,12 +729,12 @@ class AsyncAgentSession(_AgentSessionBase):
         self,
         text: str,
         *,
-        on_listening_action: typing.Optional[str] = None,
-        on_thinking_action: typing.Optional[str] = None,
-        on_speaking_action: typing.Optional[str] = None,
+        on_listening_action: typing.Optional[AgentThinkRequestOnListeningAction] = None,
+        on_thinking_action: typing.Optional[AgentThinkRequestOnThinkingAction] = None,
+        on_speaking_action: typing.Optional[AgentThinkRequestOnSpeakingAction] = None,
         interruptable: typing.Optional[bool] = None,
         metadata: typing.Optional[typing.Dict[str, str]] = None,
-    ) -> typing.Any:
+    ) -> AgentThinkResponse:
         """Inject a custom text instruction into the current session pipeline."""
         if self._status != "running":
             raise RuntimeError(f"Cannot think in {self._status} state")
