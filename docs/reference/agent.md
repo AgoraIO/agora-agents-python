@@ -126,6 +126,10 @@ Set SAL (Selective Attention Locking) configuration.
 
 Set advanced features (e.g. `{'enable_mllm': True}`, `{'enable_rtm': True}`).
 
+### `with_tools(enabled: bool = True) -> Agent`
+
+Enable or disable MCP tool invocation by setting `advanced_features.enable_tools`.
+
 ### `with_parameters(parameters: SessionParams) -> Agent`
 
 Set session parameters (silence config, farewell config, data channel, etc.).

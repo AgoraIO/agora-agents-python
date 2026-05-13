@@ -32,6 +32,7 @@ from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT, Ope
 | `failure_message` | `str` | No | `None` | Failure message |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `params` | `Dict[str, Any]` | No | `None` | Additional model parameters |
+| `headers` | `Dict[str, str]` | No | `None` | Custom HTTP headers forwarded to the LLM provider |
 
 <!-- snippet: fragment -->
 ```python
@@ -55,6 +56,7 @@ llm = OpenAI(api_key='your-key', model='gpt-4o-mini', temperature=0.7)
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Failure message |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `headers` | `Dict[str, str]` | No | `None` | Custom HTTP headers forwarded to the LLM provider |
 
 <!-- snippet: fragment -->
 ```python
@@ -80,6 +82,7 @@ llm = AzureOpenAI(
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Failure message |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `headers` | `Dict[str, str]` | No | `None` | Custom HTTP headers forwarded to the LLM provider |
 
 <!-- snippet: fragment -->
 ```python
@@ -102,6 +105,7 @@ llm = Anthropic(api_key='your-anthropic-key', model='claude-3-5-sonnet-20241022'
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Failure message |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `headers` | `Dict[str, str]` | No | `None` | Custom HTTP headers forwarded to the LLM provider |
 
 <!-- snippet: fragment -->
 ```python
@@ -180,6 +184,17 @@ Fixed sample rate: 24000 Hz.
 | `secret_key` | `str` | Yes | — | AWS secret key |
 | `region` | `str` | Yes | — | AWS region (e.g., `us-east-1`) |
 | `voice_id` | `str` | Yes | — | Amazon Polly voice ID |
+| `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
+
+### `DeepgramTTS`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Deepgram API key |
+| `model` | `str` | Yes | — | Deepgram TTS model (e.g., `aura-2-thalia-en`) |
+| `base_url` | `str` | No | `None` | WebSocket endpoint; defaults server-side to `wss://api.deepgram.com/v1/speak` |
+| `sample_rate` | `int` | No | `None` | Sample rate in Hz (for example, `24000`) |
+| `params` | `Dict[str, Any]` | No | `None` | Additional Deepgram TTS parameters |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### `HumeAITTS`

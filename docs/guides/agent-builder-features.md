@@ -16,6 +16,7 @@ For string values with a finite set of options (e.g. `data_channel`, `sal_mode`,
 |---|---|---|
 | `sal` | `with_sal(config)` | Selective Attention Locking — speaker recognition and noise suppression |
 | `advanced_features` | `with_advanced_features(features)` | Enable MLLM, RTM, SAL, tools |
+| `tools` | `with_tools(enabled=True)` | Enable MCP tool invocation |
 | `parameters` | `with_parameters(params)` | Silence config, farewell config, data channel |
 | `failure_message` | `with_failure_message(msg)` | Message spoken when LLM fails |
 | `max_history` | `with_max_history(n)` | Max conversation turns in LLM context |
@@ -66,7 +67,7 @@ agent = Agent(advanced_features=AdvancedFeatures(enable_mllm=True)).with_mllm(Op
 agent = Agent(advanced_features=AdvancedFeatures(enable_rtm=True))
 
 # Enable tool invocation via MCP
-agent = Agent(advanced_features=AdvancedFeatures(enable_tools=True))
+agent = Agent().with_tools()
 ```
 
 ## Session Parameters
