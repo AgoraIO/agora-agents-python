@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v1.4.1] — 2026-05-18
+
+### Fixed
+
+- **Release workflow** — Publish to PyPI with the `PYPI_API_TOKEN` secret.
+
 ## [v1.4.0] — 2026-05-13
 
 ### Added
