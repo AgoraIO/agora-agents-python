@@ -59,17 +59,7 @@ class StartAgentsRequestPropertiesMllm(UncheckedBaseModel):
 
     failure_message: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Message played when the MLLM call fails.
-    """
-
-    max_history: typing.Optional[int] = pydantic.Field(default=None)
-    """
-    Maximum number of conversation history messages cached for the MLLM session.
-    """
-
-    predefined_tools: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
-    """
-    Predefined tools available to the MLLM provider.
+    Agent failure message. If provided, the agent speaks this message when an MLLM request fails.
     """
 
     vendor: typing.Optional[StartAgentsRequestPropertiesMllmVendor] = pydantic.Field(default=None)
@@ -78,6 +68,7 @@ class StartAgentsRequestPropertiesMllm(UncheckedBaseModel):
     - `openai`: OpenAI Realtime API
     - `gemini`: Google Gemini Live
     - `vertexai`: Google Gemini Live (Vertex AI)
+    - `xai`: xAI Grok Realtime API
     """
 
     turn_detection: typing.Optional[StartAgentsRequestPropertiesMllmTurnDetection] = pydantic.Field(default=None)

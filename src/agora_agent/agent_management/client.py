@@ -72,6 +72,7 @@ class AgentManagementClient:
         on_listening_action : typing.Optional[AgentThinkAgentManagementRequestOnListeningAction]
             The action to take when the agent is in a listening state:
             - `inject`: Inject the custom text instruction into the current turn without interrupting it.
+            - `interrupt`: Immediately interrupt the current flow and initiate a new round of dialogue.
             - `ignore`: Ignore the request.
 
         on_thinking_action : typing.Optional[AgentThinkAgentManagementRequestOnThinkingAction]
@@ -186,6 +187,7 @@ class AsyncAgentManagementClient:
         on_listening_action : typing.Optional[AgentThinkAgentManagementRequestOnListeningAction]
             The action to take when the agent is in a listening state:
             - `inject`: Inject the custom text instruction into the current turn without interrupting it.
+            - `interrupt`: Immediately interrupt the current flow and initiate a new round of dialogue.
             - `ignore`: Ignore the request.
 
         on_thinking_action : typing.Optional[AgentThinkAgentManagementRequestOnThinkingAction]

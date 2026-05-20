@@ -7,24 +7,21 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class OpenAiTtsParams(UncheckedBaseModel):
+class TelephonyErrorResponse(UncheckedBaseModel):
     """
-    OpenAI TTS configuration parameters.
+    Error response returned when a Telephony or Phone Number Management API request fails.
+
+    The response body includes `error_type` and `description` fields (not the Agent Management `detail`/`reason` shape).
     """
 
-    api_key: typing.Optional[str] = pydantic.Field(default=None)
+    error_type: typing.Optional[str] = pydantic.Field(default=None)
     """
-    OpenAI API key. Optional for preset-backed OpenAI TTS usage.
-    """
-
-    voice: str = pydantic.Field()
-    """
-    Voice name (e.g., "alloy", "echo", "fable", "onyx", "nova", "shimmer")
+    The type of error that occurred.
     """
 
-    model: typing.Optional[str] = pydantic.Field(default=None)
+    description: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Model name (e.g., "tts-1", "tts-1-hd")
+    A detailed description of the error.
     """
 
     if IS_PYDANTIC_V2:

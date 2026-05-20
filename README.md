@@ -18,6 +18,7 @@ and multimodal flows (MLLM) for real-time audio processing.
 - [Documentation](#documentation)
 - [Reference](#reference)
 - [Mllm Flow Multimodal](#mllm-flow-multimodal)
+- [Mllm Flow Multimodal](#mllm-flow-multimodal)
 - [Usage](#usage)
 - [Async Client](#async-client)
 - [Exception Handling](#exception-handling)
@@ -278,6 +279,71 @@ client.agents.start(
 ```
 
 
+## MLLM Flow (Multimodal)
+
+For real-time audio processing using OpenAI's Realtime API or Google Gemini Live, use the MLLM (Multimodal Large Language Model) flow instead of the cascading ASR -> LLM -> TTS flow. See the [MLLM Overview](https://docs.agora.io/en/conversational-ai/models/mllm/overview) for more details.
+
+```python
+from agora-agent-server-sdk import Agora
+from agora-agent-server-sdk.agents import (
+    StartAgentsRequestProperties,
+    StartAgentsRequestPropertiesAdvancedFeatures,
+    StartAgentsRequestPropertiesMllm,
+    StartAgentsRequestPropertiesMllmVendor,
+    StartAgentsRequestPropertiesTts,
+    StartAgentsRequestPropertiesTtsVendor,
+    StartAgentsRequestPropertiesLlm,
+    StartAgentsRequestPropertiesTurnDetection,
+    StartAgentsRequestPropertiesTurnDetectionType,
+)
+
+client = Agora(
+    customer_id="YOUR_CUSTOMER_ID",
+    customer_secret="YOUR_CUSTOMER_SECRET",
+)
+
+client.agents.start(
+    appid="your_app_id",
+    name="mllm_agent",
+    properties=StartAgentsRequestProperties(
+        channel="channel_name",
+        token="your_token",
+        agent_rtc_uid="1001",
+        remote_rtc_uids=["1002"],
+        idle_timeout=120,
+        advanced_features=StartAgentsRequestPropertiesAdvancedFeatures(
+            enable_mllm=True,
+        ),
+        mllm=StartAgentsRequestPropertiesMllm(
+            url="wss://api.openai.com/v1/realtime",
+            api_key="<your_openai_api_key>",
+            vendor=StartAgentsRequestPropertiesMllmVendor.OPENAI,
+            params={
+                "model": "gpt-4o-realtime-preview",
+                "voice": "alloy",
+            },
+            input_modalities=["audio"],
+            output_modalities=["text", "audio"],
+            greeting_message="Hello! I'm ready to chat in real-time.",
+        ),
+        turn_detection=StartAgentsRequestPropertiesTurnDetection(
+            type=StartAgentsRequestPropertiesTurnDetectionType.SERVER_VAD,
+            threshold=0.5,
+            silence_duration_ms=500,
+        ),
+        # TTS and LLM are still required but not used when MLLM is enabled
+        tts=StartAgentsRequestPropertiesTts(
+            vendor=StartAgentsRequestPropertiesTtsVendor.MICROSOFT,
+            params={},
+        ),
+        llm=StartAgentsRequestPropertiesLlm(
+            url="https://api.openai.com/v1/chat/completions",
+        ),
+    ),
+)
+```
+
+
 ## Usage
 
 Instantiate and use the client with the following:
@@ -288,6 +354,9 @@ from agora_agent.agents import (
     StartAgentsRequestProperties,
     StartAgentsRequestPropertiesAsr,
     StartAgentsRequestPropertiesLlm,
+    StartAgentsRequestPropertiesTurnDetection,
+    StartAgentsRequestPropertiesTurnDetectionConfig,
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
 )
 
 client = Agora(
@@ -325,6 +394,13 @@ client.agents.start(
             greeting_message="Hello, how can I assist you today?",
             failure_message="Please hold on a second.",
         ),
+        turn_detection=StartAgentsRequestPropertiesTurnDetection(
+            config=StartAgentsRequestPropertiesTurnDetectionConfig(
+                end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
+                    mode="semantic",
+                ),
+            ),
+        ),
     ),
 )
 ```
@@ -341,6 +417,9 @@ from agora_agent.agents import (
     StartAgentsRequestProperties,
     StartAgentsRequestPropertiesAsr,
     StartAgentsRequestPropertiesLlm,
+    StartAgentsRequestPropertiesTurnDetection,
+    StartAgentsRequestPropertiesTurnDetectionConfig,
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
 )
 
 client = AsyncAgora(
@@ -380,6 +459,13 @@ async def main() -> None:
                 max_history=32,
                 greeting_message="Hello, how can I assist you today?",
                 failure_message="Please hold on a second.",
+            ),
+            turn_detection=StartAgentsRequestPropertiesTurnDetection(
+                config=StartAgentsRequestPropertiesTurnDetectionConfig(
+                    end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
+                        mode="semantic",
+                    ),
+                ),
             ),
         ),
     )

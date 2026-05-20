@@ -26,7 +26,7 @@ class StartAgentsRequestPropertiesMllmTurnDetection(UncheckedBaseModel):
     """
     Turn detection mode for MLLM:
     - `agora_vad`: Agora VAD-based detection.
-    - `server_vad`: Vendor-side VAD-based detection. Supported by OpenAI Realtime API and Gemini Live.
+    - `server_vad`: Vendor-side VAD-based detection. Supported by OpenAI Realtime API, Gemini Live, and xAI Grok.
     - `semantic_vad`: Semantic-based detection. Supported by OpenAI Realtime API only.
     """
 

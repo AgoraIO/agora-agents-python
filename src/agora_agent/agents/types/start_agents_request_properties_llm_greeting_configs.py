@@ -27,6 +27,12 @@ class StartAgentsRequestPropertiesLlmGreetingConfigs(UncheckedBaseModel):
     The delay in milliseconds before the agent plays the greeting message after a user joins the channel.
     """
 
+    interruptable: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    - `true`: Follows the global `interruption` configuration.
+    - `false`: Uninterruptible. The greeting plays in its entirety. If the user speaks multiple times while the greeting plays, the system merges the speech segments after the greeting ends and sends them to the LLM for a single response.
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

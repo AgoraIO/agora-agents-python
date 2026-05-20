@@ -15,7 +15,7 @@ class StartAgentsRequestPropertiesFillerWordsContentStaticConfig(UncheckedBaseMo
     Static filler word configuration. Used when `mode` is `static`.
     """
 
-    phrases: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    phrases: typing.List[str] = pydantic.Field()
     """
     List of filler word phrases. Maximum 100 filler words, each not exceeding 50 English words.
     """

@@ -30,7 +30,7 @@ class StartAgentsRequestPropertiesMllmTurnDetectionServerVadConfig(UncheckedBase
 
     threshold: typing.Optional[float] = pydantic.Field(default=None)
     """
-    VAD sensitivity threshold. Applicable to OpenAI Realtime API only.
+    VAD sensitivity threshold. Applicable to OpenAI Realtime API and xAI Grok.
     """
 
     idle_timeout_ms: typing.Optional[int] = pydantic.Field(default=None)

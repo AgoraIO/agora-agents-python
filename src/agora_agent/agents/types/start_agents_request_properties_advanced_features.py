@@ -14,7 +14,7 @@ class StartAgentsRequestPropertiesAdvancedFeatures(UncheckedBaseModel):
 
     enable_mllm: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Use `mllm.enable` instead. Enable Multimodal Large Language Model for voice-to-voice processing. Enabling MLLM automatically disables ASR, LLM, and TTS since the MLLM handles end-to-end voice processing directly. See `turn_detection.mode` for turn detection options available with MLLM.
+    Use `mllm.enable` instead. Enable Multimodal Large Language Model for voice-to-voice processing. Enabling MLLM automatically disables ASR, LLM, and TTS since the MLLM handles end-to-end voice processing directly. See `turn_detection.type` for turn detection options available with MLLM.
     """
 
     enable_rtm: typing.Optional[bool] = pydantic.Field(default=None)

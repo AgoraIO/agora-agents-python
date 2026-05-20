@@ -144,7 +144,6 @@ class RawAgentsClient:
             - `RUNNING` (2): The agent is running.
             - `STOPPING` (3): The agent is stopping.
             - `STOPPED` (4): The agent has exited.
-            - `RECOVERING` (5): The agent is recovering.
             - `FAILED` (6): The agent failed to execute.
 
         limit : typing.Optional[int]
@@ -293,7 +292,13 @@ class RawAgentsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_turns(
-        self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        appid: str,
+        agent_id: str,
+        *,
+        page_index: typing.Optional[int] = None,
+        page_size: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[GetTurnsAgentsResponse]:
         """
         Query conversation turn information for a conversational AI agent session.
@@ -310,6 +315,12 @@ class RawAgentsClient:
         agent_id : str
             The agent instance ID you obtained after successfully calling `join` to start a conversational AI agent.
 
+        page_index : typing.Optional[int]
+            The page number. Starts from 1.
+
+        page_size : typing.Optional[int]
+            The number of dialogue turns returned per page.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -321,6 +332,10 @@ class RawAgentsClient:
         _response = self._client_wrapper.httpx_client.request(
             f"v2/projects/{jsonable_encoder(appid)}/agents/{jsonable_encoder(agent_id)}/turns",
             method="GET",
+            params={
+                "page_index": page_index,
+                "page_size": page_size,
+            },
             request_options=request_options,
         )
         try:
@@ -342,7 +357,7 @@ class RawAgentsClient:
         self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[None]:
         """
-        Stop the specified conversational agent instance.
+        Stop the specified conversational agent instance. The API responds after request parameters are validated, and the stop operation is processed asynchronously after the response is returned.
 
         Parameters
         ----------
@@ -670,7 +685,6 @@ class AsyncRawAgentsClient:
             - `RUNNING` (2): The agent is running.
             - `STOPPING` (3): The agent is stopping.
             - `STOPPED` (4): The agent has exited.
-            - `RECOVERING` (5): The agent is recovering.
             - `FAILED` (6): The agent failed to execute.
 
         limit : typing.Optional[int]
@@ -822,7 +836,13 @@ class AsyncRawAgentsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_turns(
-        self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        appid: str,
+        agent_id: str,
+        *,
+        page_index: typing.Optional[int] = None,
+        page_size: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[GetTurnsAgentsResponse]:
         """
         Query conversation turn information for a conversational AI agent session.
@@ -839,6 +859,12 @@ class AsyncRawAgentsClient:
         agent_id : str
             The agent instance ID you obtained after successfully calling `join` to start a conversational AI agent.
 
+        page_index : typing.Optional[int]
+            The page number. Starts from 1.
+
+        page_size : typing.Optional[int]
+            The number of dialogue turns returned per page.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -850,6 +876,10 @@ class AsyncRawAgentsClient:
         _response = await self._client_wrapper.httpx_client.request(
             f"v2/projects/{jsonable_encoder(appid)}/agents/{jsonable_encoder(agent_id)}/turns",
             method="GET",
+            params={
+                "page_index": page_index,
+                "page_size": page_size,
+            },
             request_options=request_options,
         )
         try:
@@ -871,7 +901,7 @@ class AsyncRawAgentsClient:
         self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[None]:
         """
-        Stop the specified conversational agent instance.
+        Stop the specified conversational agent instance. The API responds after request parameters are validated, and the stop operation is processed asynchronously after the response is returned.
 
         Parameters
         ----------

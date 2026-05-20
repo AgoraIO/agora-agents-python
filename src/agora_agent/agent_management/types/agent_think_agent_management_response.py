@@ -20,7 +20,7 @@ class AgentThinkAgentManagementResponse(UncheckedBaseModel):
 
     start_ts: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Timestamp indicating when the agent was created.
+    Unix timestamp in seconds when the think request was processed.
     """
 
     if IS_PYDANTIC_V2:

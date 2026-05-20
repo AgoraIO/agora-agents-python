@@ -7,20 +7,24 @@ from ...core.pydantic_utilities import IS_PYDANTIC_V2
 from ...core.unchecked_base_model import UncheckedBaseModel
 
 
-class AgentThinkResponse(UncheckedBaseModel):
-    agent_id: typing.Optional[str] = pydantic.Field(default=None)
+class GetTurnsAgentsResponsePagination(UncheckedBaseModel):
     """
-    Unique identifier of the agent instance.
-    """
-
-    channel: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    The name of the RTC channel where the agent is located.
+    Pagination information.
     """
 
-    start_ts: typing.Optional[int] = pydantic.Field(default=None)
+    page_index: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Timestamp indicating when the agent was created.
+    The current page number; starts from 1.
+    """
+
+    total_pages: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The total number of pages.
+    """
+
+    is_last_page: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True if the current page is the last page.
     """
 
     if IS_PYDANTIC_V2:

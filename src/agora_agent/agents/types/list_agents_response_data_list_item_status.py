@@ -3,5 +3,5 @@
 import typing
 
 ListAgentsResponseDataListItemStatus = typing.Union[
-    typing.Literal["IDLE", "STARTING", "RUNNING", "STOPPING", "STOPPED", "RECOVERING", "FAILED"], typing.Any
+    typing.Literal["IDLE", "STARTING", "RUNNING", "STOPPING", "STOPPED", "FAILED"], typing.Any
 ]

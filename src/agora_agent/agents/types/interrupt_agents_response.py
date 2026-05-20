@@ -20,7 +20,7 @@ class InterruptAgentsResponse(UncheckedBaseModel):
 
     start_ts: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Timestamp when the broadcast started
+    Unix timestamp in seconds when the interrupt request was processed.
     """
 
     if IS_PYDANTIC_V2:
