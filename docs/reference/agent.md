@@ -264,3 +264,18 @@ to_properties(
 | `rtc` | `Optional[RtcConfig]` | RTC configuration |
 | `filler_words` | `Optional[FillerWordsConfig]` | Filler words configuration |
 | `config` | `Dict[str, Any]` | Full configuration dict |
+
+## Type aliases
+
+Public aliases over Fern-generated types: `LlmConfig`, `SttConfig`, `AsrConfig` (= `SttConfig`), `MllmConfig`, `AvatarConfig`, session/conversation types, and think types (`ThinkOnListeningAction`, etc.).
+
+Think value constants: `ThinkOnListeningActionInject`, `ThinkOnListeningActionInterrupt`, `ThinkOnListeningActionIgnore`, `ThinkOnThinkingActionInterrupt`, `ThinkOnThinkingActionIgnore`, `ThinkOnSpeakingActionInterrupt`, `ThinkOnSpeakingActionIgnore`.
+
+## Cross-SDK discovery map
+
+| Concept | Python | TypeScript | Go |
+|---|---|---|---|
+| STT payload alias (wire: `asr`) | `SttConfig` / `AsrConfig` | `SttConfig` / `AsrConfig` | `AsrConfig` / `SttConfig` |
+| xAI MLLM (primary) | `XaiGrok` | `XaiGrok` | `XaiGrok` / `NewXaiGrok` |
+| Avatar token helper | `is_avatar_token_managed` | `isAvatarTokenManaged` | `IsAvatarTokenManaged` |
+| Think inject constant | `ThinkOnListeningActionInject` | `ThinkOnListeningActionInject` | `ThinkOnListeningActionInject` |
