@@ -1,8 +1,13 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ...agents.types.start_agents_request_properties_llm_greeting_configs import (
+    StartAgentsRequestPropertiesLlmGreetingConfigs,
+)
 from .base import BaseLLM
+
+LlmGreetingConfigs = Union[StartAgentsRequestPropertiesLlmGreetingConfigs, Dict[str, Any]]
 
 
 def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -14,6 +19,14 @@ def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]
             item["transport"] = "streamable_http"
         result.append(item)
     return result
+
+
+def _dump_optional_model(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(exclude_none=True)
+    if hasattr(value, "dict"):
+        return value.dict(exclude_none=True)
+    return value
 
 class OpenAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -31,7 +44,7 @@ class OpenAIOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -74,7 +87,7 @@ class OpenAI(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.vendor is not None:
@@ -104,7 +117,7 @@ class AzureOpenAIOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -150,7 +163,7 @@ class AzureOpenAI(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.mcp_servers is not None:
@@ -177,7 +190,7 @@ class AnthropicOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -216,7 +229,7 @@ class Anthropic(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.vendor is not None:
@@ -246,7 +259,7 @@ class GeminiOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -287,7 +300,7 @@ class Gemini(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.vendor is not None:
