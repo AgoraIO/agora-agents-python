@@ -5,19 +5,19 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .base import BaseAvatar
 
-HEYGEN_SAMPLE_RATE = 24000
 LIVEAVATAR_SAMPLE_RATE = 24000
+HEYGEN_SAMPLE_RATE = LIVEAVATAR_SAMPLE_RATE
 AKOOL_SAMPLE_RATE = 16000
 
 
-class HeyGenAvatarOptions(BaseModel):
+class LiveAvatarAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    api_key: str = Field(..., description="HeyGen API key")
+    api_key: str = Field(..., description="LiveAvatar API key")
     quality: str = Field(..., description="Avatar quality: low, medium, or high")
     agora_uid: str = Field(..., description="Agora UID for the avatar stream")
     agora_token: Optional[str] = Field(default=None, description="RTC token for avatar authentication")
-    avatar_id: Optional[str] = Field(default=None, description="HeyGen avatar ID")
+    avatar_id: Optional[str] = Field(default=None, description="Avatar ID")
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     disable_idle_timeout: Optional[bool] = Field(default=None, description="Whether to disable idle timeout")
     activity_idle_timeout: Optional[int] = Field(default=None, description="Idle timeout in seconds")
@@ -30,6 +30,41 @@ class HeyGenAvatarOptions(BaseModel):
         if v not in valid:
             raise ValueError(f"Invalid quality '{v}'. Must be one of: {', '.join(valid)}")
         return v
+
+
+class LiveAvatarAvatar(BaseAvatar):
+    def __init__(self, **kwargs: Any):
+        self.options = LiveAvatarAvatarOptions(**kwargs)
+
+    @property
+    def required_sample_rate(self) -> int:
+        return LIVEAVATAR_SAMPLE_RATE
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = {
+            "api_key": self.options.api_key,
+            "quality": self.options.quality,
+            "agora_uid": self.options.agora_uid,
+        }
+
+        if self.options.agora_token is not None:
+            params["agora_token"] = self.options.agora_token
+        if self.options.avatar_id is not None:
+            params["avatar_id"] = self.options.avatar_id
+        if self.options.disable_idle_timeout is not None:
+            params["disable_idle_timeout"] = self.options.disable_idle_timeout
+        if self.options.activity_idle_timeout is not None:
+            params["activity_idle_timeout"] = self.options.activity_idle_timeout
+        if self.options.additional_params is not None:
+            params = {**self.options.additional_params, **params}
+
+        enable = self.options.enable if self.options.enable is not None else True
+        return {"enable": enable, "vendor": "liveavatar", "params": params}
+
+
+class HeyGenAvatarOptions(LiveAvatarAvatarOptions):
+    """Deprecated: use :class:`LiveAvatarAvatarOptions` instead."""
+
 
 class HeyGenAvatar(BaseAvatar):
     """Deprecated: HeyGen has been renamed to LiveAvatar. Use LiveAvatarAvatar instead."""
@@ -76,6 +111,7 @@ class AkoolAvatarOptions(BaseModel):
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
 
+
 class AkoolAvatar(BaseAvatar):
     def __init__(self, **kwargs: Any):
         self.options = AkoolAvatarOptions(**kwargs)
@@ -98,40 +134,6 @@ class AkoolAvatar(BaseAvatar):
         return {"enable": enable, "vendor": "akool", "params": params}
 
 
-class LiveAvatarAvatarOptions(HeyGenAvatarOptions):
-    pass
-
-
-class LiveAvatarAvatar(BaseAvatar):
-    def __init__(self, **kwargs: Any):
-        self.options = LiveAvatarAvatarOptions(**kwargs)
-
-    @property
-    def required_sample_rate(self) -> int:
-        return LIVEAVATAR_SAMPLE_RATE
-
-    def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {
-            "api_key": self.options.api_key,
-            "quality": self.options.quality,
-            "agora_uid": self.options.agora_uid,
-        }
-
-        if self.options.agora_token is not None:
-            params["agora_token"] = self.options.agora_token
-        if self.options.avatar_id is not None:
-            params["avatar_id"] = self.options.avatar_id
-        if self.options.disable_idle_timeout is not None:
-            params["disable_idle_timeout"] = self.options.disable_idle_timeout
-        if self.options.activity_idle_timeout is not None:
-            params["activity_idle_timeout"] = self.options.activity_idle_timeout
-        if self.options.additional_params is not None:
-            params = {**self.options.additional_params, **params}
-
-        enable = self.options.enable if self.options.enable is not None else True
-        return {"enable": enable, "vendor": "liveavatar", "params": params}
-
-
 class GenericAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -144,6 +146,7 @@ class GenericAvatarOptions(BaseModel):
     agora_channel: Optional[str] = Field(default=None, description="Agora channel; filled by AgentSession when omitted")
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
+
 
 class GenericAvatar(BaseAvatar):
     def __init__(self, **kwargs: Any):
@@ -178,9 +181,10 @@ class AnamAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Anam API key")
-    persona_id: Optional[str] = Field(default=None, description="Persona ID")
+    persona_id: Optional[str] = Field(default=None, description="Anam persona ID")
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
+
 
 class AnamAvatar(BaseAvatar):
     def __init__(self, **kwargs: Any):

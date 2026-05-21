@@ -13,7 +13,7 @@ from .base import (
 )
 from .avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
 from .llm import Anthropic, AzureOpenAI, Gemini, OpenAI
-from .mllm import GeminiLive, OpenAIRealtime, VertexAI, XaiGrok, XaiRealtime
+from .mllm import GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
     AmazonSTT,
     AresSTT,
@@ -83,7 +83,6 @@ __all__ = [
     "GeminiLive",
     "VertexAI",
     "XaiGrok",
-    "XaiRealtime",
     "HeyGenAvatar",
     "LiveAvatarAvatar",
     "AkoolAvatar",

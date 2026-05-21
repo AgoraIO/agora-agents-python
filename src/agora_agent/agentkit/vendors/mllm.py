@@ -1,4 +1,3 @@
-import warnings
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -117,30 +116,6 @@ class XaiGrok(BaseMLLM):
             config["turn_detection"] = self.options.turn_detection
 
         return config
-
-
-class XaiRealtimeOptions(XaiGrokOptions):
-    """Deprecated: use :class:`XaiGrokOptions` instead."""
-
-    def __init__(self, **data: Any):
-        warnings.warn(
-            "XaiRealtimeOptions is deprecated; use XaiGrokOptions instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(**data)
-
-
-class XaiRealtime(XaiGrok):
-    """Deprecated: use :class:`XaiGrok` instead."""
-
-    def __init__(self, **kwargs: Any):
-        warnings.warn(
-            "XaiRealtime is deprecated; use XaiGrok instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(**kwargs)
 
 
 class VertexAIOptions(BaseModel):
