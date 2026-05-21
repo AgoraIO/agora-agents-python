@@ -99,8 +99,6 @@ Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These
 | `VertexAI` | Vertex AI (Gemini Live) | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |
 | `XaiGrok` | xAI Grok (`mllm.vendor`: `xai`) | `api_key`; optional `voice`, `language`, `sample_rate`, `turn_detection` |
 
-`XaiRealtime` is deprecated (use `XaiGrok`). Future xAI STT/TTS wrappers will be `XaiSTT` / `XaiTTS`, not `XaiRealtime`.
-
 <!-- snippet: executable -->
 ```python
 from agora_agent.agentkit.vendors import OpenAIRealtime

@@ -20,6 +20,7 @@ from ..agents.types.update_agents_request_properties import UpdateAgentsRequestP
 from ..agents.types.get_agents_response import GetAgentsResponse
 from ..agents.types.list_agents_response import ListAgentsResponse
 from ..agents.types.list_agents_response_data_list_item import ListAgentsResponseDataListItem
+from ..agents.types.list_agents_response_data_list_item_status import ListAgentsResponseDataListItemStatus
 from ..agents.types.get_history_agents_response import GetHistoryAgentsResponse
 from ..agents.types.get_history_agents_response_contents_item import GetHistoryAgentsResponseContentsItem
 from ..agents.types.get_history_agents_response_contents_item_role import GetHistoryAgentsResponseContentsItemRole
@@ -139,6 +140,7 @@ AgentConfigUpdate = UpdateAgentsRequestProperties
 SessionInfo = GetAgentsResponse
 SessionListResponse = ListAgentsResponse
 SessionSummary = ListAgentsResponseDataListItem
+SessionStatus = ListAgentsResponseDataListItemStatus
 ConversationHistory = GetHistoryAgentsResponse
 ConversationTurn = GetHistoryAgentsResponseContentsItem
 ConversationRole = GetHistoryAgentsResponseContentsItemRole
@@ -155,6 +157,39 @@ class SessionParamsInput(typing_extensions.TypedDict, total=False):
     enable_metrics: bool
     enable_error_message: bool
     audio_scenario: ParametersAudioScenario
+
+
+class ThinkOptions(typing_extensions.TypedDict, total=False):
+    on_listening_action: AgentThinkAgentManagementRequestOnListeningAction
+    on_thinking_action: AgentThinkAgentManagementRequestOnThinkingAction
+    on_speaking_action: AgentThinkAgentManagementRequestOnSpeakingAction
+    interruptable: bool
+    metadata: typing.Dict[str, str]
+
+
+class GetTurnsOptions(typing_extensions.TypedDict, total=False):
+    page_index: int
+    page_size: int
+
+
+class SayOptions(typing_extensions.TypedDict, total=False):
+    priority: SpeakAgentsRequestPriority
+    interruptable: bool
+
+
+class SessionOptions(typing_extensions.TypedDict, total=False):
+    name: str
+    channel: str
+    token: str
+    agent_uid: str
+    remote_uids: typing.List[str]
+    idle_timeout: int
+    enable_string_uid: bool
+    preset: typing.Union[str, typing.Sequence[str]]
+    pipeline_id: str
+    expires_in: int
+    debug: bool
+    warn: typing.Callable[[str], None]
 
 # LLM sub-type aliases
 LlmGreetingConfigs = StartAgentsRequestPropertiesLlmGreetingConfigs
@@ -177,7 +212,15 @@ ThinkOnThinkingAction = AgentThinkAgentManagementRequestOnThinkingAction
 ThinkOnSpeakingAction = AgentThinkAgentManagementRequestOnSpeakingAction
 ThinkResponse = AgentThinkAgentManagementResponse
 
-from .token import generate_convo_ai_token, _validate_expires_in
+from .token import generate_convo_ai_token, _parse_numeric_uid, _validate_expires_in
+
+
+def _dump_optional_model(value: typing.Any) -> typing.Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(exclude_none=True)
+    if hasattr(value, "dict"):
+        return value.dict(exclude_none=True)
+    return value
 
 
 class Agent:
@@ -216,6 +259,7 @@ class Agent:
         labels: typing.Optional[typing.Dict[str, str]] = None,
         rtc: typing.Optional[RtcConfig] = None,
         filler_words: typing.Optional[FillerWordsConfig] = None,
+        greeting_configs: typing.Optional[LlmGreetingConfigs] = None,
     ):
         self._name = name
         self._instructions = instructions
@@ -238,6 +282,7 @@ class Agent:
         self._labels = labels
         self._rtc = rtc
         self._filler_words = filler_words
+        self._greeting_configs = greeting_configs
 
     def with_llm(self, vendor: BaseLLM) -> "Agent":
         new_agent = self._clone()
@@ -332,6 +377,12 @@ class Agent:
     def with_greeting(self, greeting: str) -> "Agent":
         new_agent = self._clone()
         new_agent._greeting = greeting
+        return new_agent
+
+    def with_greeting_configs(self, configs: LlmGreetingConfigs) -> "Agent":
+        """Returns a new Agent with greeting playback configuration."""
+        new_agent = self._clone()
+        new_agent._greeting_configs = configs
         return new_agent
 
     def with_name(self, name: str) -> "Agent":
@@ -513,6 +564,10 @@ class Agent:
         return self._greeting
 
     @property
+    def greeting_configs(self) -> typing.Optional[LlmGreetingConfigs]:
+        return self._greeting_configs
+
+    @property
     def failure_message(self) -> typing.Optional[str]:
         return self._failure_message
 
@@ -574,6 +629,7 @@ class Agent:
             "labels": self._labels,
             "rtc": self._rtc,
             "filler_words": self._filler_words,
+            "greeting_configs": self._greeting_configs,
         }
 
     def create_session(
@@ -697,7 +753,7 @@ class Agent:
                 app_id=app_id,
                 app_certificate=app_certificate,
                 channel_name=channel,
-                account=agent_uid,
+                uid=_parse_numeric_uid(agent_uid, "agent_uid"),
                 **token_kwargs,
             )
 
@@ -765,6 +821,8 @@ class Agent:
             llm_config["system_messages"] = [{"role": "system", "content": self._instructions}]
         if self._greeting is not None:
             llm_config["greeting_message"] = self._greeting
+        if self._greeting_configs is not None:
+            llm_config["greeting_configs"] = _dump_optional_model(self._greeting_configs)
         if self._failure_message is not None:
             llm_config["failure_message"] = self._failure_message
         if self._max_history is not None:
@@ -800,4 +858,5 @@ class Agent:
         new_agent._labels = self._labels
         new_agent._rtc = self._rtc
         new_agent._filler_words = self._filler_words
+        new_agent._greeting_configs = self._greeting_configs
         return new_agent

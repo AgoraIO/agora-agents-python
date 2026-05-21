@@ -6,7 +6,7 @@ def test_avatar_tokens_use_convo_ai_token_path_with_avatar_uid():
         app_id="0" * 32,
         app_certificate="1" * 32,
         channel_name="room",
-        account="avatar-uid",
+        uid=123,
     )
 
     assert token.startswith("007")

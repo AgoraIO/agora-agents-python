@@ -411,8 +411,6 @@ Fixed sample rate: 24000 Hz.
 
 xAI Grok MLLM vendor (`mllm.vendor`: `"xai"`). Matches the [xAI Grok](https://docs.agora.io/en/conversational-ai/models/mllm/xai) product docs and the TypeScript SDK.
 
-> `XaiRealtime` is deprecated and remains only as a backward-compatible alias.
-
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | xAI API key |
@@ -485,4 +483,4 @@ Same options as `HeyGenAvatar`, but serializes `vendor: "liveavatar"`. `agora_to
 | `agora_channel` | `str` | No | `None` | Optional; filled from the session channel when omitted. |
 | `enable` | `bool` | No | `True` | Enable or disable the avatar |
 
-Avatar tokens are separate from the agent join token but generated with the same `generate_convo_ai_token` path, using the avatar's `agora_uid` as the account.
+Avatar tokens are separate from the agent join token but generated with the same `generate_convo_ai_token` path, using the avatar's `agora_uid` as `uid`.

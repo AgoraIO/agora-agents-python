@@ -85,7 +85,7 @@ class GenerateConvoAITokenOptions(typing.TypedDict, total=False):
     app_id: str
     app_certificate: str
     channel_name: str
-    account: str
+    uid: int
     token_expire: int
     privilege_expire: int
 
@@ -242,7 +242,7 @@ def generate_convo_ai_token(
     app_id: str,
     app_certificate: str,
     channel_name: str,
-    account: str,
+    uid: int,
     token_expire: int = DEFAULT_EXPIRY_SECONDS,
     privilege_expire: int = 0,
 ) -> str:
@@ -262,8 +262,8 @@ def generate_convo_ai_token(
         Agora App Certificate.
     channel_name : str
         The channel the agent will join (must match the start request).
-    account : str
-        String account identity — pass the agent UID as a string (e.g. "1001").
+    uid : int
+        Numeric ConvoAI participant UID. Use the RTC UID for a user, agent, or avatar.
     token_expire : int
         Seconds until the token expires (default 86400).
     privilege_expire : int
@@ -281,7 +281,7 @@ def generate_convo_ai_token(
             app_id,
             app_certificate,
             channel_name,
-            account,
+            _uid_to_account(uid),
             ROLE_PUBLISHER,
             token_expire,
             privilege_expire,
@@ -290,6 +290,7 @@ def generate_convo_ai_token(
         pass
 
     priv_expire = privilege_expire if privilege_expire != 0 else token_expire
+    account = _uid_to_account(uid)
 
     rtc_privileges: typing.Dict[int, int] = {
         1: priv_expire,  # kPrivilegeJoinChannel
@@ -310,3 +311,15 @@ def generate_convo_ai_token(
         token_expire,
         [(1, rtc_svc), (2, rtm_svc)],
     )
+
+
+def _uid_to_account(uid: int) -> str:
+    if not isinstance(uid, int) or isinstance(uid, bool):
+        raise TypeError("uid must be an int")
+    return str(uid)
+
+
+def _parse_numeric_uid(uid: str, label: str) -> int:
+    if not uid.isdigit():
+        raise ValueError(f"{label} must be a numeric RTC UID when auto-generating a ConvoAI token")
+    return int(uid)

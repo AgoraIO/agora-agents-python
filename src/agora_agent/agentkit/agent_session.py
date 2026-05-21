@@ -28,7 +28,7 @@ from .avatar_types import (
     validate_tts_sample_rate,
 )
 from .presets import resolve_session_presets
-from .token import generate_convo_ai_token
+from .token import generate_convo_ai_token, _parse_numeric_uid
 
 
 class _AgentSessionRequiredOptions(typing.TypedDict, total=True):
@@ -169,7 +169,7 @@ class _AgentSessionBase:
             app_id=app_id,
             app_certificate=app_certificate,
             channel_name=self._channel,
-            account=self._agent_uid,
+            uid=_parse_numeric_uid(self._agent_uid, "agent_uid"),
         )
         return {"Authorization": f"agora token={token}"}
 
@@ -263,7 +263,7 @@ class _AgentSessionBase:
                 app_id=self._app_id,
                 app_certificate=self._app_certificate,
                 channel_name=self._channel,
-                account=str(params["agora_uid"]),
+                uid=_parse_numeric_uid(str(params["agora_uid"]), "avatar agora_uid"),
                 **token_kwargs,
             )
 
@@ -323,6 +323,8 @@ class _AgentSessionBase:
                 llm["system_messages"] = [{"role": "system", "content": self._agent.instructions}]
             if self._agent.greeting is not None:
                 llm["greeting_message"] = self._agent.greeting
+            if self._agent.greeting_configs is not None:
+                llm["greeting_configs"] = self._dump_model(self._agent.greeting_configs)
             if self._agent.failure_message is not None:
                 llm["failure_message"] = self._agent.failure_message
             if self._agent.max_history is not None:
@@ -525,6 +527,8 @@ class AgentSession(_AgentSessionBase):
         text: str,
         priority: typing.Optional[str] = None,
         interruptable: typing.Optional[bool] = None,
+        *,
+        options: typing.Optional["SayOptions"] = None,
     ) -> None:
         """Send a message to be spoken by the agent.
 
@@ -543,6 +547,8 @@ class AgentSession(_AgentSessionBase):
             raise RuntimeError("No agent ID available")
 
         kwargs: typing.Dict[str, typing.Any] = {"text": text}
+        if options is not None:
+            kwargs.update(options)
         if priority is not None:
             kwargs["priority"] = priority
         if interruptable is not None:
@@ -572,6 +578,7 @@ class AgentSession(_AgentSessionBase):
         on_speaking_action: typing.Optional[AgentThinkRequestOnSpeakingAction] = None,
         interruptable: typing.Optional[bool] = None,
         metadata: typing.Optional[typing.Dict[str, str]] = None,
+        options: typing.Optional["ThinkOptions"] = None,
     ) -> AgentThinkResponse:
         """Inject a custom text instruction into the current session pipeline.
 
@@ -585,6 +592,8 @@ class AgentSession(_AgentSessionBase):
             raise RuntimeError("No agent ID available")
 
         kwargs: typing.Dict[str, typing.Any] = {"text": text}
+        if options is not None:
+            kwargs.update(options)
         if on_listening_action is not None:
             kwargs["on_listening_action"] = on_listening_action
         if on_thinking_action is not None:
@@ -646,17 +655,25 @@ class AgentSession(_AgentSessionBase):
         *,
         page_index: typing.Optional[int] = None,
         page_size: typing.Optional[int] = None,
+        options: typing.Optional["GetTurnsOptions"] = None,
     ) -> GetTurnsAgentsResponse:
         """Get turn-by-turn analytics and timing details for this session."""
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
+        kwargs: typing.Dict[str, typing.Any] = {}
+        if options is not None:
+            kwargs.update(options)
+        if page_index is not None:
+            kwargs["page_index"] = page_index
+        if page_size is not None:
+            kwargs["page_size"] = page_size
+
         return self._client.agents.get_turns(
             self._app_id,
             self._agent_id,
-            page_index=page_index,
-            page_size=page_size,
             request_options=self._request_options(),
+            **kwargs,
         )
 
     def get_all_turns(self, *, page_size: typing.Optional[int] = None) -> GetTurnsAgentsResponse:
@@ -833,6 +850,8 @@ class AsyncAgentSession(_AgentSessionBase):
         text: str,
         priority: typing.Optional[str] = None,
         interruptable: typing.Optional[bool] = None,
+        *,
+        options: typing.Optional["SayOptions"] = None,
     ) -> None:
         """Send a message to be spoken by the agent.
 
@@ -851,6 +870,8 @@ class AsyncAgentSession(_AgentSessionBase):
             raise RuntimeError("No agent ID available")
 
         kwargs: typing.Dict[str, typing.Any] = {"text": text}
+        if options is not None:
+            kwargs.update(options)
         if priority is not None:
             kwargs["priority"] = priority
         if interruptable is not None:
@@ -880,6 +901,7 @@ class AsyncAgentSession(_AgentSessionBase):
         on_speaking_action: typing.Optional[AgentThinkRequestOnSpeakingAction] = None,
         interruptable: typing.Optional[bool] = None,
         metadata: typing.Optional[typing.Dict[str, str]] = None,
+        options: typing.Optional["ThinkOptions"] = None,
     ) -> AgentThinkResponse:
         """Inject a custom text instruction into the current session pipeline.
 
@@ -893,6 +915,8 @@ class AsyncAgentSession(_AgentSessionBase):
             raise RuntimeError("No agent ID available")
 
         kwargs: typing.Dict[str, typing.Any] = {"text": text}
+        if options is not None:
+            kwargs.update(options)
         if on_listening_action is not None:
             kwargs["on_listening_action"] = on_listening_action
         if on_thinking_action is not None:
@@ -954,17 +978,25 @@ class AsyncAgentSession(_AgentSessionBase):
         *,
         page_index: typing.Optional[int] = None,
         page_size: typing.Optional[int] = None,
+        options: typing.Optional["GetTurnsOptions"] = None,
     ) -> GetTurnsAgentsResponse:
         """Get turn-by-turn analytics and timing details for this session."""
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
+        kwargs: typing.Dict[str, typing.Any] = {}
+        if options is not None:
+            kwargs.update(options)
+        if page_index is not None:
+            kwargs["page_index"] = page_index
+        if page_size is not None:
+            kwargs["page_size"] = page_size
+
         return await self._client.agents.get_turns(
             self._app_id,
             self._agent_id,
-            page_index=page_index,
-            page_size=page_size,
             request_options=self._request_options(),
+            **kwargs,
         )
 
     async def get_all_turns(self, *, page_size: typing.Optional[int] = None) -> GetTurnsAgentsResponse:
