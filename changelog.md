@@ -4,26 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [v2.0.0] — 2026-05-21
 
 ### Added
 
 - **Alias parity** — `AsrConfig` (= `SttConfig`), `is_avatar_token_managed`, think type aliases (`ThinkOnListeningAction`, etc.), think value constants, and cross-SDK discovery table in `docs/reference/agent.md`.
-
-### Changed
-
-- **Avatar token gating** — Session enrichment uses `is_avatar_token_managed` (vendor-only); UID checks remain in session logic.
-
-### Deprecated (legacy naming — use replacements)
-
-- **`HeyGenAvatar`** — Use `LiveAvatarAvatar`. Emits `DeprecationWarning`.
-- **`is_rtc_avatar`** — Use `is_avatar_token_managed` for vendor gating. Emits `DeprecationWarning`.
-- **`AgentThinkRequestOn*`** / **`AgentThinkResponse`** — Use `ThinkOn*` / `ThinkResponse`.
-
-## [v1.5.0] — 2026-05-20
-
-### Added
-
 - **`XaiGrok`** — New MLLM wrapper for xAI Grok (`mllm.vendor`: `"xai"`), including Realtime API URL, voice, language, sample rate, modalities, messages, and MLLM turn detection support.
 - **`GenericAvatar`** — New generic avatar wrapper (`vendor: "generic"`) for custom avatar providers.
 - **Avatar token enrichment** — `AgentSession.start()` now fills missing generic avatar `agora_appid` and `agora_channel` from the session and generates missing avatar `agora_token` values for HeyGen, LiveAvatar, and Generic avatars using each avatar's `agora_uid`.
@@ -33,8 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
+- **ConvoAI token options** — `generate_convo_ai_token()` now accepts an integer `uid` and handles the internal token string conversion for users, agents, and avatars.
+- **Avatar token generation** — Removed the dedicated `generate_avatar_rtc_token()` wrapper; avatar RTC tokens use the existing ConvoAI token helper.
+- **Avatar token gating** — Session enrichment uses `is_avatar_token_managed` (vendor-only); UID checks remain in session logic.
 - **`XaiGrok` is the primary xAI MLLM class** — Matches the product name ([xAI Grok](https://docs.agora.io/en/conversational-ai/models/mllm/xai)) and the TypeScript/Go SDKs.
-- **Package version** — Bumped to `v1.5.0` to match the Fern-generated SDK headers.
+- **Package version** — Bumped to `v2.0.0` to match the Fern-generated SDK headers.
 - **RTM data channel default** — When `advanced_features.enable_rtm=True`, AgentKit now defaults `parameters.data_channel` to `"rtm"` unless the caller explicitly sets a data channel.
 - **Agent-level LLM overrides** — In the standard ASR + LLM + TTS pipeline, agent-level `greeting`, `failure_message`, and `max_history` now override vendor defaults, matching the TypeScript SDK. In MLLM mode, agent-level `greeting` and `failure_message` fill only missing fields.
 - **MLLM core alignment** — MLLM wrappers no longer expose or emit unsupported `predefined_tools` or `max_history` fields because they are not present in the generated v2.7 core `mllm` type.
@@ -44,6 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Pagination guard parity** — `AgentSession.get_all_turns()` and `AsyncAgentSession.get_all_turns()` now raise `RuntimeError` if the server's pagination metadata is missing (`page_index`/`total_pages`/`is_last_page`) or if the next page does not advance, matching the TypeScript SDK.
 
 ### Migration notes
+
+- **Deprecated aliases** — Use `LiveAvatarAvatar` instead of `HeyGenAvatar`, `is_avatar_token_managed` instead of `is_rtc_avatar`, and `ThinkOn*` / `ThinkResponse` instead of `AgentThinkRequestOn*` / `AgentThinkResponse`.
 
 - **`think()` default** — The server default for `on_listening_action` changed from `inject` to `interrupt` in API v2.7. Pass `on_listening_action="inject"` explicitly to preserve the old behavior.
 - **Turn analytics pagination** — Sessions with more than 50 turns must request additional pages via `get_turns(page_index=..., page_size=...)` or use `get_all_turns()`.
