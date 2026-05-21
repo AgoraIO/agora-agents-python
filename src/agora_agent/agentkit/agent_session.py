@@ -14,13 +14,16 @@ from ..agent_management.types.agent_think_agent_management_request_on_thinking_a
 from ..agent_management.types.agent_think_agent_management_response import (
     AgentThinkAgentManagementResponse as AgentThinkResponse,
 )
+from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
 from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
 from .agent import Agent
 from .avatar_types import (
     is_akool_avatar,
     is_anam_avatar,
+    is_generic_avatar,
     is_heygen_avatar,
     is_live_avatar_avatar,
+    is_rtc_avatar,
     validate_avatar_config,
     validate_tts_sample_rate,
 )
@@ -182,17 +185,29 @@ class _AgentSessionBase:
         tts = self._agent.tts
         if not avatar or avatar.get("enable", True) is False:
             return
+        if self._is_mllm_mode():
+            raise ValueError(
+                "Avatars are only supported with the cascading ASR + LLM + TTS pipeline. "
+                "Remove the avatar configuration when using MLLM, or switch to a cascading session."
+            )
 
         if (
             is_heygen_avatar(avatar)
             or is_live_avatar_avatar(avatar)
             or is_akool_avatar(avatar)
             or is_anam_avatar(avatar)
+            or is_generic_avatar(avatar)
         ):
             validate_avatar_config(avatar)
 
         tts_params = tts.get("params") if isinstance(tts, dict) else None
-        sample_rate = tts_params.get("sample_rate") if isinstance(tts_params, dict) else None
+        sample_rate = self._agent.tts_sample_rate
+        if sample_rate is None and isinstance(tts_params, dict):
+            sample_rate = (
+                tts_params.get("sample_rate")
+                or tts_params.get("sample_rate_hertz")
+                or tts_params.get("samplingRate")
+            )
         if isinstance(sample_rate, int):
             validate_tts_sample_rate(avatar, sample_rate)
         elif is_heygen_avatar(avatar):
@@ -210,6 +225,50 @@ class _AgentSessionBase:
                 "Warning: Akool avatar detected but TTS sample_rate is not explicitly set. "
                 "Akool requires 16,000 Hz. Please ensure your TTS provider is configured for 16kHz."
             )
+
+    def _enrich_avatar_for_session(self, properties: typing.Dict[str, typing.Any]) -> None:
+        avatar = properties.get("avatar")
+        if not isinstance(avatar, dict) or avatar.get("enable", True) is False:
+            return
+
+        params = avatar.get("params")
+        if not isinstance(params, dict):
+            params = {}
+            avatar["params"] = params
+
+        if is_generic_avatar(avatar):
+            if not params.get("agora_appid"):
+                params["agora_appid"] = self._app_id
+            if not params.get("agora_channel"):
+                params["agora_channel"] = self._channel
+
+        if not is_rtc_avatar(avatar):
+            validate_avatar_config(avatar, require_session_fields=is_generic_avatar(avatar))
+            return
+
+        if not params.get("agora_token"):
+            if not self._app_certificate:
+                raise ValueError(
+                    "Cannot auto-generate avatar RTC token: app_certificate is required when agora_token is omitted. "
+                    "Pass app_certificate on the Agora client or supply agora_token explicitly on the avatar vendor."
+                )
+            token_kwargs: typing.Dict[str, typing.Any] = {}
+            if self._expires_in is not None:
+                token_kwargs["token_expire"] = self._expires_in
+            params["agora_token"] = generate_convo_ai_token(
+                app_id=self._app_id,
+                app_certificate=self._app_certificate,
+                channel_name=self._channel,
+                account=str(params["agora_uid"]),
+                **token_kwargs,
+            )
+
+        if str(params.get("agora_uid")) == self._agent_uid:
+            self._warn(
+                "Warning: avatar agora_uid matches agent_rtc_uid. Use a unique UID for the avatar video publisher."
+            )
+
+        validate_avatar_config(avatar, require_session_fields=True)
 
     @staticmethod
     def _dump_model(value: typing.Any) -> typing.Any:
@@ -238,12 +297,17 @@ class _AgentSessionBase:
             **token_opts,
         )
         properties = self._dump_model(base_properties)
+        self._enrich_avatar_for_session(properties)
 
         if self._is_mllm_mode():
             if self._agent.mllm is not None:
-                mllm = dict(self._agent.mllm)
-                if self._agent.greeting:
+                mllm = self._dump_model(self._agent.mllm)
+                if not isinstance(mllm, dict):
+                    mllm = {}
+                if self._agent.greeting is not None:
                     mllm.setdefault("greeting_message", self._agent.greeting)
+                if self._agent.failure_message is not None:
+                    mllm.setdefault("failure_message", self._agent.failure_message)
                 properties["mllm"] = mllm
             return properties
 
@@ -251,19 +315,40 @@ class _AgentSessionBase:
             properties["tts"] = self._dump_model(self._agent.tts)
         if self._agent.llm is not None:
             llm = dict(self._agent.llm)
-            if self._agent.instructions:
+            if self._agent.instructions is not None:
                 llm["system_messages"] = [{"role": "system", "content": self._agent.instructions}]
-            if self._agent.greeting:
-                llm.setdefault("greeting_message", self._agent.greeting)
-            if self._agent.failure_message:
-                llm.setdefault("failure_message", self._agent.failure_message)
+            if self._agent.greeting is not None:
+                llm["greeting_message"] = self._agent.greeting
+            if self._agent.failure_message is not None:
+                llm["failure_message"] = self._agent.failure_message
             if self._agent.max_history is not None:
-                llm.setdefault("max_history", self._agent.max_history)
+                llm["max_history"] = self._agent.max_history
             properties["llm"] = llm
         if self._agent.stt is not None:
             properties["asr"] = self._dump_model(self._agent.stt)
 
         return properties
+
+    @staticmethod
+    def _page_value(pagination: typing.Any, field: str) -> typing.Any:
+        if pagination is None:
+            return None
+        if isinstance(pagination, dict):
+            return pagination.get(field)
+        return getattr(pagination, field, None)
+
+    @staticmethod
+    def _response_turns(response: typing.Any) -> typing.List[typing.Any]:
+        turns = response.get("turns") if isinstance(response, dict) else getattr(response, "turns", None)
+        return list(turns or [])
+
+    @classmethod
+    def _with_all_turns(cls, first_response: typing.Any, turns: typing.List[typing.Any]) -> GetTurnsAgentsResponse:
+        data = cls._dump_model(first_response)
+        if not isinstance(data, dict):
+            data = {}
+        data["turns"] = turns
+        return GetTurnsAgentsResponse(**data)
 
     # ------------------------------------------------------------------
     # Event handling
@@ -484,7 +569,12 @@ class AgentSession(_AgentSessionBase):
         interruptable: typing.Optional[bool] = None,
         metadata: typing.Optional[typing.Dict[str, str]] = None,
     ) -> AgentThinkResponse:
-        """Inject a custom text instruction into the current session pipeline."""
+        """Inject a custom text instruction into the current session pipeline.
+
+        In API v2.7, omitting ``on_listening_action`` uses the server default
+        ``"interrupt"``. Pass ``on_listening_action="inject"`` explicitly to
+        preserve the pre-v2.7 behavior.
+        """
         if self._status != "running":
             raise RuntimeError(f"Cannot think in {self._status} state")
         if not self._agent_id:
@@ -547,14 +637,67 @@ class AgentSession(_AgentSessionBase):
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
-    def get_turns(self) -> typing.Any:
+    def get_turns(
+        self,
+        *,
+        page_index: typing.Optional[int] = None,
+        page_size: typing.Optional[int] = None,
+    ) -> GetTurnsAgentsResponse:
         """Get turn-by-turn analytics and timing details for this session."""
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
         return self._client.agents.get_turns(
-            self._app_id, self._agent_id, request_options=self._request_options()
+            self._app_id,
+            self._agent_id,
+            page_index=page_index,
+            page_size=page_size,
+            request_options=self._request_options(),
         )
+
+    def get_all_turns(self, *, page_size: typing.Optional[int] = None) -> GetTurnsAgentsResponse:
+        """Get all turn analytics pages for this session.
+
+        Raises ``RuntimeError`` if the server's pagination metadata is missing
+        the fields required to advance, or if requesting the next page returns
+        a page index that did not advance.
+        """
+        response = self.get_turns(page_index=1, page_size=page_size)
+        all_turns = self._response_turns(response)
+        pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+        current_page = self._page_value(pagination, "page_index") or 1
+        while pagination is not None and self._page_value(pagination, "is_last_page") is False:
+            total_pages = self._page_value(pagination, "total_pages")
+            returned_index = self._page_value(pagination, "page_index")
+            if returned_index is None and total_pages is None:
+                raise RuntimeError(
+                    "get_all_turns pagination cannot continue: response must include "
+                    "page_index, total_pages, or is_last_page=true."
+                )
+            if total_pages is not None and current_page >= total_pages:
+                break
+            next_page = current_page + 1
+            response = self.get_turns(page_index=next_page, page_size=page_size)
+            all_turns.extend(self._response_turns(response))
+            pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+            returned_index = self._page_value(pagination, "page_index") if pagination else None
+            if returned_index is not None:
+                if returned_index <= current_page and self._page_value(pagination, "is_last_page") is not True:
+                    raise RuntimeError(
+                        f"get_all_turns pagination did not advance: requested page {next_page}, "
+                        f"received page {returned_index}."
+                    )
+                current_page = returned_index
+            else:
+                total_pages = self._page_value(pagination, "total_pages") if pagination else None
+                is_last_page = self._page_value(pagination, "is_last_page") if pagination else None
+                if total_pages is None and is_last_page is not True:
+                    raise RuntimeError(
+                        "get_all_turns pagination cannot continue: response must include "
+                        "page_index, total_pages, or is_last_page=true."
+                    )
+                current_page = next_page
+        return self._with_all_turns(response, all_turns)
 
 
 class AsyncAgentSession(_AgentSessionBase):
@@ -734,7 +877,12 @@ class AsyncAgentSession(_AgentSessionBase):
         interruptable: typing.Optional[bool] = None,
         metadata: typing.Optional[typing.Dict[str, str]] = None,
     ) -> AgentThinkResponse:
-        """Inject a custom text instruction into the current session pipeline."""
+        """Inject a custom text instruction into the current session pipeline.
+
+        In API v2.7, omitting ``on_listening_action`` uses the server default
+        ``"interrupt"``. Pass ``on_listening_action="inject"`` explicitly to
+        preserve the pre-v2.7 behavior.
+        """
         if self._status != "running":
             raise RuntimeError(f"Cannot think in {self._status} state")
         if not self._agent_id:
@@ -797,11 +945,64 @@ class AsyncAgentSession(_AgentSessionBase):
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
-    async def get_turns(self) -> typing.Any:
+    async def get_turns(
+        self,
+        *,
+        page_index: typing.Optional[int] = None,
+        page_size: typing.Optional[int] = None,
+    ) -> GetTurnsAgentsResponse:
         """Get turn-by-turn analytics and timing details for this session."""
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
         return await self._client.agents.get_turns(
-            self._app_id, self._agent_id, request_options=self._request_options()
+            self._app_id,
+            self._agent_id,
+            page_index=page_index,
+            page_size=page_size,
+            request_options=self._request_options(),
         )
+
+    async def get_all_turns(self, *, page_size: typing.Optional[int] = None) -> GetTurnsAgentsResponse:
+        """Get all turn analytics pages for this session.
+
+        Raises ``RuntimeError`` if the server's pagination metadata is missing
+        the fields required to advance, or if requesting the next page returns
+        a page index that did not advance.
+        """
+        response = await self.get_turns(page_index=1, page_size=page_size)
+        all_turns = self._response_turns(response)
+        pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+        current_page = self._page_value(pagination, "page_index") or 1
+        while pagination is not None and self._page_value(pagination, "is_last_page") is False:
+            total_pages = self._page_value(pagination, "total_pages")
+            returned_index = self._page_value(pagination, "page_index")
+            if returned_index is None and total_pages is None:
+                raise RuntimeError(
+                    "get_all_turns pagination cannot continue: response must include "
+                    "page_index, total_pages, or is_last_page=true."
+                )
+            if total_pages is not None and current_page >= total_pages:
+                break
+            next_page = current_page + 1
+            response = await self.get_turns(page_index=next_page, page_size=page_size)
+            all_turns.extend(self._response_turns(response))
+            pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+            returned_index = self._page_value(pagination, "page_index") if pagination else None
+            if returned_index is not None:
+                if returned_index <= current_page and self._page_value(pagination, "is_last_page") is not True:
+                    raise RuntimeError(
+                        f"get_all_turns pagination did not advance: requested page {next_page}, "
+                        f"received page {returned_index}."
+                    )
+                current_page = returned_index
+            else:
+                total_pages = self._page_value(pagination, "total_pages") if pagination else None
+                is_last_page = self._page_value(pagination, "is_last_page") if pagination else None
+                if total_pages is None and is_last_page is not True:
+                    raise RuntimeError(
+                        "get_all_turns pagination cannot continue: response must include "
+                        "page_index, total_pages, or is_last_page=true."
+                    )
+                current_page = next_page
+        return self._with_all_turns(response, all_turns)
