@@ -16,7 +16,7 @@ from ..agent_management.types.agent_think_agent_management_response import (
 )
 from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
 from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
-from .agent import Agent
+from .agent import Agent, GetTurnsOptions, SayOptions, ThinkOptions
 from .avatar_types import (
     is_akool_avatar,
     is_anam_avatar,
@@ -347,6 +347,12 @@ class _AgentSessionBase:
     def _response_turns(response: typing.Any) -> typing.List[typing.Any]:
         turns = response.get("turns") if isinstance(response, dict) else getattr(response, "turns", None)
         return list(turns or [])
+
+    @staticmethod
+    def _response_pagination(response: typing.Any) -> typing.Any:
+        if isinstance(response, dict):
+            return response.get("pagination")
+        return getattr(response, "pagination", None)
 
     @classmethod
     def _with_all_turns(cls, first_response: typing.Any, turns: typing.List[typing.Any]) -> GetTurnsAgentsResponse:
@@ -685,7 +691,7 @@ class AgentSession(_AgentSessionBase):
         """
         response = self.get_turns(page_index=1, page_size=page_size)
         all_turns = self._response_turns(response)
-        pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+        pagination = self._response_pagination(response)
         current_page = self._page_value(pagination, "page_index") or 1
         while pagination is not None and self._page_value(pagination, "is_last_page") is False:
             total_pages = self._page_value(pagination, "total_pages")
@@ -700,7 +706,7 @@ class AgentSession(_AgentSessionBase):
             next_page = current_page + 1
             response = self.get_turns(page_index=next_page, page_size=page_size)
             all_turns.extend(self._response_turns(response))
-            pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+            pagination = self._response_pagination(response)
             returned_index = self._page_value(pagination, "page_index") if pagination else None
             if returned_index is not None:
                 if returned_index <= current_page and self._page_value(pagination, "is_last_page") is not True:
@@ -1008,7 +1014,7 @@ class AsyncAgentSession(_AgentSessionBase):
         """
         response = await self.get_turns(page_index=1, page_size=page_size)
         all_turns = self._response_turns(response)
-        pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+        pagination = self._response_pagination(response)
         current_page = self._page_value(pagination, "page_index") or 1
         while pagination is not None and self._page_value(pagination, "is_last_page") is False:
             total_pages = self._page_value(pagination, "total_pages")
@@ -1023,7 +1029,7 @@ class AsyncAgentSession(_AgentSessionBase):
             next_page = current_page + 1
             response = await self.get_turns(page_index=next_page, page_size=page_size)
             all_turns.extend(self._response_turns(response))
-            pagination = response.get("pagination") if isinstance(response, dict) else response.pagination
+            pagination = self._response_pagination(response)
             returned_index = self._page_value(pagination, "page_index") if pagination else None
             if returned_index is not None:
                 if returned_index <= current_page and self._page_value(pagination, "is_last_page") is not True:
