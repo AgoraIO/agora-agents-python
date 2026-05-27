@@ -8,6 +8,9 @@ New projects should install:
 pip install agora-agents
 ```
 
-This compatibility package is kept only to preserve the legacy distribution name during the migration window. It depends on `agora-agents`, which continues to provide the `agora_agent` Python import path.
+This compatibility package re-exports the public API from `agora-agents` to support existing installs during the migration window. The primary import path remains `agora_agent`; you can also import from `agora_agent_server_sdk_compat`:
 
-It intentionally contains only a minimal compatibility module so the distribution can be built and published cleanly with Poetry.
+```python
+from agora_agent import Agora, Area
+from agora_agent_server_sdk_compat import Agora, Area
+```
