@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
-- **Alias parity** — `AsrConfig` (= `SttConfig`), `is_avatar_token_managed`, think type aliases (`ThinkOnListeningAction`, etc.), think value constants, and cross-SDK discovery table in `docs/reference/agent.md`.
+- **Type aliases** — `AsrConfig` (= `SttConfig`), `is_avatar_token_managed`, think type aliases (`ThinkOnListeningAction`, etc.), and think value constants.
 - **`XaiGrok`** — New MLLM wrapper for xAI Grok (`mllm.vendor`: `"xai"`), including Realtime API URL, voice, language, sample rate, modalities, messages, and MLLM turn detection support.
 - **`GenericAvatar`** — New generic avatar wrapper (`vendor: "generic"`) for custom avatar providers.
 - **Avatar token enrichment** — `AgentSession.start()` now fills missing generic avatar `agora_appid` and `agora_channel` from the session and generates missing avatar `agora_token` values for HeyGen, LiveAvatar, and Generic avatars using each avatar's `agora_uid`.

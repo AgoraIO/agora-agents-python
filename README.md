@@ -1,4 +1,4 @@
-# Agoraio Python Library
+# Agora Conversational AI Python SDK
 
 [![fern shield](https://img.shields.io/badge/%F0%9F%8C%BF-Built%20with%20Fern-brightgreen)](https://buildwithfern.com?utm_source=github&utm_medium=github&utm_campaign=readme&utm_source=https%3A%2F%2Fgithub.com%2FAgoraIO-Conversational-AI%2Fagent-server-sdk-python)
 [![pypi](https://img.shields.io/pypi/v/agora-agents)](https://pypi.python.org/pypi/agora-agents)
@@ -13,12 +13,11 @@ and multimodal flows (MLLM) for real-time audio processing.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Byok](#byok)
-- [Mllm Realtime Multimodal](#mllm-realtime-multimodal)
+- [BYOK](#byok)
+- [MLLM (Realtime / Multimodal)](#mllm-realtime--multimodal)
 - [Documentation](#documentation)
 - [Reference](#reference)
-- [Mllm Flow Multimodal](#mllm-flow-multimodal)
-- [Mllm Flow Multimodal](#mllm-flow-multimodal)
+- [Package Rename Compatibility](#package-rename-compatibility)
 - [Usage](#usage)
 - [Async Client](#async-client)
 - [Exception Handling](#exception-handling)
@@ -48,9 +47,10 @@ The recommended onboarding path is a server-side builder flow: define the agent 
 import os
 import time
 
-from agora_agent import Agora, Area
-from agora_agent.agentkit import (
+from agora_agent import (
     Agent,
+    Agora,
+    Area,
     DataChannel,
     DeepgramSTT,
     GenericAvatar,
@@ -195,7 +195,7 @@ If you want to bring your own vendor credentials instead of using Agora-managed 
 Use `with_mllm()` for OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok. No STT, LLM, or TTS vendor is needed when MLLM mode is enabled.
 
 ```python
-from agora_agent.agentkit import Agent, OpenAIRealtime
+from agora_agent import Agent, OpenAIRealtime
 
 agent = Agent(name="realtime-assistant").with_mllm(
     OpenAIRealtime(
@@ -218,58 +218,7 @@ A full reference for this library is available [here](https://github.com/AgoraIO
 
 ## Package Rename Compatibility
 
-The published package name is now `agora-agents`, while the Python import path remains `agora_agent` for compatibility. The legacy PyPI distribution name `agora-agent-server-sdk` is maintained as a compatibility package in [compat/agora-agent-server-sdk](./compat/agora-agent-server-sdk). It re-exports the public API from `agora-agents`, and the tag-based release workflow publishes both distributions together.
-
-## MLLM Flow (Multimodal)
-
-For real-time audio processing using OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok, use the MLLM (Multimodal Large Language Model) flow instead of the cascading ASR -> LLM -> TTS flow. MLLM mode does not require separate TTS, STT, or LLM vendors. See the [MLLM Overview](https://docs.agora.io/en/conversational-ai/models/mllm/overview) for more details.
-
-```python
-from agora_agent import Agora
-from agora_agent.agents import (
-    StartAgentsRequestProperties,
-    StartAgentsRequestPropertiesMllm,
-    StartAgentsRequestPropertiesMllmVendor,
-    StartAgentsRequestPropertiesTurnDetection,
-    StartAgentsRequestPropertiesTurnDetectionType,
-)
-
-client = Agora(
-    customer_id="YOUR_CUSTOMER_ID",
-    customer_secret="YOUR_CUSTOMER_SECRET",
-)
-
-client.agents.start(
-    appid="your_app_id",
-    name="mllm_agent",
-    properties=StartAgentsRequestProperties(
-        channel="channel_name",
-        token="your_token",
-        agent_rtc_uid="1001",
-        remote_rtc_uids=["1002"],
-        idle_timeout=120,
-        mllm=StartAgentsRequestPropertiesMllm(
-            enable=True,
-            url="wss://api.openai.com/v1/realtime",
-            api_key="<your_openai_api_key>",
-            vendor=StartAgentsRequestPropertiesMllmVendor.OPENAI,
-            params={
-                "model": "gpt-4o-realtime-preview",
-                "voice": "alloy",
-            },
-            input_modalities=["audio"],
-            output_modalities=["text", "audio"],
-            greeting_message="Hello! I'm ready to chat in real-time.",
-        ),
-        turn_detection=StartAgentsRequestPropertiesTurnDetection(
-            type=StartAgentsRequestPropertiesTurnDetectionType.SERVER_VAD,
-            threshold=0.5,
-            silence_duration_ms=500,
-        ),
-    ),
-)
-```
-
+The published package name is now `agora-agents`. The import path is still `agora_agent`. The legacy PyPI name `agora-agent-server-sdk` remains available as a compatibility package in [compat/agora-agent-server-sdk](./compat/agora-agent-server-sdk).
 
 ## MLLM Flow (Multimodal)
 
