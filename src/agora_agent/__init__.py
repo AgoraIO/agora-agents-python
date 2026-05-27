@@ -2,8 +2,12 @@
 
 # isort: skip_file
 
+"""Agora Conversational AI Python SDK."""
+
 import typing
 from importlib import import_module
+
+from . import agentkit as _agentkit
 
 if typing.TYPE_CHECKING:
     from . import agents, agentkit, core, phone_numbers, telephony
@@ -20,6 +24,7 @@ if typing.TYPE_CHECKING:
         GenerateTokenOptions,
     )
     from .agentkit.agent_session import AsyncAgentSession
+
 _dynamic_imports: typing.Dict[str, str] = {
     "Agora": ".pool_client",
     "Agent": ".agentkit",
@@ -41,29 +46,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "telephony": ".telephony",
 }
 
-
-def __getattr__(attr_name: str) -> typing.Any:
-    module_name = _dynamic_imports.get(attr_name)
-    if module_name is None:
-        raise AttributeError(f"No {attr_name} found in _dynamic_imports for module name -> {__name__}")
-    try:
-        module = import_module(module_name, __package__)
-        if module_name == f".{attr_name}":
-            return module
-        else:
-            return getattr(module, attr_name)
-    except ImportError as e:
-        raise ImportError(f"Failed to import {attr_name} from {module_name}: {e}") from e
-    except AttributeError as e:
-        raise AttributeError(f"Failed to get {attr_name} from {module_name}: {e}") from e
-
-
-def __dir__():
-    lazy_attrs = list(_dynamic_imports.keys())
-    return sorted(lazy_attrs)
-
-
-__all__ = [
+_ROOT_ALL = (
     "Agora",
     "Agent",
     "AgentSession",
@@ -83,4 +66,29 @@ __all__ = [
     "generate_rtc_token",
     "phone_numbers",
     "telephony",
-]
+)
+
+__all__ = sorted({*_ROOT_ALL, *_agentkit.__all__})
+
+
+def __getattr__(attr_name: str) -> typing.Any:
+    module_name = _dynamic_imports.get(attr_name)
+    if module_name is not None:
+        try:
+            module = import_module(module_name, __package__)
+            if module_name == f".{attr_name}":
+                return module
+            return getattr(module, attr_name)
+        except ImportError as e:
+            raise ImportError(f"Failed to import {attr_name} from {module_name}: {e}") from e
+        except AttributeError as e:
+            raise AttributeError(f"Failed to get {attr_name} from {module_name}: {e}") from e
+
+    if attr_name in _agentkit.__all__:
+        return getattr(_agentkit, attr_name)
+
+    raise AttributeError(f"module {__name__!r} has no attribute {attr_name!r}")
+
+
+def __dir__() -> typing.List[str]:
+    return list(__all__)
