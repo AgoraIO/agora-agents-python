@@ -51,8 +51,58 @@ jobs:
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
       - name: Install dependencies
         run: poetry install
-      - name: Publish to pypi
+
+      - name: Verify package versions match release tag
         run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          ROOT_VERSION="$(python - <<'PY'
+from pathlib import Path
+import tomllib
+data = tomllib.loads(Path("pyproject.toml").read_text())
+print(data["tool"]["poetry"]["version"].lstrip("v"))
+PY
+)"
+          COMPAT_VERSION="$(python - <<'PY'
+from pathlib import Path
+import tomllib
+data = tomllib.loads(Path("compat/agora-agent-server-sdk/pyproject.toml").read_text())
+print(data["tool"]["poetry"]["version"].lstrip("v"))
+PY
+)"
+          COMPAT_DEP_VERSION="$(python - <<'PY'
+from pathlib import Path
+import tomllib
+data = tomllib.loads(Path("compat/agora-agent-server-sdk/pyproject.toml").read_text())
+print(data["tool"]["poetry"]["dependencies"]["agora-agents"])
+PY
+)"
+
+          if [ "$ROOT_VERSION" != "$TAG_VERSION" ]; then
+            echo "Root package version ($ROOT_VERSION) does not match tag version ($TAG_VERSION)."
+            exit 1
+          fi
+
+          if [ "$COMPAT_VERSION" != "$TAG_VERSION" ]; then
+            echo "Compat package version ($COMPAT_VERSION) does not match tag version ($TAG_VERSION)."
+            exit 1
+          fi
+
+          if [ "$COMPAT_DEP_VERSION" != ">=${TAG_VERSION},<3.0.0" ]; then
+            echo "Compat package dependency on agora-agents ($COMPAT_DEP_VERSION) does not match >=${TAG_VERSION},<3.0.0."
+            exit 1
+          fi
+
+      - name: Publish primary package to pypi
+        run: |
+          poetry config repositories.remote https://upload.pypi.org/legacy/
+          poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Publish compatibility package to pypi
+        run: |
+          cd compat/agora-agent-server-sdk
           poetry config repositories.remote https://upload.pypi.org/legacy/
           poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
         env:

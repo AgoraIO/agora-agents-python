@@ -1,8 +1,8 @@
 [project]
-name = "agora-agent-server-sdk"
+name = "agora-agents"
 
 [tool.poetry]
-name = "agora-agent-server-sdk"
+name = "agora-agents"
 version = "v2.0.0"
 description = ""
 readme = "README.md"
