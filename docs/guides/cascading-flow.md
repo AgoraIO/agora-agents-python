@@ -17,9 +17,7 @@ User audio → STT → LLM → TTS → Agent audio
 ### Sync
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, Agora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 client = Agora(
     area=Area.US,
@@ -45,9 +43,7 @@ session.stop()
 
 ```python
 import asyncio
-from agora_agent import AsyncAgora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, AsyncAgora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 async def main():
     client = AsyncAgora(
@@ -77,9 +73,7 @@ asyncio.run(main())
 This combination keeps everything within the Azure ecosystem:
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import AzureOpenAI, MicrosoftTTS, MicrosoftSTT
+from agora_agent import Agent, Agora, Area, AzureOpenAI, MicrosoftTTS, MicrosoftSTT
 
 client = Agora(
     area=Area.EU,
@@ -118,7 +112,7 @@ session.stop()
 All LLM vendors support optional parameters for fine-tuning:
 
 ```python
-from agora_agent.agentkit.vendors import OpenAI
+from agora_agent import OpenAI
 
 llm = OpenAI(
     api_key='your-openai-key',

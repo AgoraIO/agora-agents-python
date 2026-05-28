@@ -13,24 +13,22 @@ description: Install the Agora Conversational AI Python SDK.
 ## Install with pip
 
 ```sh
-pip install agora-agent-sdk
+pip install agora-agents
 ```
 
 ## Install with Poetry
 
 ```sh
-poetry add agora-agent-sdk
+poetry add agora-agents
 ```
 
-## Dependencies
+## Imports
 
-The following packages are installed automatically:
+```python
+from agora_agent import Agent, Agora, Area, DeepgramSTT, OpenAI
+```
 
-| Package | Purpose |
-|---|---|
-| `httpx` (>= 0.21.2) | HTTP client for sync and async requests |
-| `pydantic` (>= 1.9.2) | Data validation for vendor configuration and API types |
-| `typing_extensions` (>= 4.0.0) | Backported type hints for Python 3.8+ |
+The package installs as `agora-agents` and imports as `agora_agent`.
 
 ## Sync vs. Async
 
@@ -47,4 +45,23 @@ from agora_agent import Agora, Area
 from agora_agent import AsyncAgora, AsyncAgentSession, Area
 ```
 
-Both clients share the same constructor parameters and capabilities. See [Authentication](./authentication.md) for setup details.
+## Dependencies
+
+| Package                        | Purpose                                                |
+| ------------------------------ | ------------------------------------------------------ |
+| `httpx` (>= 0.21.2)            | HTTP client for sync and async requests                |
+| `pydantic` (>= 1.9.2)          | Data validation for vendor configuration and API types |
+| `typing_extensions` (>= 4.0.0) | Backported type hints for Python 3.8+                  |
+
+## Next steps
+
+- [Authentication](./authentication.md) — configure your credentials
+- [Quick Start](./quick-start.md) — build your first conversational agent
+
+## Migrating from a previous package name
+
+The PyPI distribution was renamed from `agora-agent-server-sdk` to `agora-agents` in v2.0.0. Install `agora-agents`; the import path remains `agora_agent`.
+
+The legacy PyPI name remains available as a compatibility shim that re-exports `agora-agents`. See [compat/agora-agent-server-sdk](../../compat/agora-agent-server-sdk/README.md).
+
+For release and version details, see [changelog — Migration notes](../../changelog.md#migration-notes).

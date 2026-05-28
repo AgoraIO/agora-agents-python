@@ -9,8 +9,8 @@ description: Full API reference for the Python AgentSession class.
 **Import:**
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit import AgentSession
-from agora_agent.agentkit.agent_session import AsyncAgentSession
+from agora_agent import AgentSession
+from agora_agent import AsyncAgentSession
 # or from top-level:
 from agora_agent import AgentSession, AsyncAgentSession
 ```
@@ -56,14 +56,14 @@ AgentSession(
 
 ### `start()`
 
-Start the agent session. Generates an RTC token if not provided, validates avatar/TTS config, and calls the Agora API.
+Start the agent session. Generates an RTC token if not provided, validates avatar/TTS config for cascading sessions, and calls the Agora API. MLLM sessions do not require TTS; an enabled avatar is rejected when MLLM is configured (a disabled avatar is allowed).
 
 | | Sync (`AgentSession`) | Async (`AsyncAgentSession`) |
 |---|---|---|
 | **Signature** | `start() -> str` | `async start() -> str` |
 | **Returns** | Agent ID | Agent ID |
 | **Raises** | `RuntimeError` if not in `idle`, `stopped`, or `error` state | Same |
-| **Raises** | `ValueError` if avatar/TTS sample rate mismatch | Same |
+| **Raises** | `ValueError` if avatar/TTS sample rate mismatch or an enabled avatar is used with MLLM | Same |
 
 <!-- snippet: fragment -->
 ```python
@@ -154,6 +154,16 @@ session.update(properties)
 await session.update(properties)
 ```
 
+### `think(text, ...)`
+
+Inject a custom text instruction into the running agent.
+
+In API v2.7, omitting `on_listening_action` uses the server default `interrupt`. Pass `on_listening_action='inject'` explicitly to preserve the pre-v2.7 behavior.
+
+```python
+session.think('Summarize the last answer', on_listening_action='inject')
+```
+
 ### `get_history()`
 
 Retrieve the conversation history.
@@ -188,6 +198,22 @@ info = session.get_info()
 
 # Async
 info = await session.get_info()
+```
+
+### `get_turns(page_index=None, page_size=None)`
+
+Retrieve paginated turn analytics for a completed or running session. In v2.7, the API defaults to page 1 and up to 50 turns per page. Responses include `agent_id`, `name`, `channel`, `total_turn_count`, `pagination`, and `turns`.
+
+```python
+page = session.get_turns(page_index=1, page_size=50)
+```
+
+### `get_all_turns(page_size=None)`
+
+Fetch all turn pages and return a single `GetTurnsAgentsResponse` with the combined `turns` list.
+
+```python
+all_turns = session.get_all_turns(page_size=50)
 ```
 
 ### `on(event, handler)`

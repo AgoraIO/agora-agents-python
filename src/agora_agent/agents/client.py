@@ -89,6 +89,9 @@ class AgentsClient:
             StartAgentsRequestProperties,
             StartAgentsRequestPropertiesAsr,
             StartAgentsRequestPropertiesLlm,
+            StartAgentsRequestPropertiesTurnDetection,
+            StartAgentsRequestPropertiesTurnDetectionConfig,
+            StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
         )
 
         client = Agora(
@@ -125,6 +128,13 @@ class AgentsClient:
                     max_history=32,
                     greeting_message="Hello, how can I assist you today?",
                     failure_message="Please hold on a second.",
+                ),
+                turn_detection=StartAgentsRequestPropertiesTurnDetection(
+                    config=StartAgentsRequestPropertiesTurnDetectionConfig(
+                        end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
+                            mode="semantic",
+                        ),
+                    ),
                 ),
             ),
         )
@@ -175,7 +185,6 @@ class AgentsClient:
             - `RUNNING` (2): The agent is running.
             - `STOPPING` (3): The agent is stopping.
             - `STOPPED` (4): The agent has exited.
-            - `RECOVERING` (5): The agent is recovering.
             - `FAILED` (6): The agent failed to execute.
 
         limit : typing.Optional[int]
@@ -302,7 +311,13 @@ class AgentsClient:
         return _response.data
 
     def get_turns(
-        self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        appid: str,
+        agent_id: str,
+        *,
+        page_index: typing.Optional[int] = None,
+        page_size: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> GetTurnsAgentsResponse:
         """
         Query conversation turn information for a conversational AI agent session.
@@ -318,6 +333,12 @@ class AgentsClient:
 
         agent_id : str
             The agent instance ID you obtained after successfully calling `join` to start a conversational AI agent.
+
+        page_index : typing.Optional[int]
+            The page number. Starts from 1.
+
+        page_size : typing.Optional[int]
+            The number of dialogue turns returned per page.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -341,12 +362,14 @@ class AgentsClient:
             agent_id="agentId",
         )
         """
-        _response = self._raw_client.get_turns(appid, agent_id, request_options=request_options)
+        _response = self._raw_client.get_turns(
+            appid, agent_id, page_index=page_index, page_size=page_size, request_options=request_options
+        )
         return _response.data
 
     def stop(self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
-        Stop the specified conversational agent instance.
+        Stop the specified conversational agent instance. The API responds after request parameters are validated, and the stop operation is processed asynchronously after the response is returned.
 
         Parameters
         ----------
@@ -623,6 +646,9 @@ class AsyncAgentsClient:
             StartAgentsRequestProperties,
             StartAgentsRequestPropertiesAsr,
             StartAgentsRequestPropertiesLlm,
+            StartAgentsRequestPropertiesTurnDetection,
+            StartAgentsRequestPropertiesTurnDetectionConfig,
+            StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
         )
 
         client = AsyncAgora(
@@ -662,6 +688,13 @@ class AsyncAgentsClient:
                         max_history=32,
                         greeting_message="Hello, how can I assist you today?",
                         failure_message="Please hold on a second.",
+                    ),
+                    turn_detection=StartAgentsRequestPropertiesTurnDetection(
+                        config=StartAgentsRequestPropertiesTurnDetectionConfig(
+                            end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
+                                mode="semantic",
+                            ),
+                        ),
                     ),
                 ),
             )
@@ -715,7 +748,6 @@ class AsyncAgentsClient:
             - `RUNNING` (2): The agent is running.
             - `STOPPING` (3): The agent is stopping.
             - `STOPPED` (4): The agent has exited.
-            - `RECOVERING` (5): The agent is recovering.
             - `FAILED` (6): The agent failed to execute.
 
         limit : typing.Optional[int]
@@ -867,7 +899,13 @@ class AsyncAgentsClient:
         return _response.data
 
     async def get_turns(
-        self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        appid: str,
+        agent_id: str,
+        *,
+        page_index: typing.Optional[int] = None,
+        page_size: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> GetTurnsAgentsResponse:
         """
         Query conversation turn information for a conversational AI agent session.
@@ -883,6 +921,12 @@ class AsyncAgentsClient:
 
         agent_id : str
             The agent instance ID you obtained after successfully calling `join` to start a conversational AI agent.
+
+        page_index : typing.Optional[int]
+            The page number. Starts from 1.
+
+        page_size : typing.Optional[int]
+            The number of dialogue turns returned per page.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -914,12 +958,14 @@ class AsyncAgentsClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.get_turns(appid, agent_id, request_options=request_options)
+        _response = await self._raw_client.get_turns(
+            appid, agent_id, page_index=page_index, page_size=page_size, request_options=request_options
+        )
         return _response.data
 
     async def stop(self, appid: str, agent_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> None:
         """
-        Stop the specified conversational agent instance.
+        Stop the specified conversational agent instance. The API responds after request parameters are validated, and the stop operation is processed asynchronously after the response is returned.
 
         Parameters
         ----------

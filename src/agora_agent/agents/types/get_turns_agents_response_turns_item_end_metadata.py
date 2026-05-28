@@ -28,8 +28,8 @@ class GetTurnsAgentsResponseTurnsItemEndMetadata(UncheckedBaseModel):
     - `api_leave`: The turn was interrupted because the agent left the channel.
     
     When `type` is `ignored`, possible values are:
-    - `semantic`: The turn was ignored because semantic end-of-speech detection determined no response was required.
-    - `keywords`: The turn was ignored because the start keyword was not detected.
+    - `semantic`: The turn was ignored because semantic end-of-speech detection determined no response was required. Applies when `turn_detection.config.end_of_speech.mode` is set to `semantic`.
+    - `keywords`: The turn was ignored because the start keyword was not detected. Applies when `turn_detection.config.start_of_speech.mode` is set to `keywords`.
     - `disable`: The turn was ignored because interruption is disabled for this turn.
     """
 

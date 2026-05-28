@@ -30,9 +30,17 @@ For string values with a finite set of options (e.g. `data_channel`, `sal_mode`,
 SAL helps the agent focus on the primary speaker and suppress background noise. Enable it via `advanced_features` and configure with `with_sal`:
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent, AdvancedFeatures, SalConfig, SalModeValues
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import (
+    Agent,
+    Agora,
+    Area,
+    AdvancedFeatures,
+    SalConfig,
+    SalModeValues,
+    OpenAI,
+    ElevenLabsTTS,
+    DeepgramSTT,
+)
 
 agent = (
     Agent(
@@ -57,8 +65,7 @@ Use `SalModeValues.LOCKING` or `SalModeValues.RECOGNITION` for type safety.
 Enable MLLM, RTM, SAL, or tools:
 
 ```python
-from agora_agent.agentkit import Agent, AdvancedFeatures
-from agora_agent.agentkit.vendors import OpenAIRealtime
+from agora_agent import Agent, AdvancedFeatures, OpenAIRealtime
 
 # MLLM mode (see mllm-flow guide)
 agent = Agent().with_mllm(OpenAIRealtime(api_key='...'))
@@ -75,7 +82,7 @@ agent = Agent().with_tools()
 Configure silence handling, farewell behavior, and data channel:
 
 ```python
-from agora_agent.agentkit import (
+from agora_agent import (
     Agent,
     SessionParams,
     SilenceConfig,
@@ -134,7 +141,7 @@ agent = (
 Restrict which geographic regions the backend can use:
 
 ```python
-from agora_agent.agentkit import Agent, GeofenceConfig, GeofenceArea, GeofenceExcludeArea
+from agora_agent import Agent, GeofenceConfig, GeofenceArea, GeofenceExcludeArea
 
 agent = (
     Agent()
@@ -179,7 +186,7 @@ agent = (
 Configure RTC media encryption:
 
 ```python
-from agora_agent.agentkit import Agent, RtcConfig
+from agora_agent import Agent, RtcConfig
 
 agent = (
     Agent()
@@ -198,7 +205,7 @@ agent = (
 Play filler words while waiting for the LLM response:
 
 ```python
-from agora_agent.agentkit import (
+from agora_agent import (
     Agent,
     FillerWordsConfig,
     FillerWordsTrigger,
@@ -235,7 +242,7 @@ agent = (
 Read back configuration via properties:
 
 ```python
-from agora_agent.agentkit import Agent, GeofenceConfig, GeofenceArea
+from agora_agent import Agent, GeofenceConfig, GeofenceArea
 
 agent = (
     Agent(max_history=20)
@@ -260,7 +267,7 @@ agent.config         # Full read-only snapshot
 
 ```python
 from agora_agent import Agora, Area
-from agora_agent.agentkit import (
+from agora_agent import (
     Agent,
     AdvancedFeatures,
     SessionParams,
@@ -277,7 +284,7 @@ from agora_agent.agentkit import (
     DataChannel,
     FillerWordsSelectionRule,
 )
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import OpenAI, ElevenLabsTTS, DeepgramSTT
 
 client = Agora(
     area=Area.US,

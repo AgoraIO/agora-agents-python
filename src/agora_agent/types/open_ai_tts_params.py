@@ -14,7 +14,7 @@ class OpenAiTtsParams(UncheckedBaseModel):
 
     api_key: typing.Optional[str] = pydantic.Field(default=None)
     """
-    OpenAI API key
+    OpenAI API key. Optional for Agora-managed OpenAI TTS usage.
     """
 
     voice: str = pydantic.Field()

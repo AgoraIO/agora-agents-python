@@ -14,16 +14,16 @@ class GetTurnsAgentsResponseTurnsItemMetricsSegmentedLatencyMsItem(UncheckedBase
     
     When the LLM input modality is `text`, the returned segments are:
     - `algorithm_processing`: Algorithm processing delay.
-    - `asr_ttlw`: ASR Time To Last Word (TTLW) in milliseconds.
-    - `llm_ttft`: LLM Time To First Token (TTFT) in milliseconds.
-    - `llm_ftfs`: LLM First Token To First Sentence (FTFS) in milliseconds.
-    - `tts_ttfb`: TTS Time To First Byte (TTFB) in milliseconds.
+    - `asr_ttlw`: The ASR Time To Last Word (TTLW) in milliseconds. Represents the delay from when the user finishes speaking to when the ASR module outputs the last word.
+    - `llm_ttft`: The LLM Time To First Token (TTFT) in milliseconds. Represents the delay from when the user finishes speaking to when the LLM outputs the first token.
+    - `llm_ftfs`: The LLM First Token To First Sentence (FTFS) in milliseconds. Represents the delay from when the LLM outputs the first token to when it outputs the first complete sentence.
+    - `tts_ttfb`: The TTS Time To First Byte (TTFB) in milliseconds. Represents the delay from when the TTS module receives a text request to when it outputs the first audio byte.
     - `transport`: Network transmission delay in milliseconds. Not returned when the user is connected using the RTC Web SDK.
     
     When the LLM input modality is `audio`, the returned segments are:
     - `algorithm_processing`: Algorithm processing delay.
-    - `asr_ttlw`: ASR Time To Last Word (TTLW) in milliseconds.
-    - `llm_ttfa`: LLM Time To First Audio Byte (TTFA) in milliseconds.
+    - `asr_ttlw`: The ASR Time To Last Word (TTLW) in milliseconds. Represents the delay from when the user finishes speaking to when the ASR module outputs the last word.
+    - `llm_ttfa`: The LLM Time To First Audio Byte (TTFA) in milliseconds. Represents the delay from when the user finishes speaking to when the LLM outputs the first audio byte.
     - `transport`: Network transmission delay in milliseconds. Not returned when the user is connected using the RTC Web SDK.
     """
 

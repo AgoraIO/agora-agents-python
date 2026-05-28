@@ -44,7 +44,7 @@ class StartAgentsRequestPropertiesLlm(UncheckedBaseModel):
     """
     LLM input modalities:
     - `["text"]`: Text only
-    - `["text", "image"]`: Text plus image; requires the selected LLM to support visual input
+    - `["text", "image"]`: Text plus image. Recommended configuration, requires the selected LLM to support visual input
     """
 
     output_modalities: typing.Optional[typing.List[str]] = pydantic.Field(default=None)

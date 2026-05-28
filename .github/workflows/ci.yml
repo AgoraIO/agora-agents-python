@@ -35,8 +35,38 @@ jobs:
       - name: Test
         run: poetry run pytest -rP .
 
+  compat-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Bootstrap poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+      - name: Install primary package
+        run: poetry install
+      - name: Build and verify compatibility package
+        run: |
+          cd compat/agora-agent-server-sdk
+          poetry build
+          cd ../..
+          poetry run pip install compat/agora-agent-server-sdk/dist/*.whl
+          poetry run python - <<'PY'
+          import agora_agent
+          from agora_agent_server_sdk_compat import Agora, Area, __version__
+
+          assert Agora is agora_agent.Agora
+          assert Area is agora_agent.Area
+          assert __version__ == agora_agent.__version__
+          print("Compat shim re-exports verified.")
+          PY
+
   publish:
-    needs: [compile, test]
+    needs: [compile, test, compat-build]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
@@ -51,9 +81,64 @@ jobs:
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
       - name: Install dependencies
         run: poetry install
-      - name: Publish to pypi
+
+      - name: Verify package versions match release tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          ROOT_VERSION="$(poetry version -s | sed 's/^v//')"
+          COMPAT_VERSION="$(cd compat/agora-agent-server-sdk && poetry version -s | sed 's/^v//')"
+          COMPAT_DEP_VERSION="$(python -c "import re, sys; from pathlib import Path; text = Path('compat/agora-agent-server-sdk/pyproject.toml').read_text(); match = re.search(r'^agora-agents\s*=\s*\"([^\"]+)\"', text, re.M); sys.exit('agora-agents dependency not found in compat pyproject.toml') if not match else None; print(match.group(1))")"
+
+          if [ "$ROOT_VERSION" != "$TAG_VERSION" ]; then
+            echo "Root package version ($ROOT_VERSION) does not match tag version ($TAG_VERSION)."
+            exit 1
+          fi
+
+          if [ "$COMPAT_VERSION" != "$TAG_VERSION" ]; then
+            echo "Compat package version ($COMPAT_VERSION) does not match tag version ($TAG_VERSION)."
+            exit 1
+          fi
+
+          if [ "$COMPAT_DEP_VERSION" != ">=${TAG_VERSION},<3.0.0" ]; then
+            echo "Compat package dependency on agora-agents ($COMPAT_DEP_VERSION) does not match >=${TAG_VERSION},<3.0.0."
+            exit 1
+          fi
+
+      - name: Publish primary package to pypi
         run: |
           poetry config repositories.remote https://upload.pypi.org/legacy/
-          poetry --no-interaction -v publish --build --repository remote --username "__token__" --password "$PYPI_API_TOKEN"
+          poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"
         env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Wait for primary package on PyPI
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE="agora-agents"
+          for attempt in $(seq 1 12); do
+            if pip index versions "$PACKAGE" 2>/dev/null | grep -q "$TAG_VERSION"; then
+              echo "$PACKAGE==$TAG_VERSION is available on PyPI."
+              exit 0
+            fi
+            echo "Waiting for $PACKAGE==$TAG_VERSION on PyPI (attempt $attempt/12)..."
+            sleep 10
+          done
+          echo "Timed out waiting for $PACKAGE==$TAG_VERSION on PyPI."
+          exit 1
+
+      - name: Publish compatibility package to pypi
+        run: |
+          cd compat/agora-agent-server-sdk
+          poetry config repositories.remote https://upload.pypi.org/legacy/
+          for attempt in $(seq 1 3); do
+            if poetry --no-interaction -v publish --build --repository remote --username "$PYPI_USERNAME" --password "$PYPI_PASSWORD"; then
+              exit 0
+            fi
+            echo "Compat publish failed (attempt $attempt/3). Retrying in 15s..."
+            sleep 15
+          done
+          exit 1
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

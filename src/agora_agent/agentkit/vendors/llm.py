@@ -1,8 +1,13 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ...agents.types.start_agents_request_properties_llm_greeting_configs import (
+    StartAgentsRequestPropertiesLlmGreetingConfigs,
+)
 from .base import BaseLLM
+
+LlmGreetingConfigs = Union[StartAgentsRequestPropertiesLlmGreetingConfigs, Dict[str, Any]]
 
 
 def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -14,6 +19,14 @@ def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]
             item["transport"] = "streamable_http"
         result.append(item)
     return result
+
+
+def _dump_optional_model(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(exclude_none=True)
+    if hasattr(value, "dict"):
+        return value.dict(exclude_none=True)
+    return value
 
 class OpenAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -31,7 +44,7 @@ class OpenAIOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -74,7 +87,7 @@ class OpenAI(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.vendor is not None:
@@ -104,7 +117,7 @@ class AzureOpenAIOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -150,7 +163,7 @@ class AzureOpenAI(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.mcp_servers is not None:
@@ -177,7 +190,7 @@ class AnthropicOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -216,7 +229,7 @@ class Anthropic(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.vendor is not None:
@@ -246,7 +259,7 @@ class GeminiOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
     output_modalities: Optional[List[str]] = Field(default=None)
-    greeting_configs: Optional[Dict[str, Any]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
@@ -287,7 +300,7 @@ class Gemini(BaseLLM):
         if self.options.output_modalities is not None:
             config["output_modalities"] = self.options.output_modalities
         if self.options.greeting_configs is not None:
-            config["greeting_configs"] = self.options.greeting_configs
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
         if self.options.template_variables is not None:
             config["template_variables"] = self.options.template_variables
         if self.options.vendor is not None:
@@ -297,4 +310,140 @@ class Gemini(BaseLLM):
         if self.options.max_history is not None:
             config["max_history"] = self.options.max_history
 
+        return config
+
+
+class GroqOptions(OpenAIOptions):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Groq API key")
+    model: str = Field(default="llama-3.3-70b-versatile", description="Model name")
+    base_url: Optional[str] = Field(default=None, description="Custom Groq-compatible endpoint")
+
+
+class Groq(BaseLLM):
+    def __init__(self, **kwargs: Any):
+        self.options = GroqOptions(**kwargs)
+
+    def to_config(self) -> Dict[str, Any]:
+        config = OpenAI(**_dump_optional_model(self.options)).to_config()
+        config["url"] = self.options.base_url or "https://api.groq.com/openai/v1/chat/completions"
+        return config
+
+
+class CustomLLMOptions(OpenAIOptions):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Custom LLM API key")
+    base_url: str = Field(..., description="OpenAI-compatible chat completions endpoint")
+
+
+class CustomLLM(BaseLLM):
+    def __init__(self, **kwargs: Any):
+        self.options = CustomLLMOptions(**kwargs)
+
+    def to_config(self) -> Dict[str, Any]:
+        config = OpenAI(**_dump_optional_model(self.options)).to_config()
+        config["vendor"] = self.options.vendor or "custom"
+        return config
+
+
+class VertexAILLMOptions(GeminiOptions):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Vertex AI access token or API key")
+    project_id: str = Field(..., description="Google Cloud project ID")
+    location: str = Field(..., description="Google Cloud location")
+
+
+class VertexAILLM(BaseLLM):
+    def __init__(self, **kwargs: Any):
+        self.options = VertexAILLMOptions(**kwargs)
+
+    def to_config(self) -> Dict[str, Any]:
+        options = _dump_optional_model(self.options)
+        options.pop("project_id", None)
+        options.pop("location", None)
+        config = Gemini(**options).to_config()
+        params = dict(config["params"])
+        params["project_id"] = self.options.project_id
+        params["location"] = self.options.location
+        config["params"] = params
+        return config
+
+
+class AmazonBedrockOptions(AnthropicOptions):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Amazon Bedrock API key or gateway token")
+    url: str = Field(..., description="Amazon Bedrock proxy or runtime endpoint")
+
+
+class AmazonBedrock(BaseLLM):
+    def __init__(self, **kwargs: Any):
+        self.options = AmazonBedrockOptions(**kwargs)
+
+    def to_config(self) -> Dict[str, Any]:
+        return Anthropic(**_dump_optional_model(self.options)).to_config()
+
+
+class DifyOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Dify API key")
+    url: str = Field(..., description="Dify workflow or chat endpoint")
+    user: Optional[str] = Field(default=None, description="Dify user identifier")
+    conversation_id: Optional[str] = Field(default=None, description="Dify conversation ID")
+    system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
+    greeting_message: Optional[str] = Field(default=None)
+    failure_message: Optional[str] = Field(default=None)
+    input_modalities: Optional[List[str]] = Field(default=None)
+    params: Optional[Dict[str, Any]] = Field(default=None)
+    headers: Optional[Dict[str, str]] = Field(default=None)
+    output_modalities: Optional[List[str]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
+    template_variables: Optional[Dict[str, str]] = Field(default=None)
+    vendor: Optional[str] = Field(default=None)
+    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    max_history: Optional[int] = Field(default=None, gt=0)
+
+
+class Dify(BaseLLM):
+    def __init__(self, **kwargs: Any):
+        self.options = DifyOptions(**kwargs)
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.options.params or {})
+        if self.options.user is not None:
+            params["user"] = self.options.user
+        if self.options.conversation_id is not None:
+            params["conversation_id"] = self.options.conversation_id
+
+        config: Dict[str, Any] = {
+            "url": self.options.url,
+            "api_key": self.options.api_key,
+            "params": params,
+            "style": "dify",
+            "input_modalities": self.options.input_modalities or ["text"],
+        }
+        if self.options.headers is not None:
+            config["headers"] = self.options.headers
+        if self.options.system_messages is not None:
+            config["system_messages"] = self.options.system_messages
+        if self.options.greeting_message is not None:
+            config["greeting_message"] = self.options.greeting_message
+        if self.options.failure_message is not None:
+            config["failure_message"] = self.options.failure_message
+        if self.options.output_modalities is not None:
+            config["output_modalities"] = self.options.output_modalities
+        if self.options.greeting_configs is not None:
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
+        if self.options.template_variables is not None:
+            config["template_variables"] = self.options.template_variables
+        if self.options.vendor is not None:
+            config["vendor"] = self.options.vendor
+        if self.options.mcp_servers is not None:
+            config["mcp_servers"] = _ensure_mcp_transport(self.options.mcp_servers)
+        if self.options.max_history is not None:
+            config["max_history"] = self.options.max_history
         return config

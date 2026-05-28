@@ -6,7 +6,7 @@ description: Full API reference for the Python Agent builder class.
 
 # Agent Reference
 
-**Import:** `from agora_agent.agentkit import Agent` or `from agora_agent import Agent`
+**Import:** `from agora_agent import Agent`
 
 ## Constructor
 
@@ -57,7 +57,7 @@ Set the LLM vendor for cascading flow.
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import OpenAI
+from agora_agent import OpenAI
 agent = Agent().with_llm(OpenAI(api_key='your-key', model='gpt-4o-mini'))
 ```
 
@@ -67,7 +67,7 @@ Set the TTS vendor. Records the vendor's `sample_rate` for avatar validation.
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import ElevenLabsTTS
+from agora_agent import ElevenLabsTTS
 agent = Agent().with_tts(ElevenLabsTTS(key='your-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id'))
 ```
 
@@ -77,27 +77,29 @@ Set the STT (ASR) vendor.
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import DeepgramSTT
+from agora_agent import DeepgramSTT
 agent = Agent().with_stt(DeepgramSTT(api_key='your-key', language='en-US'))
 ```
 
 ### `with_mllm(vendor: BaseMLLM) -> Agent`
 
-Set the MLLM vendor for multimodal flow. Calling `with_mllm()` automatically sets `mllm.enable = True`.
+Set the MLLM vendor for multimodal flow. Calling `with_mllm()` automatically sets `mllm.enable = True`. MLLM sessions do not require TTS, STT, or LLM vendors.
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import OpenAIRealtime
+from agora_agent import OpenAIRealtime
 agent = Agent().with_mllm(OpenAIRealtime(api_key='your-key'))
 ```
 
 ### `with_avatar(vendor: BaseAvatar) -> Agent`
 
-Set the avatar vendor. Raises `ValueError` if TTS sample rate does not match the avatar's `required_sample_rate`.
+Set the avatar vendor for the cascading ASR + LLM + TTS pipeline. Avatars are not supported when MLLM is enabled — combining `with_mllm()` and an enabled `with_avatar()` is rejected at `to_properties()` and `AgentSession.start()`. A disabled avatar (`enable=False`) is allowed alongside MLLM.
+
+Raises `ValueError` if the TTS sample rate does not match the avatar's `required_sample_rate`.
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import HeyGenAvatar
+from agora_agent import HeyGenAvatar
 agent = agent.with_avatar(HeyGenAvatar(api_key='your-key', quality='medium', agora_uid='2'))
 ```
 
@@ -106,6 +108,22 @@ agent = agent.with_avatar(HeyGenAvatar(api_key='your-key', quality='medium', ago
 ### `with_turn_detection(config: TurnDetectionConfig) -> Agent`
 
 Override cascading-flow turn detection settings. Use `config.start_of_speech` and `config.end_of_speech` for SOS/EOS detection. Use `with_interruption()` for interruption behavior and MLLM vendor `turn_detection` for MLLM turn detection.
+
+Pause-state detection is configured under semantic end-of-speech:
+
+```python
+agent = agent.with_turn_detection({
+    "mode": "default",
+    "config": {
+        "end_of_speech": {
+            "mode": "semantic",
+            "semantic_config": {
+                "pause_state_enabled": True,
+            },
+        },
+    },
+})
+```
 
 ### `with_interruption(config: InterruptionConfig) -> Agent`
 
@@ -131,13 +149,19 @@ Set SAL (Selective Attention Locking) configuration.
 
 Set advanced features (e.g. `{'enable_rtm': True}`).
 
+When `enable_rtm=True`, AgentKit defaults `parameters.data_channel` to `"rtm"` unless you explicitly set another data channel.
+
 ### `with_tools(enabled: bool = True) -> Agent`
 
 Enable or disable MCP tool invocation by setting `advanced_features.enable_tools`.
 
 ### `with_parameters(parameters: SessionParams) -> Agent`
 
-Set session parameters (silence config, farewell config, data channel, etc.).
+Set session parameters (silence config, farewell config, data channel, audio scenario, etc.).
+
+### `with_audio_scenario(audio_scenario: ParametersAudioScenario) -> Agent`
+
+Set `parameters.audio_scenario` without replacing existing session parameters.
 
 ### `with_failure_message(message: str) -> Agent`
 
@@ -145,7 +169,7 @@ Set the message spoken via TTS when the LLM call fails.
 
 ### `with_max_history(max_history: int) -> Agent`
 
-Set the maximum conversation history length.
+Set the maximum conversation history length for the standard ASR + LLM + TTS pipeline. The v2.7 MLLM core type does not expose `max_history`.
 
 ### `with_geofence(geofence: GeofenceConfig) -> Agent`
 
@@ -240,3 +264,9 @@ to_properties(
 | `rtc` | `Optional[RtcConfig]` | RTC configuration |
 | `filler_words` | `Optional[FillerWordsConfig]` | Filler words configuration |
 | `config` | `Dict[str, Any]` | Full configuration dict |
+
+## Type aliases
+
+Public aliases over Fern-generated types: `LlmConfig`, `SttConfig`, `AsrConfig` (= `SttConfig`), `MllmConfig`, `AvatarConfig`, session/conversation types, and think types (`ThinkOnListeningAction`, etc.).
+
+Think value constants: `ThinkOnListeningActionInject`, `ThinkOnListeningActionInterrupt`, `ThinkOnListeningActionIgnore`, `ThinkOnThinkingActionInterrupt`, `ThinkOnThinkingActionIgnore`, `ThinkOnSpeakingActionInterrupt`, `ThinkOnSpeakingActionIgnore`.

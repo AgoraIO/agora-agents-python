@@ -6,16 +6,18 @@ description: Constructor options for all LLM, TTS, STT, MLLM, and Avatar vendor 
 
 # Vendor Reference
 
-All vendor classes are available from `agora_agent.agentkit.vendors`:
+All vendor classes are available from `agora_agent`:
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramTTS, DeepgramSTT, OpenAIRealtime, GeminiLive, HeyGenAvatar
+from agora_agent import OpenAI, ElevenLabsTTS, DeepgramTTS, DeepgramSTT, OpenAIRealtime, XaiGrok, GenericAvatar
 ```
 
 ---
 
 ## LLM Vendors
+
+`greeting_configs` accepts either a dict or `LlmGreetingConfigs`. In v2.7, `greeting_configs.interruptable=False` makes the greeting uninterruptible; `True` follows the global `interruption` settings.
 
 ### `OpenAI`
 
@@ -39,7 +41,7 @@ from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramTTS, Dee
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import OpenAI
+from agora_agent import OpenAI
 
 llm = OpenAI(api_key='your-key', model='gpt-4o-mini', temperature=0.7)
 ```
@@ -67,7 +69,7 @@ llm = OpenAI(api_key='your-key', model='gpt-4o-mini', temperature=0.7)
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import AzureOpenAI
+from agora_agent import AzureOpenAI
 
 llm = AzureOpenAI(
     api_key='your-azure-key',
@@ -97,7 +99,7 @@ llm = AzureOpenAI(
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import Anthropic
+from agora_agent import Anthropic
 
 llm = Anthropic(api_key='your-anthropic-key', model='claude-3-5-sonnet-20241022')
 ```
@@ -124,10 +126,22 @@ llm = Anthropic(api_key='your-anthropic-key', model='claude-3-5-sonnet-20241022'
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent.agentkit.vendors import Gemini
+from agora_agent import Gemini
 
 llm = Gemini(api_key='your-google-key', model='gemini-2.0-flash-exp')
 ```
+
+### Other LLM vendors
+
+The SDK also includes named helpers for the remaining Agora-supported LLM providers. These helpers choose the correct request format internally.
+
+| Class | Provider | Key parameters |
+|---|---|---|
+| `Groq` | Groq | `api_key`, `model`, `base_url?` |
+| `VertexAILLM` | Google Vertex AI | `api_key`, `model`, `project_id`, `location`, `url?` |
+| `AmazonBedrock` | Amazon Bedrock | `api_key`, `url`, `model` |
+| `Dify` | Dify | `api_key`, `url`, `user?`, `conversation_id?` |
+| `CustomLLM` | OpenAI-compatible LLM | `api_key`, `model`, `base_url` |
 
 ---
 
@@ -364,8 +378,6 @@ Fixed sample rate: 24000 Hz.
 | `url` | `str` | No | `None` | Custom WebSocket URL |
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
-| `max_history` | `int` | No | `None` | Maximum conversation history length |
-| `predefined_tools` | `List[str]` | No | `None` | Predefined tools (e.g., `["_publish_message"]`) |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
@@ -383,8 +395,6 @@ Fixed sample rate: 24000 Hz.
 | `voice` | `str` | No | `None` | Voice name |
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
-| `max_history` | `int` | No | `None` | Maximum conversation history length |
-| `predefined_tools` | `List[str]` | No | `None` | Predefined tools (e.g., `["_publish_message"]`) |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
@@ -403,17 +413,36 @@ Fixed sample rate: 24000 Hz.
 | `voice` | `str` | No | `None` | Voice name (e.g., `Aoede`, `Charon`) |
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
-| `max_history` | `int` | No | `None` | Maximum conversation history length |
-| `predefined_tools` | `List[str]` | No | `None` | Predefined tools (e.g., `["_publish_message"]`) |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 | `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
+### `XaiGrok`
+
+xAI Grok MLLM vendor (`mllm.vendor`: `"xai"`). Matches the [xAI Grok](https://docs.agora.io/en/conversational-ai/models/mllm/xai) product docs.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | xAI API key |
+| `url` | `str` | No | `wss://api.x.ai/v1/realtime` | xAI realtime WebSocket URL |
+| `voice` | `str` | No | `None` | Voice identifier, for example `eve` or `rex` |
+| `language` | `str` | No | `None` | Language code, for example `en` |
+| `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
+| `greeting_message` | `str` | No | `None` | Greeting message |
+| `failure_message` | `str` | No | `None` | Message played when the model call fails |
+| `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `output_modalities` | `List[str]` | No | `None` | Output modalities |
+| `messages` | `List[Dict]` | No | `None` | Conversation messages |
+| `params` | `Dict[str, Any]` | No | `None` | Additional xAI parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | Supports `agora_vad` and `server_vad` for xAI |
+
 ---
 
 ## Avatar Vendors
+
+Avatar vendors are currently supported only with the cascading ASR + LLM + TTS pipeline.
 
 ### `HeyGenAvatar`
 
@@ -424,7 +453,7 @@ Required TTS sample rate: **24000 Hz**
 | `api_key` | `str` | Yes | — | HeyGen API key |
 | `quality` | `str` | Yes | — | Avatar quality: `low`, `medium`, or `high` |
 | `agora_uid` | `str` | Yes | — | Agora UID for avatar video stream |
-| `agora_token` | `str` | No | `None` | RTC token for avatar authentication |
+| `agora_token` | `str` | No | `None` | Avatar token. When omitted, `AgentSession.start()` generates one for `agora_uid` using the same token path as the agent. |
 | `avatar_id` | `str` | No | `None` | HeyGen avatar ID |
 | `enable` | `bool` | No | `True` | Enable or disable the avatar |
 | `disable_idle_timeout` | `bool` | No | `None` | Disable the idle timeout |
@@ -437,5 +466,33 @@ Required TTS sample rate: **16000 Hz**
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Akool API key |
-| `agora_uid` | `str` | Yes | — | Agora UID for avatar video stream |
 | `avatar_id` | `str` | No | `None` | Avatar ID |
+
+### `LiveAvatarAvatar`
+
+Required TTS sample rate: **24000 Hz**
+
+Same options as `HeyGenAvatar`, but serializes `vendor: "liveavatar"`. `agora_token` is optional and generated by `AgentSession.start()` when omitted.
+
+### `AnamAvatar`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Anam API key |
+| `persona_id` | `str` | No | `None` | Persona ID |
+| `enable` | `bool` | No | `True` | Enable or disable the avatar |
+
+### `GenericAvatar`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Generic avatar provider API key |
+| `agora_uid` | `str` | Yes | — | Avatar RTC UID. Must differ from the agent UID. |
+| `api_base_url` | `str` | Yes | — | Avatar provider API base URL |
+| `avatar_id` | `str` | Yes | — | Avatar ID |
+| `agora_token` | `str` | No | `None` | Optional avatar token. Generated by `AgentSession.start()` when omitted. |
+| `agora_appid` | `str` | No | `None` | Optional; filled from the session App ID when omitted. |
+| `agora_channel` | `str` | No | `None` | Optional; filled from the session channel when omitted. |
+| `enable` | `bool` | No | `True` | Enable or disable the avatar |
+
+Avatar tokens are separate from the agent join token but generated with the same `generate_convo_ai_token` path, using the avatar's `agora_uid` as `uid`.

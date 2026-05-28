@@ -58,3 +58,53 @@ class TurnDetectionTypeValues:
     AGORA_VAD = "agora_vad"
     SERVER_VAD = "server_vad"
     SEMANTIC_VAD = "semantic_vad"
+
+
+class InterruptionMode:
+    START_OF_SPEECH = "start_of_speech"
+    KEYWORDS = "keywords"
+
+
+InterruptionModeStartOfSpeech = InterruptionMode.START_OF_SPEECH
+InterruptionModeKeywords = InterruptionMode.KEYWORDS
+
+
+class InterruptionDisabledStrategy:
+    APPEND = "append"
+    IGNORE = "ignore"
+
+
+InterruptionDisabledStrategyAppend = InterruptionDisabledStrategy.APPEND
+InterruptionDisabledStrategyIgnore = InterruptionDisabledStrategy.IGNORE
+
+
+class SpeakPriority:
+    INTERRUPT = "INTERRUPT"
+    APPEND = "APPEND"
+    IGNORE = "IGNORE"
+
+
+SpeakPriorityInterrupt = SpeakPriority.INTERRUPT
+SpeakPriorityAppend = SpeakPriority.APPEND
+SpeakPriorityIgnore = SpeakPriority.IGNORE
+
+
+class MllmTurnDetectionMode:
+    AGORA_VAD = "agora_vad"
+    SERVER_VAD = "server_vad"
+    SEMANTIC_VAD = "semantic_vad"
+
+
+MllmTurnDetectionModeAgoraVad = MllmTurnDetectionMode.AGORA_VAD
+MllmTurnDetectionModeServerVad = MllmTurnDetectionMode.SERVER_VAD
+MllmTurnDetectionModeSemanticVad = MllmTurnDetectionMode.SEMANTIC_VAD
+
+
+# Think action value constants (match Fern wire values)
+ThinkOnListeningActionInject = "inject"
+ThinkOnListeningActionInterrupt = "interrupt"
+ThinkOnListeningActionIgnore = "ignore"
+ThinkOnThinkingActionInterrupt = "interrupt"
+ThinkOnThinkingActionIgnore = "ignore"
+ThinkOnSpeakingActionInterrupt = "interrupt"
+ThinkOnSpeakingActionIgnore = "ignore"

@@ -8,6 +8,25 @@ if typing.TYPE_CHECKING:
     from .agent_session import AgentSession, AsyncAgentSession
 
 from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
+from ..agents.types.start_agents_request_properties_asr import StartAgentsRequestPropertiesAsr
+from ..agents.types.start_agents_request_properties_asr_vendor import StartAgentsRequestPropertiesAsrVendor
+from ..agents.types.start_agents_request_properties_avatar import StartAgentsRequestPropertiesAvatar
+from ..agents.types.start_agents_request_properties_avatar_vendor import StartAgentsRequestPropertiesAvatarVendor
+from ..agents.types.start_agents_request_properties_llm import StartAgentsRequestPropertiesLlm
+from ..agents.types.start_agents_request_properties_llm_style import StartAgentsRequestPropertiesLlmStyle
+from ..agents.types.start_agents_request_properties_mllm import StartAgentsRequestPropertiesMllm
+from ..agents.types.start_agents_request_properties_mllm_vendor import StartAgentsRequestPropertiesMllmVendor
+from ..agents.types.update_agents_request_properties import UpdateAgentsRequestProperties
+from ..agents.types.get_agents_response import GetAgentsResponse
+from ..agents.types.list_agents_response import ListAgentsResponse
+from ..agents.types.list_agents_response_data_list_item import ListAgentsResponseDataListItem
+from ..agents.types.list_agents_response_data_list_item_status import ListAgentsResponseDataListItemStatus
+from ..agents.types.get_history_agents_response import GetHistoryAgentsResponse
+from ..agents.types.get_history_agents_response_contents_item import GetHistoryAgentsResponseContentsItem
+from ..agents.types.get_history_agents_response_contents_item_role import GetHistoryAgentsResponseContentsItemRole
+from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
+from ..agents.types.get_turns_agents_response_turns_item import GetTurnsAgentsResponseTurnsItem
+from ..agents.types.speak_agents_request_priority import SpeakAgentsRequestPriority
 from ..agents.types.start_agents_request_properties_turn_detection import StartAgentsRequestPropertiesTurnDetection
 from ..agents.types.start_agents_request_properties_turn_detection_config import StartAgentsRequestPropertiesTurnDetectionConfig
 from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeech
@@ -46,10 +65,33 @@ from ..agents.types.start_agents_request_properties_filler_words_trigger import 
 from ..agents.types.start_agents_request_properties_filler_words_trigger_fixed_time_config import StartAgentsRequestPropertiesFillerWordsTriggerFixedTimeConfig
 from ..agents.types.start_agents_request_properties_filler_words_content import StartAgentsRequestPropertiesFillerWordsContent
 from ..agents.types.start_agents_request_properties_filler_words_content_static_config import StartAgentsRequestPropertiesFillerWordsContentStaticConfig
-from .token import generate_convo_ai_token, _validate_expires_in
+from ..agents.types.start_agents_request_properties_filler_words_content_static_config_selection_rule import StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule
+from ..types.tts import Tts
+from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
+    AgentThinkAgentManagementRequestOnListeningAction,
+)
+from ..agent_management.types.agent_think_agent_management_request_on_thinking_action import (
+    AgentThinkAgentManagementRequestOnThinkingAction,
+)
+from ..agent_management.types.agent_think_agent_management_request_on_speaking_action import (
+    AgentThinkAgentManagementRequestOnSpeakingAction,
+)
+from ..agent_management.types.agent_think_agent_management_response import (
+    AgentThinkAgentManagementResponse,
+)
 from .vendors.base import BaseAvatar, BaseLLM, BaseMLLM, BaseSTT, BaseTTS
 
 # Top-level aliases
+LlmConfig = StartAgentsRequestPropertiesLlm
+LlmStyle = StartAgentsRequestPropertiesLlmStyle
+SttConfig = StartAgentsRequestPropertiesAsr
+AsrConfig = SttConfig
+SttVendor = StartAgentsRequestPropertiesAsrVendor
+TtsConfig = Tts
+MllmConfig = StartAgentsRequestPropertiesMllm
+MllmVendor = StartAgentsRequestPropertiesMllmVendor
+AvatarConfig = StartAgentsRequestPropertiesAvatar
+AvatarVendor = StartAgentsRequestPropertiesAvatarVendor
 TurnDetectionConfig = StartAgentsRequestPropertiesTurnDetection
 SalConfig = StartAgentsRequestPropertiesSal
 SalMode = StartAgentsRequestPropertiesSalSalMode
@@ -93,6 +135,19 @@ InterruptionConfig = StartAgentsRequestPropertiesInterruption
 InterruptionMode = StartAgentsRequestPropertiesInterruptionMode
 MllmTurnDetectionConfig = StartAgentsRequestPropertiesMllmTurnDetection
 MllmTurnDetectionMode = StartAgentsRequestPropertiesMllmTurnDetectionMode
+AgentConfig = StartAgentsRequestProperties
+AgentConfigUpdate = UpdateAgentsRequestProperties
+SessionInfo = GetAgentsResponse
+SessionListResponse = ListAgentsResponse
+SessionSummary = ListAgentsResponseDataListItem
+SessionStatus = ListAgentsResponseDataListItemStatus
+ConversationHistory = GetHistoryAgentsResponse
+ConversationTurn = GetHistoryAgentsResponseContentsItem
+ConversationRole = GetHistoryAgentsResponseContentsItemRole
+ConversationTurns = GetTurnsAgentsResponse
+ConversationSessionTurn = GetTurnsAgentsResponseTurnsItem
+SpeakPriority = SpeakAgentsRequestPriority
+Labels = typing.Dict[str, str]
 
 
 class SessionParamsInput(typing_extensions.TypedDict, total=False):
@@ -102,6 +157,39 @@ class SessionParamsInput(typing_extensions.TypedDict, total=False):
     enable_metrics: bool
     enable_error_message: bool
     audio_scenario: ParametersAudioScenario
+
+
+class ThinkOptions(typing_extensions.TypedDict, total=False):
+    on_listening_action: AgentThinkAgentManagementRequestOnListeningAction
+    on_thinking_action: AgentThinkAgentManagementRequestOnThinkingAction
+    on_speaking_action: AgentThinkAgentManagementRequestOnSpeakingAction
+    interruptable: bool
+    metadata: typing.Dict[str, str]
+
+
+class GetTurnsOptions(typing_extensions.TypedDict, total=False):
+    page_index: int
+    page_size: int
+
+
+class SayOptions(typing_extensions.TypedDict, total=False):
+    priority: SpeakAgentsRequestPriority
+    interruptable: bool
+
+
+class SessionOptions(typing_extensions.TypedDict, total=False):
+    name: str
+    channel: str
+    token: str
+    agent_uid: str
+    remote_uids: typing.List[str]
+    idle_timeout: int
+    enable_string_uid: bool
+    preset: typing.Union[str, typing.Sequence[str]]
+    pipeline_id: str
+    expires_in: int
+    debug: bool
+    warn: typing.Callable[[str], None]
 
 # LLM sub-type aliases
 LlmGreetingConfigs = StartAgentsRequestPropertiesLlmGreetingConfigs
@@ -116,6 +204,23 @@ FillerWordsTrigger = StartAgentsRequestPropertiesFillerWordsTrigger
 FillerWordsTriggerFixedTimeConfig = StartAgentsRequestPropertiesFillerWordsTriggerFixedTimeConfig
 FillerWordsContent = StartAgentsRequestPropertiesFillerWordsContent
 FillerWordsContentStaticConfig = StartAgentsRequestPropertiesFillerWordsContentStaticConfig
+FillerWordsContentSelectionRule = StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule
+
+# Think type aliases and response
+ThinkOnListeningAction = AgentThinkAgentManagementRequestOnListeningAction
+ThinkOnThinkingAction = AgentThinkAgentManagementRequestOnThinkingAction
+ThinkOnSpeakingAction = AgentThinkAgentManagementRequestOnSpeakingAction
+ThinkResponse = AgentThinkAgentManagementResponse
+
+from .token import generate_convo_ai_token, _parse_numeric_uid, _validate_expires_in
+
+
+def _dump_optional_model(value: typing.Any) -> typing.Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(exclude_none=True)
+    if hasattr(value, "dict"):
+        return value.dict(exclude_none=True)
+    return value
 
 
 class Agent:
@@ -126,8 +231,7 @@ class Agent:
 
     Examples
     --------
-    >>> from agora_agent.agentkit import Agent
-    >>> from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+    >>> from agora_agent import Agent, OpenAI, ElevenLabsTTS, DeepgramSTT
     >>>
     >>> agent = Agent(instructions="You are a helpful voice assistant.")
     >>> agent = (
@@ -154,6 +258,7 @@ class Agent:
         labels: typing.Optional[typing.Dict[str, str]] = None,
         rtc: typing.Optional[RtcConfig] = None,
         filler_words: typing.Optional[FillerWordsConfig] = None,
+        greeting_configs: typing.Optional[LlmGreetingConfigs] = None,
     ):
         self._name = name
         self._instructions = instructions
@@ -176,6 +281,7 @@ class Agent:
         self._labels = labels
         self._rtc = rtc
         self._filler_words = filler_words
+        self._greeting_configs = greeting_configs
 
     def with_llm(self, vendor: BaseLLM) -> "Agent":
         new_agent = self._clone()
@@ -183,9 +289,20 @@ class Agent:
         return new_agent
 
     def with_tts(self, vendor: BaseTTS) -> "Agent":
+        sample_rate = vendor.sample_rate
+        if (
+            self._avatar_required_sample_rate not in (None, 0)
+            and sample_rate is not None
+            and sample_rate != self._avatar_required_sample_rate
+        ):
+            raise ValueError(
+                f"Avatar requires TTS sample rate of {self._avatar_required_sample_rate} Hz, "
+                f"but TTS is configured with {sample_rate} Hz. "
+                f"Please update your TTS sample_rate to {self._avatar_required_sample_rate}."
+            )
         new_agent = self._clone()
         new_agent._tts = vendor.to_config()
-        new_agent._tts_sample_rate = vendor.sample_rate
+        new_agent._tts_sample_rate = sample_rate
         return new_agent
 
     def with_stt(self, vendor: BaseSTT) -> "Agent":
@@ -194,6 +311,9 @@ class Agent:
         return new_agent
 
     def with_mllm(self, vendor: BaseMLLM) -> "Agent":
+        # Note: avatars are not supported with MLLM. The combination is rejected
+        # at ``to_properties`` / ``AgentSession.start`` so callers can still
+        # configure both for tests, debugging, or disabled-avatar use cases.
         new_agent = self._clone()
         new_agent._mllm = vendor.to_config()
         if isinstance(new_agent._mllm, dict):
@@ -202,7 +322,10 @@ class Agent:
             advanced_features = {key: value for key, value in new_agent._advanced_features.items() if key != "enable_mllm"}
             new_agent._advanced_features = typing.cast(AdvancedFeatures, advanced_features) if advanced_features else None
         elif isinstance(new_agent._advanced_features, StartAgentsRequestPropertiesAdvancedFeatures):
-            advanced_features_model = new_agent._advanced_features.model_copy(update={"enable_mllm": None})
+            advanced_features_model = self._copy_model_update(
+                new_agent._advanced_features,
+                {"enable_mllm": None},
+            )
             if (
                 advanced_features_model.enable_rtm is None
                 and advanced_features_model.enable_sal is None
@@ -214,6 +337,10 @@ class Agent:
         return new_agent
 
     def with_avatar(self, vendor: BaseAvatar) -> "Agent":
+        # Note: avatars are not supported with MLLM. The combination is rejected
+        # at ``to_properties`` / ``AgentSession.start`` (only when the avatar is
+        # enabled) so callers may still combine the two for testing or for the
+        # disabled-avatar pattern.
         required_sample_rate = vendor.required_sample_rate
         if (
             required_sample_rate not in (None, 0)
@@ -251,6 +378,12 @@ class Agent:
         new_agent._greeting = greeting
         return new_agent
 
+    def with_greeting_configs(self, configs: LlmGreetingConfigs) -> "Agent":
+        """Returns a new Agent with greeting playback configuration."""
+        new_agent = self._clone()
+        new_agent._greeting_configs = configs
+        return new_agent
+
     def with_name(self, name: str) -> "Agent":
         new_agent = self._clone()
         new_agent._name = name
@@ -282,7 +415,10 @@ class Agent:
                 {**new_agent._advanced_features, "enable_tools": enabled},
             )
         else:
-            new_agent._advanced_features = new_agent._advanced_features.model_copy(update={"enable_tools": enabled})
+            new_agent._advanced_features = self._copy_model_update(
+                new_agent._advanced_features,
+                {"enable_tools": enabled},
+            )
         return new_agent
 
     def with_parameters(self, parameters: typing.Union[SessionParams, SessionParamsInput]) -> "Agent":
@@ -292,6 +428,23 @@ class Agent:
         """
         new_agent = self._clone()
         new_agent._parameters = parameters
+        return new_agent
+
+    def with_audio_scenario(self, audio_scenario: ParametersAudioScenario) -> "Agent":
+        """Returns a new Agent with the specified RTC audio scenario."""
+        new_agent = self._clone()
+        if new_agent._parameters is None:
+            new_agent._parameters = StartAgentsRequestPropertiesParameters(audio_scenario=audio_scenario)
+        elif isinstance(new_agent._parameters, dict):
+            new_agent._parameters = typing.cast(
+                SessionParamsInput,
+                {**new_agent._parameters, "audio_scenario": audio_scenario},
+            )
+        else:
+            new_agent._parameters = self._copy_model_update(
+                new_agent._parameters,
+                {"audio_scenario": audio_scenario},
+            )
         return new_agent
 
     def with_failure_message(self, message: str) -> "Agent":
@@ -342,6 +495,33 @@ class Agent:
         new_agent._filler_words = filler_words
         return new_agent
 
+    @staticmethod
+    def _field_value(value: typing.Any, field: str) -> typing.Any:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return value.get(field)
+        return getattr(value, field, None)
+
+    @staticmethod
+    def _copy_model_update(value: typing.Any, update: typing.Dict[str, typing.Any]) -> typing.Any:
+        if hasattr(value, "model_copy"):
+            return value.model_copy(update=update)
+        if hasattr(value, "copy"):
+            return value.copy(update=update)
+        raise TypeError(f"Object of type {type(value).__name__} does not support model copying")
+
+    def _resolved_parameters(self) -> typing.Optional[typing.Union[SessionParams, SessionParamsInput]]:
+        enable_rtm = self._field_value(self._advanced_features, "enable_rtm") is True
+        data_channel = self._field_value(self._parameters, "data_channel")
+        if not enable_rtm or data_channel is not None:
+            return self._parameters
+        if self._parameters is None:
+            return StartAgentsRequestPropertiesParameters(data_channel="rtm")
+        if isinstance(self._parameters, dict):
+            return typing.cast(SessionParamsInput, {**self._parameters, "data_channel": "rtm"})
+        return self._copy_model_update(self._parameters, {"data_channel": "rtm"})
+
     @property
     def name(self) -> typing.Optional[str]:
         return self._name
@@ -353,6 +533,10 @@ class Agent:
     @property
     def tts(self) -> typing.Optional[typing.Dict[str, typing.Any]]:
         return self._tts
+
+    @property
+    def tts_sample_rate(self) -> typing.Optional[int]:
+        return self._tts_sample_rate
 
     @property
     def stt(self) -> typing.Optional[typing.Dict[str, typing.Any]]:
@@ -377,6 +561,10 @@ class Agent:
     @property
     def greeting(self) -> typing.Optional[str]:
         return self._greeting
+
+    @property
+    def greeting_configs(self) -> typing.Optional[LlmGreetingConfigs]:
+        return self._greeting_configs
 
     @property
     def failure_message(self) -> typing.Optional[str]:
@@ -440,6 +628,7 @@ class Agent:
             "labels": self._labels,
             "rtc": self._rtc,
             "filler_words": self._filler_words,
+            "greeting_configs": self._greeting_configs,
         }
 
     def create_session(
@@ -536,6 +725,20 @@ class Agent:
         expires_in: typing.Optional[int] = None,
         skip_vendor_validation: bool = False,
     ) -> StartAgentsRequestProperties:
+        # Validate the MLLM + enabled-avatar combination BEFORE generating the
+        # RTC token so callers get a clear, actionable error first (matches the
+        # TypeScript and Go SDKs' fail-fast contract).
+        mllm_flag = isinstance(self._mllm, dict) and self._mllm.get("enable") is True
+        is_mllm_mode = bool(mllm_flag or self._mllm is not None)
+        avatar_enabled = (
+            isinstance(self._avatar, dict) and self._avatar.get("enable") is not False
+        )
+        if is_mllm_mode and avatar_enabled:
+            raise ValueError(
+                "Avatars are only supported with the cascading ASR + LLM + TTS pipeline. "
+                "Remove the avatar configuration when using MLLM, or switch to a cascading session."
+            )
+
         if token is None:
             if app_id is None or app_certificate is None:
                 raise ValueError("Either token or app_id+app_certificate must be provided")
@@ -549,12 +752,9 @@ class Agent:
                 app_id=app_id,
                 app_certificate=app_certificate,
                 channel_name=channel,
-                account=agent_uid,
+                uid=_parse_numeric_uid(agent_uid, "agent_uid"),
                 **token_kwargs,
             )
-
-        mllm_flag = isinstance(self._mllm, dict) and self._mllm.get("enable") is True
-        is_mllm_mode = bool(mllm_flag or self._mllm is not None)
 
         base_kwargs: typing.Dict[str, typing.Any] = {
             "channel": channel,
@@ -579,11 +779,12 @@ class Agent:
             base_kwargs["avatar"] = self._avatar
         if self._advanced_features is not None:
             base_kwargs["advanced_features"] = self._advanced_features
-        if self._parameters is not None:
-            if isinstance(self._parameters, dict):
-                base_kwargs["parameters"] = StartAgentsRequestPropertiesParameters(**self._parameters)
+        parameters = self._resolved_parameters()
+        if parameters is not None:
+            if isinstance(parameters, dict):
+                base_kwargs["parameters"] = StartAgentsRequestPropertiesParameters(**parameters)
             else:
-                base_kwargs["parameters"] = self._parameters
+                base_kwargs["parameters"] = parameters
         if self._geofence is not None:
             base_kwargs["geofence"] = self._geofence
         if self._labels is not None:
@@ -596,12 +797,10 @@ class Agent:
         if is_mllm_mode:
             if self._mllm is not None:
                 mllm_config = dict(self._mllm)
-                if self._greeting:
+                if self._greeting is not None:
                     mllm_config.setdefault("greeting_message", self._greeting)
-                if self._failure_message:
+                if self._failure_message is not None:
                     mllm_config.setdefault("failure_message", self._failure_message)
-                if self._max_history is not None:
-                    mllm_config.setdefault("max_history", self._max_history)
                 base_kwargs["mllm"] = mllm_config
             return StartAgentsRequestProperties(**base_kwargs)
 
@@ -617,14 +816,16 @@ class Agent:
         llm_config = dict(self._llm)
         # Agent-level fields take priority over the vendor's defaults.
         # This matches the TS SDK where agent-level values override vendor config.
-        if self._instructions:
+        if self._instructions is not None:
             llm_config["system_messages"] = [{"role": "system", "content": self._instructions}]
-        if self._greeting:
-            llm_config.setdefault("greeting_message", self._greeting)
-        if self._failure_message:
-            llm_config.setdefault("failure_message", self._failure_message)
+        if self._greeting is not None:
+            llm_config["greeting_message"] = self._greeting
+        if self._greeting_configs is not None:
+            llm_config["greeting_configs"] = _dump_optional_model(self._greeting_configs)
+        if self._failure_message is not None:
+            llm_config["failure_message"] = self._failure_message
         if self._max_history is not None:
-            llm_config.setdefault("max_history", self._max_history)
+            llm_config["max_history"] = self._max_history
 
         base_kwargs["llm"] = llm_config
         base_kwargs["tts"] = self._tts
@@ -656,4 +857,5 @@ class Agent:
         new_agent._labels = self._labels
         new_agent._rtc = self._rtc
         new_agent._filler_words = self._filler_words
+        new_agent._greeting_configs = self._greeting_configs
         return new_agent

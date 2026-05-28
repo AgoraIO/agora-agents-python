@@ -12,7 +12,7 @@ The `Agent` class is a fluent builder for configuring AI agent properties. It co
 
 <!-- snippet: executable -->
 ```python
-from agora_agent.agentkit import Agent
+from agora_agent import Agent
 
 agent = Agent(
     name='support-assistant',
@@ -75,8 +75,8 @@ Each `with_*` method returns a **new** `Agent` instance — the original is unch
 
 <!-- snippet: executable -->
 ```python
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent
+from agora_agent import OpenAI, ElevenLabsTTS, DeepgramSTT
 
 agent = (
     Agent(name='my-agent', instructions='You are a helpful assistant.')
@@ -92,9 +92,7 @@ Because each `with_*` call returns a new `Agent`, you can build a base configura
 
 <!-- snippet: executable -->
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, Agora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 client = Agora(area=Area.US, app_id='your-app-id', app_certificate='your-app-certificate')
 
