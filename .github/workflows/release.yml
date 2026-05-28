@@ -1,0 +1,51 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, for example v1.4.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract release notes
+        run: |
+          TAG="${RELEASE_TAG}"
+          git rev-parse "$TAG" >/dev/null
+          awk -v tag="$TAG" '
+            index($0, "## [" tag "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' changelog.md > release_notes.md
+
+          if [ ! -s release_notes.md ]; then
+            echo "Release $TAG" > release_notes.md
+          fi
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${RELEASE_TAG}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file release_notes.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file release_notes.md
+          fi
