@@ -17,8 +17,6 @@ and multimodal flows (MLLM) for real-time audio processing.
 - [MLLM (Realtime / Multimodal)](#mllm-realtime--multimodal)
 - [Documentation](#documentation)
 - [Reference](#reference)
-- [Usage](#usage)
-- [Async Client](#async-client)
 - [Exception Handling](#exception-handling)
 - [Pagination](#pagination)
 - [Advanced](#advanced)
@@ -148,7 +146,7 @@ def start_conversation() -> str:
 
 ### Why no token or vendor key in the example?
 
-`Agora` generates the required ConvoAI REST auth and RTC join tokens automatically when you provide `app_id` and `app_certificate`. AgentKit then inspects the builder-provided vendor configs and infers the matching supported `preset` values for reseller-backed models, so you do not pass vendor API keys in this flow.
+`Agora` generates the required ConvoAI REST auth and RTC join tokens automatically when you provide `app_id` and `app_certificate`. AgentKit inspects the builder-provided vendor configs and infers Agora-managed configuration for supported models, so you do not pass vendor API keys in this flow.
 
 ### BYOK version of the same builder flow
 
@@ -187,7 +185,7 @@ Migrating from `agora-agent-server-sdk` on PyPI? Use `pip install agora-agents`;
 
 ## BYOK
 
-If you want to bring your own vendor credentials instead of using Agora-managed presets, use the BYOK guide:
+If you want to bring your own vendor credentials instead of using Agora-managed models, use the BYOK guide:
 
 - [BYOK Guide](./docs/guides/byok.md)
 
@@ -217,187 +215,6 @@ API reference documentation is available [here](https://docs.agora.io/en/convers
 
 A full reference for this library is available [here](https://github.com/AgoraIO-Conversational-AI/agent-server-sdk-python/blob/HEAD/./reference.md).
 
-## MLLM Flow (Multimodal)
-
-For real-time audio processing using OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok, use the MLLM (Multimodal Large Language Model) flow instead of the cascading ASR -> LLM -> TTS flow. MLLM mode does not require separate TTS, STT, or LLM vendors. See the [MLLM Overview](https://docs.agora.io/en/conversational-ai/models/mllm/overview) for more details.
-
-```python
-from agora_agent import Agora
-from agora_agent.agents import (
-    StartAgentsRequestProperties,
-    StartAgentsRequestPropertiesMllm,
-    StartAgentsRequestPropertiesMllmVendor,
-    StartAgentsRequestPropertiesTurnDetection,
-    StartAgentsRequestPropertiesTurnDetectionType,
-)
-
-client = Agora(
-    customer_id="YOUR_CUSTOMER_ID",
-    customer_secret="YOUR_CUSTOMER_SECRET",
-)
-
-client.agents.start(
-    appid="your_app_id",
-    name="mllm_agent",
-    properties=StartAgentsRequestProperties(
-        channel="channel_name",
-        token="your_token",
-        agent_rtc_uid="1001",
-        remote_rtc_uids=["1002"],
-        idle_timeout=120,
-        mllm=StartAgentsRequestPropertiesMllm(
-            enable=True,
-            url="wss://api.openai.com/v1/realtime",
-            api_key="<your_openai_api_key>",
-            vendor=StartAgentsRequestPropertiesMllmVendor.OPENAI,
-            params={
-                "model": "gpt-4o-realtime-preview",
-                "voice": "alloy",
-            },
-            input_modalities=["audio"],
-            output_modalities=["text", "audio"],
-            greeting_message="Hello! I'm ready to chat in real-time.",
-        ),
-        turn_detection=StartAgentsRequestPropertiesTurnDetection(
-            type=StartAgentsRequestPropertiesTurnDetectionType.SERVER_VAD,
-            threshold=0.5,
-            silence_duration_ms=500,
-        ),
-    ),
-)
-```
-
-
-## Usage
-
-Instantiate and use the client with the following:
-
-```python
-from agora_agent import Agora, MicrosoftTtsParams, Tts_Microsoft
-from agora_agent.agents import (
-    StartAgentsRequestProperties,
-    StartAgentsRequestPropertiesAsr,
-    StartAgentsRequestPropertiesLlm,
-    StartAgentsRequestPropertiesTurnDetection,
-    StartAgentsRequestPropertiesTurnDetectionConfig,
-    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
-)
-
-client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
-)
-client.agents.start(
-    appid="appid",
-    name="unique_name",
-    properties=StartAgentsRequestProperties(
-        channel="channel_name",
-        token="token",
-        agent_rtc_uid="1001",
-        remote_rtc_uids=["1002"],
-        idle_timeout=120,
-        asr=StartAgentsRequestPropertiesAsr(
-            language="en-US",
-        ),
-        tts=Tts_Microsoft(
-            params=MicrosoftTtsParams(
-                key="key",
-                region="region",
-                voice_name="voice_name",
-            ),
-        ),
-        llm=StartAgentsRequestPropertiesLlm(
-            url="https://api.openai.com/v1/chat/completions",
-            api_key="<your_llm_key>",
-            system_messages=[
-                {"role": "system", "content": "You are a helpful chatbot."}
-            ],
-            params={"model": "gpt-4o-mini"},
-            max_history=32,
-            greeting_message="Hello, how can I assist you today?",
-            failure_message="Please hold on a second.",
-        ),
-        turn_detection=StartAgentsRequestPropertiesTurnDetection(
-            config=StartAgentsRequestPropertiesTurnDetectionConfig(
-                end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
-                    mode="semantic",
-                ),
-            ),
-        ),
-    ),
-)
-```
-
-## Async Client
-
-The SDK also exports an `async` client so that you can make non-blocking calls to our API. Note that if you are constructing an Async httpx client class to pass into this client, use `httpx.AsyncClient()` instead of `httpx.Client()` (e.g. for the `httpx_client` parameter of this client).
-
-```python
-import asyncio
-
-from agora_agent import AsyncAgora, MicrosoftTtsParams, Tts_Microsoft
-from agora_agent.agents import (
-    StartAgentsRequestProperties,
-    StartAgentsRequestPropertiesAsr,
-    StartAgentsRequestPropertiesLlm,
-    StartAgentsRequestPropertiesTurnDetection,
-    StartAgentsRequestPropertiesTurnDetectionConfig,
-    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
-)
-
-client = AsyncAgora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
-)
-
-
-async def main() -> None:
-    await client.agents.start(
-        appid="appid",
-        name="unique_name",
-        properties=StartAgentsRequestProperties(
-            channel="channel_name",
-            token="token",
-            agent_rtc_uid="1001",
-            remote_rtc_uids=["1002"],
-            idle_timeout=120,
-            asr=StartAgentsRequestPropertiesAsr(
-                language="en-US",
-            ),
-            tts=Tts_Microsoft(
-                params=MicrosoftTtsParams(
-                    key="key",
-                    region="region",
-                    voice_name="voice_name",
-                ),
-            ),
-            llm=StartAgentsRequestPropertiesLlm(
-                url="https://api.openai.com/v1/chat/completions",
-                api_key="<your_llm_key>",
-                system_messages=[
-                    {"role": "system", "content": "You are a helpful chatbot."}
-                ],
-                params={"model": "gpt-4o-mini"},
-                max_history=32,
-                greeting_message="Hello, how can I assist you today?",
-                failure_message="Please hold on a second.",
-            ),
-            turn_detection=StartAgentsRequestPropertiesTurnDetection(
-                config=StartAgentsRequestPropertiesTurnDetectionConfig(
-                    end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
-                        mode="semantic",
-                    ),
-                ),
-            ),
-        ),
-    )
-
-
-asyncio.run(main())
-```
-
 ## Exception Handling
 
 When the API returns a non-success status code (4xx or 5xx response), a subclass of the following error
@@ -418,15 +235,15 @@ except ApiError as e:
 Paginated requests will return a `SyncPager` or `AsyncPager`, which can be used as generators for the underlying object.
 
 ```python
-from agora_agent import Agora
+from agora_agent import Agora, Area
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="your-app-id",
+    app_certificate="your-app-certificate",
 )
 response = client.agents.list(
-    appid="appid",
+    appid=client.app_id,
 )
 for item in response:
     yield item

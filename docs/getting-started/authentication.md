@@ -46,41 +46,6 @@ session = agent.create_session(
 print(client.auth_mode)  # "app-credentials"
 ```
 
-## Other auth modes
+## Legacy auth modes
 
-The SDK also supports pre-minted REST tokens and HTTP Basic Auth for legacy integrations. These are not recommended for new applications.
-
-### Token auth (`auth_token`)
-
-Pass a pre-minted Agora REST token on the client. You must also supply the RTC join token on `create_session(..., token=...)`.
-
-```python
-client = Agora(
-    area=Area.US,
-    app_id="your-app-id",
-    app_certificate="your-app-certificate",
-    auth_token="your-rest-auth-token",
-)
-
-session = agent.create_session(
-    client,
-    channel="room-123",
-    agent_uid="1",
-    remote_uids=["100"],
-    token="your-rtc-join-token",
-)
-```
-
-### Basic Auth (`customer_id` + `customer_secret`)
-
-Uses HTTP Basic Auth with Customer ID and Secret from Agora Console. Avoid for new integrations — the same credentials are sent on every request instead of minting fresh tokens.
-
-```python
-client = Agora(
-    area=Area.US,
-    app_id="your-app-id",
-    app_certificate="your-app-certificate",
-    customer_id="your-customer-id",
-    customer_secret="your-customer-secret",
-)
-```
+The generated client still supports pre-minted REST tokens and HTTP Basic Auth for legacy integrations. Do not use those modes for new session integrations. Use app credentials so AgentKit can mint short-lived ConvoAI REST auth and RTC join tokens for each session.
