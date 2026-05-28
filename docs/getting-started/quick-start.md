@@ -6,7 +6,7 @@ description: Build and run your first Agora Conversational AI agent in Python wi
 
 # Quick Start
 
-This guide uses the recommended onboarding path:
+This guide starts with the standard AgentKit path:
 
 - `app_id`, `app_certificate`, and `area` on `Agora` or `AsyncAgora`
 - the `Agent` builder with `.with_stt()`, `.with_llm()`, and `.with_tts()`
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
 1. `Agora` runs in app-credentials mode when you pass `app_id` and `app_certificate` only.
 2. `Agent` holds reusable behavior such as instructions, greeting, and history settings.
-3. Vendor classes on the builder select the ASR, LLM, and TTS stack. AgentKit infers Agora-managed configuration when credentials are omitted for supported models.
+3. Vendor classes on the builder select the ASR, LLM, and TTS stack. Leave vendor credentials unset for supported Agora-managed models, or provide keys when you want BYOK.
 4. `session.start()` generates the required auth tokens and returns the unique agent session ID.
 
 ## Async applications
@@ -70,7 +70,7 @@ For `asyncio` services, switch to `AsyncAgora` and `await` the session methods. 
 
 ## When to use BYOK instead
 
-Use the builder without vendor API keys when you want the fastest path with Agora-managed models.
+Use the builder without vendor API keys when you are using supported Agora-managed models.
 
 Use BYOK when you need to:
 

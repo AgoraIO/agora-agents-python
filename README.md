@@ -7,38 +7,19 @@ The Agora Conversational AI SDK provides convenient access to the Agora Conversa
 enabling you to build voice-powered AI agents with support for both cascading flows (ASR -> LLM -> TTS) 
 and multimodal flows (MLLM) for real-time audio processing.
 
-
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [BYOK](#byok)
-- [MLLM (Realtime / Multimodal)](#mllm-realtime--multimodal)
-- [Documentation](#documentation)
-- [Reference](#reference)
-- [Exception Handling](#exception-handling)
-- [Pagination](#pagination)
-- [Advanced](#advanced)
-  - [Access Raw Response Data](#access-raw-response-data)
-  - [Retries](#retries)
-  - [Timeouts](#timeouts)
-  - [Custom Client](#custom-client)
-- [Contributing](#contributing)
-
-## Requirements
-
-- Python 3.8+
-
-## Installation
+## Install
 
 ```sh
 pip install agora-agents
 ```
 
+## Requirements
+
+- Python 3.8+
+
 ## Quick Start
 
-The recommended onboarding path is a server-side builder flow: define the agent once, configure vendors on the builder, and let AgentKit infer Agora-managed configuration when credentials are omitted.
+Start with the `Agent` builder: create a client with app credentials, choose your ASR, LLM, and TTS providers, then start a session. Omit vendor API keys for supported Agora-managed models, or provide keys when you want BYOK.
 
 ```python
 import os
@@ -146,11 +127,11 @@ def start_conversation() -> str:
 
 ### Why no token or vendor key in the example?
 
-`Agora` generates the required ConvoAI REST auth and RTC join tokens automatically when you provide `app_id` and `app_certificate`. AgentKit inspects the builder-provided vendor configs and infers Agora-managed configuration for supported models, so you do not pass vendor API keys in this flow.
+`Agora` generates the required ConvoAI REST auth and RTC join tokens automatically when you provide `app_id` and `app_certificate`. For supported Agora-managed models, leave vendor API keys unset; provide keys when you want BYOK.
 
-### BYOK version of the same builder flow
+### BYOK version
 
-Use the same `Agent` builder shape, but provide credentials explicitly when you want vendor-managed billing and routing instead of Agora-managed presets.
+Use the same `Agent` builder shape, but provide credentials explicitly when you want vendor-managed billing and routing instead of Agora-managed models.
 
 ```python
 agent = Agent(
@@ -232,7 +213,7 @@ except ApiError as e:
 
 ## Pagination
 
-Paginated requests will return a `SyncPager` or `AsyncPager`, which can be used as generators for the underlying object.
+Paginated requests will return a `SyncPager` or `AsyncPager`, which can be used as generators for the returned object.
 
 ```python
 from agora_agent import Agora, Area
@@ -276,15 +257,15 @@ client = Agora(
 )
 response = client.agents.with_raw_response.start(...)
 print(response.headers)  # access the response headers
-print(response.data)  # access the underlying object
+print(response.data)  # access the returned object
 pager = client.agents.list(...)
 print(pager.response)  # access the typed response for the first page
 for item in pager:
-    print(item)  # access the underlying object(s)
+    print(item)  # access the returned object(s)
 for page in pager.iter_pages():
     print(page.response)  # access the typed response for each page
     for item in page:
-        print(item)  # access the underlying object(s)
+        print(item)  # access the returned object(s)
 ```
 
 ### Retries

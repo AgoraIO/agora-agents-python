@@ -25,6 +25,11 @@ Used with `agent.with_llm()` for the cascading flow (ASR → LLM → TTS).
 | `AzureOpenAI` | Azure OpenAI | `api_key`, `endpoint`, `deployment_name` |
 | `Anthropic` | Anthropic | `api_key` |
 | `Gemini` | Google Gemini | `api_key` |
+| `Groq` | Groq | `api_key` |
+| `VertexAILLM` | Google Vertex AI | `api_key`, `project_id`, `location` |
+| `AmazonBedrock` | Amazon Bedrock | `api_key`, `url`, `model` |
+| `Dify` | Dify | `api_key`, `url` |
+| `CustomLLM` | OpenAI-compatible LLM | `api_key`, `base_url`, `model` |
 
 <!-- snippet: executable -->
 ```python

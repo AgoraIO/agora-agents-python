@@ -131,6 +131,18 @@ from agora_agent import Gemini
 llm = Gemini(api_key='your-google-key', model='gemini-2.0-flash-exp')
 ```
 
+### Other LLM vendors
+
+The SDK also includes named helpers for the remaining Agora-supported LLM providers. These helpers choose the correct request format internally.
+
+| Class | Provider | Key parameters |
+|---|---|---|
+| `Groq` | Groq | `api_key`, `model`, `base_url?` |
+| `VertexAILLM` | Google Vertex AI | `api_key`, `model`, `project_id`, `location`, `url?` |
+| `AmazonBedrock` | Amazon Bedrock | `api_key`, `url`, `model` |
+| `Dify` | Dify | `api_key`, `url`, `user?`, `conversation_id?` |
+| `CustomLLM` | OpenAI-compatible LLM | `api_key`, `model`, `base_url` |
+
 ---
 
 ## TTS Vendors

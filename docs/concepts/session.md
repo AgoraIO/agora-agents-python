@@ -145,13 +145,13 @@ session.off('started', on_started)
 | `session.app_id` | `str` | The Agora App ID |
 | `session.raw` | `AgentsClient` | Direct access to the Fern-generated agents client |
 
-## `session.raw` — Escape Hatch
+## Direct API access with `session.raw`
 
-If the agentkit does not yet expose a method for a new API endpoint, use `session.raw` to access the underlying Fern-generated `AgentsClient` (sync) or `AsyncAgentsClient` (async) directly:
+If AgentKit does not yet expose a method for a new API endpoint, use `session.raw` to access the generated `AgentsClient` (sync) or `AsyncAgentsClient` (async) directly:
 
 <!-- snippet: fragment -->
 ```python
-# Access any Fern-generated method
+# Access any generated REST method
 response = session.raw.list(session.app_id)
 ```
 
