@@ -14,6 +14,7 @@ README.md
 # Compatibility shim and CI/release workflows are managed manually
 compat/
 .github/workflows/
+.github/workflows/release.yml
 
 # Dependency manifests/lockfiles are managed manually
 pyproject.toml
