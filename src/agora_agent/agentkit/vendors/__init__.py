@@ -12,7 +12,7 @@ from .base import (
     SampleRate,
 )
 from .avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
-from .llm import Anthropic, AzureOpenAI, Gemini, OpenAI
+from .llm import AmazonBedrock, Anthropic, AzureOpenAI, CustomLLM, Dify, Gemini, Groq, OpenAI, VertexAILLM
 from .mllm import GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
     AmazonSTT,
@@ -57,6 +57,11 @@ __all__ = [
     "AzureOpenAI",
     "Anthropic",
     "Gemini",
+    "Groq",
+    "VertexAILLM",
+    "AmazonBedrock",
+    "Dify",
+    "CustomLLM",
     "ElevenLabsTTS",
     "MicrosoftTTS",
     "OpenAITTS",
