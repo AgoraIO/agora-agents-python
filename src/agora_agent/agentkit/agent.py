@@ -214,6 +214,44 @@ ThinkResponse = AgentThinkAgentManagementResponse
 
 from .token import generate_convo_ai_token, _parse_numeric_uid, _validate_expires_in
 
+InteractionLanguage = typing_extensions.Literal[
+    "ar-EG",
+    "ar-JO",
+    "ar-SA",
+    "ar-AE",
+    "bn-IN",
+    "zh-CN",
+    "zh-HK",
+    "zh-TW",
+    "nl-NL",
+    "en-IN",
+    "en-US",
+    "fil-PH",
+    "fr-FR",
+    "de-DE",
+    "gu-IN",
+    "he-IL",
+    "hi-IN",
+    "id-ID",
+    "it-IT",
+    "ja-JP",
+    "kn-IN",
+    "ko-KR",
+    "ms-MY",
+    "fa-IR",
+    "pt-PT",
+    "ru-RU",
+    "es-ES",
+    "ta-IN",
+    "te-IN",
+    "th-TH",
+    "tr-TR",
+    "vi-VN",
+]
+
+DEFAULT_INTERACTION_LANGUAGE: InteractionLanguage = "en-US"
+_INTERACTION_LANGUAGES = set(InteractionLanguage.__args__)
+
 
 def _dump_optional_model(value: typing.Any) -> typing.Any:
     if hasattr(value, "model_dump"):
@@ -223,11 +261,21 @@ def _dump_optional_model(value: typing.Any) -> typing.Any:
     return value
 
 
+def _is_interaction_language(value: typing.Any) -> bool:
+    return isinstance(value, str) and value in _INTERACTION_LANGUAGES
+
+
 class Agent:
     """A reusable agent definition.
 
     Use the fluent builder methods (.with_llm(), .with_tts(), .with_stt(), .with_mllm())
     to configure vendor settings after construction.
+
+    Deprecated:
+        The Agent-level ``instructions``, ``greeting``, ``failure_message``,
+        ``max_history``, and ``greeting_configs`` convenience fields are kept
+        for compatibility. Configure those values on the LLM or MLLM vendor
+        instead.
 
     Examples
     --------
@@ -251,6 +299,7 @@ class Agent:
         sal: typing.Optional[SalConfig] = None,
         advanced_features: typing.Optional[AdvancedFeatures] = None,
         parameters: typing.Optional[typing.Union[SessionParams, SessionParamsInput]] = None,
+        interaction_language: typing.Optional[InteractionLanguage] = None,
         greeting: typing.Optional[str] = None,
         failure_message: typing.Optional[str] = None,
         max_history: typing.Optional[int] = None,
@@ -277,6 +326,7 @@ class Agent:
         self._sal = sal
         self._advanced_features = advanced_features
         self._parameters = parameters
+        self._interaction_language = interaction_language
         self._geofence = geofence
         self._labels = labels
         self._rtc = rtc
@@ -308,6 +358,16 @@ class Agent:
     def with_stt(self, vendor: BaseSTT) -> "Agent":
         new_agent = self._clone()
         new_agent._stt = vendor.to_config()
+        return new_agent
+
+    def with_interaction_language(self, language: InteractionLanguage) -> "Agent":
+        """Returns a new Agent with the Agora interaction language.
+
+        This serializes to ``asr.language``. Vendor-specific language values
+        remain under ``asr.params``, for example ``asr.params.language``.
+        """
+        new_agent = self._clone()
+        new_agent._interaction_language = language
         return new_agent
 
     def with_mllm(self, vendor: BaseMLLM) -> "Agent":
@@ -369,17 +429,19 @@ class Agent:
         return new_agent
 
     def with_instructions(self, instructions: str) -> "Agent":
+        """Deprecated. Configure system messages on the LLM vendor instead."""
         new_agent = self._clone()
         new_agent._instructions = instructions
         return new_agent
 
     def with_greeting(self, greeting: str) -> "Agent":
+        """Deprecated. Configure the greeting on the LLM or MLLM vendor instead."""
         new_agent = self._clone()
         new_agent._greeting = greeting
         return new_agent
 
     def with_greeting_configs(self, configs: LlmGreetingConfigs) -> "Agent":
-        """Returns a new Agent with greeting playback configuration."""
+        """Deprecated. Configure greeting playback on the LLM vendor instead."""
         new_agent = self._clone()
         new_agent._greeting_configs = configs
         return new_agent
@@ -448,16 +510,13 @@ class Agent:
         return new_agent
 
     def with_failure_message(self, message: str) -> "Agent":
-        """Returns a new Agent with the specified failure message.
-
-        The failure message is played via TTS when the LLM call fails.
-        """
+        """Deprecated. Configure the failure message on the LLM or MLLM vendor instead."""
         new_agent = self._clone()
         new_agent._failure_message = message
         return new_agent
 
     def with_max_history(self, max_history: int) -> "Agent":
-        """Returns a new Agent with the specified maximum conversation history length."""
+        """Deprecated. Configure max history on the LLM vendor instead."""
         new_agent = self._clone()
         new_agent._max_history = max_history
         return new_agent
@@ -607,6 +666,10 @@ class Agent:
         return self._filler_words
 
     @property
+    def interaction_language(self) -> typing.Optional[InteractionLanguage]:
+        return self._interaction_language
+
+    @property
     def config(self) -> typing.Dict[str, typing.Any]:
         return {
             "name": self._name,
@@ -624,6 +687,7 @@ class Agent:
             "avatar": self._avatar,
             "advanced_features": self._advanced_features,
             "parameters": self._parameters,
+            "interaction_language": self._interaction_language,
             "geofence": self._geofence,
             "labels": self._labels,
             "rtc": self._rtc,
@@ -804,6 +868,8 @@ class Agent:
                 base_kwargs["mllm"] = mllm_config
             return StartAgentsRequestProperties(**base_kwargs)
 
+        base_kwargs["asr"] = self._resolve_asr_config()
+
         if skip_vendor_validation:
             return StartAgentsRequestProperties(**base_kwargs)
 
@@ -829,10 +895,17 @@ class Agent:
 
         base_kwargs["llm"] = llm_config
         base_kwargs["tts"] = self._tts
-        if self._stt is not None:
-            base_kwargs["asr"] = self._stt
 
         return StartAgentsRequestProperties(**base_kwargs)
+
+    def _resolve_asr_config(self) -> typing.Dict[str, typing.Any]:
+        asr_config = dict(self._stt or {})
+        existing_language = asr_config.get("language")
+        language = self._interaction_language
+        if language is None:
+            language = existing_language if _is_interaction_language(existing_language) else DEFAULT_INTERACTION_LANGUAGE
+        asr_config["language"] = language
+        return asr_config
 
     def _clone(self) -> "Agent":
         new_agent = Agent.__new__(Agent)
@@ -849,6 +922,7 @@ class Agent:
         new_agent._sal = self._sal
         new_agent._advanced_features = self._advanced_features
         new_agent._parameters = self._parameters
+        new_agent._interaction_language = self._interaction_language
         new_agent._instructions = self._instructions
         new_agent._greeting = self._greeting
         new_agent._failure_message = self._failure_message
