@@ -219,7 +219,7 @@ class AmazonTTSOptions(BaseModel):
     secret_key: str = Field(..., description="AWS secret key")
     region: str = Field(..., description="AWS region (e.g., us-east-1)")
     voice_id: str = Field(..., description="Amazon Polly voice ID")
-    engine: Optional[str] = Field(default=None, description="Amazon Polly engine type")
+    engine: str = Field(..., description="Amazon Polly engine type")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
 class AmazonTTS(BaseTTS):
@@ -236,9 +236,8 @@ class AmazonTTS(BaseTTS):
             "aws_secret_access_key": self.options.secret_key,
             "region_name": self.options.region,
             "voice": self.options.voice_id,
+            "engine": self.options.engine,
         }
-        if self.options.engine is not None:
-            params["engine"] = self.options.engine
 
         result: Dict[str, Any] = {"vendor": "amazon", "params": params}
         if self.options.skip_patterns is not None:
@@ -329,7 +328,7 @@ class RimeTTSOptions(BaseModel):
 
     key: str = Field(..., description="Rime API key")
     speaker: str = Field(..., description="Speaker ID")
-    model_id: Optional[str] = Field(default=None, description="Model ID")
+    model_id: str = Field(..., description="Model ID")
     base_url: Optional[str] = Field(default=None, description="WebSocket URL")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
@@ -345,10 +344,8 @@ class RimeTTS(BaseTTS):
         params: Dict[str, Any] = {
             "api_key": self.options.key,
             "speaker": self.options.speaker,
+            "modelId": self.options.model_id,
         }
-
-        if self.options.model_id is not None:
-            params["modelId"] = self.options.model_id
         if self.options.base_url is not None:
             params["base_url"] = self.options.base_url
 
@@ -363,7 +360,7 @@ class FishAudioTTSOptions(BaseModel):
 
     key: str = Field(..., description="Fish Audio API key")
     reference_id: str = Field(..., description="Reference ID")
-    backend: Optional[str] = Field(default=None, description="Backend")
+    backend: str = Field(..., description="Backend")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
 class FishAudioTTS(BaseTTS):
@@ -378,9 +375,8 @@ class FishAudioTTS(BaseTTS):
         params: Dict[str, Any] = {
             "api_key": self.options.key,
             "reference_id": self.options.reference_id,
+            "backend": self.options.backend,
         }
-        if self.options.backend is not None:
-            params["backend"] = self.options.backend
 
         result: Dict[str, Any] = {"vendor": "fishaudio", "params": params}
         if self.options.skip_patterns is not None:
@@ -468,8 +464,8 @@ class MurfTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Murf API key")
-    voice_id: str = Field(..., description="Voice ID (e.g., 'Ariana', 'Natalie', 'Ken')")
-    base_url: str = Field(..., description="WebSocket endpoint")
+    voice_id: Optional[str] = Field(default=None, description="Voice ID (e.g., 'Ariana', 'Natalie', 'Ken')")
+    base_url: Optional[str] = Field(default=None, description="WebSocket endpoint")
     style: Optional[str] = Field(default=None, description="Voice style (e.g., 'Angry', 'Sad', 'Conversational', 'Newscast')")
     locale: Optional[str] = Field(default=None, description="Voice locale")
     rate: Optional[float] = Field(default=None, description="Speech rate")
@@ -487,12 +483,12 @@ class MurfTTS(BaseTTS):
         return None
 
     def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {
-            "api_key": self.options.key,
-            "base_url": self.options.base_url,
-            "voiceId": self.options.voice_id,
-        }
+        params: Dict[str, Any] = {"api_key": self.options.key}
 
+        if self.options.base_url is not None:
+            params["base_url"] = self.options.base_url
+        if self.options.voice_id is not None:
+            params["voiceId"] = self.options.voice_id
         if self.options.style is not None:
             params["style"] = self.options.style
         if self.options.locale is not None:

@@ -47,3 +47,7 @@ def test_tts_vendor_params_match_generated_core_shapes() -> None:
         "base_url": "wss://murf.example/ws",
         "voiceId": "Ariana",
     }
+
+    assert MurfTTS(key="murf-key").to_config()["params"] == {
+        "api_key": "murf-key",
+    }
