@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.1.0] — 2026-06-02
+
+### Added
+
+- **ASR interaction language** — AgentKit now manages Agora `asr.language` through `interaction_language` / `Agent.with_interaction_language()`, validates it against the supported BCP-47 interaction language list, and sends the default `en-US` when no language is provided.
+- **Provider parameter parity** — ASR, LLM, MLLM, TTS, and avatar wrappers expose typed provider parameters plus passthrough fields where the generated core supports additional properties.
+
+### Changed
+
+- **Generated core refresh** — Regenerated core types from the v2.1 API schema.
+- **Deepgram TTS passthrough** — `DeepgramTTS` now uses `additional_params` for passthrough fields and flattens them into `tts.params`; the removed nested `params.params` shape is no longer documented or emitted.
+- **OpenAI TTS** — Docs and tests now reflect the generated core shape, including `instructions` and `speed` under `tts.params`.
+- **TTS provider docs** — Updated TTS provider reference tables to match implemented wrapper fields and generated core params.
+
+### Fixed
+
+- **Managed-provider validation** — AgentKit validation now distinguishes preset-backed providers from BYOK providers so required provider fields are only required when credentials are caller-supplied.
+- **ASR language separation** — Provider-specific STT language values remain under `asr.params`, while Agora interaction language is emitted separately as `asr.language`.
+
 ## [v2.0.0] — 2026-05-21
 
 ### Added
