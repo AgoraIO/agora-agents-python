@@ -129,7 +129,7 @@ class MicrosoftSTTOptions(BaseModel):
 
     key: str = Field(..., description="Azure subscription key")
     region: str = Field(..., description="Azure region (e.g., eastus)")
-    language: Optional[str] = Field(default=None, description="Language code (e.g., en-US)")
+    language: str = Field(..., description="Language code (e.g., en-US)")
     interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
@@ -175,15 +175,14 @@ class OpenAISTT(BaseSTT):
         params: Dict[str, Any] = dict(self.options.additional_params or {})
         params["api_key"] = self.options.api_key
 
-        transcription = dict(self.options.input_audio_transcription or {})
+        transcription = {"model": "whisper-1", **(self.options.input_audio_transcription or {})}
         if self.options.model is not None:
             transcription["model"] = self.options.model
         if self.options.prompt is not None:
             transcription["prompt"] = self.options.prompt
         if self.options.language is not None:
             transcription["language"] = self.options.language
-        if transcription:
-            params["input_audio_transcription"] = transcription
+        params["input_audio_transcription"] = transcription
 
         config: Dict[str, Any] = {
             "vendor": "openai",
@@ -201,7 +200,7 @@ class GoogleSTTOptions(BaseModel):
     project_id: str = Field(..., description="Google Cloud project ID")
     location: str = Field(..., description="Google Cloud region")
     adc_credentials_string: str = Field(..., description="Google service account credentials JSON string")
-    language: Optional[str] = Field(default=None, description="Language code (e.g., en-US)")
+    language: str = Field(..., description="Language code (e.g., en-US)")
     interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     model: Optional[str] = Field(default=None, description="Recognition model")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -239,7 +238,7 @@ class AmazonSTTOptions(BaseModel):
     access_key: str = Field(..., description="AWS Access Key ID")
     secret_key: str = Field(..., description="AWS Secret Access Key")
     region: str = Field(..., description="AWS region (e.g., us-east-1)")
-    language: Optional[str] = Field(default=None, description="Language code")
+    language: str = Field(..., description="Language code")
     interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
@@ -271,7 +270,7 @@ class AssemblyAISTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="AssemblyAI API key")
-    language: Optional[str] = Field(default=None, description="Language code")
+    language: str = Field(..., description="Language code")
     interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     uri: Optional[str] = Field(default=None, description="AssemblyAI streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)

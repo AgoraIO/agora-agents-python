@@ -2,12 +2,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ...agents.types.start_agents_request_properties_llm_greeting_configs import (
-    StartAgentsRequestPropertiesLlmGreetingConfigs,
-)
 from .base import BaseLLM
 
-LlmGreetingConfigs = Union[StartAgentsRequestPropertiesLlmGreetingConfigs, Dict[str, Any]]
+LlmGreetingConfigs = Dict[str, Any]
 
 
 def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -375,8 +372,11 @@ class VertexAILLM(BaseLLM):
 class AmazonBedrockOptions(AnthropicOptions):
     model_config = ConfigDict(extra="forbid")
 
-    api_key: str = Field(..., description="Amazon Bedrock API key or gateway token")
-    url: str = Field(..., description="Amazon Bedrock proxy or runtime endpoint")
+    access_key: str = Field(..., description="AWS access key ID")
+    secret_key: str = Field(..., description="AWS secret access key")
+    region: str = Field(..., description="AWS region")
+    api_key: Optional[str] = Field(default=None, description="Unused; kept for AnthropicOptions compatibility")
+    url: Optional[str] = Field(default=None, description="Unused; kept for AnthropicOptions compatibility")
 
 
 class AmazonBedrock(BaseLLM):
@@ -384,7 +384,44 @@ class AmazonBedrock(BaseLLM):
         self.options = AmazonBedrockOptions(**kwargs)
 
     def to_config(self) -> Dict[str, Any]:
-        return Anthropic(**_dump_optional_model(self.options)).to_config()
+        params: Dict[str, Any] = dict(self.options.params or {})
+        if self.options.max_tokens is not None:
+            params["max_tokens"] = self.options.max_tokens
+        if self.options.temperature is not None:
+            params["temperature"] = self.options.temperature
+        if self.options.top_p is not None:
+            params["top_p"] = self.options.top_p
+
+        config: Dict[str, Any] = {
+            "access_key": self.options.access_key,
+            "secret_key": self.options.secret_key,
+            "region": self.options.region,
+            "model": self.options.model,
+            "params": params,
+            "style": "bedrock",
+            "input_modalities": self.options.input_modalities or ["text"],
+        }
+        if self.options.system_messages is not None:
+            config["system_messages"] = self.options.system_messages
+        if self.options.headers is not None:
+            config["headers"] = self.options.headers
+        if self.options.greeting_message is not None:
+            config["greeting_message"] = self.options.greeting_message
+        if self.options.failure_message is not None:
+            config["failure_message"] = self.options.failure_message
+        if self.options.output_modalities is not None:
+            config["output_modalities"] = self.options.output_modalities
+        if self.options.greeting_configs is not None:
+            config["greeting_configs"] = _dump_optional_model(self.options.greeting_configs)
+        if self.options.template_variables is not None:
+            config["template_variables"] = self.options.template_variables
+        if self.options.vendor is not None:
+            config["vendor"] = self.options.vendor
+        if self.options.mcp_servers is not None:
+            config["mcp_servers"] = _ensure_mcp_transport(self.options.mcp_servers)
+        if self.options.max_history is not None:
+            config["max_history"] = self.options.max_history
+        return config
 
 
 class DifyOptions(BaseModel):

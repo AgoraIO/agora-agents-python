@@ -8,14 +8,8 @@ if typing.TYPE_CHECKING:
     from .agent_session import AgentSession, AsyncAgentSession
 
 from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
-from ..agents.types.start_agents_request_properties_asr import StartAgentsRequestPropertiesAsr
-from ..agents.types.start_agents_request_properties_asr_vendor import StartAgentsRequestPropertiesAsrVendor
 from ..agents.types.start_agents_request_properties_avatar import StartAgentsRequestPropertiesAvatar
 from ..agents.types.start_agents_request_properties_avatar_vendor import StartAgentsRequestPropertiesAvatarVendor
-from ..agents.types.start_agents_request_properties_llm import StartAgentsRequestPropertiesLlm
-from ..agents.types.start_agents_request_properties_llm_style import StartAgentsRequestPropertiesLlmStyle
-from ..agents.types.start_agents_request_properties_mllm import StartAgentsRequestPropertiesMllm
-from ..agents.types.start_agents_request_properties_mllm_vendor import StartAgentsRequestPropertiesMllmVendor
 from ..agents.types.update_agents_request_properties import UpdateAgentsRequestProperties
 from ..agents.types.get_agents_response import GetAgentsResponse
 from ..agents.types.list_agents_response import ListAgentsResponse
@@ -52,11 +46,6 @@ from ..agents.types.start_agents_request_properties_parameters_data_channel impo
 from ..agents.types.start_agents_request_properties_parameters_audio_scenario import StartAgentsRequestPropertiesParametersAudioScenario
 from ..agents.types.start_agents_request_properties_interruption import StartAgentsRequestPropertiesInterruption
 from ..agents.types.start_agents_request_properties_interruption_mode import StartAgentsRequestPropertiesInterruptionMode
-from ..agents.types.start_agents_request_properties_mllm_turn_detection import StartAgentsRequestPropertiesMllmTurnDetection
-from ..agents.types.start_agents_request_properties_mllm_turn_detection_mode import StartAgentsRequestPropertiesMllmTurnDetectionMode
-from ..agents.types.start_agents_request_properties_llm_greeting_configs import StartAgentsRequestPropertiesLlmGreetingConfigs
-from ..agents.types.start_agents_request_properties_llm_greeting_configs_mode import StartAgentsRequestPropertiesLlmGreetingConfigsMode
-from ..agents.types.start_agents_request_properties_llm_mcp_servers_item import StartAgentsRequestPropertiesLlmMcpServersItem
 from ..agents.types.start_agents_request_properties_geofence import StartAgentsRequestPropertiesGeofence
 from ..agents.types.start_agents_request_properties_rtc import StartAgentsRequestPropertiesRtc
 from ..agents.types.start_agents_request_properties_advanced_features import StartAgentsRequestPropertiesAdvancedFeatures
@@ -67,6 +56,13 @@ from ..agents.types.start_agents_request_properties_filler_words_content import 
 from ..agents.types.start_agents_request_properties_filler_words_content_static_config import StartAgentsRequestPropertiesFillerWordsContentStaticConfig
 from ..agents.types.start_agents_request_properties_filler_words_content_static_config_selection_rule import StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule
 from ..types.tts import Tts
+from ..types.asr import Asr
+from ..types.llm import Llm
+from ..types.llm_style import LlmStyle as GeneratedLlmStyle
+from ..types.mllm import Mllm
+from ..types.mllm_turn_detection import MllmTurnDetection
+from ..types.mllm_turn_detection_mode import MllmTurnDetectionMode as GeneratedMllmTurnDetectionMode
+from ..types.mllm_vendor import MllmVendor as GeneratedMllmVendor
 from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
     AgentThinkAgentManagementRequestOnListeningAction,
 )
@@ -82,14 +78,14 @@ from ..agent_management.types.agent_think_agent_management_response import (
 from .vendors.base import BaseAvatar, BaseLLM, BaseMLLM, BaseSTT, BaseTTS
 
 # Top-level aliases
-LlmConfig = StartAgentsRequestPropertiesLlm
-LlmStyle = StartAgentsRequestPropertiesLlmStyle
-SttConfig = StartAgentsRequestPropertiesAsr
+LlmConfig = Llm
+LlmStyle = GeneratedLlmStyle
+SttConfig = Asr
 AsrConfig = SttConfig
-SttVendor = StartAgentsRequestPropertiesAsrVendor
+SttVendor = typing.Any
 TtsConfig = Tts
-MllmConfig = StartAgentsRequestPropertiesMllm
-MllmVendor = StartAgentsRequestPropertiesMllmVendor
+MllmConfig = Mllm
+MllmVendor = GeneratedMllmVendor
 AvatarConfig = StartAgentsRequestPropertiesAvatar
 AvatarVendor = StartAgentsRequestPropertiesAvatarVendor
 TurnDetectionConfig = StartAgentsRequestPropertiesTurnDetection
@@ -133,8 +129,8 @@ ParametersDataChannel = StartAgentsRequestPropertiesParametersDataChannel
 ParametersAudioScenario = StartAgentsRequestPropertiesParametersAudioScenario
 InterruptionConfig = StartAgentsRequestPropertiesInterruption
 InterruptionMode = StartAgentsRequestPropertiesInterruptionMode
-MllmTurnDetectionConfig = StartAgentsRequestPropertiesMllmTurnDetection
-MllmTurnDetectionMode = StartAgentsRequestPropertiesMllmTurnDetectionMode
+MllmTurnDetectionConfig = MllmTurnDetection
+MllmTurnDetectionMode = GeneratedMllmTurnDetectionMode
 AgentConfig = StartAgentsRequestProperties
 AgentConfigUpdate = UpdateAgentsRequestProperties
 SessionInfo = GetAgentsResponse
@@ -192,9 +188,9 @@ class SessionOptions(typing_extensions.TypedDict, total=False):
     warn: typing.Callable[[str], None]
 
 # LLM sub-type aliases
-LlmGreetingConfigs = StartAgentsRequestPropertiesLlmGreetingConfigs
-LlmGreetingConfigsMode = StartAgentsRequestPropertiesLlmGreetingConfigsMode
-McpServersItem = StartAgentsRequestPropertiesLlmMcpServersItem
+LlmGreetingConfigs = typing.Dict[str, typing.Any]
+LlmGreetingConfigsMode = typing.Any
+McpServersItem = typing.Dict[str, typing.Any]
 
 # Additional top-level config aliases
 GeofenceConfig = StartAgentsRequestPropertiesGeofence

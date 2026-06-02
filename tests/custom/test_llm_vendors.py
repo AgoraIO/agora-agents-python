@@ -34,16 +34,19 @@ def test_vertex_ai_llm_includes_project_routing() -> None:
     assert config["params"]["location"] == "us-central1"
 
 
-def test_amazon_bedrock_serializes_as_anthropic_style() -> None:
+def test_amazon_bedrock_serializes_as_bedrock_style() -> None:
     config = AmazonBedrock(
-        api_key="bedrock-key",
-        url="https://bedrock.example.com/messages",
+        access_key="aws-access",
+        secret_key="aws-secret",
+        region="us-east-1",
         model="anthropic.claude-3-5-sonnet-20241022-v2:0",
     ).to_config()
 
-    assert config["api_key"] == "bedrock-key"
-    assert config["style"] == "anthropic"
-    assert config["params"]["model"] == "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    assert config["access_key"] == "aws-access"
+    assert config["secret_key"] == "aws-secret"
+    assert config["region"] == "us-east-1"
+    assert config["model"] == "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    assert config["style"] == "bedrock"
 
 
 def test_dify_serializes_conversation_fields() -> None:

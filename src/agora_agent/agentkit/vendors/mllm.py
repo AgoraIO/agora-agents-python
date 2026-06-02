@@ -2,12 +2,10 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ...agents.types.start_agents_request_properties_mllm_turn_detection import (
-    StartAgentsRequestPropertiesMllmTurnDetection,
-)
+from ...types.mllm_turn_detection import MllmTurnDetection
 from .base import BaseMLLM
 
-MllmTurnDetectionConfig = StartAgentsRequestPropertiesMllmTurnDetection
+MllmTurnDetectionConfig = MllmTurnDetection
 
 
 class OpenAIRealtimeOptions(BaseModel):
@@ -15,6 +13,9 @@ class OpenAIRealtimeOptions(BaseModel):
 
     api_key: str = Field(..., description="OpenAI API key")
     model: Optional[str] = Field(default=None, description="Model name (e.g., gpt-4o-realtime-preview)")
+    voice: Optional[str] = Field(default=None, description="Voice identifier")
+    instructions: Optional[str] = Field(default=None, description="System instructions")
+    input_audio_transcription: Optional[Dict[str, Any]] = Field(default=None, description="Audio transcription settings")
     url: Optional[str] = Field(default=None, description="WebSocket URL")
     greeting_message: Optional[str] = Field(default=None, description="Agent greeting message")
     input_modalities: Optional[List[str]] = Field(default=None, description="Input modalities")
@@ -36,13 +37,25 @@ class OpenAIRealtime(BaseMLLM):
 
         if self.options.url is not None:
             config["url"] = self.options.url
-        if self.options.model is not None:
-            params = {"model": self.options.model}
+        if (
+            self.options.model is not None
+            or self.options.params is not None
+            or self.options.voice is not None
+            or self.options.instructions is not None
+            or self.options.input_audio_transcription is not None
+        ):
+            params = {}
+            if self.options.model is not None:
+                params["model"] = self.options.model
             if self.options.params is not None:
                 params.update(self.options.params)
+            if self.options.voice is not None:
+                params["voice"] = self.options.voice
+            if self.options.instructions is not None:
+                params["instructions"] = self.options.instructions
+            if self.options.input_audio_transcription is not None:
+                params["input_audio_transcription"] = self.options.input_audio_transcription
             config["params"] = params
-        elif self.options.params is not None:
-            config["params"] = self.options.params
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
         if self.options.input_modalities is not None:
@@ -128,6 +141,11 @@ class VertexAIOptions(BaseModel):
     adc_credentials_string: str = Field(..., description="Application Default Credentials JSON string")
     instructions: Optional[str] = Field(default=None, description="System instructions")
     voice: Optional[str] = Field(default=None, description="Voice name (e.g., Aoede, Charon)")
+    affective_dialog: Optional[bool] = Field(default=None, description="Enable affective dialog")
+    proactive_audio: Optional[bool] = Field(default=None, description="Enable proactive audio")
+    transcribe_agent: Optional[bool] = Field(default=None, description="Transcribe agent speech")
+    transcribe_user: Optional[bool] = Field(default=None, description="Transcribe user speech")
+    http_options: Optional[Dict[str, Any]] = Field(default=None, description="HTTP options")
     greeting_message: Optional[str] = Field(default=None, description="Agent greeting message")
     input_modalities: Optional[List[str]] = Field(default=None, description="Input modalities")
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
@@ -145,16 +163,26 @@ class VertexAI(BaseMLLM):
         # matching the TypeScript SDK.
         params: Dict[str, Any] = dict(self.options.additional_params or {})
         params["model"] = self.options.model
-        params["project_id"] = self.options.project_id
-        params["location"] = self.options.location
-        params["adc_credentials_string"] = self.options.adc_credentials_string
         if self.options.instructions is not None:
             params["instructions"] = self.options.instructions
         if self.options.voice is not None:
             params["voice"] = self.options.voice
+        if self.options.affective_dialog is not None:
+            params["affective_dialog"] = self.options.affective_dialog
+        if self.options.proactive_audio is not None:
+            params["proactive_audio"] = self.options.proactive_audio
+        if self.options.transcribe_agent is not None:
+            params["transcribe_agent"] = self.options.transcribe_agent
+        if self.options.transcribe_user is not None:
+            params["transcribe_user"] = self.options.transcribe_user
+        if self.options.http_options is not None:
+            params["http_options"] = self.options.http_options
 
         config: Dict[str, Any] = {
             "vendor": "vertexai",
+            "project_id": self.options.project_id,
+            "location": self.options.location,
+            "adc_credentials_string": self.options.adc_credentials_string,
             "params": params,
         }
 
@@ -184,6 +212,11 @@ class GeminiLiveOptions(BaseModel):
     url: Optional[str] = Field(default=None, description="WebSocket URL")
     instructions: Optional[str] = Field(default=None, description="System instructions")
     voice: Optional[str] = Field(default=None, description="Voice name")
+    affective_dialog: Optional[bool] = Field(default=None, description="Enable affective dialog")
+    proactive_audio: Optional[bool] = Field(default=None, description="Enable proactive audio")
+    transcribe_agent: Optional[bool] = Field(default=None, description="Transcribe agent speech")
+    transcribe_user: Optional[bool] = Field(default=None, description="Transcribe user speech")
+    http_options: Optional[Dict[str, Any]] = Field(default=None, description="HTTP options")
     greeting_message: Optional[str] = Field(default=None, description="Agent greeting message")
     input_modalities: Optional[List[str]] = Field(default=None, description="Input modalities")
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
@@ -205,6 +238,16 @@ class GeminiLive(BaseMLLM):
             params["instructions"] = self.options.instructions
         if self.options.voice is not None:
             params["voice"] = self.options.voice
+        if self.options.affective_dialog is not None:
+            params["affective_dialog"] = self.options.affective_dialog
+        if self.options.proactive_audio is not None:
+            params["proactive_audio"] = self.options.proactive_audio
+        if self.options.transcribe_agent is not None:
+            params["transcribe_agent"] = self.options.transcribe_agent
+        if self.options.transcribe_user is not None:
+            params["transcribe_user"] = self.options.transcribe_user
+        if self.options.http_options is not None:
+            params["http_options"] = self.options.http_options
 
         config: Dict[str, Any] = {
             "vendor": "gemini",
