@@ -44,7 +44,7 @@ class OpenAIRealtime(BaseMLLM):
             or self.options.instructions is not None
             or self.options.input_audio_transcription is not None
         ):
-            params = {}
+            params: Dict[str, Any] = {}
             if self.options.model is not None:
                 params["model"] = self.options.model
             if self.options.params is not None:

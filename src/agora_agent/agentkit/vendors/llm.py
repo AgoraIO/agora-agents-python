@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -384,7 +384,7 @@ class VertexAILLM(BaseLLM):
         return config
 
 
-class AmazonBedrockOptions(AnthropicOptions):
+class AmazonBedrockOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     access_key: str = Field(..., description="AWS access key ID")
@@ -392,9 +392,21 @@ class AmazonBedrockOptions(AnthropicOptions):
     region: str = Field(..., description="AWS region")
     model: str = Field(..., description="Amazon Bedrock model identifier")
     max_tokens: Optional[int] = Field(default=None, gt=0)
-    api_key: Optional[str] = Field(default=None, description="Unused; kept for AnthropicOptions compatibility")
-    url: Optional[str] = Field(default=None, description="Unused; kept for AnthropicOptions compatibility")
+    url: Optional[str] = Field(default=None, description="Amazon Bedrock converse stream endpoint URL")
+    temperature: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
+    greeting_message: Optional[str] = Field(default=None)
+    failure_message: Optional[str] = Field(default=None)
+    input_modalities: Optional[List[str]] = Field(default=None)
+    params: Optional[Dict[str, Any]] = Field(default=None)
     headers: Optional[Dict[str, str]] = Field(default=None)
+    output_modalities: Optional[List[str]] = Field(default=None)
+    greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
+    template_variables: Optional[Dict[str, str]] = Field(default=None)
+    vendor: Optional[str] = Field(default=None)
+    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
 class AmazonBedrock(BaseLLM):

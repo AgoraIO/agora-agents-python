@@ -246,7 +246,41 @@ InteractionLanguage = typing_extensions.Literal[
 ]
 
 DEFAULT_INTERACTION_LANGUAGE: InteractionLanguage = "en-US"
-_INTERACTION_LANGUAGES = set(InteractionLanguage.__args__)
+INTERACTION_LANGUAGE_VALUES: typing.Tuple[InteractionLanguage, ...] = (
+    "ar-EG",
+    "ar-JO",
+    "ar-SA",
+    "ar-AE",
+    "bn-IN",
+    "zh-CN",
+    "zh-HK",
+    "zh-TW",
+    "nl-NL",
+    "en-IN",
+    "en-US",
+    "fil-PH",
+    "fr-FR",
+    "de-DE",
+    "gu-IN",
+    "he-IL",
+    "hi-IN",
+    "id-ID",
+    "it-IT",
+    "ja-JP",
+    "kn-IN",
+    "ko-KR",
+    "ms-MY",
+    "fa-IR",
+    "pt-PT",
+    "ru-RU",
+    "es-ES",
+    "ta-IN",
+    "te-IN",
+    "th-TH",
+    "tr-TR",
+    "vi-VN",
+)
+_INTERACTION_LANGUAGES = set(INTERACTION_LANGUAGE_VALUES)
 
 
 def _dump_optional_model(value: typing.Any) -> typing.Any:
