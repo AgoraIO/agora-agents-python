@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .hume_ai_tts_params_provider import HumeAiTtsParamsProvider
 
 
 class HumeAiTtsParams(UncheckedBaseModel):
@@ -17,9 +18,34 @@ class HumeAiTtsParams(UncheckedBaseModel):
     Hume AI API key
     """
 
+    voice_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Hume AI voice ID
+    """
+
+    base_url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Base URL for the Hume AI API
+    """
+
+    provider: typing.Optional[HumeAiTtsParamsProvider] = pydantic.Field(default=None)
+    """
+    Voice provider type
+    """
+
+    speed: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Playback speed of the generated speech
+    """
+
+    trailing_silence: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Duration of silence in seconds to add at the end of each utterance
+    """
+
     config_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Hume AI configuration ID
+    Hume AI configuration ID. Deprecated; use voice_id for the documented TTS shape.
     """
 
     if IS_PYDANTIC_V2:

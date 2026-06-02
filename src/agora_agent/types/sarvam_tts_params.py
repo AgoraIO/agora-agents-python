@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .sarvam_tts_params_target_language_code import SarvamTtsParamsTargetLanguageCode
 
 
 class SarvamTtsParams(UncheckedBaseModel):
@@ -12,7 +13,7 @@ class SarvamTtsParams(UncheckedBaseModel):
     Sarvam TTS configuration parameters.
     """
 
-    key: str = pydantic.Field()
+    api_subscription_key: str = pydantic.Field()
     """
     Sarvam API subscription key
     """
@@ -22,9 +23,29 @@ class SarvamTtsParams(UncheckedBaseModel):
     Voice ID (e.g., anushka, abhilash, karun, hitesh, manisha, vidya, arya)
     """
 
-    target_language_code: str = pydantic.Field()
+    target_language_code: SarvamTtsParamsTargetLanguageCode = pydantic.Field()
     """
     Target language code (e.g., en-IN)
+    """
+
+    pitch: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Pitch adjustment for the voice
+    """
+
+    pace: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speed of speech
+    """
+
+    loudness: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Volume level of the speech
+    """
+
+    sample_rate: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Audio sample rate in Hz
     """
 
     if IS_PYDANTIC_V2:

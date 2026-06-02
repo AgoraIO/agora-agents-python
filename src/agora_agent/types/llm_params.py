@@ -7,24 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class LlmParams(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Additional LLM configuration parameters.
     """
 
-    reference_id: str = pydantic.Field()
+    model: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Fish Audio reference ID
+    The LLM model identifier.
     """
 
-    backend: typing.Optional[str] = pydantic.Field(default=None)
+    max_tokens: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Backend model version to use
+    Maximum tokens in the response.
     """
 
     if IS_PYDANTIC_V2:

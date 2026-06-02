@@ -5,35 +5,36 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .cartesia_tts_output_format import CartesiaTtsOutputFormat
-from .cartesia_tts_voice import CartesiaTtsVoice
 
 
-class CartesiaTtsParams(UncheckedBaseModel):
+class DeepgramAsrParams(UncheckedBaseModel):
     """
-    Cartesia TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Cartesia API key
+    Deepgram ASR configuration parameters.
     """
 
-    model_id: str = pydantic.Field()
+    url: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Model ID (for example, sonic-2)
-    """
-
-    base_url: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    WebSocket URL for the Cartesia streaming API
+    WebSocket URL for Deepgram's streaming API
     """
 
-    voice: CartesiaTtsVoice
-    output_format: typing.Optional[CartesiaTtsOutputFormat] = None
+    key: str = pydantic.Field()
+    """
+    Deepgram API key
+    """
+
+    model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Speech recognition model
+    """
+
     language: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Target language for speech synthesis
+    Language code for speech recognition
+    """
+
+    keyterm: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Boost specialized terms and brands
     """
 
     if IS_PYDANTIC_V2:

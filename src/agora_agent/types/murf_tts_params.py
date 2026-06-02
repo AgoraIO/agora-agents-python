@@ -3,7 +3,9 @@
 import typing
 
 import pydantic
+import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
+from ..core.serialization import FieldMetadata
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
@@ -12,19 +14,44 @@ class MurfTtsParams(UncheckedBaseModel):
     Murf TTS configuration parameters.
     """
 
-    key: str = pydantic.Field()
+    api_key: str = pydantic.Field()
     """
     Murf API key
     """
 
-    voice_id: str = pydantic.Field()
+    base_url: str = pydantic.Field()
     """
-    Voice ID (e.g., Ariana, Natalie, Ken)
+    WebSocket endpoint for streaming TTS output
     """
 
-    style: typing.Optional[str] = pydantic.Field(default=None)
+    voice_id: typing_extensions.Annotated[str, FieldMetadata(alias="voiceId")] = pydantic.Field()
     """
-    Voice style (e.g., Angry, Sad, Conversational, Newscast)
+    Voice ID (e.g., Matthew)
+    """
+
+    locale: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Locale for the selected voice
+    """
+
+    rate: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speech rate adjustment
+    """
+
+    pitch: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Pitch adjustment
+    """
+
+    model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    TTS model to use
+    """
+
+    sample_rate: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Audio sample rate in Hz
     """
 
     if IS_PYDANTIC_V2:

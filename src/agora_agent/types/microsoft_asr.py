@@ -5,27 +5,17 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .asr_language import AsrLanguage
+from .microsoft_asr_params import MicrosoftAsrParams
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class MicrosoftAsr(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Microsoft Azure ASR configuration.
     """
 
-    reference_id: str = pydantic.Field()
-    """
-    Fish Audio reference ID
-    """
-
-    backend: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Backend model version to use
-    """
+    language: typing.Optional[AsrLanguage] = None
+    params: MicrosoftAsrParams
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

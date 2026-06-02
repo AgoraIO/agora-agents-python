@@ -7,39 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class MicrosoftTtsParams(UncheckedBaseModel):
+class CartesiaTtsOutputFormat(UncheckedBaseModel):
     """
-    Microsoft Azure TTS configuration parameters.
-    """
-
-    key: str = pydantic.Field()
-    """
-    Microsoft Azure API key
+    Cartesia audio output format configuration.
     """
 
-    region: str = pydantic.Field()
+    container: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Azure region (e.g., "eastus")
-    """
-
-    voice_name: str = pydantic.Field()
-    """
-    Voice name (e.g., "en-US-AndrewMultilingualNeural")
+    Audio container format for the output stream
     """
 
     sample_rate: typing.Optional[int] = pydantic.Field(default=None)
     """
     Audio sampling rate in Hz
-    """
-
-    speed: typing.Optional[float] = pydantic.Field(default=None)
-    """
-    Speaking rate multiplier. Values between 0.5 and 2.0.
-    """
-
-    volume: typing.Optional[float] = pydantic.Field(default=None)
-    """
-    Audio volume. Values between 0.0 and 100.0.
     """
 
     if IS_PYDANTIC_V2:

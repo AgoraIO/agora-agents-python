@@ -7,24 +7,34 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class GoogleAsrParams(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Google ASR configuration parameters.
     """
 
-    reference_id: str = pydantic.Field()
+    project_id: str = pydantic.Field()
     """
-    Fish Audio reference ID
+    Google Cloud project ID
     """
 
-    backend: typing.Optional[str] = pydantic.Field(default=None)
+    location: str = pydantic.Field()
     """
-    Backend model version to use
+    Google Cloud region for the speech service
+    """
+
+    adc_credentials_string: str = pydantic.Field()
+    """
+    Google Cloud service account credentials JSON string
+    """
+
+    language: str = pydantic.Field()
+    """
+    Language code for speech recognition
+    """
+
+    model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Recognition model to use
     """
 
     if IS_PYDANTIC_V2:

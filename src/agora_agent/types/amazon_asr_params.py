@@ -5,37 +5,41 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .amazon_tts_params_engine import AmazonTtsParamsEngine
 
 
-class AmazonTtsParams(UncheckedBaseModel):
+class AmazonAsrParams(UncheckedBaseModel):
     """
-    Amazon Polly TTS configuration parameters.
+    Amazon Transcribe ASR configuration parameters.
     """
 
-    aws_access_key_id: str = pydantic.Field()
+    region: str = pydantic.Field()
+    """
+    AWS region
+    """
+
+    access_key_id: str = pydantic.Field()
     """
     AWS access key ID
     """
 
-    aws_secret_access_key: str = pydantic.Field()
+    secret_access_key: str = pydantic.Field()
     """
-    AWS secret key
-    """
-
-    region_name: str = pydantic.Field()
-    """
-    AWS region (e.g., "us-east-1")
+    AWS secret access key
     """
 
-    voice: str = pydantic.Field()
+    language_code: str = pydantic.Field()
     """
-    Amazon Polly voice ID
+    Language code for speech recognition
     """
 
-    engine: typing.Optional[AmazonTtsParamsEngine] = pydantic.Field(default=None)
+    media_sample_rate_hz: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Amazon Polly engine type
+    Sample rate in Hertz for the audio input
+    """
+
+    media_encoding: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Encoding format of the audio input
     """
 
     if IS_PYDANTIC_V2:

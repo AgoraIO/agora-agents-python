@@ -7,25 +7,11 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
-    """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
-    """
-
-    reference_id: str = pydantic.Field()
-    """
-    Fish Audio reference ID
-    """
-
-    backend: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Backend model version to use
-    """
+class MllmTurnDetectionAgoraVadConfig(UncheckedBaseModel):
+    interrupt_duration_ms: typing.Optional[int] = None
+    prefix_padding_ms: typing.Optional[int] = None
+    silence_duration_ms: typing.Optional[int] = None
+    threshold: typing.Optional[float] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -7,24 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class AssemblyAiAsrParams(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
+    AssemblyAI ASR configuration parameters.
     """
 
     api_key: str = pydantic.Field()
     """
-    Fish Audio API key
+    AssemblyAI API key
     """
 
-    reference_id: str = pydantic.Field()
+    language: str = pydantic.Field()
     """
-    Fish Audio reference ID
+    Language code for speech recognition
     """
 
-    backend: typing.Optional[str] = pydantic.Field(default=None)
+    uri: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Backend model version to use
+    WebSocket URL for AssemblyAI's streaming API
     """
 
     if IS_PYDANTIC_V2:

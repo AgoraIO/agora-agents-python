@@ -5,27 +5,11 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .mllm_turn_detection_semantic_vad_config_eagerness import MllmTurnDetectionSemanticVadConfigEagerness
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
-    """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
-    """
-
-    reference_id: str = pydantic.Field()
-    """
-    Fish Audio reference ID
-    """
-
-    backend: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Backend model version to use
-    """
+class MllmTurnDetectionSemanticVadConfig(UncheckedBaseModel):
+    eagerness: typing.Optional[MllmTurnDetectionSemanticVadConfigEagerness] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
