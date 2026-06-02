@@ -33,6 +33,11 @@ AgentSession(
     token: Optional[str] = None,
     idle_timeout: Optional[int] = None,
     enable_string_uid: Optional[bool] = None,
+    preset: Optional[Union[str, Sequence[str]]] = None,
+    pipeline_id: Optional[str] = None,
+    expires_in: Optional[int] = None,
+    debug: Optional[bool] = None,
+    warn: Optional[Callable[[str], None]] = None,
 )
 ```
 
@@ -51,6 +56,13 @@ AgentSession(
 | `token` | `Optional[str]` | No | Pre-built RTC token |
 | `idle_timeout` | `Optional[int]` | No | Idle timeout in seconds |
 | `enable_string_uid` | `Optional[bool]` | No | Enable string UIDs |
+| `preset` | `Optional[Union[str, Sequence[str]]]` | No | Advanced preset value for project-specific routing |
+| `pipeline_id` | `Optional[str]` | No | Published AI Studio pipeline ID for this session. Overrides `agent.pipeline_id`. |
+| `expires_in` | `Optional[int]` | No | Auto-generated token lifetime in seconds |
+| `debug` | `Optional[bool]` | No | Enable debug logging of the start request |
+| `warn` | `Optional[Callable[[str], None]]` | No | Custom warning sink |
+
+`pipeline_id` is sent as the top-level `/join` field `pipeline_id`, not inside `properties`. If unset, `AgentSession.start()` uses the agent-level value from `Agent(..., pipeline_id=...)`.
 
 ## Methods
 

@@ -343,8 +343,10 @@ class Agent:
         rtc: typing.Optional[RtcConfig] = None,
         filler_words: typing.Optional[FillerWordsConfig] = None,
         greeting_configs: typing.Optional[LlmGreetingConfigs] = None,
+        pipeline_id: typing.Optional[str] = None,
     ):
         self._name = name
+        self._pipeline_id = pipeline_id
         self._instructions = instructions
         self._greeting = greeting
         self._failure_message = failure_message
@@ -610,6 +612,11 @@ class Agent:
         return self._name
 
     @property
+    def pipeline_id(self) -> typing.Optional[str]:
+        """Published AI Studio pipeline ID used as this agent's base configuration."""
+        return self._pipeline_id
+
+    @property
     def llm(self) -> typing.Optional[typing.Dict[str, typing.Any]]:
         return self._llm
 
@@ -693,6 +700,7 @@ class Agent:
     def config(self) -> typing.Dict[str, typing.Any]:
         return {
             "name": self._name,
+            "pipeline_id": self._pipeline_id,
             "instructions": self._instructions,
             "greeting": self._greeting,
             "failure_message": self._failure_message,
@@ -945,6 +953,7 @@ class Agent:
     def _clone(self) -> "Agent":
         new_agent = Agent.__new__(Agent)
         new_agent._name = self._name
+        new_agent._pipeline_id = self._pipeline_id
         new_agent._llm = self._llm
         new_agent._tts = self._tts
         new_agent._stt = self._stt

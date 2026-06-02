@@ -52,7 +52,8 @@ class AgentSessionOptions(_AgentSessionRequiredOptions, total=False):
 
     Optional fields
     ---------------
-    app_certificate, token, idle_timeout, enable_string_uid, expires_in
+    app_certificate, token, idle_timeout, enable_string_uid, preset,
+    pipeline_id, expires_in, debug, warn
     """
 
     app_certificate: str
@@ -290,14 +291,18 @@ class _AgentSessionBase:
             return True
         return mllm is not None
 
-    def _build_start_properties(self, token_opts: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+    def _build_start_properties(
+        self,
+        token_opts: typing.Dict[str, typing.Any],
+        skip_vendor_validation: bool,
+    ) -> typing.Dict[str, typing.Any]:
         base_properties = self._agent.to_properties(
             channel=self._channel,
             agent_uid=self._agent_uid,
             remote_uids=self._remote_uids,
             idle_timeout=self._idle_timeout,
             enable_string_uid=self._enable_string_uid,
-            skip_vendor_validation=True,
+            skip_vendor_validation=skip_vendor_validation,
             **token_opts,
         )
         properties = self._dump_model(base_properties)
@@ -445,6 +450,7 @@ class AgentSession(_AgentSessionBase):
         self._status = "starting"
 
         try:
+            pipeline_id = self._pipeline_id if self._pipeline_id is not None else self._agent.pipeline_id
             if self._token:
                 token_opts: typing.Dict[str, typing.Any] = {"token": self._token}
             else:
@@ -454,7 +460,7 @@ class AgentSession(_AgentSessionBase):
                     "expires_in": self._expires_in,
                 }
 
-            properties = self._build_start_properties(token_opts)
+            properties = self._build_start_properties(token_opts, skip_vendor_validation=bool(self._preset or pipeline_id))
             resolved_preset, resolved_properties = resolve_session_presets(
                 self._preset,
                 properties,
@@ -466,7 +472,7 @@ class AgentSession(_AgentSessionBase):
                     "appid": self._app_id,
                     "name": self._name,
                     "preset": resolved_preset,
-                    "pipeline_id": self._pipeline_id,
+                    "pipeline_id": pipeline_id,
                     "properties": resolved_properties,
                 })
 
@@ -480,7 +486,7 @@ class AgentSession(_AgentSessionBase):
                 name=self._name,
                 properties=request_properties,
                 preset=resolved_preset,
-                pipeline_id=self._pipeline_id,
+                pipeline_id=pipeline_id,
                 request_options=self._request_options(),
             )
 
@@ -766,6 +772,7 @@ class AsyncAgentSession(_AgentSessionBase):
         self._status = "starting"
 
         try:
+            pipeline_id = self._pipeline_id if self._pipeline_id is not None else self._agent.pipeline_id
             if self._token:
                 token_opts: typing.Dict[str, typing.Any] = {"token": self._token}
             else:
@@ -775,7 +782,7 @@ class AsyncAgentSession(_AgentSessionBase):
                     "expires_in": self._expires_in,
                 }
 
-            properties = self._build_start_properties(token_opts)
+            properties = self._build_start_properties(token_opts, skip_vendor_validation=bool(self._preset or pipeline_id))
             resolved_preset, resolved_properties = resolve_session_presets(
                 self._preset,
                 properties,
@@ -787,7 +794,7 @@ class AsyncAgentSession(_AgentSessionBase):
                     "appid": self._app_id,
                     "name": self._name,
                     "preset": resolved_preset,
-                    "pipeline_id": self._pipeline_id,
+                    "pipeline_id": pipeline_id,
                     "properties": resolved_properties,
                 })
 
@@ -801,7 +808,7 @@ class AsyncAgentSession(_AgentSessionBase):
                 name=self._name,
                 properties=request_properties,
                 preset=resolved_preset,
-                pipeline_id=self._pipeline_id,
+                pipeline_id=pipeline_id,
                 request_options=self._request_options(),
             )
 

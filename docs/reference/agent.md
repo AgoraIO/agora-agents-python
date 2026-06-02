@@ -27,12 +27,14 @@ Agent(
     labels: Optional[Dict[str, str]] = None,
     rtc: Optional[RtcConfig] = None,
     filler_words: Optional[FillerWordsConfig] = None,
+    pipeline_id: Optional[str] = None,
 )
 ```
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `name` | `Optional[str]` | `None` | Agent name, used as default session name |
+| `pipeline_id` | `Optional[str]` | `None` | Published AI Studio pipeline ID used as this agent's base configuration |
 | `instructions` | `Optional[str]` | `None` | Deprecated. Use LLM vendor `system_messages` instead. |
 | `turn_detection` | `Optional[TurnDetectionConfig]` | `None` | Interaction language and turn detection configuration |
 | `interruption` | `Optional[InterruptionConfig]` | `None` | Unified interruption control configuration |
@@ -46,6 +48,8 @@ Agent(
 | `labels` | `Optional[Dict[str, str]]` | `None` | Custom key-value labels (returned in callbacks) |
 | `rtc` | `Optional[RtcConfig]` | `None` | RTC media encryption |
 | `filler_words` | `Optional[FillerWordsConfig]` | `None` | Filler words while waiting for LLM |
+
+`pipeline_id` is an AI Studio base configuration. Explicit Agent config such as `with_llm()`, `with_tts()`, `with_stt()`, `with_mllm()`, `advanced_features`, and other builder options may send fields in `properties` that override the saved pipeline settings. Session-level `pipeline_id` overrides the agent-level value.
 
 The Agent-level `instructions`, `greeting`, `failure_message`, `max_history`, and `greeting_configs` fields are compatibility shims. New code should configure those values on the LLM or MLLM vendor because that matches the core request schema.
 
@@ -202,6 +206,8 @@ create_session(
     token: Optional[str] = None,
     idle_timeout: Optional[int] = None,
     enable_string_uid: Optional[bool] = None,
+    preset: Optional[Union[str, Sequence[str]]] = None,
+    pipeline_id: Optional[str] = None,
     expires_in: Optional[int] = None,
 ) -> AgentSession
 ```
@@ -219,6 +225,10 @@ Creates an `AgentSession` bound to the given client and channel.
 | `expires_in` | `Optional[int]` | No | Token lifetime in seconds (default: `86400` = 24 h, Agora max). Only applies when the token is auto-generated. Use `expires_in_hours()` or `expires_in_minutes()` for clarity. Valid range: 1–86400. |
 | `idle_timeout` | `Optional[int]` | No | Idle timeout in seconds |
 | `enable_string_uid` | `Optional[bool]` | No | Enable string UIDs |
+| `preset` | `Optional[Union[str, Sequence[str]]]` | No | Advanced preset value for project-specific routing |
+| `pipeline_id` | `Optional[str]` | No | Published AI Studio pipeline ID for this session. Overrides `agent.pipeline_id`. |
+
+`pipeline_id` is sent as the top-level `/join` field `pipeline_id`, not inside `properties`.
 
 **Returns:** `AgentSession`
 

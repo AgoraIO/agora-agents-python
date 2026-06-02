@@ -96,6 +96,38 @@ def start_conversation() -> str:
 
 `Agora` generates the required ConvoAI REST auth and RTC join tokens automatically when you provide `app_id` and `app_certificate`. For supported Agora-managed models, leave vendor API keys unset; provide keys when you want BYOK.
 
+## AI Studio pipeline IDs
+
+Use `pipeline_id` when you want a published AI Studio pipeline to provide the base agent configuration:
+
+```python
+agent = Agent(
+    name="support",
+    pipeline_id="studio-pipeline-id",
+)
+
+session = agent.create_session(
+    client,
+    channel="support-room",
+    agent_uid="1",
+    remote_uids=["100"],
+)
+```
+
+You can override it per session:
+
+```python
+session = agent.create_session(
+    client,
+    channel="support-room",
+    agent_uid="1",
+    remote_uids=["100"],
+    pipeline_id="session-pipeline-id",
+)
+```
+
+AgentKit sends the resolved value as the top-level `/join` field `pipeline_id`, not inside `properties`. Explicit Agent config such as `with_llm()`, `with_tts()`, `with_stt()`, `with_mllm()`, and `advanced_features` may send `properties` fields that override the saved pipeline settings.
+
 ### BYOK version
 
 Use the same `Agent` builder shape, but provide credentials explicitly when you want vendor-managed billing and routing instead of Agora-managed models.
