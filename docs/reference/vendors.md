@@ -180,6 +180,8 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `region` | `str` | Yes | — | Azure region (e.g., `eastus`) |
 | `voice_name` | `str` | Yes | — | Voice name (e.g., `en-US-JennyNeural`) |
 | `sample_rate` | `int` | No | `None` | Sample rate: 8000, 16000, 24000, or 48000 Hz |
+| `speed` | `float` | No | `None` | Speaking rate multiplier |
+| `volume` | `float` | No | `None` | Audio volume |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### `OpenAITTS`
@@ -203,6 +205,8 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `api_key` | `str` | Yes | — | Cartesia API key |
 | `voice_id` | `str` | Yes | — | Voice ID (serialized as `{"mode": "id", "id": "..."}`) |
 | `model_id` | `str` | Yes | — | Model ID |
+| `base_url` | `str` | No | `None` | WebSocket URL |
+| `language` | `str` | No | `None` | Target language |
 | `sample_rate` | `int` | No | `None` | Sample rate: 8000–48000 Hz |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
@@ -213,6 +217,7 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `key` | `str` | Yes | — | Google Cloud API key |
 | `voice_name` | `str` | Yes | — | Voice name |
 | `language_code` | `str` | No | `None` | Language code (e.g., `en-US`) |
+| `sample_rate_hertz` | `int` | No | `None` | Sample rate in Hz |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### `AmazonTTS`
@@ -273,12 +278,14 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `key` | `str` | Yes | — | MiniMax API key |
-| `group_id` | `str` | Yes | — | MiniMax group ID |
+| `key` | `str` | BYOK only | `None` | MiniMax API key. Optional for supported Agora-managed MiniMax models |
+| `group_id` | `str` | BYOK only | `None` | MiniMax group ID |
 | `model` | `str` | Yes | — | Model name (e.g., `speech-02-turbo`) |
-| `voice_id` | `str` | Yes | — | Voice style identifier |
-| `url` | `str` | Yes | — | WebSocket endpoint |
+| `voice_id` | `str` | BYOK only | `None` | Voice style identifier |
+| `url` | `str` | BYOK only | `None` | WebSocket endpoint |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
+
+`key`, `group_id`, `voice_id`, and `url` are required together for BYOK. Without `key`, `model` must be one of the supported Agora-managed MiniMax models.
 
 ### `MurfTTS`
 
@@ -301,6 +308,10 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `key` | `str` | Yes | — | Sarvam API key |
 | `speaker` | `str` | Yes | — | Speaker name |
 | `target_language_code` | `str` | Yes | — | Target language code |
+| `pitch` | `float` | No | `None` | Pitch adjustment |
+| `pace` | `float` | No | `None` | Speed of speech |
+| `loudness` | `float` | No | `None` | Volume level |
+| `sample_rate` | `int` | No | `None` | Audio sample rate |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ---
