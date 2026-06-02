@@ -7,24 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class MllmInputAudioTranscription(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Configuration for audio input transcription.
     """
 
-    reference_id: str = pydantic.Field()
+    language: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Fish Audio reference ID
+    Language of the input audio.
     """
 
-    backend: str = pydantic.Field()
+    model: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Backend model version to use
+    Model to use for transcription.
+    """
+
+    prompt: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Text to guide the transcription model.
     """
 
     if IS_PYDANTIC_V2:

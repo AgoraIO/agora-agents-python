@@ -7,24 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class OpenAiInputAudioTranscription(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    OpenAI audio transcription configuration.
     """
 
-    reference_id: str = pydantic.Field()
+    model: str = pydantic.Field()
     """
-    Fish Audio reference ID
+    OpenAI ASR model to use for transcription
     """
 
-    backend: str = pydantic.Field()
+    prompt: str = pydantic.Field()
     """
-    Backend model version to use
+    Prompt that guides the transcription process
+    """
+
+    language: str = pydantic.Field()
+    """
+    Language code to use for transcription
     """
 
     if IS_PYDANTIC_V2:

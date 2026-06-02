@@ -5,27 +5,17 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .asr_language import AsrLanguage
+from .sarvam_asr_params import SarvamAsrParams
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class SarvamAsr(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Sarvam ASR configuration.
     """
 
-    reference_id: str = pydantic.Field()
-    """
-    Fish Audio reference ID
-    """
-
-    backend: str = pydantic.Field()
-    """
-    Backend model version to use
-    """
+    language: typing.Optional[AsrLanguage] = None
+    params: SarvamAsrParams
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -14,7 +14,12 @@ class OpenAiTtsParams(UncheckedBaseModel):
 
     api_key: typing.Optional[str] = pydantic.Field(default=None)
     """
-    OpenAI API key. Optional for Agora-managed OpenAI TTS usage.
+    OpenAI API key. Optional for preset-backed OpenAI TTS usage.
+    """
+
+    base_url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Endpoint URL for the OpenAI TTS service.
     """
 
     voice: str = pydantic.Field()
@@ -25,6 +30,16 @@ class OpenAiTtsParams(UncheckedBaseModel):
     model: typing.Optional[str] = pydantic.Field(default=None)
     """
     Model name (e.g., "tts-1", "tts-1-hd")
+    """
+
+    instructions: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Custom instructions for voice style, accent, pace, and tone.
+    """
+
+    speed: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speaking rate multiplier.
     """
 
     if IS_PYDANTIC_V2:

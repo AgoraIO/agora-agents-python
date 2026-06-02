@@ -2,6 +2,6 @@
 
 import typing
 
-StartAgentsRequestPropertiesMllmTurnDetectionServerVadConfigStartOfSpeechSensitivity = typing.Union[
+MllmTurnDetectionServerVadConfigStartOfSpeechSensitivity = typing.Union[
     typing.Literal["START_SENSITIVITY_HIGH", "START_SENSITIVITY_LOW"], typing.Any
 ]

@@ -5,15 +5,15 @@ import typing
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2
 from ...core.unchecked_base_model import UncheckedBaseModel
+from ...types.asr import Asr
+from ...types.llm import Llm
+from ...types.mllm import Mllm
 from ...types.tts import Tts
 from .start_agents_request_properties_advanced_features import StartAgentsRequestPropertiesAdvancedFeatures
-from .start_agents_request_properties_asr import StartAgentsRequestPropertiesAsr
 from .start_agents_request_properties_avatar import StartAgentsRequestPropertiesAvatar
 from .start_agents_request_properties_filler_words import StartAgentsRequestPropertiesFillerWords
 from .start_agents_request_properties_geofence import StartAgentsRequestPropertiesGeofence
 from .start_agents_request_properties_interruption import StartAgentsRequestPropertiesInterruption
-from .start_agents_request_properties_llm import StartAgentsRequestPropertiesLlm
-from .start_agents_request_properties_mllm import StartAgentsRequestPropertiesMllm
 from .start_agents_request_properties_parameters import StartAgentsRequestPropertiesParameters
 from .start_agents_request_properties_rtc import StartAgentsRequestPropertiesRtc
 from .start_agents_request_properties_sal import StartAgentsRequestPropertiesSal
@@ -67,7 +67,7 @@ class StartAgentsRequestProperties(UncheckedBaseModel):
     Advanced features configuration.
     """
 
-    asr: typing.Optional[StartAgentsRequestPropertiesAsr] = pydantic.Field(default=None)
+    asr: typing.Optional[Asr] = pydantic.Field(default=None)
     """
     Automatic Speech Recognition (ASR) configuration.
     """
@@ -77,12 +77,12 @@ class StartAgentsRequestProperties(UncheckedBaseModel):
     Text-to-speech (TTS) module configuration.
     """
 
-    llm: typing.Optional[StartAgentsRequestPropertiesLlm] = pydantic.Field(default=None)
+    llm: typing.Optional[Llm] = pydantic.Field(default=None)
     """
     Large language model (LLM) configuration.
     """
 
-    mllm: typing.Optional[StartAgentsRequestPropertiesMllm] = pydantic.Field(default=None)
+    mllm: typing.Optional[Mllm] = pydantic.Field(default=None)
     """
     Multimodal Large Language Model (MLLM) configuration for real-time audio and text processing. `mllm` is an exclusive alternative to the standard `asr` + `llm` + `tts` pipeline.
     """

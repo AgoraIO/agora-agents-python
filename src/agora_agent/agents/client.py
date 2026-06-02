@@ -84,11 +84,16 @@ class AgentsClient:
 
         Examples
         --------
-        from agora_agent import Agora, MicrosoftTtsParams, Tts_Microsoft
+        from agora_agent import (
+            Agora,
+            Asr_Ares,
+            Llm,
+            LlmParams,
+            MicrosoftTtsParams,
+            Tts_Microsoft,
+        )
         from agora_agent.agents import (
             StartAgentsRequestProperties,
-            StartAgentsRequestPropertiesAsr,
-            StartAgentsRequestPropertiesLlm,
             StartAgentsRequestPropertiesTurnDetection,
             StartAgentsRequestPropertiesTurnDetectionConfig,
             StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
@@ -108,9 +113,7 @@ class AgentsClient:
                 agent_rtc_uid="1001",
                 remote_rtc_uids=["1002"],
                 idle_timeout=120,
-                asr=StartAgentsRequestPropertiesAsr(
-                    language="en-US",
-                ),
+                asr=Asr_Ares(),
                 tts=Tts_Microsoft(
                     params=MicrosoftTtsParams(
                         key="key",
@@ -118,13 +121,15 @@ class AgentsClient:
                         voice_name="voice_name",
                     ),
                 ),
-                llm=StartAgentsRequestPropertiesLlm(
+                llm=Llm(
                     url="https://api.openai.com/v1/chat/completions",
                     api_key="<your_llm_key>",
                     system_messages=[
                         {"role": "system", "content": "You are a helpful chatbot."}
                     ],
-                    params={"model": "gpt-4o-mini"},
+                    params=LlmParams(
+                        model="gpt-4o-mini",
+                    ),
                     max_history=32,
                     greeting_message="Hello, how can I assist you today?",
                     failure_message="Please hold on a second.",
@@ -641,11 +646,16 @@ class AsyncAgentsClient:
         --------
         import asyncio
 
-        from agora_agent import AsyncAgora, MicrosoftTtsParams, Tts_Microsoft
+        from agora_agent import (
+            Asr_Ares,
+            AsyncAgora,
+            Llm,
+            LlmParams,
+            MicrosoftTtsParams,
+            Tts_Microsoft,
+        )
         from agora_agent.agents import (
             StartAgentsRequestProperties,
-            StartAgentsRequestPropertiesAsr,
-            StartAgentsRequestPropertiesLlm,
             StartAgentsRequestPropertiesTurnDetection,
             StartAgentsRequestPropertiesTurnDetectionConfig,
             StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
@@ -668,9 +678,7 @@ class AsyncAgentsClient:
                     agent_rtc_uid="1001",
                     remote_rtc_uids=["1002"],
                     idle_timeout=120,
-                    asr=StartAgentsRequestPropertiesAsr(
-                        language="en-US",
-                    ),
+                    asr=Asr_Ares(),
                     tts=Tts_Microsoft(
                         params=MicrosoftTtsParams(
                             key="key",
@@ -678,13 +686,15 @@ class AsyncAgentsClient:
                             voice_name="voice_name",
                         ),
                     ),
-                    llm=StartAgentsRequestPropertiesLlm(
+                    llm=Llm(
                         url="https://api.openai.com/v1/chat/completions",
                         api_key="<your_llm_key>",
                         system_messages=[
                             {"role": "system", "content": "You are a helpful chatbot."}
                         ],
-                        params={"model": "gpt-4o-mini"},
+                        params=LlmParams(
+                            model="gpt-4o-mini",
+                        ),
                         max_history=32,
                         greeting_message="Hello, how can I assist you today?",
                         failure_message="Please hold on a second.",

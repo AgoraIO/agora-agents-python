@@ -5,26 +5,20 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .asr_language import AsrLanguage
+from .deepgram_asr_params import DeepgramAsrParams
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class DeepgramAsr(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Deepgram ASR configuration.
     """
 
-    reference_id: str = pydantic.Field()
+    language: typing.Optional[AsrLanguage] = None
+    params: DeepgramAsrParams
+    keyterm: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Fish Audio reference ID
-    """
-
-    backend: str = pydantic.Field()
-    """
-    Backend model version to use
+    Boost specialized terms and brands for preset-backed Deepgram usage.
     """
 
     if IS_PYDANTIC_V2:

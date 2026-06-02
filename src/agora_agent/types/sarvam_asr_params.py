@@ -7,24 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class SarvamAsrParams(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
+    Sarvam ASR configuration parameters.
     """
 
     api_key: str = pydantic.Field()
     """
-    Fish Audio API key
+    Sarvam API key
     """
 
-    reference_id: str = pydantic.Field()
+    language: str = pydantic.Field()
     """
-    Fish Audio reference ID
-    """
-
-    backend: str = pydantic.Field()
-    """
-    Backend model version to use
+    Language code for transcription. Set to unknown for automatic language detection.
     """
 
     if IS_PYDANTIC_V2:

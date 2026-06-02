@@ -7,24 +7,19 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class GoogleTtsAudioConfig(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Google audio output configuration.
     """
 
-    reference_id: str = pydantic.Field()
+    speaking_rate: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Fish Audio reference ID
+    Speed of speech
     """
 
-    backend: str = pydantic.Field()
+    sample_rate_hertz: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Backend model version to use
+    Sample rate in Hz
     """
 
     if IS_PYDANTIC_V2:

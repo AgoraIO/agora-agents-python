@@ -7,24 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class SpeechmaticsAsrParams(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
+    Speechmatics ASR configuration parameters.
     """
 
     api_key: str = pydantic.Field()
     """
-    Fish Audio API key
+    Speechmatics API key
     """
 
-    reference_id: str = pydantic.Field()
+    language: str = pydantic.Field()
     """
-    Fish Audio reference ID
+    Language code to use for transcription
     """
 
-    backend: str = pydantic.Field()
+    uri: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Backend model version to use
+    WebSocket URL for the Speechmatics streaming API
     """
 
     if IS_PYDANTIC_V2:

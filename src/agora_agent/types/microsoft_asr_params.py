@@ -7,9 +7,9 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class MicrosoftTtsParams(UncheckedBaseModel):
+class MicrosoftAsrParams(UncheckedBaseModel):
     """
-    Microsoft Azure TTS configuration parameters.
+    Microsoft Azure ASR configuration parameters.
     """
 
     key: str = pydantic.Field()
@@ -19,27 +19,17 @@ class MicrosoftTtsParams(UncheckedBaseModel):
 
     region: str = pydantic.Field()
     """
-    Azure region (e.g., "eastus")
+    Azure region
     """
 
-    voice_name: str = pydantic.Field()
+    language: str = pydantic.Field()
     """
-    Voice name (e.g., "en-US-AndrewMultilingualNeural")
-    """
-
-    sample_rate: typing.Optional[int] = pydantic.Field(default=None)
-    """
-    Audio sampling rate in Hz
+    Language code for speech recognition
     """
 
-    speed: typing.Optional[float] = pydantic.Field(default=None)
+    phrase_list: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    Speaking rate multiplier. Values between 0.5 and 2.0.
-    """
-
-    volume: typing.Optional[float] = pydantic.Field(default=None)
-    """
-    Audio volume. Values between 0.0 and 100.0.
+    Words or phrases to improve recognition accuracy
     """
 
     if IS_PYDANTIC_V2:

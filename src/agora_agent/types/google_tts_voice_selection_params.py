@@ -7,24 +7,14 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class FishAudioTtsParams(UncheckedBaseModel):
+class GoogleTtsVoiceSelectionParams(UncheckedBaseModel):
     """
-    Fish Audio TTS configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Fish Audio API key
+    Google voice selection parameters.
     """
 
-    reference_id: str = pydantic.Field()
+    name: str = pydantic.Field()
     """
-    Fish Audio reference ID
-    """
-
-    backend: str = pydantic.Field()
-    """
-    Backend model version to use
+    Google voice name
     """
 
     if IS_PYDANTIC_V2:
