@@ -1,6 +1,6 @@
 import pytest
 
-from agora_agent import AmazonTTS, CartesiaTTS, ElevenLabsTTS, FishAudioTTS, GoogleTTS, HumeAITTS, MiniMaxTTS, MurfTTS, OpenAITTS, RimeTTS, SarvamTTS
+from agora_agent import AmazonTTS, CartesiaTTS, DeepgramTTS, ElevenLabsTTS, FishAudioTTS, GoogleTTS, HumeAITTS, MiniMaxTTS, MurfTTS, OpenAITTS, RimeTTS, SarvamTTS
 
 
 def test_tts_vendor_params_match_generated_core_shapes() -> None:
@@ -42,6 +42,14 @@ def test_tts_vendor_params_match_generated_core_shapes() -> None:
         "base_url": "wss://api.elevenlabs.io/v1",
         "model_id": "eleven_flash_v2_5",
         "voice_id": "voice",
+    }
+
+    assert DeepgramTTS(api_key="deepgram-key", model="aura-2-thalia-en", base_url="wss://api.deepgram.com/v1/speak", sample_rate=24000, additional_params={"encoding": "linear16"}).to_config()["params"] == {
+        "api_key": "deepgram-key",
+        "model": "aura-2-thalia-en",
+        "base_url": "wss://api.deepgram.com/v1/speak",
+        "sample_rate": 24000,
+        "encoding": "linear16",
     }
 
     assert OpenAITTS(api_key="openai-key", voice="coral", model="gpt-4o-mini-tts", base_url="https://api.openai.com/v1").to_config()["params"] == {

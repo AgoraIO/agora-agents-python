@@ -20,6 +20,7 @@ pip install agora-agents
 ## Quick Start
 
 Start with the `Agent` builder: create a client with app credentials, choose your ASR, LLM, and TTS providers, then start a session. Omit vendor API keys for supported Agora-managed models, or provide keys when you want BYOK.
+Use `with_interaction_language()` for Agora `asr.language`; provider-specific STT language values remain under `asr.params`.
 
 ```python
 import os
@@ -29,12 +30,9 @@ from agora_agent import (
     Agent,
     Agora,
     Area,
-    DataChannel,
     DeepgramSTT,
-    GenericAvatar,
     MiniMaxTTS,
     OpenAI,
-    XaiGrok,
     expires_in_hours,
 )
 
@@ -56,35 +54,7 @@ def start_conversation() -> str:
         app_certificate=app_certificate,
     )
 
-    agent = Agent(
-        name=f"conversation-{int(time.time())}",
-        turn_detection={
-            "config": {
-                "speech_threshold": 0.5,
-                "start_of_speech": {
-                    "mode": "vad",
-                    "vad_config": {
-                        "interrupt_duration_ms": 160,
-                        "prefix_padding_ms": 300,
-                    },
-                },
-                "end_of_speech": {
-                    "mode": "vad",
-                    "vad_config": {
-                        "silence_duration_ms": 480,
-                    },
-                },
-            },
-        },
-        advanced_features={
-            "enable_rtm": True,
-            "enable_tools": True,
-        },
-        parameters={
-            "data_channel": DataChannel.RTM,
-            "enable_error_message": True,
-        },
-    ).with_stt(
+    agent = Agent(name=f"conversation-{int(time.time())}").with_interaction_language("en-US").with_stt(
         DeepgramSTT(
             model="nova-3",
             language="en",
@@ -131,7 +101,7 @@ def start_conversation() -> str:
 Use the same `Agent` builder shape, but provide credentials explicitly when you want vendor-managed billing and routing instead of Agora-managed models.
 
 ```python
-agent = Agent().with_stt(
+agent = Agent().with_interaction_language("en-US").with_stt(
     DeepgramSTT(
         api_key=os.environ["DEEPGRAM_API_KEY"],
         model="nova-3",

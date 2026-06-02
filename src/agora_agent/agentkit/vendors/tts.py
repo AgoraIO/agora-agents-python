@@ -268,7 +268,7 @@ class DeepgramTTSOptions(BaseModel):
     model: str = Field(..., description="Deepgram TTS model (e.g., 'aura-2-thalia-en')")
     base_url: Optional[str] = Field(default=None, description="WebSocket endpoint")
     sample_rate: Optional[int] = Field(default=None, description="Sample rate in Hz")
-    params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Deepgram TTS parameters")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Deepgram TTS parameters")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
 class DeepgramTTS(BaseTTS):
@@ -280,17 +280,16 @@ class DeepgramTTS(BaseTTS):
         return self.options.sample_rate
 
     def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {
+        params: Dict[str, Any] = dict(self.options.additional_params or {})
+        params.update({
             "api_key": self.options.api_key,
             "model": self.options.model,
-            **(self.options.params or {}),
-        }
+        })
 
         if self.options.base_url is not None:
             params["base_url"] = self.options.base_url
         if self.options.sample_rate is not None:
             params["sample_rate"] = self.options.sample_rate
-
         result: Dict[str, Any] = {"vendor": "deepgram", "params": params}
         if self.options.skip_patterns is not None:
             result["skip_patterns"] = self.options.skip_patterns

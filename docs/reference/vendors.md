@@ -233,7 +233,7 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `model` | `str` | Yes | — | Deepgram TTS model (e.g., `aura-2-thalia-en`) |
 | `base_url` | `str` | No | `None` | WebSocket endpoint; defaults server-side to `wss://api.deepgram.com/v1/speak` |
 | `sample_rate` | `int` | No | `None` | Sample rate in Hz (for example, `24000`) |
-| `params` | `Dict[str, Any]` | No | `None` | Additional Deepgram TTS parameters |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Deepgram TTS parameters, flattened into `params` |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### `HumeAITTS`

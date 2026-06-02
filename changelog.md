@@ -52,7 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
-- **`DeepgramTTS`** — New TTS vendor wrapper for Deepgram (Beta). Accepts `api_key`, `model`, `base_url`, `sample_rate`, `params`, and `skip_patterns`.
+- **`DeepgramTTS`** — New TTS vendor wrapper for Deepgram (Beta). Accepts `api_key`, `model`, `base_url`, `sample_rate`, `additional_params`, and `skip_patterns`.
 - **`Agent.with_tools(enabled=True)`** — Dedicated builder method to enable MCP tool invocation (`advanced_features.enable_tools`). Replaces the raw `with_advanced_features(AdvancedFeatures(enable_tools=True))` call.
 - **LLM vendors: `headers` field** — All four LLM vendors (`OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`) now accept an optional `headers: Dict[str, str]` parameter. Use this to pass custom HTTP headers to the LLM provider (e.g., tenant identifiers, routing headers).
 - **`AgentSession.think()` / `AsyncAgentSession.think()`** — Send a custom instruction to a running agent through the `agent_management` API.
