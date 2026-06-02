@@ -46,7 +46,7 @@ Used with `agent.with_tts()`. Each TTS vendor produces audio at a specific sampl
 |---|---|---|---|
 | `ElevenLabsTTS` | ElevenLabs | `key`, `model_id`, `voice_id`, `base_url` | 16000, 22050, 24000, or 44100 Hz |
 | `MicrosoftTTS` | Microsoft Azure | `key`, `region`, `voice_name` | 8000, 16000, 24000, or 48000 Hz |
-| `OpenAITTS` | OpenAI | `key`, `voice` | 24000 Hz (fixed) |
+| `OpenAITTS` | OpenAI | `voice` for Agora-managed `tts-1`; `api_key`, `model`, `base_url`, `voice` for BYOK | 24000 Hz (fixed) |
 | `CartesiaTTS` | Cartesia | `api_key`, `voice_id`, `model_id` | 8000–48000 Hz |
 | `GoogleTTS` | Google Cloud | `key`, `voice_name` | — |
 | `AmazonTTS` | Amazon Polly | `access_key`, `secret_key`, `region`, `voice_id`, `engine` | — |

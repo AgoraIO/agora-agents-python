@@ -184,14 +184,15 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `api_key` | `str` | Yes | — | OpenAI API key |
+| `api_key` | `str` | BYOK only | `None` | OpenAI API key |
 | `voice` | `str` | Yes | — | Voice: `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer` |
-| `model` | `str` | No | `None` | Model: `tts-1` or `tts-1-hd` |
+| `model` | `str` | BYOK only | `None` | Model: `tts-1` or `tts-1-hd` |
+| `base_url` | `str` | BYOK only | `None` | OpenAI TTS endpoint URL |
 | `response_format` | `str` | No | `None` | Audio format (e.g., `pcm`) |
 | `speed` | `float` | No | `None` | Speech speed multiplier |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
-Fixed sample rate: 24000 Hz.
+`api_key`, `model`, and `base_url` are required together for BYOK. Without `api_key`, AgentKit uses the Agora-managed `tts-1` path. Fixed sample rate: 24000 Hz.
 
 ### `CartesiaTTS`
 
