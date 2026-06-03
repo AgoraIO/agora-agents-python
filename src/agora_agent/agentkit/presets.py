@@ -37,7 +37,12 @@ AgentPresets = _AgentPresets()
 DeepgramPresetModels = ("nova-2", "nova-3")
 OpenAIPresetModels = ("gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini")
 OpenAITtsPresetModels = ("tts-1",)
-MiniMaxPresetModels = ("speech-2.6-turbo", "speech_2_6_turbo", "speech-2.8-turbo", "speech_2_8_turbo")
+MiniMaxPresetModels = (
+    "speech-2.6-turbo",
+    "speech_2_6_turbo",
+    "speech-2.8-turbo",
+    "speech_2_8_turbo",
+)
 
 PresetInput = typing.Union[str, typing.Sequence[str]]
 
@@ -61,7 +66,10 @@ _MINIMAX_MODEL_TO_PRESET = {
 
 
 def _normalize_model_name(value: typing.Any) -> typing.Optional[str]:
-    return value.strip().lower() if isinstance(value, str) else None
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().lower()
+    return normalized if normalized else None
 
 
 def _parse_preset_input(preset: typing.Optional[PresetInput]) -> typing.List[str]:
@@ -85,6 +93,10 @@ def _get_preset_category(preset: str) -> typing.Optional[str]:
     if preset in vars(AgentPresets.tts).values():
         return "tts"
     return None
+
+
+def get_preset_category(preset: str) -> typing.Optional[str]:
+    return _get_preset_category(preset)
 
 
 def _omit_none(value: typing.Dict[str, typing.Any]) -> typing.Optional[typing.Dict[str, typing.Any]]:

@@ -27,7 +27,14 @@ from .avatar_types import (
     validate_avatar_config,
     validate_tts_sample_rate,
 )
-from .presets import resolve_session_presets
+from .presets import (
+    get_preset_category,
+    infer_asr_preset,
+    infer_llm_preset,
+    infer_tts_preset,
+    normalize_preset_input,
+    resolve_session_presets,
+)
 from .token import generate_convo_ai_token, _parse_numeric_uid
 
 
@@ -294,7 +301,8 @@ class _AgentSessionBase:
     def _build_start_properties(
         self,
         token_opts: typing.Dict[str, typing.Any],
-        skip_vendor_validation: bool,
+        skip_vendor_validation_categories: typing.AbstractSet[str],
+        allow_missing_vendor_categories: typing.AbstractSet[str],
     ) -> typing.Dict[str, typing.Any]:
         base_properties = self._agent.to_properties(
             channel=self._channel,
@@ -302,7 +310,8 @@ class _AgentSessionBase:
             remote_uids=self._remote_uids,
             idle_timeout=self._idle_timeout,
             enable_string_uid=self._enable_string_uid,
-            skip_vendor_validation=skip_vendor_validation,
+            skip_vendor_validation_categories=skip_vendor_validation_categories,
+            allow_missing_vendor_categories=allow_missing_vendor_categories,
             **token_opts,
         )
         properties = self._dump_model(base_properties)
@@ -339,6 +348,29 @@ class _AgentSessionBase:
             properties["asr"] = self._dump_model(self._agent.stt)
 
         return properties
+
+    def _vendor_validation_categories(
+        self,
+        pipeline_id: typing.Optional[str],
+    ) -> typing.Tuple[typing.Set[str], typing.Set[str]]:
+        skip_categories: typing.Set[str] = set()
+        allow_missing_categories: typing.Set[str] = {"asr", "llm", "tts"} if pipeline_id else set()
+
+        preset = normalize_preset_input(self._preset)
+        if preset:
+            for item in preset.split(","):
+                category = get_preset_category(item)
+                if category is not None:
+                    skip_categories.add(category)
+                    allow_missing_categories.add(category)
+
+        if infer_asr_preset(self._agent.stt):
+            skip_categories.add("asr")
+        if infer_llm_preset(self._agent.llm):
+            skip_categories.add("llm")
+        if infer_tts_preset(self._agent.tts):
+            skip_categories.add("tts")
+        return skip_categories, allow_missing_categories
 
     @staticmethod
     def _page_value(pagination: typing.Any, field: str) -> typing.Any:
@@ -460,7 +492,12 @@ class AgentSession(_AgentSessionBase):
                     "expires_in": self._expires_in,
                 }
 
-            properties = self._build_start_properties(token_opts, skip_vendor_validation=bool(self._preset or pipeline_id))
+            skip_categories, allow_missing_categories = self._vendor_validation_categories(pipeline_id)
+            properties = self._build_start_properties(
+                token_opts,
+                skip_vendor_validation_categories=skip_categories,
+                allow_missing_vendor_categories=allow_missing_categories,
+            )
             resolved_preset, resolved_properties = resolve_session_presets(
                 self._preset,
                 properties,
@@ -782,7 +819,12 @@ class AsyncAgentSession(_AgentSessionBase):
                     "expires_in": self._expires_in,
                 }
 
-            properties = self._build_start_properties(token_opts, skip_vendor_validation=bool(self._preset or pipeline_id))
+            skip_categories, allow_missing_categories = self._vendor_validation_categories(pipeline_id)
+            properties = self._build_start_properties(
+                token_opts,
+                skip_vendor_validation_categories=skip_categories,
+                allow_missing_vendor_categories=allow_missing_categories,
+            )
             resolved_preset, resolved_properties = resolve_session_presets(
                 self._preset,
                 properties,

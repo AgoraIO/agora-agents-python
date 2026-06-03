@@ -1,6 +1,6 @@
 import pytest
 
-from agora_agent import Agent
+from agora_agent import Agent, OpenAI, OpenAITTS
 
 
 def dump(value):
@@ -85,6 +85,75 @@ def test_agent_pipeline_id_skips_missing_vendor_validation() -> None:
     call = start_agent(Agent(name="support", pipeline_id="studio-pipeline-id"))
 
     assert call["pipeline_id"] == "studio-pipeline-id"
+    properties = dump(call["properties"])
+    assert "asr" not in properties
+    assert "llm" not in properties
+    assert "tts" not in properties
+
+
+def test_pipeline_id_allows_single_llm_override_without_tts_or_asr() -> None:
+    agent = Agent(name="support", pipeline_id="studio-pipeline-id").with_llm(
+        OpenAI(
+            api_key="openai-key",
+            base_url="https://api.openai.com/v1/chat/completions",
+            model="gpt-4o",
+        )
+    )
+
+    call = start_agent(agent)
+
+    assert call["pipeline_id"] == "studio-pipeline-id"
+    properties = dump(call["properties"])
+    assert "asr" not in properties
+    assert "tts" not in properties
+    assert properties["llm"]["api_key"] == "openai-key"
+    assert properties["llm"]["params"]["model"] == "gpt-4o"
+
+
+def test_pipeline_id_allows_multiple_overrides_without_asr() -> None:
+    agent = (
+        Agent(name="support", pipeline_id="studio-pipeline-id")
+        .with_llm(
+            OpenAI(
+                api_key="openai-key",
+                base_url="https://api.openai.com/v1/chat/completions",
+                model="gpt-4o",
+            )
+        )
+        .with_tts(
+            OpenAITTS(
+                api_key="tts-key",
+                base_url="https://api.openai.com/v1/audio/speech",
+                model="tts-1-hd",
+                voice="alloy",
+            )
+        )
+    )
+
+    call = start_agent(agent)
+
+    assert call["pipeline_id"] == "studio-pipeline-id"
+    properties = dump(call["properties"])
+    assert "asr" not in properties
+    assert properties["llm"]["api_key"] == "openai-key"
+    assert properties["tts"]["vendor"] == "openai"
+    assert properties["tts"]["params"]["api_key"] == "tts-key"
+
+
+def test_skip_vendor_validation_boolean_is_deprecated() -> None:
+    with pytest.warns(DeprecationWarning, match="skip_vendor_validation is deprecated"):
+        properties = Agent(name="support").to_properties(
+            channel="channel",
+            token="token",
+            agent_uid="1",
+            remote_uids=["100"],
+            skip_vendor_validation=True,
+        )
+
+    payload = dump(properties)
+    assert "asr" not in payload
+    assert "llm" not in payload
+    assert "tts" not in payload
 
 
 def test_pipeline_id_is_not_sent_inside_properties() -> None:

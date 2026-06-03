@@ -114,5 +114,5 @@ def test_tts_managed_mode_validation_matches_core_shapes() -> None:
     with pytest.raises(Exception, match="OpenAITTS requires api_key"):
         OpenAITTS(voice="coral", model="tts-1-hd")
 
-    with pytest.raises(Exception, match="MiniMaxTTS requires key"):
-        MiniMaxTTS(model="speech-02-turbo")
+    with pytest.raises(Exception, match="MiniMaxTTS requires key unless using a supported Agora-managed model"):
+        MiniMaxTTS(model="unsupported-model")

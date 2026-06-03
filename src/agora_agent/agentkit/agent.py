@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 import typing
 import typing_extensions
+import warnings
 
 if typing.TYPE_CHECKING:
     from .agent_session import AgentSession, AsyncAgentSession
@@ -815,6 +816,8 @@ class Agent:
         app_certificate: typing.Optional[str] = None,
         expires_in: typing.Optional[int] = None,
         skip_vendor_validation: bool = False,
+        skip_vendor_validation_categories: typing.Optional[typing.AbstractSet[str]] = None,
+        allow_missing_vendor_categories: typing.Optional[typing.AbstractSet[str]] = None,
     ) -> StartAgentsRequestProperties:
         # Validate the MLLM + enabled-avatar combination BEFORE generating the
         # RTC token so callers get a clear, actionable error first (matches the
@@ -895,19 +898,49 @@ class Agent:
                 base_kwargs["mllm"] = mllm_config
             return StartAgentsRequestProperties(**base_kwargs)
 
-        base_kwargs["asr"] = self._resolve_asr_config()
+        if skip_vendor_validation:
+            warnings.warn(
+                "skip_vendor_validation is deprecated and will be removed in a future release. "
+                "Use skip_vendor_validation_categories and allow_missing_vendor_categories instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        skip_categories = set(skip_vendor_validation_categories or ())
+        allow_missing_categories = set(allow_missing_vendor_categories or ())
+        if skip_vendor_validation:
+            skip_categories.update({"asr", "llm", "tts"})
+            allow_missing_categories.update({"asr", "llm", "tts"})
+
+        skip_asr_validation = skip_vendor_validation or "asr" in skip_categories
+        skip_llm_validation = skip_vendor_validation or "llm" in skip_categories
+        skip_tts_validation = skip_vendor_validation or "tts" in skip_categories
+        allow_missing_asr = "asr" in allow_missing_categories
+        allow_missing_llm = "llm" in allow_missing_categories
+        allow_missing_tts = "tts" in allow_missing_categories
+
+        if not skip_asr_validation and (self._stt is not None or not allow_missing_asr):
+            base_kwargs["asr"] = self._resolve_asr_config()
         base_kwargs["turn_detection"] = self._resolve_turn_detection_config()
 
         if skip_vendor_validation:
             return StartAgentsRequestProperties(**base_kwargs)
 
-        if self._tts is None:
+        if self._tts is None and not (skip_tts_validation or allow_missing_tts):
             raise ValueError("TTS configuration is required. Use with_tts() to set it.")
 
-        if self._llm is None:
+        if self._llm is None and not (skip_llm_validation or allow_missing_llm):
             raise ValueError("LLM configuration is required. Use with_llm() to set it.")
 
-        llm_config = dict(self._llm)
+        if self._llm is not None and not skip_llm_validation:
+            base_kwargs["llm"] = self._resolve_llm_config()
+        if self._tts is not None and not skip_tts_validation:
+            base_kwargs["tts"] = self._tts
+
+        return StartAgentsRequestProperties(**base_kwargs)
+
+    def _resolve_llm_config(self) -> typing.Dict[str, typing.Any]:
+        llm_config = dict(self._llm or {})
         # Agent-level fields take priority over the vendor's defaults.
         # This matches the TS SDK where agent-level values override vendor config.
         if self._instructions is not None:
@@ -920,11 +953,7 @@ class Agent:
             llm_config["failure_message"] = self._failure_message
         if self._max_history is not None:
             llm_config["max_history"] = self._max_history
-
-        base_kwargs["llm"] = llm_config
-        base_kwargs["tts"] = self._tts
-
-        return StartAgentsRequestProperties(**base_kwargs)
+        return llm_config
 
     def _resolve_asr_config(self) -> typing.Dict[str, typing.Any]:
         asr_config = dict(self._stt or {})
