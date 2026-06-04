@@ -139,6 +139,8 @@ class OpenAITTS(BaseTTS):
         }
         if self.options.api_key is not None:
             params["api_key"] = self.options.api_key
+        if self.options.base_url is not None:
+            params["base_url"] = self.options.base_url
             params["base_url"] = self.options.base_url
             params["model"] = self.options.model
         elif self.options.model is not None:
@@ -254,6 +256,8 @@ class AmazonTTS(BaseTTS):
             "voice": self.options.voice_id,
             "engine": self.options.engine,
         }
+        if self.options.engine is not None:
+            params["engine"] = self.options.engine
 
         result: Dict[str, Any] = {"vendor": "amazon", "params": params}
         if self.options.skip_patterns is not None:
@@ -392,6 +396,8 @@ class FishAudioTTS(BaseTTS):
             "reference_id": self.options.reference_id,
             "backend": self.options.backend,
         }
+        if self.options.backend is not None:
+            params["backend"] = self.options.backend
 
         result: Dict[str, Any] = {"vendor": "fishaudio", "params": params}
         if self.options.skip_patterns is not None:
