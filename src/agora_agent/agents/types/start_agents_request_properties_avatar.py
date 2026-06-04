@@ -24,6 +24,7 @@ class StartAgentsRequestPropertiesAvatar(UncheckedBaseModel):
     - `akool`: Akool (Beta)
     - `liveavatar`: LiveAvatar (Beta)
     - `anam`: Anam (Beta)
+    - `generic`: Generic (Beta)
     """
 
     params: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)

@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .cartesia_tts_output_format import CartesiaTtsOutputFormat
 from .cartesia_tts_voice import CartesiaTtsVoice
 
 
@@ -18,15 +19,21 @@ class CartesiaTtsParams(UncheckedBaseModel):
     Cartesia API key
     """
 
-    voice: CartesiaTtsVoice
-    model_id: typing.Optional[str] = pydantic.Field(default=None)
+    model_id: str = pydantic.Field()
     """
-    Model ID (optional)
+    Model ID (for example, sonic-2)
     """
 
-    sample_rate: typing.Optional[int] = pydantic.Field(default=None)
+    base_url: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Audio sampling rate in Hz
+    WebSocket URL for the Cartesia streaming API
+    """
+
+    voice: CartesiaTtsVoice
+    output_format: typing.Optional[CartesiaTtsOutputFormat] = None
+    language: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Target language for speech synthesis
     """
 
     if IS_PYDANTIC_V2:

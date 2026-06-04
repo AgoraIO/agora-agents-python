@@ -5,10 +5,36 @@ import typing
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2
 from ...core.unchecked_base_model import UncheckedBaseModel
+from .get_turns_agents_response_pagination import GetTurnsAgentsResponsePagination
 from .get_turns_agents_response_turns_item import GetTurnsAgentsResponseTurnsItem
 
 
 class GetTurnsAgentsResponse(UncheckedBaseModel):
+    agent_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The unique identifier of the agent.
+    """
+
+    name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The name of the agent.
+    """
+
+    channel: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The name of the RTC channel the agent joined.
+    """
+
+    total_turn_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The total number of dialogue turns in the current session.
+    """
+
+    pagination: typing.Optional[GetTurnsAgentsResponsePagination] = pydantic.Field(default=None)
+    """
+    Pagination information.
+    """
+
     turns: typing.Optional[typing.List[GetTurnsAgentsResponseTurnsItem]] = pydantic.Field(default=None)
     """
     A list of conversation turns for the agent session.

@@ -32,11 +32,6 @@ class DeepgramTtsParams(UncheckedBaseModel):
     Audio sampling rate in Hz
     """
 
-    params: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
-    """
-    Additional Deepgram TTS parameters
-    """
-
     skip_patterns: typing.Optional[typing.List[int]] = pydantic.Field(default=None)
     """
     Controls whether the TTS module skips bracketed content when reading LLM response text.

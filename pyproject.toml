@@ -1,9 +1,9 @@
 [project]
-name = "agora-agent-server-sdk"
+name = "agora-agents"
 
 [tool.poetry]
-name = "agora-agent-server-sdk"
-version = "v1.4.1"
+name = "agora-agents"
+version = "v2.1.1"
 description = ""
 readme = "README.md"
 authors = []

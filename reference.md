@@ -32,6 +32,9 @@ from agora_agent.agents import (
     StartAgentsRequestProperties,
     StartAgentsRequestPropertiesAsr,
     StartAgentsRequestPropertiesLlm,
+    StartAgentsRequestPropertiesTurnDetection,
+    StartAgentsRequestPropertiesTurnDetectionConfig,
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
 )
 
 client = Agora(
@@ -68,6 +71,13 @@ client.agents.start(
             max_history=32,
             greeting_message="Hello, how can I assist you today?",
             failure_message="Please hold on a second.",
+        ),
+        turn_detection=StartAgentsRequestPropertiesTurnDetection(
+            config=StartAgentsRequestPropertiesTurnDetectionConfig(
+                end_of_speech=StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech(
+                    mode="semantic",
+                ),
+            ),
         ),
     ),
 )
@@ -242,7 +252,6 @@ The agent state to filter by. Only one state can be specified per query:
 - `RUNNING` (2): The agent is running.
 - `STOPPING` (3): The agent is stopping.
 - `STOPPED` (4): The agent has exited.
-- `RECOVERING` (5): The agent is recovering.
 - `FAILED` (6): The agent failed to execute.
     
 </dd>
@@ -516,6 +525,22 @@ client.agents.get_turns(
 <dl>
 <dd>
 
+**page_index:** `typing.Optional[int]` — The page number. Starts from 1.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**page_size:** `typing.Optional[int]` — The number of dialogue turns returned per page.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -540,7 +565,7 @@ client.agents.get_turns(
 <dl>
 <dd>
 
-Stop the specified conversational agent instance.
+Stop the specified conversational agent instance. The API responds after request parameters are validated, and the stop operation is processed asynchronously after the response is returned.
 </dd>
 </dl>
 </dd>
@@ -1015,6 +1040,7 @@ client.agent_management.agent_think(
 
 The action to take when the agent is in a listening state:
 - `inject`: Inject the custom text instruction into the current turn without interrupting it.
+- `interrupt`: Immediately interrupt the current flow and initiate a new round of dialogue.
 - `ignore`: Ignore the request.
     
 </dd>

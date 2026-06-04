@@ -108,7 +108,7 @@ print(client.get_current_url())
 
 ## Accessing the Pool Directly
 
-For advanced use, access the underlying `Pool` object:
+For advanced use, access the `Pool` object:
 
 ```python
 pool = client.pool
@@ -127,4 +127,4 @@ area = pool.get_area()
 | `next_region()` | sync | sync | Cycle to next region prefix |
 | `select_best_domain()` | sync | **`async` (requires `await`)** | DNS-based domain selection |
 | `get_current_url()` | sync | sync | Get the current base URL |
-| `pool` (property) | sync | sync | Access the underlying `Pool` object |
+| `pool` (property) | sync | sync | Access the `Pool` object |

@@ -12,24 +12,28 @@ The `Agent` class is a fluent builder for configuring AI agent properties. It co
 
 <!-- snippet: executable -->
 ```python
-from agora_agent.agentkit import Agent
+from agora_agent import Agent, OpenAI
 
-agent = Agent(
-    name='support-assistant',
-    instructions='You are a helpful voice assistant.',
-    greeting='Hello! How can I help you?',
-    failure_message='Sorry, something went wrong.',
-    max_history=20,
+agent = Agent(name='support-assistant').with_llm(
+    OpenAI(
+        api_key='your-openai-key',
+        base_url='https://api.openai.com/v1/chat/completions',
+        model='gpt-4o-mini',
+        system_messages=[{'role': 'system', 'content': 'You are a helpful voice assistant.'}],
+        greeting_message='Hello! How can I help you?',
+        failure_message='Sorry, something went wrong.',
+        max_history=20,
+    )
 )
 ```
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `name` | `str` | No | Agent display name (used as session name if not overridden) |
-| `instructions` | `str` | No | System prompt for the LLM |
-| `greeting` | `str` | No | Message spoken when the agent joins |
-| `failure_message` | `str` | No | Message spoken on error |
-| `max_history` | `int` | No | Maximum conversation history length |
+| `instructions` | `str` | No | Deprecated. Use LLM vendor `system_messages` instead. |
+| `greeting` | `str` | No | Deprecated. Use LLM/MLLM vendor `greeting_message` instead. |
+| `failure_message` | `str` | No | Deprecated. Use LLM/MLLM vendor `failure_message` instead. |
+| `max_history` | `int` | No | Deprecated. Use LLM vendor `max_history` instead. |
 | `turn_detection` | `TurnDetectionConfig` | No | Turn detection settings |
 | `sal` | `SalConfig` | No | SAL (Speech Activity Level) configuration |
 | `advanced_features` | `Dict[str, Any]` | No | Advanced features (e.g., `{'enable_rtm': True}`) |
@@ -57,15 +61,15 @@ Each `with_*` method returns a **new** `Agent` instance — the original is unch
 
 | Method | Accepts | Purpose |
 |---|---|---|
-| `with_instructions(text)` | `str` | Override the system prompt |
-| `with_greeting(text)` | `str` | Override the greeting message |
+| `with_instructions(text)` | `str` | Deprecated. Use LLM vendor `system_messages` instead. |
+| `with_greeting(text)` | `str` | Deprecated. Use LLM/MLLM vendor `greeting_message` instead. |
 | `with_name(name)` | `str` | Override the agent name |
-| `with_turn_detection(config)` | `TurnDetectionConfig` | Override cascading-flow SOS/EOS detection; use `with_interruption()` for interruption behavior |
+| `with_turn_detection(config)` | `TurnDetectionConfig` | Configure `turn_detection.language` and cascading-flow SOS/EOS detection; use `with_interruption()` for interruption behavior |
 | `with_sal(config)` | `SalConfig` | Set SAL configuration |
 | `with_advanced_features(features)` | `Dict[str, Any]` | Set advanced features |
 | `with_parameters(parameters)` | `SessionParams` | Set session parameters |
-| `with_failure_message(message)` | `str` | Set failure message |
-| `with_max_history(max_history)` | `int` | Set max history length |
+| `with_failure_message(message)` | `str` | Deprecated. Use LLM/MLLM vendor `failure_message` instead. |
+| `with_max_history(max_history)` | `int` | Deprecated. Use LLM vendor `max_history` instead. |
 | `with_geofence(geofence)` | `GeofenceConfig` | Set geofence configuration |
 | `with_labels(labels)` | `Dict[str, str]` | Set custom labels |
 | `with_rtc(rtc)` | `RtcConfig` | Set RTC configuration |
@@ -75,13 +79,18 @@ Each `with_*` method returns a **new** `Agent` instance — the original is unch
 
 <!-- snippet: executable -->
 ```python
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent
+from agora_agent import OpenAI, ElevenLabsTTS, DeepgramSTT
 
 agent = (
-    Agent(name='my-agent', instructions='You are a helpful assistant.')
-    .with_llm(OpenAI(api_key='your-openai-key', model='gpt-4o-mini'))
-    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id'))
+    Agent(name='my-agent')
+    .with_llm(OpenAI(
+        api_key='your-openai-key',
+        base_url='https://api.openai.com/v1/chat/completions',
+        model='gpt-4o-mini',
+        system_messages=[{'role': 'system', 'content': 'You are a helpful assistant.'}],
+    ))
+    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', base_url='wss://api.elevenlabs.io/v1'))
     .with_stt(DeepgramSTT(api_key='your-deepgram-key', language='en-US'))
 )
 ```
@@ -92,16 +101,19 @@ Because each `with_*` call returns a new `Agent`, you can build a base configura
 
 <!-- snippet: executable -->
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, Agora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 client = Agora(area=Area.US, app_id='your-app-id', app_certificate='your-app-certificate')
 
 base = (
-    Agent(instructions='You are a helpful assistant.')
-    .with_llm(OpenAI(api_key='your-openai-key', model='gpt-4o-mini'))
-    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id'))
+    Agent()
+    .with_llm(OpenAI(
+        api_key='your-openai-key',
+        base_url='https://api.openai.com/v1/chat/completions',
+        model='gpt-4o-mini',
+        system_messages=[{'role': 'system', 'content': 'You are a helpful assistant.'}],
+    ))
+    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', base_url='wss://api.elevenlabs.io/v1'))
     .with_stt(DeepgramSTT(api_key='your-deepgram-key', language='en-US'))
 )
 

@@ -100,7 +100,7 @@ url = client.get_current_url()
 
 ### `pool` (property)
 
-Access the underlying `Pool` object for advanced domain management.
+Access the `Pool` object for advanced domain management.
 
 <!-- snippet: fragment -->
 ```python

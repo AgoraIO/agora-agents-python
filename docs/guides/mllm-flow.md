@@ -1,29 +1,28 @@
 ---
 sidebar_position: 2
 title: MLLM Flow (Multimodal)
-description: Use OpenAI Realtime or Gemini Live for end-to-end audio processing.
+description: Use OpenAI Realtime, Gemini Live, Vertex AI, or xAI for end-to-end audio processing.
 ---
 
 # MLLM Flow (Multimodal)
 
 The MLLM (Multimodal LLM) flow uses a single model to handle both audio input and output — no separate STT or TTS step. This gives the model direct access to voice tone, pacing, and emotion.
 
-Two MLLM vendors are supported:
+MLLM vendors supported by AgentKit:
 
 - **OpenAI Realtime** — `gpt-4o-realtime-preview` and related models
 - **Gemini Live** — direct Google AI API access for audio-native Gemini models
+- **Vertex AI** — Gemini Live through Google Cloud Vertex AI
+- **xAI Grok** — xAI Realtime API
 
 ## Enable MLLM Mode
 
-Call `agent.with_mllm(vendor)` to enable MLLM mode. The builder sets `mllm.enable = True` automatically.
+Call `agent.with_mllm(vendor)` to enable MLLM mode. The builder sets `mllm.enable = True` automatically. MLLM sessions do not require TTS, STT, or LLM vendors. Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline.
 
 ```python
-from agora_agent.agentkit import Agent
+from agora_agent import Agent
 
-agent = Agent(
-    name='realtime-agent',
-    instructions='You are a voice assistant.',
-)
+agent = Agent(name='realtime-agent')
 ```
 
 ## OpenAI Realtime
@@ -31,9 +30,7 @@ agent = Agent(
 ### Sync
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAIRealtime
+from agora_agent import Agent, Agora, Area, OpenAIRealtime
 
 client = Agora(
     area=Area.US,
@@ -42,10 +39,7 @@ client = Agora(
 )
 
 agent = (
-    Agent(
-        name='realtime-agent',
-        instructions='You are a helpful voice assistant.',
-    )
+    Agent(name='realtime-agent')
     .with_mllm(OpenAIRealtime(
         api_key='your-openai-key',
         model='gpt-4o-realtime-preview',
@@ -62,9 +56,7 @@ session.stop()
 
 ```python
 import asyncio
-from agora_agent import AsyncAgora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAIRealtime
+from agora_agent import Agent, AsyncAgora, Area, OpenAIRealtime
 
 async def main():
     client = AsyncAgora(
@@ -74,10 +66,7 @@ async def main():
         )
 
     agent = (
-        Agent(
-            name='realtime-agent',
-            instructions='You are a helpful voice assistant.',
-        )
+        Agent(name='realtime-agent')
         .with_mllm(OpenAIRealtime(
             api_key='your-openai-key',
             model='gpt-4o-realtime-preview',
@@ -96,9 +85,7 @@ asyncio.run(main())
 Gemini Live uses a Google AI API key:
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import GeminiLive
+from agora_agent import Agent, Agora, Area, GeminiLive
 
 client = Agora(
     area=Area.AP,
@@ -107,10 +94,7 @@ client = Agora(
 )
 
 agent = (
-    Agent(
-        name='gemini-agent',
-        instructions='You are a helpful multilingual assistant.',
-    )
+    Agent(name='gemini-agent')
     .with_mllm(GeminiLive(
         api_key='your-google-ai-api-key',
         model='gemini-live-2.5-flash',
@@ -123,10 +107,35 @@ agent_id = session.start()
 session.stop()
 ```
 
+## xAI Grok
+
+```python
+from agora_agent import Agent, Agora, Area, XaiGrok
+
+client = Agora(area=Area.US, app_id='your-app-id', app_certificate='your-app-certificate')
+
+agent = (
+    Agent(name='xai-agent')
+    .with_mllm(XaiGrok(
+        api_key='your-xai-key',
+        voice='eve',
+        language='en',
+        sample_rate=24000,
+        output_modalities=['audio', 'text'],
+    ))
+)
+
+session = agent.create_session(client, channel='xai-room', agent_uid='1', remote_uids=['100'])
+agent_id = session.start()
+session.stop()
+```
+
+For xAI turn detection, use `mllm.turn_detection` with `agora_vad` or `server_vad`.
+
 ## OpenAI Realtime with Custom Options
 
 ```python
-from agora_agent.agentkit.vendors import OpenAIRealtime
+from agora_agent import OpenAIRealtime
 
 mllm = OpenAIRealtime(
     api_key='your-openai-key',
@@ -145,10 +154,10 @@ mllm = OpenAIRealtime(
 |---|---|---|
 | Latency | Lower — single model, no pipeline | Higher — three models in sequence |
 | Voice control | Model-dependent | Full vendor choice for TTS |
-| Vendor flexibility | Limited (OpenAI Realtime or Gemini Live) | Mix and match 4 LLMs, 12 TTS, 10 STT |
+| Vendor flexibility | Limited to supported MLLM providers (OpenAI Realtime, Gemini Live, Vertex AI, xAI Grok) | Mix and match LLM, TTS, and STT vendors |
 | Audio understanding | Model hears tone, pacing, emotion | STT produces text only |
 
 ## Next Steps
 
 - For the cascading pipeline, see [Cascading Flow](./cascading-flow.md)
-- To add a visual avatar, see [Avatars](./avatars.md)
+- To add a visual avatar, use the cascading pipeline and see [Avatars](./avatars.md)

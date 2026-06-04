@@ -12,7 +12,7 @@ class ElevenLabsTtsParams(UncheckedBaseModel):
     ElevenLabs TTS configuration parameters.
     """
 
-    base_url: typing.Optional[str] = pydantic.Field(default=None)
+    base_url: str = pydantic.Field()
     """
     WebSocket URL (e.g., "wss://api.elevenlabs.io/v1")
     """
@@ -35,6 +35,31 @@ class ElevenLabsTtsParams(UncheckedBaseModel):
     sample_rate: typing.Optional[int] = pydantic.Field(default=None)
     """
     Audio sample rate in Hz (16kHz for Akool, 24kHz for HeyGen)
+    """
+
+    speed: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speech speed multiplier.
+    """
+
+    stability: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Voice stability. Higher values produce more consistent speech.
+    """
+
+    similarity_boost: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Similarity boost for the selected voice.
+    """
+
+    style: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speaking style and expressiveness control.
+    """
+
+    use_speaker_boost: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether to improve voice quality and similarity.
     """
 
     if IS_PYDANTIC_V2:

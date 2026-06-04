@@ -32,6 +32,16 @@ class MicrosoftTtsParams(UncheckedBaseModel):
     Audio sampling rate in Hz
     """
 
+    speed: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speaking rate multiplier. Values between 0.5 and 2.0.
+    """
+
+    volume: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Audio volume. Values between 0.0 and 100.0.
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

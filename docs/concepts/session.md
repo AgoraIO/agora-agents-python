@@ -35,16 +35,19 @@ Use `Agent.create_session()` to create a session:
 
 <!-- snippet: executable -->
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, Agora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 client = Agora(area=Area.US, app_id='your-app-id', app_certificate='your-app-certificate')
 
 agent = (
-    Agent(name='my-agent', instructions='You are helpful.')
-    .with_llm(OpenAI(api_key='your-openai-key', model='gpt-4o-mini'))
-    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id'))
+    Agent(name='my-agent')
+    .with_llm(OpenAI(
+        api_key='your-openai-key',
+        base_url='https://api.openai.com/v1/chat/completions',
+        model='gpt-4o-mini',
+        system_messages=[{'role': 'system', 'content': 'You are helpful.'}],
+    ))
+    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', base_url='wss://api.elevenlabs.io/v1'))
     .with_stt(DeepgramSTT(api_key='your-deepgram-key', language='en-US'))
 )
 
@@ -147,13 +150,13 @@ session.off('started', on_started)
 | `session.app_id` | `str` | The Agora App ID |
 | `session.raw` | `AgentsClient` | Direct access to the Fern-generated agents client |
 
-## `session.raw` — Escape Hatch
+## Direct API access with `session.raw`
 
-If the agentkit does not yet expose a method for a new API endpoint, use `session.raw` to access the underlying Fern-generated `AgentsClient` (sync) or `AsyncAgentsClient` (async) directly:
+If AgentKit does not yet expose a method for a new API endpoint, use `session.raw` to access the generated `AgentsClient` (sync) or `AsyncAgentsClient` (async) directly:
 
 <!-- snippet: fragment -->
 ```python
-# Access any Fern-generated method
+# Access any generated REST method
 response = session.raw.list(session.app_id)
 ```
 

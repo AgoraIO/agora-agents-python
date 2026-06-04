@@ -17,9 +17,7 @@ User audio → STT → LLM → TTS → Agent audio
 ### Sync
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, Agora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 client = Agora(
     area=Area.US,
@@ -28,9 +26,14 @@ client = Agora(
 )
 
 agent = (
-    Agent(name='assistant', instructions='You are a friendly customer support agent.')
-    .with_llm(OpenAI(api_key='your-openai-key', model='gpt-4o-mini'))
-    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', sample_rate=24000))
+    Agent(name='assistant')
+    .with_llm(OpenAI(
+        api_key='your-openai-key',
+        base_url='https://api.openai.com/v1/chat/completions',
+        model='gpt-4o-mini',
+        system_messages=[{'role': 'system', 'content': 'You are a friendly customer support agent.'}],
+    ))
+    .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', base_url='wss://api.elevenlabs.io/v1', sample_rate=24000))
     .with_stt(DeepgramSTT(api_key='your-deepgram-key', language='en-US', model='nova-2'))
 )
 
@@ -45,9 +48,7 @@ session.stop()
 
 ```python
 import asyncio
-from agora_agent import AsyncAgora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import OpenAI, ElevenLabsTTS, DeepgramSTT
+from agora_agent import Agent, AsyncAgora, Area, OpenAI, ElevenLabsTTS, DeepgramSTT
 
 async def main():
     client = AsyncAgora(
@@ -57,9 +58,14 @@ async def main():
         )
 
     agent = (
-        Agent(name='assistant', instructions='You are a friendly customer support agent.')
-        .with_llm(OpenAI(api_key='your-openai-key', model='gpt-4o-mini'))
-        .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', sample_rate=24000))
+        Agent(name='assistant')
+        .with_llm(OpenAI(
+            api_key='your-openai-key',
+            base_url='https://api.openai.com/v1/chat/completions',
+            model='gpt-4o-mini',
+            system_messages=[{'role': 'system', 'content': 'You are a friendly customer support agent.'}],
+        ))
+        .with_tts(ElevenLabsTTS(key='your-elevenlabs-key', model_id='eleven_flash_v2_5', voice_id='your-voice-id', base_url='wss://api.elevenlabs.io/v1', sample_rate=24000))
         .with_stt(DeepgramSTT(api_key='your-deepgram-key', language='en-US', model='nova-2'))
     )
 
@@ -77,9 +83,7 @@ asyncio.run(main())
 This combination keeps everything within the Azure ecosystem:
 
 ```python
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import AzureOpenAI, MicrosoftTTS, MicrosoftSTT
+from agora_agent import Agent, Agora, Area, AzureOpenAI, MicrosoftTTS, MicrosoftSTT
 
 client = Agora(
     area=Area.EU,
@@ -88,11 +92,12 @@ client = Agora(
 )
 
 agent = (
-    Agent(name='azure-agent', instructions='You are a helpful assistant for enterprise customers.')
+    Agent(name='azure-agent')
     .with_llm(AzureOpenAI(
         api_key='your-azure-key',
         endpoint='https://your-resource.openai.azure.com',
         deployment_name='gpt-4o-mini',
+        system_messages=[{'role': 'system', 'content': 'You are a helpful assistant for enterprise customers.'}],
     ))
     .with_tts(MicrosoftTTS(
         key='your-azure-speech-key',
@@ -118,10 +123,11 @@ session.stop()
 All LLM vendors support optional parameters for fine-tuning:
 
 ```python
-from agora_agent.agentkit.vendors import OpenAI
+from agora_agent import OpenAI
 
 llm = OpenAI(
     api_key='your-openai-key',
+    base_url='https://api.openai.com/v1/chat/completions',
     model='gpt-4o-mini',
     temperature=0.7,
     top_p=0.9,
@@ -131,14 +137,16 @@ llm = OpenAI(
 
 ## Adding a Greeting
 
-The `greeting` parameter on `Agent` makes the agent speak automatically when the session starts:
+Configure greetings on the LLM vendor so message ownership stays with the LLM configuration:
 
 ```python
-agent = Agent(
-    name='greeter',
-    instructions='You are a helpful assistant.',
-    greeting='Hi there! What can I do for you?',
-)
+agent = Agent(name='greeter').with_llm(OpenAI(
+    api_key='your-openai-key',
+    base_url='https://api.openai.com/v1/chat/completions',
+    model='gpt-4o-mini',
+    system_messages=[{'role': 'system', 'content': 'You are a helpful assistant.'}],
+    greeting_message='Hi there! What can I do for you?',
+))
 ```
 
 ## Next Steps

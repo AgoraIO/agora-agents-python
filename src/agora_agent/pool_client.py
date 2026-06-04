@@ -195,7 +195,7 @@ class Agora(BaseAgora):
     from agora_agent import Agora, Area
     from agora_agent.agentkit.token import generate_convo_ai_token
 
-    raw_token = generate_convo_ai_token(app_id="...", app_certificate="...", channel_name="...", account="1")
+    raw_token = generate_convo_ai_token(app_id="...", app_certificate="...", channel_name="...", uid=1)
     client = Agora(
         area=Area.US,
         app_id="YOUR_APP_ID",
@@ -323,7 +323,7 @@ class Agora(BaseAgora):
                 app_id=self.app_id,
                 app_certificate=self.app_certificate,
                 channel_name="stop",
-                account=agent_id,
+                uid=0,
             )
             request_options = {"additional_headers": {"Authorization": f"agora token={token}"}}
 
@@ -534,7 +534,7 @@ class AsyncAgora(BaseAsyncAgora):
                 app_id=self.app_id,
                 app_certificate=self.app_certificate,
                 channel_name="stop",
-                account=agent_id,
+                uid=0,
             )
             request_options = {"additional_headers": {"Authorization": f"agora token={token}"}}
 

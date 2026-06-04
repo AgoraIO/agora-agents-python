@@ -32,7 +32,6 @@ class GetAgentsResponse(UncheckedBaseModel):
     - `RUNNING` (2): The agent is running.
     - `STOPPING` (3): The agent is stopping.
     - `STOPPED` (4): The agent has exited.
-    - `RECOVERING` (5): The agent is recovering.
     - `FAILED` (6): The agent failed to execute.
     """
 

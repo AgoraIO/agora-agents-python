@@ -3,7 +3,9 @@
 import typing
 
 import pydantic
+import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
+from ..core.serialization import FieldMetadata
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
@@ -12,7 +14,7 @@ class RimeTtsParams(UncheckedBaseModel):
     Rime TTS configuration parameters.
     """
 
-    key: str = pydantic.Field()
+    api_key: str = pydantic.Field()
     """
     Rime API key
     """
@@ -22,9 +24,14 @@ class RimeTtsParams(UncheckedBaseModel):
     Rime speaker ID
     """
 
-    model_id: typing.Optional[str] = pydantic.Field(default=None)
+    model_id: typing_extensions.Annotated[str, FieldMetadata(alias="modelId")] = pydantic.Field()
     """
-    Model ID (optional)
+    Rime TTS model ID
+    """
+
+    base_url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    WebSocket URL for the Rime streaming API
     """
 
     if IS_PYDANTIC_V2:

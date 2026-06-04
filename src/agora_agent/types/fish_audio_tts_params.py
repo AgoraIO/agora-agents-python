@@ -12,7 +12,7 @@ class FishAudioTtsParams(UncheckedBaseModel):
     Fish Audio TTS configuration parameters.
     """
 
-    key: str = pydantic.Field()
+    api_key: str = pydantic.Field()
     """
     Fish Audio API key
     """
@@ -20,6 +20,11 @@ class FishAudioTtsParams(UncheckedBaseModel):
     reference_id: str = pydantic.Field()
     """
     Fish Audio reference ID
+    """
+
+    backend: str = pydantic.Field()
+    """
+    Backend model version to use
     """
 
     if IS_PYDANTIC_V2:

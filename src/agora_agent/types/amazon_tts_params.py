@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .amazon_tts_params_engine import AmazonTtsParamsEngine
 
 
 class AmazonTtsParams(UncheckedBaseModel):
@@ -12,24 +13,29 @@ class AmazonTtsParams(UncheckedBaseModel):
     Amazon Polly TTS configuration parameters.
     """
 
-    access_key: str = pydantic.Field()
+    aws_access_key_id: str = pydantic.Field()
     """
-    AWS access key
+    AWS access key ID
     """
 
-    secret_key: str = pydantic.Field()
+    aws_secret_access_key: str = pydantic.Field()
     """
     AWS secret key
     """
 
-    region: str = pydantic.Field()
+    region_name: str = pydantic.Field()
     """
     AWS region (e.g., "us-east-1")
     """
 
-    voice_id: str = pydantic.Field()
+    voice: str = pydantic.Field()
     """
     Amazon Polly voice ID
+    """
+
+    engine: AmazonTtsParamsEngine = pydantic.Field()
+    """
+    Amazon Polly engine type
     """
 
     if IS_PYDANTIC_V2:

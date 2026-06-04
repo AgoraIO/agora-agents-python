@@ -6,11 +6,11 @@ description: Bring your own vendor credentials and use custom vendor configurati
 
 # BYOK
 
-Use BYOK when you want to provide vendor credentials yourself instead of relying on Agora-managed presets.
+Use BYOK when you want to provide vendor credentials yourself instead of relying on Agora-managed models via the builder.
 
 Typical reasons:
 
-- you need a vendor model that is not part of the preset catalog
+- you need a vendor model outside the Agora-managed catalog
 - you want to point to a custom endpoint
 - you want direct control over vendor-specific parameters
 - your organization manages vendor billing separately from Agora
@@ -20,9 +20,7 @@ Typical reasons:
 ```python
 import os
 
-from agora_agent import Agora, Area
-from agora_agent.agentkit import Agent
-from agora_agent.agentkit.vendors import DeepgramSTT, ElevenLabsTTS, OpenAI
+from agora_agent import Agent, Agora, Area, DeepgramSTT, ElevenLabsTTS, OpenAI
 
 
 def main() -> None:
@@ -34,12 +32,7 @@ def main() -> None:
 
     # In BYOK mode, each vendor carries its own credentials.
     agent = (
-        Agent(
-            name="support-assistant",
-            instructions="You are a concise support voice assistant.",
-            greeting="Hello! How can I help you today?",
-            max_history=10,
-        )
+        Agent(name="support-assistant")
         .with_stt(
             DeepgramSTT(
                 api_key=os.environ["DEEPGRAM_API_KEY"],
@@ -50,7 +43,11 @@ def main() -> None:
         .with_llm(
             OpenAI(
                 api_key=os.environ["OPENAI_API_KEY"],
+                base_url="https://api.openai.com/v1/chat/completions",
                 model="gpt-4o-mini",
+                system_messages=[{"role": "system", "content": "You are a concise support voice assistant."}],
+                greeting_message="Hello! How can I help you today?",
+                max_history=10,
             )
         )
         .with_tts(
@@ -58,6 +55,7 @@ def main() -> None:
                 key=os.environ["ELEVENLABS_API_KEY"],
                 model_id="eleven_flash_v2_5",
                 voice_id=os.environ["ELEVENLABS_VOICE_ID"],
+                base_url="wss://api.elevenlabs.io/v1",
                 sample_rate=24000,
             )
         )
@@ -81,7 +79,7 @@ if __name__ == "__main__":
     main()
 ```
 
-## Presets vs BYOK
+## Builder-managed vs BYOK
 
-- Presets: fastest path, no vendor keys in app code
-- BYOK: most control, your keys and your vendor configuration
+- Builder without vendor keys: supported Agora-managed models
+- BYOK: your keys and full vendor control
