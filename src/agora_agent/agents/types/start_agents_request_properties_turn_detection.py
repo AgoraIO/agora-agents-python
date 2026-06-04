@@ -5,7 +5,6 @@ import typing
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2
 from ...core.unchecked_base_model import UncheckedBaseModel
-from ...types.asr_language import AsrLanguage
 from .start_agents_request_properties_turn_detection_config import StartAgentsRequestPropertiesTurnDetectionConfig
 from .start_agents_request_properties_turn_detection_eagerness import StartAgentsRequestPropertiesTurnDetectionEagerness
 from .start_agents_request_properties_turn_detection_interrupt_mode import (
@@ -17,11 +16,6 @@ from .start_agents_request_properties_turn_detection_type import StartAgentsRequ
 class StartAgentsRequestPropertiesTurnDetection(UncheckedBaseModel):
     """
     Conversation turn detection settings. Controls the logic for voice activity detection and conversation turn determination. This object has no effect when `mllm.enable` is true; use `mllm.turn_detection` instead.
-    """
-
-    language: typing.Optional[AsrLanguage] = pydantic.Field(default=None)
-    """
-    BCP-47 language tag identifying the primary language used for agent interaction.
     """
 
     mode: typing.Optional[typing.Literal["default"]] = pydantic.Field(default=None)
