@@ -79,10 +79,12 @@ def test_vertex_ai_explicit_fields_override_additional_params():
     ).to_config()
 
     assert config["vendor"] == "vertexai"
+    # routing fields are top-level, not inside params
+    assert config["project_id"] == "explicit-project"
+    assert config["location"] == "explicit-region"
+    assert config["adc_credentials_string"] == "{}"
+    # model and extra_key live inside params
     assert config["params"]["model"] == "explicit-model"
-    assert config["params"]["project_id"] == "explicit-project"
-    assert config["params"]["location"] == "explicit-region"
-    assert config["params"]["adc_credentials_string"] == "{}"
     assert config["params"]["extra_key"] == "kept"
 
 
