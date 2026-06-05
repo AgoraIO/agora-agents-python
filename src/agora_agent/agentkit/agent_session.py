@@ -362,9 +362,12 @@ class _AgentSessionBase:
             if pipeline_id:
                 return resolved_properties
             if resolved_preset:
+                normalized_preset = normalize_preset_input(resolved_preset)
+                if not normalized_preset:
+                    raise
                 preset_categories = {
                     category
-                    for item in normalize_preset_input(resolved_preset).split(",")
+                    for item in normalized_preset.split(",")
                     for category in [get_preset_category(item)]
                     if category is not None
                 }

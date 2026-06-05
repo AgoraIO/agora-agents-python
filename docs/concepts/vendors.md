@@ -80,7 +80,7 @@ Use `turn_detection.language` for Agora interaction language; it defaults to `en
 | Class | Provider | Required Parameters |
 |---|---|---|
 | `SpeechmaticsSTT` | Speechmatics | `api_key`, `language` |
-| `DeepgramSTT` | Deepgram | `model` for Agora-managed `nova-2`/`nova-3`; `api_key` for BYOK |
+| `DeepgramSTT` | Deepgram | `model` for Agora-managed `nova-2`/`nova-3`; `api_key` for BYOK; `language?`, `keyterm?` |
 | `MicrosoftSTT` | Microsoft Azure | `key`, `region`, `language` |
 | `OpenAISTT` | OpenAI | `api_key` |
 | `GoogleSTT` | Google Cloud | `project_id`, `location`, `adc_credentials_string`, `language` |
