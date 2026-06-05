@@ -98,20 +98,25 @@ def test_stt_vendor_params_match_documented_shapes() -> None:
         "language": "en",
     }
 
-    assert OpenAISTT(api_key="openai-key", model="gpt-4o-mini-transcribe", language="en").to_config()["params"] == {
+    assert OpenAISTT(
+        api_key="openai-key",
+        model="gpt-4o-mini-transcribe",
+        language="en",
+        prompt="Transcribe English speech",
+    ).to_config()["params"] == {
         "api_key": "openai-key",
         "input_audio_transcription": {
             "model": "gpt-4o-mini-transcribe",
             "language": "en",
+            "prompt": "Transcribe English speech",
         },
     }
 
-    assert OpenAISTT(api_key="openai-key").to_config()["params"] == {
-        "api_key": "openai-key",
-        "input_audio_transcription": {
-            "model": "whisper-1",
-        },
-    }
+    with pytest.raises(ValueError, match="prompt is required"):
+        OpenAISTT(api_key="openai-key", language="en").to_config()
+
+    with pytest.raises(ValueError, match="language is required"):
+        OpenAISTT(api_key="openai-key", prompt="Transcribe speech").to_config()
 
     assert GoogleSTT(
         project_id="project",

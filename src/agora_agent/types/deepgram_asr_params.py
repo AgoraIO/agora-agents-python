@@ -34,7 +34,7 @@ class DeepgramAsrParams(UncheckedBaseModel):
 
     keyterm: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Boost specialized terms and brands
+    Boost specialized terms and brands for Deepgram.
     """
 
     if IS_PYDANTIC_V2:

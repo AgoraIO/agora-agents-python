@@ -16,10 +16,6 @@ class DeepgramAsr(UncheckedBaseModel):
 
     language: typing.Optional[AsrLanguage] = None
     params: DeepgramAsrParams
-    keyterm: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Boost specialized terms and brands for preset-backed Deepgram usage.
-    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

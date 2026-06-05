@@ -4,6 +4,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .base import BaseSTT
 
+# BCP-47 language tag for asr.language (the Agora interaction language).
+InteractionLanguage = str
+
 _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
 
 
@@ -12,6 +15,7 @@ class SpeechmaticsSTTOptions(BaseModel):
 
     api_key: str = Field(..., description="Speechmatics API key")
     language: str = Field(..., description="Language code (e.g., en, es, fr)")
+    interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     model: Optional[str] = Field(default=None, description="Model name")
     uri: Optional[str] = Field(default=None, description="Speechmatics streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -45,6 +49,7 @@ class DeepgramSTTOptions(BaseModel):
     model: Optional[str] = Field(default=None, description="Model (e.g., nova-2, enhanced, base)")
     language: Optional[str] = Field(default=None, description="Language code (e.g., en-US)")
     keyterm: Optional[str] = Field(default=None, description="Boost specialized terms and brands for Deepgram")
+    interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     smart_format: Optional[bool] = Field(default=None, description="Enable smart formatting")
     punctuation: Optional[bool] = Field(default=None, description="Enable punctuation")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -262,6 +267,7 @@ class SarvamSTTOptions(BaseModel):
 
     api_key: str = Field(..., description="Sarvam API key")
     language: str = Field(..., description="Language code (e.g., en, hi, ta)")
+    interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
     model: Optional[str] = Field(default=None, description="Model name")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 

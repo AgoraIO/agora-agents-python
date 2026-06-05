@@ -54,7 +54,6 @@ class Asr_Deepgram(UncheckedBaseModel):
     vendor: typing.Literal["deepgram"] = "deepgram"
     language: typing.Optional[AsrLanguage] = None
     params: DeepgramAsrParams
-    keyterm: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

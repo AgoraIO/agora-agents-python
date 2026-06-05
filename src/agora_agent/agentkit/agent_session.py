@@ -24,6 +24,7 @@ from .avatar_types import (
     is_generic_avatar,
     is_heygen_avatar,
     is_live_avatar_avatar,
+    is_rtc_avatar,
     validate_avatar_config,
     validate_tts_sample_rate,
 )
@@ -333,15 +334,15 @@ class _AgentSessionBase:
             properties["tts"] = self._dump_model(self._agent.tts)
         if self._agent.llm is not None:
             llm = dict(self._agent.llm)
-            if self._agent.instructions is not None:
+            if self._agent.instructions is not None and "system_messages" not in llm:
                 llm["system_messages"] = [{"role": "system", "content": self._agent.instructions}]
-            if self._agent.greeting is not None:
+            if self._agent.greeting is not None and "greeting_message" not in llm:
                 llm["greeting_message"] = self._agent.greeting
-            if self._agent.greeting_configs is not None:
+            if self._agent.greeting_configs is not None and "greeting_configs" not in llm:
                 llm["greeting_configs"] = self._dump_model(self._agent.greeting_configs)
-            if self._agent.failure_message is not None:
+            if self._agent.failure_message is not None and "failure_message" not in llm:
                 llm["failure_message"] = self._agent.failure_message
-            if self._agent.max_history is not None:
+            if self._agent.max_history is not None and "max_history" not in llm:
                 llm["max_history"] = self._agent.max_history
             properties["llm"] = llm
         if self._agent.stt is not None:

@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -178,11 +179,12 @@ class VertexAI(BaseMLLM):
         if self.options.http_options is not None:
             params["http_options"] = self.options.http_options
 
+        params["project_id"] = self.options.project_id
+        params["location"] = self.options.location
+        params["adc_credentials_string"] = self.options.adc_credentials_string
+
         config: Dict[str, Any] = {
             "vendor": "vertexai",
-            "project_id": self.options.project_id,
-            "location": self.options.location,
-            "adc_credentials_string": self.options.adc_credentials_string,
             "params": params,
         }
 
