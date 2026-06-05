@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.2.0] — 2026-06-05
+
+### Added
+
+- **Expanded provider surface** — Added generated API support for the latest Conversational AI vendors and configuration types, including Dify LLM and Generic Avatar.
+- **STT interaction language fields** — Added `interaction_language` support across Speechmatics, Deepgram, Microsoft, Google, Amazon, AssemblyAI, and Sarvam STT wrappers.
+- **Deepgram keyterm** — Added `keyterm` support on `DeepgramSTT`, serialized as `asr.params.keyterm`.
+
+### Changed
+
+- **MiniMax managed presets** — MiniMax preset-backed TTS now keeps the preset model as an internal hint while sending only supported partial TTS settings such as `voice_setting.voice_id`.
+- **Vertex AI LLM routing** — `VertexAILLM` now keeps project and location in the generated endpoint URL instead of duplicating them in `llm.params`.
+
+### Fixed
+
+- **Provider wire keys** — Corrected alias-sensitive TTS payloads so Google TTS emits `VoiceSelectionParams` and `AudioConfig`, Rime TTS emits `modelId`, and Murf TTS preserves `voiceId`.
+- **AgentKit request validation** — Start request validation now de-aliases REST-shaped provider dictionaries before constructing generated request models, while still allowing preset and pipeline-backed partial configs.
+- **Request body coverage** — Added regression tests for BYOK, preset-backed, mixed preset/BYOK, and pipeline override request shapes across provider configurations.
+- **Python docs examples** — Added a docs guard to keep Python examples on snake_case kwargs while allowing documented JSON wire keys.
+
 ## [v2.1.0] — 2026-06-02
 
 ### Added
