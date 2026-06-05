@@ -214,13 +214,13 @@ class GoogleTTS(BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
             "credentials": self.options.key,
-            "voice_selection_params": {"name": self.options.voice_name},
+            "VoiceSelectionParams": {"name": self.options.voice_name},
         }
 
         if self.options.language_code is not None:
-            params["voice_selection_params"]["language_code"] = self.options.language_code
+            params["VoiceSelectionParams"]["language_code"] = self.options.language_code
         if self.options.sample_rate_hertz is not None:
-            params["audio_config"] = {"sample_rate_hertz": self.options.sample_rate_hertz}
+            params["AudioConfig"] = {"sample_rate_hertz": self.options.sample_rate_hertz}
 
         result: Dict[str, Any] = {"vendor": "google", "params": params}
         if self.options.skip_patterns is not None:
@@ -359,7 +359,7 @@ class RimeTTS(BaseTTS):
         params: Dict[str, Any] = {
             "api_key": self.options.key,
             "speaker": self.options.speaker,
-            "model_id": self.options.model_id,
+            "modelId": self.options.model_id,
         }
         if self.options.base_url is not None:
             params["base_url"] = self.options.base_url

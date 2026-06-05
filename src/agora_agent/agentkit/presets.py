@@ -187,6 +187,8 @@ def strip_inferred_preset_fields(properties: typing.Dict[str, typing.Any], infer
             params["url"] = None
         tts = {k: v for k, v in {**tts, "params": _omit_none(params)}.items() if v is not None}
         tts.pop("_minimax_preset_model", None)
+    if tts and "_minimax_preset_model" in tts:
+        tts = {k: v for k, v in tts.items() if k != "_minimax_preset_model"}
 
     return {**properties, "asr": asr, "llm": llm, "tts": tts}
 

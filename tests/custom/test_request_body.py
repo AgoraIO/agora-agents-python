@@ -464,6 +464,49 @@ def test_7c_pipeline_id_empty_properties_no_vendors() -> None:
     assert "tts" not in properties
 
 
+def test_7d_pipeline_id_with_byok_tts_only() -> None:
+    """7d: pipeline_id present, TTS-only BYOK override — ASR and LLM absent from properties."""
+    agent = Agent(name="support", pipeline_id="studio-pipeline").with_tts(
+        ElevenLabsTTS(
+            key="el-key",
+            model_id="eleven_flash_v2_5",
+            voice_id="some-voice",
+            base_url="wss://api.elevenlabs.io/v1",
+        )
+    )
+
+    call = start_session(agent)
+    assert call["pipeline_id"] == "studio-pipeline"
+    properties = dump(call["properties"])
+    assert "asr" not in properties
+    assert "llm" not in properties
+    assert properties["tts"]["vendor"] == "elevenlabs"
+    assert properties["tts"]["params"]["key"] == "el-key"
+
+
+def test_7e_pipeline_id_with_byok_asr_and_tts() -> None:
+    """7e: pipeline_id present, ASR+TTS BYOK overrides — LLM absent from properties."""
+    agent = (
+        Agent(name="support", pipeline_id="studio-pipeline")
+        .with_stt(DeepgramSTT(api_key="dg-key", language="en"))
+        .with_tts(
+            ElevenLabsTTS(
+                key="el-key",
+                model_id="eleven_flash_v2_5",
+                voice_id="some-voice",
+                base_url="wss://api.elevenlabs.io/v1",
+            )
+        )
+    )
+
+    call = start_session(agent)
+    assert call["pipeline_id"] == "studio-pipeline"
+    properties = dump(call["properties"])
+    assert "llm" not in properties
+    assert properties["asr"]["vendor"] == "deepgram"
+    assert properties["tts"]["vendor"] == "elevenlabs"
+
+
 # ===========================================================================
 # Scenario 8 — MLLM mode
 # ===========================================================================
@@ -872,10 +915,11 @@ def test_byok_sarvam_tts_params() -> None:
 
 
 def test_byok_murf_tts_params() -> None:
-    agent = Agent(name="t").with_tts(MurfTTS(key="murf-key"))
+    agent = Agent(name="t").with_tts(MurfTTS(key="murf-key", voice_id="Ariana"))
     props = build_properties(agent, allow_missing={"asr", "llm"})
     assert props["tts"]["vendor"] == "murf"
     assert props["tts"]["params"]["api_key"] == "murf-key"
+    assert props["tts"]["params"]["voiceId"] == "Ariana"
 
 
 # ---------------------------------------------------------------------------
@@ -965,3 +1009,15 @@ def test_preset_minimax_speech_2_8_turbo_inferred() -> None:
 def test_preset_minimax_speech_2_6_turbo_inferred() -> None:
     preset, properties = resolve_session_presets(None, {"tts": MiniMaxTTS(model="speech-2.6-turbo", voice_id="voice").to_config()})
     assert preset == "minimax_speech_2_6_turbo"
+
+
+def test_explicit_minimax_preset_strips_internal_hint() -> None:
+    """Explicit MiniMax TTS preset must not leak _minimax_preset_model to the wire."""
+    # When the caller supplies the preset explicitly, inference is skipped but the
+    # internal _minimax_preset_model hint set by MiniMaxTTS.to_config() must still
+    # be removed before the POST body is sent.
+    tts_config = MiniMaxTTS(model="speech_2_8_turbo", voice_id="voice").to_config()
+    assert "_minimax_preset_model" in tts_config  # confirm the hint is set pre-strip
+
+    _, properties = resolve_session_presets("minimax_speech_2_8_turbo", {"tts": tts_config})
+    assert "_minimax_preset_model" not in properties["tts"]
