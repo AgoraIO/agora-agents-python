@@ -108,7 +108,7 @@ def infer_asr_preset(asr: typing.Optional[typing.Dict[str, typing.Any]]) -> typi
     if not asr or asr.get("vendor") != "deepgram":
         return None
     params = asr.get("params") or {}
-    if params.get("api_key"):
+    if params.get("key"):
         return None
     return _DEEPGRAM_MODEL_TO_PRESET.get(_normalize_model_name(params.get("model")) or "")
 
