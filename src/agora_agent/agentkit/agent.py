@@ -351,52 +351,54 @@ class Agent:
     """
 
     if typing.TYPE_CHECKING:
+        from .regional_agent import CNAgent, GlobalAgent
+
         _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
 
-        @typing.overload
-        def __new__(
-            cls,
-            client: "Agora[typing_extensions.Literal[Area.CN]]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "CNAgent":
-            ...
+    @typing.overload
+    def __new__(
+        cls,
+        client: "Agora[typing_extensions.Literal[Area.CN]]",
+        *args: typing.Any,
+        **kwargs: typing.Any,
+    ) -> "CNAgent":
+        ...
 
-        @typing.overload
-        def __new__(
-            cls,
-            client: "Agora[_GlobalArea]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "GlobalAgent":
-            ...
+    @typing.overload
+    def __new__(
+        cls,
+        client: "Agora[_GlobalArea]",
+        *args: typing.Any,
+        **kwargs: typing.Any,
+    ) -> "GlobalAgent":
+        ...
 
-        @typing.overload
-        def __new__(
-            cls,
-            client: "AsyncAgora[typing_extensions.Literal[Area.CN]]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "CNAgent":
-            ...
+    @typing.overload
+    def __new__(
+        cls,
+        client: "AsyncAgora[typing_extensions.Literal[Area.CN]]",
+        *args: typing.Any,
+        **kwargs: typing.Any,
+    ) -> "CNAgent":
+        ...
 
-        @typing.overload
-        def __new__(
-            cls,
-            client: "AsyncAgora[_GlobalArea]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "GlobalAgent":
-            ...
+    @typing.overload
+    def __new__(
+        cls,
+        client: "AsyncAgora[_GlobalArea]",
+        *args: typing.Any,
+        **kwargs: typing.Any,
+    ) -> "GlobalAgent":
+        ...
 
-        @typing.overload
-        def __new__(
-            cls,
-            client: typing.Any,
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "Agent":
-            ...
+    @typing.overload
+    def __new__(
+        cls,
+        client: typing.Any,
+        *args: typing.Any,
+        **kwargs: typing.Any,
+    ) -> "Agent":
+        ...
 
     def __new__(
         cls,
