@@ -102,11 +102,3 @@ def allowed_vendors_for_scope(scope: AreaScope) -> typing.Dict[str, typing.Tuple
     }
 
 
-def validate_vendor_for_scope(category: str, vendor: str, scope: AreaScope) -> None:
-    allowed = allowed_vendors_for_scope(scope).get(category, ())
-    if vendor not in allowed:
-        allowed_joined = ", ".join(allowed)
-        raise ValueError(
-            f"{category} vendor '{vendor}' is not available for area scope '{scope}'. "
-            f"Supported {category} vendors for this scope: {allowed_joined}"
-        )

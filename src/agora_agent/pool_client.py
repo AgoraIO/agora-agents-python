@@ -10,7 +10,6 @@ import httpx
 import typing_extensions
 
 from .agentkit.regional_agent import CNAgent, GlobalAgent, RegionalAgent
-from .agentkit.region_validation import validate_agent_region_compatibility
 from .agentkit.vendors.region import AreaScope, area_to_scope
 from .client import Agora as BaseAgora
 from .client import AsyncAgora as BaseAsyncAgora
@@ -416,8 +415,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         return agent_cls(*args, **kwargs)
 
     def validate_agent_region(self, agent: RegionalAgent) -> None:
-        """Validate that the agent only uses vendors available in this area."""
-        validate_agent_region_compatibility(agent, self._area)
+        """No-op. Area and vendor compatibility is not enforced by the SDK."""
 
     def next_region(self) -> None:
         """
@@ -773,8 +771,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         return agent_cls(*args, **kwargs)
 
     def validate_agent_region(self, agent: RegionalAgent) -> None:
-        """Validate that the agent only uses vendors available in this area."""
-        validate_agent_region_compatibility(agent, self._area)
+        """No-op. Area and vendor compatibility is not enforced by the SDK."""
 
     def next_region(self) -> None:
         """

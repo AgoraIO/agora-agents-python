@@ -33,9 +33,9 @@ client = Agora(
 )
 ```
 
-## Area-aware vendor hints
+## Recommended vendors by area
 
-Bind `client` into `Agent(client=client, ...)` and construct vendors directly with SDK classes. The bound client still validates that each vendor is available in the selected `area`.
+Bind `client` into `Agent(client=client, ...)` and construct vendors directly with SDK classes. The bound client selects `CNAgent` or `GlobalAgent` for IDE hints based on `area`, but does not restrict which vendor classes you can configure.
 
 | Client area | STT classes | LLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|

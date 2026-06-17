@@ -13,9 +13,9 @@ All vendor classes are available from `agora_agent`:
 from agora_agent import OpenAI, ElevenLabsTTS, DeepgramTTS, DeepgramSTT, OpenAIRealtime, XaiGrok, GenericAvatar
 ```
 
-## Area-aware vendor classes
+## Recommended vendors by area
 
-Construct vendors directly from `agora_agent`, then bind a client with `Agent(client=client, ...)`. The bound client validates that each vendor is available in the selected `area`.
+Construct vendors directly from `agora_agent`, then bind a client with `Agent(client=client, ...)`. The bound client selects `CNAgent` or `GlobalAgent` for IDE hints based on `area`, but does not restrict which vendor classes you can configure.
 
 | Area | STT classes | LLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|

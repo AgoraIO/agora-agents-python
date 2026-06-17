@@ -35,7 +35,6 @@ from .presets import (
     normalize_preset_input,
     resolve_session_presets,
 )
-from .region_validation import validate_agent_region_compatibility
 from .token import generate_convo_ai_token, _parse_numeric_uid
 
 
@@ -188,12 +187,6 @@ class _AgentSessionBase:
         if headers is None:
             return None
         return {"additional_headers": headers}
-
-    def _validate_region_compatibility(self) -> None:
-        pool = getattr(self._client, "pool", None)
-        get_area = getattr(pool, "get_area", None)
-        if callable(get_area):
-            validate_agent_region_compatibility(self._agent, get_area())
 
     def _validate_avatar_config(self) -> None:
         avatar = self._agent.avatar
@@ -526,7 +519,6 @@ class AgentSession(_AgentSessionBase):
         if self._status not in ("idle", "stopped", "error"):
             raise RuntimeError(f"Cannot start session in {self._status} state")
 
-        self._validate_region_compatibility()
         self._validate_avatar_config()
         self._status = "starting"
 
@@ -855,7 +847,6 @@ class AsyncAgentSession(_AgentSessionBase):
         if self._status not in ("idle", "stopped", "error"):
             raise RuntimeError(f"Cannot start session in {self._status} state")
 
-        self._validate_region_compatibility()
         self._validate_avatar_config()
         self._status = "starting"
 

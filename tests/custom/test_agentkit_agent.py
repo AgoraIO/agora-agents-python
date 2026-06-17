@@ -180,11 +180,12 @@ def test_with_mllm_removes_deprecated_advanced_features_enable_mllm():
     assert af_dump.get("enable_rtm") is True
 
 
-def test_bound_client_rejects_region_incompatible_llm_at_builder_time():
+def test_bound_client_allows_region_incompatible_llm_at_builder_time():
     client = AgentClient(area=Area.CN, app_id="0" * 32, app_certificate="1" * 32)
 
-    with pytest.raises(ValueError, match="area scope 'cn'"):
-        Agent(client=client, name="cn").with_llm(OpenAI(model="gpt-4o-mini"))
+    agent = Agent(client=client, name="cn").with_llm(OpenAI(model="gpt-4o-mini"))
+    assert agent.__class__.__name__ == "CNAgent"
+    assert agent.llm["vendor"] == "openai"
 
 
 def test_to_properties_rejects_mllm_with_enabled_avatar():

@@ -8,7 +8,7 @@ description: Full API reference for the Python Agent builder class.
 
 **Import:** `from agora_agent import Agent`
 
-Bind the client once on `Agent(client=client, ...)`, then pass vendor classes directly. The bound client still enforces area compatibility:
+Bind the client once on `Agent(client=client, ...)`, then pass vendor classes directly. The bound client sets the API routing region and provides area-specific IDE hints via `CNAgent` / `GlobalAgent`:
 
 <!-- snippet: fragment -->
 ```python

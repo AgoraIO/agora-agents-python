@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
 1. `Agora` runs in app-credentials mode when you pass `app_id` and `app_certificate` only.
 2. `Agent(client=client, ...)` binds the authenticated client once and reuses it when you later create sessions.
-3. `Agent(client=client, ...)` binds the area-aware client once, and direct vendor classes such as `DeepgramSTT(...)`, `OpenAI(...)`, and `MiniMaxTTS(...)` are validated against that area. Leave vendor credentials unset for supported Agora-managed global models, or provide keys when you want BYOK. CN MiniMax TTS typically includes `key`.
+3. `Agent(client=client, ...)` binds the area-aware client once. Pass vendor classes such as `DeepgramSTT(...)`, `OpenAI(...)`, and `MiniMaxTTS(...)` directly; the SDK does not enforce area and vendor matching. Leave vendor credentials unset for supported Agora-managed global models, or provide keys when you want BYOK. CN MiniMax TTS typically includes `key`.
 4. `session.start()` generates the required auth tokens and returns the unique agent session ID.
 
 ## Async applications
