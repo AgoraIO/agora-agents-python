@@ -57,6 +57,8 @@ from ..agents.types.start_agents_request_properties_filler_words_content import 
 from ..agents.types.start_agents_request_properties_filler_words_content_static_config import StartAgentsRequestPropertiesFillerWordsContentStaticConfig
 from ..agents.types.start_agents_request_properties_filler_words_content_static_config_selection_rule import StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule
 from ..types.tts import Tts
+from ..agents.types.start_agents_request_properties_filler_words_content_static_config_selection_rule import StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule
+from ..types.tts import Tts
 from ..types.asr import Asr
 from ..types.llm import Llm
 from ..types.llm_style import LlmStyle as GeneratedLlmStyle
@@ -525,6 +527,23 @@ class Agent:
         """
         new_agent = self._clone()
         new_agent._parameters = parameters
+        return new_agent
+
+    def with_audio_scenario(self, audio_scenario: ParametersAudioScenario) -> "Agent":
+        """Returns a new Agent with the specified RTC audio scenario."""
+        new_agent = self._clone()
+        if new_agent._parameters is None:
+            new_agent._parameters = StartAgentsRequestPropertiesParameters(audio_scenario=audio_scenario)
+        elif isinstance(new_agent._parameters, dict):
+            new_agent._parameters = typing.cast(
+                SessionParamsInput,
+                {**new_agent._parameters, "audio_scenario": audio_scenario},
+            )
+        else:
+            new_agent._parameters = self._copy_model_update(
+                new_agent._parameters,
+                {"audio_scenario": audio_scenario},
+            )
         return new_agent
 
     def with_audio_scenario(self, audio_scenario: ParametersAudioScenario) -> "Agent":

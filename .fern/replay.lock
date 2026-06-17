@@ -12,7 +12,13 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-current_generation: b66d871314ca0e5929cb9c9095949a7fd5e856a7
+  - commit_sha: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
+    tree_hash: a2231bae160991dd969f615296d857f1ad7a6c14
+    timestamp: 2026-06-17T06:34:56.828Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+current_generation: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
 patches:
   - id: patch-6e30398b
     content_hash: sha256:e99898e508e2d6cb9f134cc33e0b73c1c8acb845f5887924e0e38031a6e089c0
@@ -8237,26 +8243,26 @@ patches:
         | Think inject constant | `ThinkOnListeningActionInject` | `ThinkOnListeningActionInject` | `ThinkOnListeningActionInject` |
     status: unresolved
   - id: patch-7465fada
-    content_hash: sha256:9c6ed2e5f48702293eed8b213cc31cce63a7ed5a1ad16a0b23e791c13e77746f
+    content_hash: sha256:a2f90f66c927424018f2c3304742f097e8594dec9cb2f783264c7b11679a14ac
     original_commit: 7465fadafa0f1e62051d99b42d0eeda85f31eeee
     original_message: "fix(agentkit): resolve Python session typing issues"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: b66d871314ca0e5929cb9c9095949a7fd5e856a7
+    base_generation: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
     files:
       - src/agora_agent/agentkit/agent_session.py
     patch_content: |
       diff --git a/src/agora_agent/agentkit/agent_session.py b/src/agora_agent/agentkit/agent_session.py
-      index dbff562..dca9ee8 100644
+      index 2900c18..745c465 100644
       --- a/src/agora_agent/agentkit/agent_session.py
       +++ b/src/agora_agent/agentkit/agent_session.py
-      @@ -24,6 +24,7 @@ from .avatar_types import (
-           is_generic_avatar,
-           is_heygen_avatar,
-           is_live_avatar_avatar,
-      +    is_rtc_avatar,
-           validate_avatar_config,
-           validate_tts_sample_rate,
+      @@ -15,6 +15,7 @@ from ..agent_management.types.agent_think_agent_management_response import (
+           AgentThinkAgentManagementResponse as AgentThinkResponse,
        )
+       from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
+      +from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
+       from .agent import Agent, GetTurnsOptions, SayOptions, ThinkOptions, _start_properties_from_mapping
+       from .avatar_types import (
+           is_akool_avatar,
     theirs_snapshot:
       src/agora_agent/agentkit/agent_session.py: |
         import typing
@@ -8276,8 +8282,8 @@ patches:
             AgentThinkAgentManagementResponse as AgentThinkResponse,
         )
         from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
-        from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
-        from .agent import Agent, GetTurnsOptions, SayOptions, ThinkOptions
+        from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
+        from .agent import Agent, GetTurnsOptions, SayOptions, ThinkOptions, _start_properties_from_mapping
         from .avatar_types import (
             is_akool_avatar,
             is_anam_avatar,
@@ -8595,21 +8601,62 @@ patches:
                     properties["tts"] = self._dump_model(self._agent.tts)
                 if self._agent.llm is not None:
                     llm = dict(self._agent.llm)
-                    if self._agent.instructions is not None:
+                    if self._agent.instructions is not None and "system_messages" not in llm:
                         llm["system_messages"] = [{"role": "system", "content": self._agent.instructions}]
-                    if self._agent.greeting is not None:
+                    if self._agent.greeting is not None and "greeting_message" not in llm:
                         llm["greeting_message"] = self._agent.greeting
-                    if self._agent.greeting_configs is not None:
+                    if self._agent.greeting_configs is not None and "greeting_configs" not in llm:
                         llm["greeting_configs"] = self._dump_model(self._agent.greeting_configs)
-                    if self._agent.failure_message is not None:
+                    if self._agent.failure_message is not None and "failure_message" not in llm:
                         llm["failure_message"] = self._agent.failure_message
-                    if self._agent.max_history is not None:
+                    if self._agent.max_history is not None and "max_history" not in llm:
                         llm["max_history"] = self._agent.max_history
                     properties["llm"] = llm
                 if self._agent.stt is not None:
                     properties["asr"] = self._dump_model(self._agent.stt)
 
                 return properties
+
+            @staticmethod
+            def _request_properties_for_start(
+                resolved_properties: typing.Dict[str, typing.Any],
+                *,
+                resolved_preset: typing.Optional[str],
+                pipeline_id: typing.Optional[str],
+            ) -> typing.Any:
+                try:
+                    return _start_properties_from_mapping(resolved_properties)
+                except Exception as exc:
+                    if pipeline_id:
+                        return resolved_properties
+                    if resolved_preset:
+                        normalized_preset = normalize_preset_input(resolved_preset)
+                        if not normalized_preset:
+                            raise
+                        preset_categories = {
+                            category
+                            for item in normalized_preset.split(",")
+                            for category in [get_preset_category(item)]
+                            if category is not None
+                        }
+                        error_categories = _AgentSessionBase._validation_error_categories(exc)
+                        if error_categories and error_categories.issubset(preset_categories):
+                            return resolved_properties
+                    raise
+
+            @staticmethod
+            def _validation_error_categories(exc: Exception) -> typing.Set[str]:
+                errors = getattr(exc, "errors", None)
+                if not callable(errors):
+                    return set()
+                categories: typing.Set[str] = set()
+                for error in errors():
+                    loc = error.get("loc") if isinstance(error, dict) else None
+                    if isinstance(loc, tuple) and loc:
+                        field = loc[0]
+                        if field in {"asr", "llm", "tts"}:
+                            categories.add(typing.cast(str, field))
+                return categories
 
             def _vendor_validation_categories(
                 self,
@@ -8775,10 +8822,11 @@ patches:
                             "properties": resolved_properties,
                         })
 
-                    try:
-                        request_properties: typing.Any = StartAgentsRequestProperties(**resolved_properties)
-                    except Exception:
-                        request_properties = resolved_properties
+                    request_properties = self._request_properties_for_start(
+                        resolved_properties,
+                        resolved_preset=resolved_preset,
+                        pipeline_id=pipeline_id,
+                    )
 
                     response = self._client.agents.start(
                         self._app_id,
@@ -9102,10 +9150,11 @@ patches:
                             "properties": resolved_properties,
                         })
 
-                    try:
-                        request_properties: typing.Any = StartAgentsRequestProperties(**resolved_properties)
-                    except Exception:
-                        request_properties = resolved_properties
+                    request_properties = self._request_properties_for_start(
+                        resolved_properties,
+                        resolved_preset=resolved_preset,
+                        pipeline_id=pipeline_id,
+                    )
 
                     response = await self._client.agents.start(
                         self._app_id,
@@ -9478,7 +9527,7 @@ patches:
     original_commit: fae1249a20c53761a2eb5515a1bf92ca666760d1
     original_message: Re-export agora-agents API from legacy PyPI compatibility package The compat distribution delegates to agora_agent via __getattr__ and documents both import paths in its README.
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: b66d871314ca0e5929cb9c9095949a7fd5e856a7
+    base_generation: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
     files:
       - compat/agora-agent-server-sdk/README.md
       - compat/agora-agent-server-sdk/src/agora_agent_server_sdk_compat/__init__.py
@@ -9566,88 +9615,6 @@ patches:
         def __dir__():
             return dir(_agora_agent)
     user_owned: true
-  - id: patch-fc9d93c3
-    content_hash: sha256:93877741bdad745fda5dd549d7c3dd6bc315f4574aabd2defb52c0c795bff011
-    original_commit: fc9d93c3026a6109d8a5e8b386418592f8d121c5
-    original_message: Document agora-agents PyPI install name and migration notes
-    original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: a217c8ecfd919345831eebaca8295e292d65ebcf
-    files:
-      - docs/getting-started/installation.md
-    patch_content: |
-      diff --git a/docs/getting-started/installation.md b/docs/getting-started/installation.md
-      index c14bdb2..f6f1750 100644
-      --- a/docs/getting-started/installation.md
-      +++ b/docs/getting-started/installation.md
-      @@ -13,13 +13,13 @@ description: Install the Agora Conversational AI Python SDK.
-       ## Install with pip
-       
-       ```sh
-      -pip install agora-agent-sdk
-      +pip install agora-agents
-       ```
-       
-       ## Install with Poetry
-       
-       ```sh
-      -poetry add agora-agent-sdk
-      +poetry add agora-agents
-       ```
-       
-       ## Dependencies
-    theirs_snapshot:
-      docs/getting-started/installation.md: |
-        ---
-        sidebar_position: 1
-        title: Installation
-        description: Install the Agora Conversational AI Python SDK.
-        ---
-
-        # Installation
-
-        ## Prerequisites
-
-        - Python >= 3.8
-
-        ## Install with pip
-
-        ```sh
-        pip install agora-agents
-        ```
-
-        ## Install with Poetry
-
-        ```sh
-        poetry add agora-agents
-        ```
-
-        ## Dependencies
-
-        The following packages are installed automatically:
-
-        | Package | Purpose |
-        |---|---|
-        | `httpx` (>= 0.21.2) | HTTP client for sync and async requests |
-        | `pydantic` (>= 1.9.2) | Data validation for vendor configuration and API types |
-        | `typing_extensions` (>= 4.0.0) | Backported type hints for Python 3.8+ |
-
-        ## Sync vs. Async
-
-        The SDK supports both synchronous and asynchronous usage:
-
-        - **Synchronous** — import `Agora` from `agora_agent` and use blocking method calls
-        - **Asynchronous** — import `AsyncAgora` and `AsyncAgentSession` from `agora_agent` and use `await` with all API calls
-
-        ```python
-        # Sync
-        from agora_agent import Agora, Area
-
-        # Async
-        from agora_agent import AsyncAgora, AsyncAgentSession, Area
-        ```
-
-        Both clients share the same constructor parameters and capabilities. See [Authentication](./authentication.md) for setup details.
-    status: unresolved
   - id: patch-44c21c14
     content_hash: sha256:920a8a5905a3bbb134edb28b007c5c0b1b4b2c1f75753140fef305b14a64e3e0
     original_commit: 44c21c14a14aa7ad469a18ce86024ff14ca2bf9b
@@ -11681,535 +11648,20 @@ patches:
             assert "DeepgramSTT" in agora_agent.__all__
             assert "OpenAI" in agora_agent.__all__
     status: unresolved
-  - id: patch-d475306b
-    content_hash: sha256:407af5e7564d6e8d0b91f1e117cb433aec931f083225af53c6df2abfff281b22
-    original_commit: d475306bd42279984bcf4934b900003e8e02c4eb
-    original_message: Move package rename guidance to installation docs and protect manual paths in Fern ignore. Consolidate migration notes into the installation guide with next-step links, add a brief README pointer, and exclude README, compat, and workflow files from Fern generation.
-    original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: a217c8ecfd919345831eebaca8295e292d65ebcf
-    files:
-      - compat/agora-agent-server-sdk/README.md
-      - docs/getting-started/installation.md
-    patch_content: |
-      diff --git a/compat/agora-agent-server-sdk/README.md b/compat/agora-agent-server-sdk/README.md
-      index e43d1d8..1da36aa 100644
-      --- a/compat/agora-agent-server-sdk/README.md
-      +++ b/compat/agora-agent-server-sdk/README.md
-      @@ -14,3 +14,5 @@ This compatibility package re-exports the public API from `agora-agents` to supp
-       from agora_agent import Agora, Area
-       from agora_agent_server_sdk_compat import Agora, Area
-       ```
-      +
-      +Maintainers: dual-publish steps live in the repository release workflow, not in the root README.
-      diff --git a/docs/getting-started/installation.md b/docs/getting-started/installation.md
-      index 04b48da..8fca9ab 100644
-      --- a/docs/getting-started/installation.md
-      +++ b/docs/getting-started/installation.md
-      @@ -53,4 +53,15 @@ from agora_agent import AsyncAgora, AsyncAgentSession, Area
-       | `pydantic` (>= 1.9.2)          | Data validation for vendor configuration and API types |
-       | `typing_extensions` (>= 4.0.0) | Backported type hints for Python 3.8+                  |
-       
-      -See [Authentication](./authentication.md) for setup details.
-      +## Next steps
-      +
-      +- [Authentication](./authentication.md) — configure your credentials
-      +- [Quick Start](./quick-start.md) — build your first conversational agent
-      +
-      +## Migrating from a previous package name
-      +
-      +The PyPI distribution was renamed from `agora-agent-server-sdk` to `agora-agents` in v2.0.0. Install `agora-agents`; the import path remains `agora_agent`.
-      +
-      +The legacy PyPI name remains available as a compatibility shim that re-exports `agora-agents`. See [compat/agora-agent-server-sdk](../../compat/agora-agent-server-sdk/README.md).
-      +
-      +For release and version details, see [changelog — Migration notes](../../changelog.md#migration-notes).
-    theirs_snapshot:
-      compat/agora-agent-server-sdk/README.md: |
-        # agora-agent-server-sdk
-
-        This package has been renamed to `agora-agents`.
-
-        New projects should install:
-
-        ```sh
-        pip install agora-agents
-        ```
-
-        This compatibility package re-exports the public API from `agora-agents` to support existing installs during the migration window. The primary import path remains `agora_agent`; you can also import from `agora_agent_server_sdk_compat`:
-
-        ```python
-        from agora_agent import Agora, Area
-        from agora_agent_server_sdk_compat import Agora, Area
-        ```
-
-        Maintainers: dual-publish steps live in the repository release workflow, not in the root README.
-      docs/getting-started/installation.md: |
-        ---
-        sidebar_position: 1
-        title: Installation
-        description: Install the Agora Conversational AI Python SDK.
-        ---
-
-        # Installation
-
-        ## Prerequisites
-
-        - Python >= 3.8
-
-        ## Install with pip
-
-        ```sh
-        pip install agora-agents
-        ```
-
-        ## Install with Poetry
-
-        ```sh
-        poetry add agora-agents
-        ```
-
-        ## Imports
-
-        ```python
-        from agora_agent import Agent, Agora, Area, DeepgramSTT, OpenAI
-        ```
-
-        The package installs as `agora-agents` and imports as `agora_agent`.
-
-        ## Sync vs. Async
-
-        The SDK supports both synchronous and asynchronous usage:
-
-        - **Synchronous** — import `Agora` from `agora_agent` and use blocking method calls
-        - **Asynchronous** — import `AsyncAgora` and `AsyncAgentSession` from `agora_agent` and use `await` with all API calls
-
-        ```python
-        # Sync
-        from agora_agent import Agora, Area
-
-        # Async
-        from agora_agent import AsyncAgora, AsyncAgentSession, Area
-        ```
-
-        ## Dependencies
-
-        | Package                        | Purpose                                                |
-        | ------------------------------ | ------------------------------------------------------ |
-        | `httpx` (>= 0.21.2)            | HTTP client for sync and async requests                |
-        | `pydantic` (>= 1.9.2)          | Data validation for vendor configuration and API types |
-        | `typing_extensions` (>= 4.0.0) | Backported type hints for Python 3.8+                  |
-
-        ## Next steps
-
-        - [Authentication](./authentication.md) — configure your credentials
-        - [Quick Start](./quick-start.md) — build your first conversational agent
-
-        ## Migrating from a previous package name
-
-        The PyPI distribution was renamed from `agora-agent-server-sdk` to `agora-agents` in v2.0.0. Install `agora-agents`; the import path remains `agora_agent`.
-
-        The legacy PyPI name remains available as a compatibility shim that re-exports `agora-agents`. See [compat/agora-agent-server-sdk](../../compat/agora-agent-server-sdk/README.md).
-
-        For release and version details, see [changelog — Migration notes](../../changelog.md#migration-notes).
-    status: unresolved
-  - id: patch-c9355576
-    content_hash: sha256:83b3b6148b21f2b4d53ee67321777522f5f4e871b61ea3b23f3a6b88ca052769
-    original_commit: c93555763ffd63267a737b3e430217a890f203db
-    original_message: Streamline Python docs and README for app-credentials-first onboarding. Remove duplicated low-level client examples from the README, de-emphasize legacy auth modes, refocus the low-level API guide on AgentKit with telephony escape hatches, and update Agora-managed model terminology.
-    original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: a217c8ecfd919345831eebaca8295e292d65ebcf
-    files:
-      - docs/getting-started/authentication.md
-      - docs/guides/low-level-api.md
-    patch_content: |
-      diff --git a/docs/getting-started/authentication.md b/docs/getting-started/authentication.md
-      index 31dcc56..74c62cd 100644
-      --- a/docs/getting-started/authentication.md
-      +++ b/docs/getting-started/authentication.md
-      @@ -46,41 +46,6 @@ session = agent.create_session(
-       print(client.auth_mode)  # "app-credentials"
-       ```
-       
-      -## Other auth modes
-      +## Legacy auth modes
-       
-      -The SDK also supports pre-minted REST tokens and HTTP Basic Auth for legacy integrations. These are not recommended for new applications.
-      -
-      -### Token auth (`auth_token`)
-      -
-      -Pass a pre-minted Agora REST token on the client. You must also supply the RTC join token on `create_session(..., token=...)`.
-      -
-      -```python
-      -client = Agora(
-      -    area=Area.US,
-      -    app_id="your-app-id",
-      -    app_certificate="your-app-certificate",
-      -    auth_token="your-rest-auth-token",
-      -)
-      -
-      -session = agent.create_session(
-      -    client,
-      -    channel="room-123",
-      -    agent_uid="1",
-      -    remote_uids=["100"],
-      -    token="your-rtc-join-token",
-      -)
-      -```
-      -
-      -### Basic Auth (`customer_id` + `customer_secret`)
-      -
-      -Uses HTTP Basic Auth with Customer ID and Secret from Agora Console. Avoid for new integrations — the same credentials are sent on every request instead of minting fresh tokens.
-      -
-      -```python
-      -client = Agora(
-      -    area=Area.US,
-      -    app_id="your-app-id",
-      -    app_certificate="your-app-certificate",
-      -    customer_id="your-customer-id",
-      -    customer_secret="your-customer-secret",
-      -)
-      -```
-      +The generated client still supports pre-minted REST tokens and HTTP Basic Auth for legacy integrations. Do not use those modes for new session integrations. Use app credentials so AgentKit can mint short-lived ConvoAI REST auth and RTC join tokens for each session.
-      diff --git a/docs/guides/low-level-api.md b/docs/guides/low-level-api.md
-      index 6677b45..47397b7 100644
-      --- a/docs/guides/low-level-api.md
-      +++ b/docs/guides/low-level-api.md
-      @@ -1,187 +1,55 @@
-       ---
-       sidebar_position: 10
-       title: Low-Level API
-      -description: Direct client.agents.start() usage without the builder pattern.
-      +description: Use generated clients for escape-hatch APIs while keeping agent sessions on AgentKit.
-       ---
-       
-       # Low-Level API
-       
-      -For full control over request payloads you can call the generated clients directly and pass raw types such as `StartAgentsRequestProperties`, `Tts_Elevenlabs`, and `StartAgentsRequestPropertiesAsr`. Use this when you need vendor or options not exposed by the agentkit, or when integrating with generated types from the API spec.
-      +Use the `Agent` builder and `AgentSession` for conversational agent starts. That path generates ConvoAI REST auth and RTC join tokens from `app_id` and `app_certificate`, so application code does not need prebuilt REST tokens, RTC tokens, Customer ID, or Customer Secret.
-       
-      -## Raw telephony and phone-number APIs
-      -
-      -AgentKit focuses on realtime agent session helpers. Telephony call status, call hangup, and phone-number management are exposed through the generated low-level clients:
-      -
-      -- `client.telephony` for call status and hangup operations
-      -- `client.phone_numbers` for phone-number list, create, retrieve, update, and delete operations
-      +Generated clients are still available for API surface that AgentKit does not wrap yet, such as telephony and phone-number management.
-       
-      -## Cascading flow (ASR → LLM → TTS)
-      +## Client setup
-       
-       ```python
-       from agora_agent import Agora, Area
-      -from agora_agent.agents import (
-      -    StartAgentsRequestProperties,
-      -    StartAgentsRequestPropertiesAsr,
-      -    StartAgentsRequestPropertiesLlm,
-      -)
-      -from agora_agent.types.eleven_labs_tts_params import ElevenLabsTtsParams
-      -from agora_agent.types.tts import Tts_Elevenlabs
-       
-       client = Agora(
-           area=Area.US,
-      -    app_id="YOUR_APP_ID",
-      -    app_certificate="YOUR_APP_CERTIFICATE",
-      -    auth_token="your-rest-auth-token",
-      -)
-      -client.agents.start(
-      -    client.app_id,
-      -    name="unique_name",
-      -    properties=StartAgentsRequestProperties(
-      -        channel="channel_name",
-      -        token="token",
-      -        agent_rtc_uid="1001",
-      -        remote_rtc_uids=["1002"],
-      -        idle_timeout=120,
-      -        asr=StartAgentsRequestPropertiesAsr(
-      -            language="en-US",
-      -            vendor="deepgram",
-      -            params={"api_key": "YOUR_DEEPGRAM_API_KEY"},
-      -        ),
-      -        tts=Tts_Elevenlabs(
-      -            params=ElevenLabsTtsParams(
-      -                key="YOUR_ELEVENLABS_API_KEY",
-      -                model_id="eleven_flash_v2_5",
-      -                voice_id="pNInz6obpgDQGcFmaJgB",
-      -                sample_rate=24000,
-      -            ),
-      -        ),
-      -        llm=StartAgentsRequestPropertiesLlm(
-      -            url="https://api.openai.com/v1/chat/completions",
-      -            api_key="<your_llm_key>",
-      -            system_messages=[
-      -                {"role": "system", "content": "You are a helpful chatbot."}
-      -            ],
-      -            params={"model": "gpt-4o-mini"},
-      -            max_history=32,
-      -            greeting_message="Hello, how can I assist you today?",
-      -            failure_message="Please hold on a second.",
-      -        ),
-      -    ),
-      +    app_id="your-app-id",
-      +    app_certificate="your-app-certificate",
-       )
-       ```
-       
-      -## Async (low-level)
-      +## Raw telephony and phone-number APIs
-       
-      -```python
-      -import asyncio
-      -from agora_agent import Area, AsyncAgora
-      -from agora_agent.agents import (
-      -    StartAgentsRequestProperties,
-      -    StartAgentsRequestPropertiesAsr,
-      -    StartAgentsRequestPropertiesLlm,
-      -)
-      -from agora_agent.types.eleven_labs_tts_params import ElevenLabsTtsParams
-      -from agora_agent.types.tts import Tts_Elevenlabs
-      +AgentKit focuses on realtime agent session helpers. Use generated clients for operational APIs:
-       
-      -client = AsyncAgora(
-      -    area=Area.US,
-      -    app_id="YOUR_APP_ID",
-      -    app_certificate="YOUR_APP_CERTIFICATE",
-      -    auth_token="your-rest-auth-token",
-      +- `client.telephony` for call status and hangup operations
-      +- `client.phone_numbers` for phone-number list, create, retrieve, update, and delete operations
-      +
-      +```python
-      +calls = client.telephony.list(
-      +    appid=client.app_id,
-      +    type="sip",
-       )
-       
-      -async def main() -> None:
-      -    await client.agents.start(
-      -        client.app_id,
-      -        name="unique_name",
-      -        properties=StartAgentsRequestProperties(
-      -            channel="channel_name",
-      -            token="token",
-      -            agent_rtc_uid="1001",
-      -            remote_rtc_uids=["1002"],
-      -            idle_timeout=120,
-      -            asr=StartAgentsRequestPropertiesAsr(
-      -                language="en-US",
-      -                vendor="deepgram",
-      -                params={"api_key": "YOUR_DEEPGRAM_API_KEY"},
-      -            ),
-      -            tts=Tts_Elevenlabs(
-      -                params=ElevenLabsTtsParams(
-      -                    key="YOUR_ELEVENLABS_API_KEY",
-      -                    model_id="eleven_flash_v2_5",
-      -                    voice_id="pNInz6obpgDQGcFmaJgB",
-      -                    sample_rate=24000,
-      -                ),
-      -            ),
-      -            llm=StartAgentsRequestPropertiesLlm(
-      -                url="https://api.openai.com/v1/chat/completions",
-      -                api_key="<your_llm_key>",
-      -                system_messages=[
-      -                    {"role": "system", "content": "You are a helpful chatbot."}
-      -                ],
-      -                params={"model": "gpt-4o-mini"},
-      -                max_history=32,
-      -                greeting_message="Hello, how can I assist you today?",
-      -                failure_message="Please hold on a second.",
-      -            ),
-      -        ),
-      -    )
-      -
-      -asyncio.run(main())
-      +for call in calls:
-      +    print(call.id, call.state)
-       ```
-       
-      -## MLLM flow (multimodal)
-      +## Direct agent APIs
-       
-      -For real-time audio with OpenAI Realtime or Google Gemini Live, use the MLLM flow instead of the cascading ASR → LLM → TTS flow. See the [MLLM Overview](https://docs.agora.io/en/conversational-ai/models/mllm/overview).
-      +`client.agents` exposes the generated REST surface for advanced integrations. Prefer `agent.create_session(...).start()` for new session starts because it handles auth, token generation, vendor serialization, lifecycle state, and avatar enrichment.
-       
-      -```python
-      -from agora_agent import Agora, Area
-      -from agora_agent.agents import (
-      -    StartAgentsRequestProperties,
-      -    StartAgentsRequestPropertiesMllm,
-      -    StartAgentsRequestPropertiesMllmVendor,
-      -    StartAgentsRequestPropertiesTts,
-      -    StartAgentsRequestPropertiesTtsVendor,
-      -    StartAgentsRequestPropertiesLlm,
-      -)
-      +If you need an endpoint that is not wrapped by `AgentSession`, use `session.raw` after creating the session:
-       
-      -client = Agora(
-      -    area=Area.US,
-      -    app_id="YOUR_APP_ID",
-      -    app_certificate="YOUR_APP_CERTIFICATE",
-      -    auth_token="your-rest-auth-token",
-      -)
-      -
-      -client.agents.start(
-      -    client.app_id,
-      -    name="mllm_agent",
-      -    properties=StartAgentsRequestProperties(
-      -        channel="channel_name",
-      -        token="your_token",
-      -        agent_rtc_uid="1001",
-      -        remote_rtc_uids=["1002"],
-      -        idle_timeout=120,
-      -        mllm=StartAgentsRequestPropertiesMllm(
-      -            enable=True,
-      -            url="wss://api.openai.com/v1/realtime",
-      -            api_key="<your_openai_api_key>",
-      -            vendor=StartAgentsRequestPropertiesMllmVendor.OPENAI,
-      -            params={
-      -                "model": "gpt-4o-realtime-preview",
-      -                "voice": "alloy",
-      -            },
-      -            input_modalities=["audio"],
-      -            output_modalities=["text", "audio"],
-      -            greeting_message="Hello! I'm ready to chat in real-time.",
-      -            turn_detection={
-      -                "mode": "server_vad",
-      -                "server_vad_config": {
-      -                    "idle_timeout_ms": 5000,
-      -                },
-      -            },
-      -        ),
-      -    ),
-      +```python
-      +info = session.raw.get(
-      +    appid=session.app_id,
-      +    agent_id=session.id,
-       )
-       ```
-       
-      -For more on the agentkit-based MLLM flow, see [MLLM Flow](./mllm-flow.md).
-      +You must pass `appid` and `agent_id` manually when using generated raw methods.
-    theirs_snapshot:
-      docs/getting-started/authentication.md: |
-        ---
-        sidebar_position: 2
-        title: Authentication
-        description: Configure the Python SDK with app credentials and understand other supported auth modes.
-        ---
-
-        # Authentication
-
-        Create `Agora` or `AsyncAgora` with `app_id` and `app_certificate` only. The SDK mints a fresh ConvoAI REST token for each API call and generates the RTC join token when the session starts.
-
-        ## App credentials
-
-        ```python
-        from agora_agent import Agent, Agora, Area, DeepgramSTT, OpenAI, MiniMaxTTS
-
-        client = Agora(
-            area=Area.US,
-            app_id="your-app-id",
-            app_certificate="your-app-certificate",
-        )
-
-        agent = (
-            Agent(instructions="Be concise.")
-            .with_stt(DeepgramSTT(model="nova-3"))
-            .with_llm(OpenAI(model="gpt-4o-mini"))
-            .with_tts(MiniMaxTTS(model="speech_2_6_turbo", voice_id="English_captivating_female1"))
-        )
-
-        session = agent.create_session(
-            client,
-            channel="room-123",
-            agent_uid="1",
-            remote_uids=["100"],
-        )
-        ```
-
-        ## Why app credentials
-
-        - Fresh short-lived tokens per API call instead of reusing long-lived credentials
-        - No Customer ID / Customer Secret in request headers
-        - No manual REST or RTC token provisioning in application code
-
-        ## Inspecting auth mode
-
-        ```python
-        print(client.auth_mode)  # "app-credentials"
-        ```
-
-        ## Legacy auth modes
-
-        The generated client still supports pre-minted REST tokens and HTTP Basic Auth for legacy integrations. Do not use those modes for new session integrations. Use app credentials so AgentKit can mint short-lived ConvoAI REST auth and RTC join tokens for each session.
-      docs/guides/low-level-api.md: |
-        ---
-        sidebar_position: 10
-        title: Low-Level API
-        description: Use generated clients for escape-hatch APIs while keeping agent sessions on AgentKit.
-        ---
-
-        # Low-Level API
-
-        Use the `Agent` builder and `AgentSession` for conversational agent starts. That path generates ConvoAI REST auth and RTC join tokens from `app_id` and `app_certificate`, so application code does not need prebuilt REST tokens, RTC tokens, Customer ID, or Customer Secret.
-
-        Generated clients are still available for API surface that AgentKit does not wrap yet, such as telephony and phone-number management.
-
-        ## Client setup
-
-        ```python
-        from agora_agent import Agora, Area
-
-        client = Agora(
-            area=Area.US,
-            app_id="your-app-id",
-            app_certificate="your-app-certificate",
-        )
-        ```
-
-        ## Raw telephony and phone-number APIs
-
-        AgentKit focuses on realtime agent session helpers. Use generated clients for operational APIs:
-
-        - `client.telephony` for call status and hangup operations
-        - `client.phone_numbers` for phone-number list, create, retrieve, update, and delete operations
-
-        ```python
-        calls = client.telephony.list(
-            appid=client.app_id,
-            type="sip",
-        )
-
-        for call in calls:
-            print(call.id, call.state)
-        ```
-
-        ## Direct agent APIs
-
-        `client.agents` exposes the generated REST surface for advanced integrations. Prefer `agent.create_session(...).start()` for new session starts because it handles auth, token generation, vendor serialization, lifecycle state, and avatar enrichment.
-
-        If you need an endpoint that is not wrapped by `AgentSession`, use `session.raw` after creating the session:
-
-        ```python
-        info = session.raw.get(
-            appid=session.app_id,
-            agent_id=session.id,
-        )
-        ```
-
-        You must pass `appid` and `agent_id` manually when using generated raw methods.
-    status: unresolved
   - id: patch-299e4bd9
-    content_hash: sha256:e1470176436d28416d0ff67d8acc614060fae7b312f86c09b899a92d1c4adfe4
+    content_hash: sha256:ee71350debd51653f1cb1472477a577436d74cbb847b3536a9cdbff0211abf2d
     original_commit: 299e4bd9cb59bd6144084332a7c3fa7bf260769f
     original_message: "fix(agentkit): resolve provider config type checks"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: b66d871314ca0e5929cb9c9095949a7fd5e856a7
+    base_generation: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
     files:
       - src/agora_agent/agentkit/agent.py
       - src/agora_agent/agentkit/vendors/llm.py
       - src/agora_agent/agentkit/vendors/mllm.py
       - src/agora_agent/agentkit/vendors/stt.py
-    patch_content: |+
+    patch_content: |
       diff --git a/src/agora_agent/agentkit/agent.py b/src/agora_agent/agentkit/agent.py
-      index 6275f04..ecf01c6 100644
+      index 1daba82..95cfe34 100644
       --- a/src/agora_agent/agentkit/agent.py
       +++ b/src/agora_agent/agentkit/agent.py
       @@ -57,6 +57,8 @@ from ..agents.types.start_agents_request_properties_filler_words_content import
@@ -12221,7 +11673,7 @@ patches:
        from ..types.asr import Asr
        from ..types.llm import Llm
        from ..types.llm_style import LlmStyle as GeneratedLlmStyle
-      @@ -536,6 +538,23 @@ class Agent:
+      @@ -544,6 +546,23 @@ class Agent:
                    )
                return new_agent
        
@@ -12246,12 +11698,10 @@ patches:
                """Deprecated. Configure the failure message on the LLM or MLLM vendor instead."""
                new_agent = self._clone()
       diff --git a/src/agora_agent/agentkit/vendors/llm.py b/src/agora_agent/agentkit/vendors/llm.py
-      index 9156a01..5dd822d 100644
+      index 5a9f39e..1f1b354 100644
       --- a/src/agora_agent/agentkit/vendors/llm.py
       +++ b/src/agora_agent/agentkit/vendors/llm.py
-      @@ -1,7 +1,10 @@
-      -from typing import Any, Dict, List, Optional
-      +from typing import Any, Dict, List, Optional, Union
+      @@ -2,6 +2,9 @@ from typing import Any, Dict, List, Optional, Union
        
        from pydantic import BaseModel, ConfigDict, Field, model_validator
        
@@ -12261,43 +11711,6 @@ patches:
        from .base import BaseLLM
        
        LlmGreetingConfigs = Dict[str, Any]
-      diff --git a/src/agora_agent/agentkit/vendors/mllm.py b/src/agora_agent/agentkit/vendors/mllm.py
-      index 236a494..6a260d8 100644
-      --- a/src/agora_agent/agentkit/vendors/mllm.py
-      +++ b/src/agora_agent/agentkit/vendors/mllm.py
-      @@ -1,3 +1,4 @@
-      +import warnings
-       from typing import Any, Dict, List, Optional
-       
-       from pydantic import BaseModel, ConfigDict, Field
-      diff --git a/src/agora_agent/agentkit/vendors/stt.py b/src/agora_agent/agentkit/vendors/stt.py
-      index e5117b0..bb222a9 100644
-      --- a/src/agora_agent/agentkit/vendors/stt.py
-      +++ b/src/agora_agent/agentkit/vendors/stt.py
-      @@ -89,6 +89,7 @@ class SpeechmaticsSTTOptions(BaseModel):
-       
-           api_key: str = Field(..., description="Speechmatics API key")
-           language: str = Field(..., description="Language code (e.g., en, es, fr)")
-      +    interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
-           model: Optional[str] = Field(default=None, description="Model name")
-           uri: Optional[str] = Field(default=None, description="Speechmatics streaming WebSocket URL")
-           additional_params: Optional[Dict[str, Any]] = Field(default=None)
-      @@ -124,6 +125,7 @@ class DeepgramSTTOptions(BaseModel):
-           api_key: Optional[str] = Field(default=None, description="Deepgram API key")
-           model: Optional[str] = Field(default=None, description="Model (e.g., nova-2, enhanced, base)")
-           language: Optional[str] = Field(default=None, description="Language code (e.g., en-US)")
-      +    interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
-           smart_format: Optional[bool] = Field(default=None, description="Enable smart formatting")
-           punctuation: Optional[bool] = Field(default=None, description="Enable punctuation")
-           additional_params: Optional[Dict[str, Any]] = Field(default=None)
-      @@ -353,6 +355,7 @@ class SarvamSTTOptions(BaseModel):
-       
-           api_key: str = Field(..., description="Sarvam API key")
-           language: str = Field(..., description="Language code (e.g., en, hi, ta)")
-      +    interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
-           model: Optional[str] = Field(default=None, description="Model name")
-           additional_params: Optional[Dict[str, Any]] = Field(default=None)
-       
     theirs_snapshot:
       src/agora_agent/agentkit/agent.py: |
         from __future__ import annotations
@@ -12380,6 +11793,7 @@ patches:
         from ..agent_management.types.agent_think_agent_management_response import (
             AgentThinkAgentManagementResponse,
         )
+        from ..core.pydantic_utilities import parse_obj_as
         from .vendors.base import BaseAvatar, BaseLLM, BaseMLLM, BaseSTT, BaseTTS
 
         # Top-level aliases
@@ -12492,6 +11906,13 @@ patches:
             debug: bool
             warn: typing.Callable[[str], None]
 
+
+        def _start_properties_from_mapping(
+            properties: typing.Mapping[str, typing.Any],
+        ) -> StartAgentsRequestProperties:
+            return parse_obj_as(StartAgentsRequestProperties, dict(properties))
+
+
         # LLM sub-type aliases
         LlmGreetingConfigs = typing.Dict[str, typing.Any]
         LlmGreetingConfigsMode = typing.Any
@@ -12602,7 +12023,7 @@ patches:
 
         def _validate_turn_detection_language(value: typing.Any) -> TurnDetectionLanguage:
             if not _is_turn_detection_language(value):
-                raise ValueError(f"Invalid interaction language: {value}")
+                raise ValueError(f"Invalid turn_detection.language: {value}")
             return value  # type: ignore[return-value]
 
 
@@ -13217,7 +12638,7 @@ patches:
                         if self._failure_message is not None:
                             mllm_config.setdefault("failure_message", self._failure_message)
                         base_kwargs["mllm"] = mllm_config
-                    return StartAgentsRequestProperties(**base_kwargs)
+                    return _start_properties_from_mapping(base_kwargs)
 
                 if skip_vendor_validation:
                     warnings.warn(
@@ -13240,12 +12661,13 @@ patches:
                 allow_missing_llm = "llm" in allow_missing_categories
                 allow_missing_tts = "tts" in allow_missing_categories
 
+                turn_detection_config = self._resolve_turn_detection_config()
                 if not skip_asr_validation and (self._stt is not None or not allow_missing_asr):
-                    base_kwargs["asr"] = self._resolve_asr_config()
-                base_kwargs["turn_detection"] = self._resolve_turn_detection_config()
+                    base_kwargs["asr"] = self._resolve_asr_config(turn_detection_config)
+                base_kwargs["turn_detection"] = turn_detection_config
 
                 if skip_vendor_validation:
-                    return StartAgentsRequestProperties(**base_kwargs)
+                    return _start_properties_from_mapping(base_kwargs)
 
                 if self._tts is None and not (skip_tts_validation or allow_missing_tts):
                     raise ValueError("TTS configuration is required. Use with_tts() to set it.")
@@ -13258,39 +12680,34 @@ patches:
                 if self._tts is not None and not skip_tts_validation:
                     base_kwargs["tts"] = self._tts
 
-                return StartAgentsRequestProperties(**base_kwargs)
+                return _start_properties_from_mapping(base_kwargs)
 
             def _resolve_llm_config(self) -> typing.Dict[str, typing.Any]:
                 llm_config = dict(self._llm or {})
-                # Agent-level fields take priority over the vendor's defaults.
-                # This matches the TS SDK where agent-level values override vendor config.
-                if self._instructions is not None:
+                if self._instructions is not None and "system_messages" not in llm_config:
                     llm_config["system_messages"] = [{"role": "system", "content": self._instructions}]
-                if self._greeting is not None:
+                if self._greeting is not None and "greeting_message" not in llm_config:
                     llm_config["greeting_message"] = self._greeting
-                if self._greeting_configs is not None:
+                if self._greeting_configs is not None and "greeting_configs" not in llm_config:
                     llm_config["greeting_configs"] = _dump_optional_model(self._greeting_configs)
-                if self._failure_message is not None:
+                if self._failure_message is not None and "failure_message" not in llm_config:
                     llm_config["failure_message"] = self._failure_message
-                if self._max_history is not None:
+                if self._max_history is not None and "max_history" not in llm_config:
                     llm_config["max_history"] = self._max_history
                 return llm_config
 
-            def _resolve_asr_config(self) -> typing.Dict[str, typing.Any]:
+            def _resolve_asr_config(self, turn_detection_config: TurnDetectionConfig) -> typing.Dict[str, typing.Any]:
                 asr_config = dict(self._stt or {})
-                asr_config.pop("language", None)
                 if not asr_config:
                     asr_config["vendor"] = "ares"
+                asr_config["language"] = self._field_value(turn_detection_config, "language")
                 return asr_config
 
             def _resolve_turn_detection_config(self) -> TurnDetectionConfig:
-                existing_stt_language = self._stt.get("language") if self._stt is not None else None
                 existing_turn_detection_language = self._field_value(self._turn_detection, "language")
                 language = (
                     existing_turn_detection_language
                     if existing_turn_detection_language is not None
-                    else existing_stt_language
-                    if _is_turn_detection_language(existing_stt_language)
                     else DEFAULT_TURN_DETECTION_LANGUAGE
                 )
                 language = _validate_turn_detection_language(language)
@@ -13708,12 +13125,13 @@ patches:
                 options = _dump_optional_model(self.options)
                 options.pop("project_id", None)
                 options.pop("location", None)
-                config = Gemini(**options).to_config()
-                params = dict(config["params"])
-                params["project_id"] = self.options.project_id
-                params["location"] = self.options.location
-                config["params"] = params
-                return config
+                if not options.get("url"):
+                    options["url"] = (
+                        f"https://{self.options.location}-aiplatform.googleapis.com/v1/projects/"
+                        f"{self.options.project_id}/locations/{self.options.location}/"
+                        f"publishers/google/models/{self.options.model}:streamGenerateContent?alt=sse"
+                    )
+                return Gemini(**options).to_config()
 
 
         class AmazonBedrockOptions(BaseModel):
@@ -14124,90 +13542,13 @@ patches:
 
                 return config
       src/agora_agent/agentkit/vendors/stt.py: |
-        from typing import Any, Dict, Optional, Tuple
+        from typing import Any, Dict, Optional
 
         from pydantic import BaseModel, ConfigDict, Field, model_validator
-        from typing_extensions import Literal
 
         from .base import BaseSTT
 
-        TurnDetectionLanguage = Literal[
-            "ar-EG",
-            "ar-JO",
-            "ar-SA",
-            "ar-AE",
-            "bn-IN",
-            "zh-CN",
-            "zh-HK",
-            "zh-TW",
-            "nl-NL",
-            "en-IN",
-            "en-US",
-            "fil-PH",
-            "fr-FR",
-            "de-DE",
-            "gu-IN",
-            "he-IL",
-            "hi-IN",
-            "id-ID",
-            "it-IT",
-            "ja-JP",
-            "kn-IN",
-            "ko-KR",
-            "ms-MY",
-            "fa-IR",
-            "pt-PT",
-            "ru-RU",
-            "es-ES",
-            "ta-IN",
-            "te-IN",
-            "th-TH",
-            "tr-TR",
-            "vi-VN",
-        ]
-
-        TURN_DETECTION_LANGUAGE_VALUES: Tuple[TurnDetectionLanguage, ...] = (
-            "ar-EG",
-            "ar-JO",
-            "ar-SA",
-            "ar-AE",
-            "bn-IN",
-            "zh-CN",
-            "zh-HK",
-            "zh-TW",
-            "nl-NL",
-            "en-IN",
-            "en-US",
-            "fil-PH",
-            "fr-FR",
-            "de-DE",
-            "gu-IN",
-            "he-IL",
-            "hi-IN",
-            "id-ID",
-            "it-IT",
-            "ja-JP",
-            "kn-IN",
-            "ko-KR",
-            "ms-MY",
-            "fa-IR",
-            "pt-PT",
-            "ru-RU",
-            "es-ES",
-            "ta-IN",
-            "te-IN",
-            "th-TH",
-            "tr-TR",
-            "vi-VN",
-        )
-        _TURN_DETECTION_LANGUAGES = set(TURN_DETECTION_LANGUAGE_VALUES)
         _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
-
-
-        def _turn_detection_language(language: Optional[str]) -> Optional[TurnDetectionLanguage]:
-            if language in _TURN_DETECTION_LANGUAGES:
-                return language  # type: ignore[return-value]
-            return None
 
 
         class SpeechmaticsSTTOptions(BaseModel):
@@ -14215,7 +13556,6 @@ patches:
 
             api_key: str = Field(..., description="Speechmatics API key")
             language: str = Field(..., description="Language code (e.g., en, es, fr)")
-            interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
             model: Optional[str] = Field(default=None, description="Model name")
             uri: Optional[str] = Field(default=None, description="Speechmatics streaming WebSocket URL")
             additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -14239,9 +13579,6 @@ patches:
                     "vendor": "speechmatics",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
@@ -14251,7 +13588,7 @@ patches:
             api_key: Optional[str] = Field(default=None, description="Deepgram API key")
             model: Optional[str] = Field(default=None, description="Model (e.g., nova-2, enhanced, base)")
             language: Optional[str] = Field(default=None, description="Language code (e.g., en-US)")
-            interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
+            keyterm: Optional[str] = Field(default=None, description="Boost specialized terms and brands for Deepgram")
             smart_format: Optional[bool] = Field(default=None, description="Enable smart formatting")
             punctuation: Optional[bool] = Field(default=None, description="Enable punctuation")
             additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -14279,13 +13616,12 @@ patches:
                     params["smart_format"] = self.options.smart_format
                 if self.options.punctuation is not None:
                     params["punctuation"] = self.options.punctuation
+                if self.options.keyterm is not None:
+                    params["keyterm"] = self.options.keyterm
                 config: Dict[str, Any] = {
                     "vendor": "deepgram",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
@@ -14314,9 +13650,6 @@ patches:
                     "vendor": "microsoft",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
@@ -14338,22 +13671,26 @@ patches:
                 params: Dict[str, Any] = dict(self.options.additional_params or {})
                 params["api_key"] = self.options.api_key
 
-                transcription = {"model": "whisper-1", **(self.options.input_audio_transcription or {})}
+                transcription: Dict[str, Any] = {"model": "gpt-4o-mini-transcribe"}
+                transcription.update(self.options.input_audio_transcription or {})
                 if self.options.model is not None:
                     transcription["model"] = self.options.model
                 if self.options.prompt is not None:
                     transcription["prompt"] = self.options.prompt
                 if self.options.language is not None:
                     transcription["language"] = self.options.language
+                if not transcription.get("model"):
+                    raise ValueError("OpenAISTT: input_audio_transcription.model is required")
+                if not transcription.get("prompt"):
+                    raise ValueError("OpenAISTT: input_audio_transcription.prompt is required")
+                if not transcription.get("language"):
+                    raise ValueError("OpenAISTT: input_audio_transcription.language is required")
                 params["input_audio_transcription"] = transcription
 
                 config: Dict[str, Any] = {
                     "vendor": "openai",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
@@ -14388,9 +13725,6 @@ patches:
                     "vendor": "google",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
@@ -14421,9 +13755,6 @@ patches:
                     "vendor": "amazon",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
@@ -14451,16 +13782,12 @@ patches:
                     "vendor": "assemblyai",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
 
 
         class AresSTTOptions(BaseModel):
             model_config = ConfigDict(extra="forbid")
 
-            language: Optional[TurnDetectionLanguage] = Field(default=None, description="Language code")
             additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
         class AresSTT(BaseSTT):
@@ -14469,8 +13796,6 @@ patches:
 
             def to_config(self) -> Dict[str, Any]:
                 config: Dict[str, Any] = {"vendor": "ares"}
-                if self.options.language is not None:
-                    config["language"] = self.options.language
                 if self.options.additional_params:
                     config["params"] = self.options.additional_params
                 return config
@@ -14481,7 +13806,6 @@ patches:
 
             api_key: str = Field(..., description="Sarvam API key")
             language: str = Field(..., description="Language code (e.g., en, hi, ta)")
-            interaction_language: Optional[InteractionLanguage] = Field(default=None, description="Agora interaction language for asr.language")
             model: Optional[str] = Field(default=None, description="Model name")
             additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
@@ -14502,9 +13826,6 @@ patches:
                     "vendor": "sarvam",
                     "params": params,
                 }
-                turn_detection_language = _turn_detection_language(self.options.language)
-                if turn_detection_language is not None:
-                    config["language"] = turn_detection_language
                 return config
   - id: patch-617ee134
     content_hash: sha256:ea2d27ba8019bf09ce5766d322eb7218fcee0a90124e823ba16c4e45dc1af5a9
@@ -17920,24 +17241,24 @@ patches:
         Think value constants: `ThinkOnListeningActionInject`, `ThinkOnListeningActionInterrupt`, `ThinkOnListeningActionIgnore`, `ThinkOnThinkingActionInterrupt`, `ThinkOnThinkingActionIgnore`, `ThinkOnSpeakingActionInterrupt`, `ThinkOnSpeakingActionIgnore`.
     status: unresolved
   - id: patch-bed29b6b
-    content_hash: sha256:8008d9c33a194a48ef317868953c26d5b03ede60c23743b4249260894c0f6417
+    content_hash: sha256:35a32ee64c95efd478f684c167efc54c9d95344af837e99b31da4c36f66febce
     original_commit: bed29b6b7d4d08480a8510b26b5e21d1ef234cc9
     original_message: "chore: bump Python packages to 2.1.0"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: b66d871314ca0e5929cb9c9095949a7fd5e856a7
+    base_generation: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
     files:
       - compat/agora-agent-server-sdk/pyproject.toml
     patch_content: |
       diff --git a/compat/agora-agent-server-sdk/pyproject.toml b/compat/agora-agent-server-sdk/pyproject.toml
-      index ac93128..468294b 100644
+      index eea45d7..078ac75 100644
       --- a/compat/agora-agent-server-sdk/pyproject.toml
       +++ b/compat/agora-agent-server-sdk/pyproject.toml
       @@ -3,7 +3,7 @@ name = "agora-agent-server-sdk"
        
        [tool.poetry]
        name = "agora-agent-server-sdk"
-      -version = "v2.0.0"
-      +version = "v2.1.0"
+      -version = "v2.1.1"
+      +version = "v2.2.0"
        description = "Compatibility shim for the renamed agora-agents package."
        readme = "README.md"
        authors = []
@@ -17945,8 +17266,8 @@ patches:
        
        [tool.poetry.dependencies]
        python = "^3.8"
-      -agora-agents = ">=2.0.0,<3.0.0"
-      +agora-agents = ">=2.1.0,<3.0.0"
+      -agora-agents = ">=2.1.1,<3.0.0"
+      +agora-agents = ">=2.2.0,<3.0.0"
        
        [build-system]
        requires = ["poetry-core"]
@@ -17957,7 +17278,7 @@ patches:
 
         [tool.poetry]
         name = "agora-agent-server-sdk"
-        version = "v2.1.0"
+        version = "v2.2.0"
         description = "Compatibility shim for the renamed agora-agents package."
         readme = "README.md"
         authors = []
@@ -17989,9 +17310,81 @@ patches:
 
         [tool.poetry.dependencies]
         python = "^3.8"
-        agora-agents = ">=2.1.0,<3.0.0"
+        agora-agents = ">=2.2.0,<3.0.0"
 
         [build-system]
         requires = ["poetry-core"]
         build-backend = "poetry.core.masonry.api"
+    user_owned: true
+  - id: patch-fecdc77c
+    content_hash: sha256:4c3321ec0facd689cee56c0fc609559d1038380d04a4cd8478b7ad7bb4a85388
+    original_commit: fecdc77c866f433d8287fcb8a55328612e016b21
+    original_message: Fix AgentKit request validation and provider wire-key coverage
+    original_author: digitallysavvy <hermes.frangoudis@gmail.com>
+    base_generation: 3d7d10edd130c182ad733db7d0fdb6af8fe2309a
+    files:
+      - PYTHON-AGENTKIT-SNAKE-CASE-AUDIT.md
+    patch_content: |
+      diff --git a/PYTHON-AGENTKIT-SNAKE-CASE-AUDIT.md b/PYTHON-AGENTKIT-SNAKE-CASE-AUDIT.md
+      new file mode 100644
+      index 0000000..f3cd64a
+      --- /dev/null
+      +++ b/PYTHON-AGENTKIT-SNAKE-CASE-AUDIT.md
+      @@ -0,0 +1,27 @@
+      +# Python AgentKit Snake Case API Audit
+      +
+      +Scope: `agora-agents-python` public AgentKit wrappers, docs, and tests.
+      +
+      +Search terms:
+      +
+      +```bash
+      +rg -n "apiKey|baseUrl|modelId|voiceId|groupId|keyTerm|turnDetection|inputAudioTranscription|greetingMessage|failureMessage|projectId|adcCredentialsString|sampleRate|targetLanguageCode|resourceName|deploymentName" agora-agents-python
+      +```
+      +
+      +## Result
+      +
+      +No shipped camelCase public Python constructor kwargs were found in source or docs examples. No deprecated alias helper is required for this pass.
+      +
+      +| File | Class / symbol | Public arg or example | Current spelling | Desired Python spelling | `to_config()` key | Wire key | Action | Compatibility needed | Test coverage |
+      +|---|---|---|---|---|---|---|---|---|---|
+      +| `src/agora_agent/agentkit/vendors/tts.py` | `GoogleTTS` | constructor arg | `voice_name` | `voice_name` | `params.VoiceSelectionParams` | `params.VoiceSelectionParams` | keep | no | `tests/custom/test_tts_vendors.py` |
+      +| `src/agora_agent/agentkit/vendors/tts.py` | `RimeTTS` | constructor arg | `model_id` | `model_id` | `params.modelId` | `params.modelId` | keep | no | `tests/custom/test_tts_vendors.py` |
+      +| `src/agora_agent/agentkit/vendors/tts.py` | `MurfTTS` | constructor arg | `voice_id` | `voice_id` | `params.voiceId` | `params.voiceId` | keep | no | `tests/custom/test_tts_vendors.py`, `tests/custom/test_request_body.py` |
+      +| `src/agora_agent/types/rime_tts_params.py` | generated model | generated alias | `modelId` | n/a | `model_id` | `modelId` | keep | no | `tests/custom/test_tts_vendors.py` |
+      +| `src/agora_agent/types/murf_tts_params.py` | generated model | generated alias | `voiceId` | n/a | `voice_id` | `voiceId` | keep | no | `tests/custom/test_tts_vendors.py` |
+      +| `tests/custom/test_request_body.py` | wire assertion | payload key | `voiceId` | n/a | `params.voiceId` | `params.voiceId` | keep | no | request-body test |
+      +| `tests/custom/test_tts_vendors.py` | wire assertion | payload key | `modelId`, `voiceId`, `VoiceSelectionParams` | n/a | generated model fields | wire aliases | keep | no | wire serialization test |
+      +
+      +## Guardrail Added
+      +
+      +`tests/custom/test_docs_snake_case.py` scans Python markdown code fences and fails on common camelCase kwargs such as `apiKey`, `baseUrl`, `modelId`, `voiceId`, `projectId`, and `greetingMessage`. JSON, TypeScript, Go, shell, and YAML examples are skipped so wire payload examples can retain required non-Python keys.
+    theirs_snapshot:
+      PYTHON-AGENTKIT-SNAKE-CASE-AUDIT.md: |
+        # Python AgentKit Snake Case API Audit
+
+        Scope: `agora-agents-python` public AgentKit wrappers, docs, and tests.
+
+        Search terms:
+
+        ```bash
+        rg -n "apiKey|baseUrl|modelId|voiceId|groupId|keyTerm|turnDetection|inputAudioTranscription|greetingMessage|failureMessage|projectId|adcCredentialsString|sampleRate|targetLanguageCode|resourceName|deploymentName" agora-agents-python
+        ```
+
+        ## Result
+
+        No shipped camelCase public Python constructor kwargs were found in source or docs examples. No deprecated alias helper is required for this pass.
+
+        | File | Class / symbol | Public arg or example | Current spelling | Desired Python spelling | `to_config()` key | Wire key | Action | Compatibility needed | Test coverage |
+        |---|---|---|---|---|---|---|---|---|---|
+        | `src/agora_agent/agentkit/vendors/tts.py` | `GoogleTTS` | constructor arg | `voice_name` | `voice_name` | `params.VoiceSelectionParams` | `params.VoiceSelectionParams` | keep | no | `tests/custom/test_tts_vendors.py` |
+        | `src/agora_agent/agentkit/vendors/tts.py` | `RimeTTS` | constructor arg | `model_id` | `model_id` | `params.modelId` | `params.modelId` | keep | no | `tests/custom/test_tts_vendors.py` |
+        | `src/agora_agent/agentkit/vendors/tts.py` | `MurfTTS` | constructor arg | `voice_id` | `voice_id` | `params.voiceId` | `params.voiceId` | keep | no | `tests/custom/test_tts_vendors.py`, `tests/custom/test_request_body.py` |
+        | `src/agora_agent/types/rime_tts_params.py` | generated model | generated alias | `modelId` | n/a | `model_id` | `modelId` | keep | no | `tests/custom/test_tts_vendors.py` |
+        | `src/agora_agent/types/murf_tts_params.py` | generated model | generated alias | `voiceId` | n/a | `voice_id` | `voiceId` | keep | no | `tests/custom/test_tts_vendors.py` |
+        | `tests/custom/test_request_body.py` | wire assertion | payload key | `voiceId` | n/a | `params.voiceId` | `params.voiceId` | keep | no | request-body test |
+        | `tests/custom/test_tts_vendors.py` | wire assertion | payload key | `modelId`, `voiceId`, `VoiceSelectionParams` | n/a | generated model fields | wire aliases | keep | no | wire serialization test |
+
+        ## Guardrail Added
+
+        `tests/custom/test_docs_snake_case.py` scans Python markdown code fences and fails on common camelCase kwargs such as `apiKey`, `baseUrl`, `modelId`, `voiceId`, `projectId`, and `greetingMessage`. JSON, TypeScript, Go, shell, and YAML examples are skipped so wire payload examples can retain required non-Python keys.
     user_owned: true
