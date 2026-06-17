@@ -33,7 +33,6 @@ from agora_agent import (
     DeepgramSTT,
     OpenAI,
     MiniMaxTTS,
-    ElevenLabsTTS,
     expires_in_hours,
 )
 
@@ -99,7 +98,7 @@ def start_conversation() -> str:
 
 ### Regional agent builders
 
-Bind the client once with `Agent(client=client, ...)` and pass vendor classes directly such as `OpenAI(...)` or `MiniMaxTTS(...)`. The bound client selects the API routing region and provides IDE hints via `CNAgent` / `GlobalAgent`, but does not restrict which vendor classes you can use. See [`docs/guides/regional-routing.md`](./docs/guides/regional-routing.md) for regional examples.
+Bind the client once with `Agent(client=client, ...)` and pass vendor classes directly such as `OpenAI(...)` or `MiniMaxTTS(...)`. The bound client selects the API routing region and provides IDE hints via `CNAgent` / `GlobalAgent`, but does not restrict which vendor classes you can use. See `[docs/guides/regional-routing.md](./docs/guides/regional-routing.md)` for regional examples.
 
 ## AI Studio pipeline IDs
 

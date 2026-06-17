@@ -1,7 +1,6 @@
 import pytest
 
 from agora_agent import (
-from test_helpers import test_client
     Agent,
     AmazonSTT,
     AssemblyAISTT,
@@ -15,6 +14,7 @@ from test_helpers import test_client
     SpeechmaticsSTT,
     TurnDetectionConfig,
 )
+from test_helpers import test_client
 
 
 def dump(value):

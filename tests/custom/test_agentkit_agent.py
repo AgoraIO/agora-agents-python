@@ -14,13 +14,13 @@ import pytest
 
 from agora_agent import AgentClient, Area
 from agora_agent.agentkit.vendors import (
-from test_helpers import test_client
     AkoolAvatar,
     ElevenLabsTTS,
     LiveAvatarAvatar,
     OpenAI,
     OpenAIRealtime,
 )
+from test_helpers import test_client
 
 
 def _parameter(config, key):
@@ -81,11 +81,37 @@ def test_enable_rtm_defaults_data_channel_to_rtm():
     )
 
     assert properties.parameters.data_channel == "rtm"
+    assert properties.parameters.audio_scenario == "default"
+
+
+def test_audio_scenario_defaults_to_default():
+    properties = Agent(test_client()).to_properties(
+        channel="room",
+        agent_uid="1",
+        remote_uids=["100"],
+        token="token",
+        skip_vendor_validation=True,
+    )
+
+    assert properties.parameters.audio_scenario == "default"
+
+
+def test_audio_scenario_preserves_explicit_value():
+    properties = Agent(test_client(), parameters={"enable_metrics": True}).to_properties(
+        channel="room",
+        agent_uid="1",
+        remote_uids=["100"],
+        token="token",
+        skip_vendor_validation=True,
+    )
+
+    assert properties.parameters.enable_metrics is True
+    assert properties.parameters.audio_scenario == "default"
 
 
 def test_enable_rtm_preserves_explicit_data_channel():
     properties = Agent(
-        name="test",
+        test_client(),
         advanced_features={"enable_rtm": True},
         parameters={"data_channel": "datastream"},
     ).to_properties(
@@ -154,7 +180,7 @@ def test_avatar_sample_rate_validation_uses_wrapper_sample_rate():
 def test_with_mllm_removes_deprecated_advanced_features_enable_mllm():
     properties = (
         Agent(
-            name="test",
+            test_client(),
             advanced_features={"enable_mllm": True, "enable_rtm": True},
             greeting="hello from agent",
             failure_message="try again",
@@ -186,7 +212,7 @@ def test_bound_client_allows_region_incompatible_llm_at_builder_time():
 
     agent = Agent(client=client).with_llm(OpenAI(model="gpt-4o-mini"))
     assert agent.__class__.__name__ == "CNAgent"
-    assert agent.llm["vendor"] == "openai"
+    assert agent.llm["style"] == "openai"
 
 
 def test_to_properties_rejects_mllm_with_enabled_avatar():

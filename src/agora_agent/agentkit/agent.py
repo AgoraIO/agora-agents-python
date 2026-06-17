@@ -400,7 +400,7 @@ class Agent:
 
     def __new__(
         cls,
-        client: typing.Any,
+        client: typing.Any = None,
         *args: typing.Any,
         **kwargs: typing.Any,
     ) -> "Agent":
@@ -690,15 +690,22 @@ class Agent:
         raise TypeError(f"Object of type {type(value).__name__} does not support model copying")
 
     def _resolved_parameters(self) -> typing.Optional[typing.Union[SessionParams, SessionParamsInput]]:
+        parameters = self._parameters
+        updates: typing.Dict[str, typing.Any] = {}
+
         enable_rtm = self._field_value(self._advanced_features, "enable_rtm") is True
-        data_channel = self._field_value(self._parameters, "data_channel")
-        if not enable_rtm or data_channel is not None:
-            return self._parameters
-        if self._parameters is None:
-            return StartAgentsRequestPropertiesParameters(data_channel="rtm")
-        if isinstance(self._parameters, dict):
-            return typing.cast(SessionParamsInput, {**self._parameters, "data_channel": "rtm"})
-        return self._copy_model_update(self._parameters, {"data_channel": "rtm"})
+        if enable_rtm and self._field_value(parameters, "data_channel") is None:
+            updates["data_channel"] = "rtm"
+        if self._field_value(parameters, "audio_scenario") is None:
+            updates["audio_scenario"] = "default"
+
+        if not updates:
+            return parameters
+        if parameters is None:
+            return StartAgentsRequestPropertiesParameters(**updates)
+        if isinstance(parameters, dict):
+            return typing.cast(SessionParamsInput, {**parameters, **updates})
+        return self._copy_model_update(parameters, updates)
 
     @property
     def pipeline_id(self) -> typing.Optional[str]:
@@ -1087,7 +1094,7 @@ class Agent:
         return self._copy_model_update(self._turn_detection, {"language": language})
 
     def _clone(self) -> "Agent":
-        new_agent = self.__class__.__new__(self.__class__)
+        new_agent = self.__class__.__new__(self.__class__, self._client)
         new_agent._client = self._client
         new_agent._pipeline_id = self._pipeline_id
         new_agent._llm = self._llm

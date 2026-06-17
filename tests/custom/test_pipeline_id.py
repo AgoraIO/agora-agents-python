@@ -181,7 +181,7 @@ def test_pipeline_id_survives_builder_clone() -> None:
 async def test_async_session_uses_agent_pipeline_id() -> None:
     agents = FakeAsyncAgentsClient()
     client = FakeClient(agents)
-    agent = Agent(test_client(), pipeline_id="studio-pipeline-id", client=client)
+    agent = Agent(client=client, pipeline_id="studio-pipeline-id")
 
     agent_id = await agent.create_async_session(
         channel="channel",
