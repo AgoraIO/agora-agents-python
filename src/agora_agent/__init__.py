@@ -12,14 +12,12 @@ from . import agentkit as _agentkit
 if typing.TYPE_CHECKING:
     from . import agents, agentkit, core, phone_numbers, telephony
     from .core.domain import Area, Pool, create_pool
-    from .pool_client import Agora, AsyncAgora
+    from .pool_client import Agora, AsyncAgora, AgentClient, AsyncAgentClient
     from .version import __version__
     from .agentkit import (
         Agent,
         AgentSession,
         AgentSessionOptions,
-        AgentClient,
-        AsyncAgentClient,
         CNAgent,
         GlobalAgent,
         GenericAvatar,
