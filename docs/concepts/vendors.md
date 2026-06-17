@@ -125,7 +125,7 @@ Used with `agent.with_avatar()` in the cascading ASR + LLM + TTS pipeline. Some 
 | `AkoolAvatar` | Akool | `api_key` | 16000 Hz |
 | `AnamAvatar` | Anam | `api_key` | None |
 | `GenericAvatar` | Generic Avatar | `api_key`, `api_base_url`, `avatar_id`, `agora_uid` | None |
-| `SenseTimeAvatar` | SenseTime (CN) | `agora_token`, `agora_uid`, `app_key`, `sceneList` | None |
+| `SenseTimeAvatar` | SenseTime (CN) | `agora_uid`, `app_key`, `sceneList` | None |
 
 <!-- snippet: executable -->
 ```python

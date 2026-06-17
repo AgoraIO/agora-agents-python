@@ -15,7 +15,9 @@ class _Client:
     app_certificate = APP_CERTIFICATE
 
     def __init__(self):
-        self.agents = SimpleNamespace(start=lambda *args, **kwargs: SimpleNamespace(agent_id="agent-1"))
+        self.agents = SimpleNamespace(
+            start=lambda *args, **kwargs: SimpleNamespace(agent_id="agent-1")
+        )
         self.agent_management = object()
 
 
@@ -59,15 +61,34 @@ def test_sensetime_avatar_to_config_shape() -> None:
     assert is_sensetime_avatar(config)
 
 
+def test_sensetime_avatar_to_config_omits_token_when_not_provided() -> None:
+    config = SenseTimeAvatar(
+        agora_uid="2",
+        app_key="sensetime-app-key",
+        sceneList=_scene_list(),
+    ).to_config()
+
+    assert "agora_token" not in config["params"]
+    assert config["params"]["agora_uid"] == "2"
+
+
 @pytest.mark.parametrize(
     ("params", "message"),
     [
         ({}, "SenseTime avatar requires app_key"),
-        ({"app_key": "key", "agora_uid": "2", "agora_token": "token"}, "SenseTime avatar requires sceneList"),
-        ({"app_key": "key", "sceneList": _scene_list(), "agora_token": "token"}, "SenseTime avatar requires agora_uid"),
+        (
+            {"app_key": "key", "agora_uid": "2"},
+            "SenseTime avatar requires sceneList",
+        ),
+        (
+            {"app_key": "key", "sceneList": _scene_list()},
+            "SenseTime avatar requires agora_uid",
+        ),
     ],
 )
-def test_validate_avatar_config_rejects_incomplete_sensetime(params: dict, message: str) -> None:
+def test_validate_avatar_config_rejects_incomplete_sensetime(
+    params: dict, message: str
+) -> None:
     with pytest.raises(ValueError, match=message):
         validate_avatar_config({"vendor": "sensetime", "params": params})
 
@@ -108,3 +129,45 @@ def test_sensetime_avatar_session_validation_and_token_passthrough() -> None:
 
     assert properties["avatar"]["params"]["agora_token"] == "avatar-token"
     assert properties["avatar"]["params"]["sceneList"] == _scene_list()
+
+
+def test_sensetime_avatar_enrichment_generates_token() -> None:
+    agent = Agent().with_avatar(
+        SenseTimeAvatar(
+            agora_uid="2",
+            app_key="sensetime-app-key",
+            sceneList=_scene_list(),
+        )
+    )
+    session = _session(agent)
+
+    properties = session._build_start_properties(  # noqa: SLF001
+        {"app_id": APP_ID, "app_certificate": APP_CERTIFICATE},
+        skip_vendor_validation_categories=set(),
+        allow_missing_vendor_categories={"tts", "llm", "asr"},
+    )
+
+    params = properties["avatar"]["params"]
+    assert params["agora_token"]
+    assert params["agora_token"] != properties["token"]
+    assert params["agora_uid"] == "2"
+
+
+def test_sensetime_avatar_user_token_is_not_overwritten() -> None:
+    agent = Agent().with_avatar(
+        SenseTimeAvatar(
+            agora_uid="2",
+            agora_token="user-token",
+            app_key="sensetime-app-key",
+            sceneList=_scene_list(),
+        )
+    )
+    session = _session(agent)
+
+    properties = session._build_start_properties(  # noqa: SLF001
+        {"app_id": APP_ID, "app_certificate": APP_CERTIFICATE},
+        skip_vendor_validation_categories=set(),
+        allow_missing_vendor_categories={"tts", "llm", "asr"},
+    )
+
+    assert properties["avatar"]["params"]["agora_token"] == "user-token"

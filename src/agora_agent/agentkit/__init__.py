@@ -74,6 +74,7 @@ from .agent import (
     ThinkOnThinkingAction,
     ThinkResponse,
 )
+
 # Deprecated think type aliases (prefer ThinkOn* names).
 from .agent import (
     ThinkOnListeningAction as AgentThinkRequestOnListeningAction,

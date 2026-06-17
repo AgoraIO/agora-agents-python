@@ -23,9 +23,7 @@ Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline
 
 The agent and avatar join the same RTC channel with separate UIDs. The agent token is scoped to `agent_uid`; `avatar.params.agora_token` is scoped to the avatar `agora_uid`.
 
-When using `AgentSession.start()`, `agora_token` is optional for LiveAvatar, HeyGen, and Generic avatars. If omitted, AgentKit generates it with the same ConvoAI token path as the agent, using the avatar UID. You can still pass `agora_token` explicitly.
-
-SenseTime avatars are CN-only. Provide `agora_token` and `agora_uid` when constructing `SenseTimeAvatar`; AgentKit does not auto-generate the avatar token for this vendor.
+When using `AgentSession.start()`, `agora_token` is optional for LiveAvatar, HeyGen, Generic, and SenseTime avatars. If omitted, AgentKit generates it with the same ConvoAI token path as the agent, using the avatar UID. You can still pass `agora_token` explicitly.
 
 ## Sample Rate Constraint
 
@@ -103,7 +101,7 @@ agent = agent.with_avatar(GenericAvatar(
 
 ## SenseTime Avatar (CN)
 
-`SenseTimeAvatar` is available for `Area.CN` sessions. Unlike LiveAvatar, HeyGen, and Generic avatars, you must supply `agora_token` and `agora_uid` up front. AgentKit validates `app_key`, `sceneList`, `agora_uid`, and `agora_token` at session start.
+`SenseTimeAvatar` is available for `Area.CN` sessions. Provide `agora_uid`, `app_key`, and `sceneList` when constructing the avatar. `agora_token` is optional and is generated at session start when omitted, like LiveAvatar and Generic avatars.
 
 ```python
 from agora_agent import Agora, Area, CNAgent, MiniMaxCNTTS, TencentSTT
@@ -120,7 +118,6 @@ agent = (
     .with_stt(TencentSTT(key="...", app_id="...", secret="...", engine_model_type="16k_zh", voice_id="..."))
     .with_tts(MiniMaxCNTTS(model="speech_2_6_turbo", voice_id="your-voice-id"))
     .with_avatar(SenseTimeAvatar(
-        agora_token="avatar-publisher-token",
         agora_uid="2",
         app_key="your-sensetime-app-key",
         sceneList=[{"digital_role": {"face_feature_id": "role-1"}}],
@@ -232,7 +229,7 @@ If you call `with_avatar()` before `with_tts()`, the sample rate check is deferr
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `agora_token` | `str` | Yes | Avatar publisher RTC token |
+| `agora_token` | `str` | No | Avatar publisher RTC token; generated at session start when omitted |
 | `agora_uid` | `str` | Yes | Avatar publisher RTC UID |
 | `app_key` | `str` | Yes | SenseTime application key |
 | `sceneList` | `List[Dict[str, Any]]` | Yes | SenseTime scene configuration list |
