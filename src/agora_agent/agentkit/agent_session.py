@@ -15,8 +15,7 @@ from ..agent_management.types.agent_think_agent_management_response import (
     AgentThinkAgentManagementResponse as AgentThinkResponse,
 )
 from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
-from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
-from .agent import Agent, GetTurnsOptions, SayOptions, ThinkOptions
+from .agent import Agent, GetTurnsOptions, SayOptions, ThinkOptions, _start_properties_from_mapping
 from .avatar_types import (
     is_akool_avatar,
     is_anam_avatar,
@@ -24,6 +23,7 @@ from .avatar_types import (
     is_generic_avatar,
     is_heygen_avatar,
     is_live_avatar_avatar,
+    is_rtc_avatar,
     validate_avatar_config,
     validate_tts_sample_rate,
 )
@@ -333,21 +333,62 @@ class _AgentSessionBase:
             properties["tts"] = self._dump_model(self._agent.tts)
         if self._agent.llm is not None:
             llm = dict(self._agent.llm)
-            if self._agent.instructions is not None:
+            if self._agent.instructions is not None and "system_messages" not in llm:
                 llm["system_messages"] = [{"role": "system", "content": self._agent.instructions}]
-            if self._agent.greeting is not None:
+            if self._agent.greeting is not None and "greeting_message" not in llm:
                 llm["greeting_message"] = self._agent.greeting
-            if self._agent.greeting_configs is not None:
+            if self._agent.greeting_configs is not None and "greeting_configs" not in llm:
                 llm["greeting_configs"] = self._dump_model(self._agent.greeting_configs)
-            if self._agent.failure_message is not None:
+            if self._agent.failure_message is not None and "failure_message" not in llm:
                 llm["failure_message"] = self._agent.failure_message
-            if self._agent.max_history is not None:
+            if self._agent.max_history is not None and "max_history" not in llm:
                 llm["max_history"] = self._agent.max_history
             properties["llm"] = llm
         if self._agent.stt is not None:
             properties["asr"] = self._dump_model(self._agent.stt)
 
         return properties
+
+    @staticmethod
+    def _request_properties_for_start(
+        resolved_properties: typing.Dict[str, typing.Any],
+        *,
+        resolved_preset: typing.Optional[str],
+        pipeline_id: typing.Optional[str],
+    ) -> typing.Any:
+        try:
+            return _start_properties_from_mapping(resolved_properties)
+        except Exception as exc:
+            if pipeline_id:
+                return resolved_properties
+            if resolved_preset:
+                normalized_preset = normalize_preset_input(resolved_preset)
+                if not normalized_preset:
+                    raise
+                preset_categories = {
+                    category
+                    for item in normalized_preset.split(",")
+                    for category in [get_preset_category(item)]
+                    if category is not None
+                }
+                error_categories = _AgentSessionBase._validation_error_categories(exc)
+                if error_categories and error_categories.issubset(preset_categories):
+                    return resolved_properties
+            raise
+
+    @staticmethod
+    def _validation_error_categories(exc: Exception) -> typing.Set[str]:
+        errors = getattr(exc, "errors", None)
+        if not callable(errors):
+            return set()
+        categories: typing.Set[str] = set()
+        for error in errors():
+            loc = error.get("loc") if isinstance(error, dict) else None
+            if isinstance(loc, tuple) and loc:
+                field = loc[0]
+                if field in {"asr", "llm", "tts"}:
+                    categories.add(typing.cast(str, field))
+        return categories
 
     def _vendor_validation_categories(
         self,
@@ -513,10 +554,11 @@ class AgentSession(_AgentSessionBase):
                     "properties": resolved_properties,
                 })
 
-            try:
-                request_properties: typing.Any = StartAgentsRequestProperties(**resolved_properties)
-            except Exception:
-                request_properties = resolved_properties
+            request_properties = self._request_properties_for_start(
+                resolved_properties,
+                resolved_preset=resolved_preset,
+                pipeline_id=pipeline_id,
+            )
 
             response = self._client.agents.start(
                 self._app_id,
@@ -840,10 +882,11 @@ class AsyncAgentSession(_AgentSessionBase):
                     "properties": resolved_properties,
                 })
 
-            try:
-                request_properties: typing.Any = StartAgentsRequestProperties(**resolved_properties)
-            except Exception:
-                request_properties = resolved_properties
+            request_properties = self._request_properties_for_start(
+                resolved_properties,
+                resolved_preset=resolved_preset,
+                pipeline_id=pipeline_id,
+            )
 
             response = await self._client.agents.start(
                 self._app_id,

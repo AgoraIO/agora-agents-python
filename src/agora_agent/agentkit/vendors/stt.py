@@ -1,87 +1,10 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from typing_extensions import Literal
 
 from .base import BaseSTT
 
-TurnDetectionLanguage = Literal[
-    "ar-EG",
-    "ar-JO",
-    "ar-SA",
-    "ar-AE",
-    "bn-IN",
-    "zh-CN",
-    "zh-HK",
-    "zh-TW",
-    "nl-NL",
-    "en-IN",
-    "en-US",
-    "fil-PH",
-    "fr-FR",
-    "de-DE",
-    "gu-IN",
-    "he-IL",
-    "hi-IN",
-    "id-ID",
-    "it-IT",
-    "ja-JP",
-    "kn-IN",
-    "ko-KR",
-    "ms-MY",
-    "fa-IR",
-    "pt-PT",
-    "ru-RU",
-    "es-ES",
-    "ta-IN",
-    "te-IN",
-    "th-TH",
-    "tr-TR",
-    "vi-VN",
-]
-
-TURN_DETECTION_LANGUAGE_VALUES: Tuple[TurnDetectionLanguage, ...] = (
-    "ar-EG",
-    "ar-JO",
-    "ar-SA",
-    "ar-AE",
-    "bn-IN",
-    "zh-CN",
-    "zh-HK",
-    "zh-TW",
-    "nl-NL",
-    "en-IN",
-    "en-US",
-    "fil-PH",
-    "fr-FR",
-    "de-DE",
-    "gu-IN",
-    "he-IL",
-    "hi-IN",
-    "id-ID",
-    "it-IT",
-    "ja-JP",
-    "kn-IN",
-    "ko-KR",
-    "ms-MY",
-    "fa-IR",
-    "pt-PT",
-    "ru-RU",
-    "es-ES",
-    "ta-IN",
-    "te-IN",
-    "th-TH",
-    "tr-TR",
-    "vi-VN",
-)
-_TURN_DETECTION_LANGUAGES = set(TURN_DETECTION_LANGUAGE_VALUES)
 _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
-
-
-def _turn_detection_language(language: Optional[str]) -> Optional[TurnDetectionLanguage]:
-    if language in _TURN_DETECTION_LANGUAGES:
-        return language  # type: ignore[return-value]
-    return None
 
 
 class SpeechmaticsSTTOptions(BaseModel):
@@ -112,9 +35,6 @@ class SpeechmaticsSTT(BaseSTT):
             "vendor": "speechmatics",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
@@ -124,6 +44,7 @@ class DeepgramSTTOptions(BaseModel):
     api_key: Optional[str] = Field(default=None, description="Deepgram API key")
     model: Optional[str] = Field(default=None, description="Model (e.g., nova-2, enhanced, base)")
     language: Optional[str] = Field(default=None, description="Language code (e.g., en-US)")
+    keyterm: Optional[str] = Field(default=None, description="Boost specialized terms and brands for Deepgram")
     smart_format: Optional[bool] = Field(default=None, description="Enable smart formatting")
     punctuation: Optional[bool] = Field(default=None, description="Enable punctuation")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -151,13 +72,12 @@ class DeepgramSTT(BaseSTT):
             params["smart_format"] = self.options.smart_format
         if self.options.punctuation is not None:
             params["punctuation"] = self.options.punctuation
+        if self.options.keyterm is not None:
+            params["keyterm"] = self.options.keyterm
         config: Dict[str, Any] = {
             "vendor": "deepgram",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
@@ -186,9 +106,6 @@ class MicrosoftSTT(BaseSTT):
             "vendor": "microsoft",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
@@ -210,22 +127,26 @@ class OpenAISTT(BaseSTT):
         params: Dict[str, Any] = dict(self.options.additional_params or {})
         params["api_key"] = self.options.api_key
 
-        transcription = {"model": "whisper-1", **(self.options.input_audio_transcription or {})}
+        transcription: Dict[str, Any] = {"model": "gpt-4o-mini-transcribe"}
+        transcription.update(self.options.input_audio_transcription or {})
         if self.options.model is not None:
             transcription["model"] = self.options.model
         if self.options.prompt is not None:
             transcription["prompt"] = self.options.prompt
         if self.options.language is not None:
             transcription["language"] = self.options.language
+        if not transcription.get("model"):
+            raise ValueError("OpenAISTT: input_audio_transcription.model is required")
+        if not transcription.get("prompt"):
+            raise ValueError("OpenAISTT: input_audio_transcription.prompt is required")
+        if not transcription.get("language"):
+            raise ValueError("OpenAISTT: input_audio_transcription.language is required")
         params["input_audio_transcription"] = transcription
 
         config: Dict[str, Any] = {
             "vendor": "openai",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
@@ -260,9 +181,6 @@ class GoogleSTT(BaseSTT):
             "vendor": "google",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
@@ -293,9 +211,6 @@ class AmazonSTT(BaseSTT):
             "vendor": "amazon",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
@@ -323,16 +238,12 @@ class AssemblyAISTT(BaseSTT):
             "vendor": "assemblyai",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config
 
 
 class AresSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    language: Optional[TurnDetectionLanguage] = Field(default=None, description="Language code")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
 class AresSTT(BaseSTT):
@@ -341,8 +252,6 @@ class AresSTT(BaseSTT):
 
     def to_config(self) -> Dict[str, Any]:
         config: Dict[str, Any] = {"vendor": "ares"}
-        if self.options.language is not None:
-            config["language"] = self.options.language
         if self.options.additional_params:
             config["params"] = self.options.additional_params
         return config
@@ -373,7 +282,4 @@ class SarvamSTT(BaseSTT):
             "vendor": "sarvam",
             "params": params,
         }
-        turn_detection_language = _turn_detection_language(self.options.language)
-        if turn_detection_language is not None:
-            config["language"] = turn_detection_language
         return config

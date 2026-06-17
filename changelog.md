@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.2.0] — 2026-06-05
+
+### Added
+
+- **Expanded provider surface** — Added generated API support for the latest Conversational AI vendors and configuration types, including Dify LLM and Generic Avatar.
+- **Interaction language handling** — AgentKit now consistently derives REST `asr.language` from `turn_detection.language` while keeping provider-specific STT language values under `asr.params`.
+- **Deepgram keyterm** — Added `keyterm` support on `DeepgramSTT`, serialized as `asr.params.keyterm`.
+
+### Changed
+
+- **MiniMax managed presets** — MiniMax preset-backed TTS now keeps the preset model as an internal hint while sending only supported partial TTS settings such as `voice_setting.voice_id`.
+- **Vertex AI LLM routing** — `VertexAILLM` now keeps project and location in the generated endpoint URL instead of duplicating them in `llm.params`.
+
+### Fixed
+
+- **Provider wire keys** — Corrected alias-sensitive TTS payloads so Google TTS emits `VoiceSelectionParams` and `AudioConfig`, Rime TTS emits `modelId`, and Murf TTS preserves `voiceId`.
+- **AgentKit request validation** — Start request validation now de-aliases REST-shaped provider dictionaries before constructing generated request models, while still allowing preset and pipeline-backed partial configs.
+- **Request body coverage** — Added regression tests for BYOK, preset-backed, mixed preset/BYOK, and pipeline override request shapes across provider configurations.
+- **Python docs examples** — Added a docs guard to keep Python examples on snake_case kwargs while allowing documented JSON wire keys.
+
 ## [v2.1.0] — 2026-06-02
 
 ### Added
@@ -21,7 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 
 - **Managed-provider validation** — AgentKit validation now distinguishes preset-backed providers from BYOK providers so required provider fields are only required when credentials are caller-supplied.
-- **Language placement** — Provider-specific STT language values remain under `asr.params`, while Agora interaction language is emitted separately as `turn_detection.language`.
+- **Language placement** — Provider-specific STT language values remain under `asr.params`; the REST `asr.language` field is populated from `turn_detection.language`.
 
 ## [v2.0.0] — 2026-05-21
 
@@ -114,7 +134,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
-- **`AresSTT`** — Removed redundant `language` key from the `params` dict. Language is now emitted only at the top level. `params` is only included when `additional_params` is provided.
+- **`AresSTT`** — Removed redundant `language` key from the `params` dict. Ares only selects the provider; AgentKit populates REST `asr.language` from `turn_detection.language`. `params` is only included when `additional_params` is provided.
 - **`OpenAIRealtime` / `VertexAI` (MLLM)** — Agent-level `greeting` and `failure_message` defaults are now correctly applied when missing in MLLM mode. Previously these values were silently dropped.
 - **`VertexAI` (MLLM)** — `messages` is emitted at the MLLM top level, matching the generated core SDK contract.
 

@@ -114,7 +114,7 @@ class OpenAITTSOptions(BaseModel):
                     ("model", self.model),
                     ("base_url", self.base_url),
                 )
-                if value is None
+                if not value
             ]
             if missing:
                 raise ValueError(f"OpenAITTS requires {', '.join(missing)} when api_key is set")
@@ -436,17 +436,20 @@ class MiniMaxTTS(BaseTTS):
         return None
 
     def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {"model": self.options.model}
+        params: Dict[str, Any] = {}
         if self.options.key is not None:
             params["key"] = self.options.key
-        if self.options.group_id is not None:
             params["group_id"] = self.options.group_id
+            params["model"] = self.options.model
+            params["url"] = self.options.url
         if self.options.voice_id is not None:
             params["voice_setting"] = {"voice_id": self.options.voice_id}
-        if self.options.url is not None:
-            params["url"] = self.options.url
 
         result: Dict[str, Any] = {"vendor": "minimax", "params": params}
+        if self.options.key is None:
+            # Preset path: model not in params; stored as top-level hint for preset
+            # inference. Stripped by strip_inferred_preset_fields before the POST body.
+            result["_minimax_preset_model"] = self.options.model
         if self.options.skip_patterns is not None:
             result["skip_patterns"] = self.options.skip_patterns
         return result

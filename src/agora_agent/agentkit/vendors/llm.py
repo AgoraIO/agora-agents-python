@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -376,12 +376,13 @@ class VertexAILLM(BaseLLM):
         options = _dump_optional_model(self.options)
         options.pop("project_id", None)
         options.pop("location", None)
-        config = Gemini(**options).to_config()
-        params = dict(config["params"])
-        params["project_id"] = self.options.project_id
-        params["location"] = self.options.location
-        config["params"] = params
-        return config
+        if not options.get("url"):
+            options["url"] = (
+                f"https://{self.options.location}-aiplatform.googleapis.com/v1/projects/"
+                f"{self.options.project_id}/locations/{self.options.location}/"
+                f"publishers/google/models/{self.options.model}:streamGenerateContent?alt=sse"
+            )
+        return Gemini(**options).to_config()
 
 
 class AmazonBedrockOptions(BaseModel):

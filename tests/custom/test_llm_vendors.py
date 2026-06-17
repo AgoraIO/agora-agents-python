@@ -63,8 +63,10 @@ def test_vertex_ai_llm_includes_project_routing() -> None:
     assert config["api_key"] == "vertex-token"
     assert config["style"] == "gemini"
     assert config["params"]["model"] == "gemini-2.0-flash"
-    assert config["params"]["project_id"] == "project"
-    assert config["params"]["location"] == "us-central1"
+    assert "project" in config["url"]
+    assert "us-central1" in config["url"]
+    assert "project_id" not in config.get("params", {})
+    assert "location" not in config.get("params", {})
 
 
 def test_amazon_bedrock_serializes_as_bedrock_style() -> None:

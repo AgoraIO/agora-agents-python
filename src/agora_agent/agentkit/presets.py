@@ -108,7 +108,7 @@ def infer_asr_preset(asr: typing.Optional[typing.Dict[str, typing.Any]]) -> typi
     if not asr or asr.get("vendor") != "deepgram":
         return None
     params = asr.get("params") or {}
-    if params.get("api_key"):
+    if params.get("key"):
         return None
     return _DEEPGRAM_MODEL_TO_PRESET.get(_normalize_model_name(params.get("model")) or "")
 
@@ -137,7 +137,9 @@ def infer_tts_preset(tts: typing.Optional[typing.Dict[str, typing.Any]]) -> typi
     if vendor == "minimax":
         if params.get("key"):
             return None
-        return _MINIMAX_MODEL_TO_PRESET.get(_normalize_model_name(params.get("model")) or "")
+        # Model is no longer in params for the preset path; fall back to the top-level hint.
+        model = _normalize_model_name(params.get("model")) or _normalize_model_name(tts.get("_minimax_preset_model")) or ""
+        return _MINIMAX_MODEL_TO_PRESET.get(model)
     return None
 
 
@@ -184,6 +186,9 @@ def strip_inferred_preset_fields(properties: typing.Dict[str, typing.Any], infer
             params["group_id"] = None
             params["url"] = None
         tts = {k: v for k, v in {**tts, "params": _omit_none(params)}.items() if v is not None}
+        tts.pop("_minimax_preset_model", None)
+    if tts and "_minimax_preset_model" in tts:
+        tts = {k: v for k, v in tts.items() if k != "_minimax_preset_model"}
 
     return {**properties, "asr": asr, "llm": llm, "tts": tts}
 

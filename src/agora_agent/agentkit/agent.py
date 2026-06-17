@@ -76,6 +76,7 @@ from ..agent_management.types.agent_think_agent_management_request_on_speaking_a
 from ..agent_management.types.agent_think_agent_management_response import (
     AgentThinkAgentManagementResponse,
 )
+from ..core.pydantic_utilities import parse_obj_as
 from .vendors.base import BaseAvatar, BaseLLM, BaseMLLM, BaseSTT, BaseTTS
 
 # Top-level aliases
@@ -188,6 +189,13 @@ class SessionOptions(typing_extensions.TypedDict, total=False):
     debug: bool
     warn: typing.Callable[[str], None]
 
+
+def _start_properties_from_mapping(
+    properties: typing.Mapping[str, typing.Any],
+) -> StartAgentsRequestProperties:
+    return parse_obj_as(StartAgentsRequestProperties, dict(properties))
+
+
 # LLM sub-type aliases
 LlmGreetingConfigs = typing.Dict[str, typing.Any]
 LlmGreetingConfigsMode = typing.Any
@@ -298,7 +306,7 @@ def _is_turn_detection_language(value: typing.Any) -> bool:
 
 def _validate_turn_detection_language(value: typing.Any) -> TurnDetectionLanguage:
     if not _is_turn_detection_language(value):
-        raise ValueError(f"Invalid interaction language: {value}")
+        raise ValueError(f"Invalid turn_detection.language: {value}")
     return value  # type: ignore[return-value]
 
 
@@ -896,7 +904,7 @@ class Agent:
                 if self._failure_message is not None:
                     mllm_config.setdefault("failure_message", self._failure_message)
                 base_kwargs["mllm"] = mllm_config
-            return StartAgentsRequestProperties(**base_kwargs)
+            return _start_properties_from_mapping(base_kwargs)
 
         if skip_vendor_validation:
             warnings.warn(
@@ -919,12 +927,13 @@ class Agent:
         allow_missing_llm = "llm" in allow_missing_categories
         allow_missing_tts = "tts" in allow_missing_categories
 
+        turn_detection_config = self._resolve_turn_detection_config()
         if not skip_asr_validation and (self._stt is not None or not allow_missing_asr):
-            base_kwargs["asr"] = self._resolve_asr_config()
-        base_kwargs["turn_detection"] = self._resolve_turn_detection_config()
+            base_kwargs["asr"] = self._resolve_asr_config(turn_detection_config)
+        base_kwargs["turn_detection"] = turn_detection_config
 
         if skip_vendor_validation:
-            return StartAgentsRequestProperties(**base_kwargs)
+            return _start_properties_from_mapping(base_kwargs)
 
         if self._tts is None and not (skip_tts_validation or allow_missing_tts):
             raise ValueError("TTS configuration is required. Use with_tts() to set it.")
@@ -937,39 +946,34 @@ class Agent:
         if self._tts is not None and not skip_tts_validation:
             base_kwargs["tts"] = self._tts
 
-        return StartAgentsRequestProperties(**base_kwargs)
+        return _start_properties_from_mapping(base_kwargs)
 
     def _resolve_llm_config(self) -> typing.Dict[str, typing.Any]:
         llm_config = dict(self._llm or {})
-        # Agent-level fields take priority over the vendor's defaults.
-        # This matches the TS SDK where agent-level values override vendor config.
-        if self._instructions is not None:
+        if self._instructions is not None and "system_messages" not in llm_config:
             llm_config["system_messages"] = [{"role": "system", "content": self._instructions}]
-        if self._greeting is not None:
+        if self._greeting is not None and "greeting_message" not in llm_config:
             llm_config["greeting_message"] = self._greeting
-        if self._greeting_configs is not None:
+        if self._greeting_configs is not None and "greeting_configs" not in llm_config:
             llm_config["greeting_configs"] = _dump_optional_model(self._greeting_configs)
-        if self._failure_message is not None:
+        if self._failure_message is not None and "failure_message" not in llm_config:
             llm_config["failure_message"] = self._failure_message
-        if self._max_history is not None:
+        if self._max_history is not None and "max_history" not in llm_config:
             llm_config["max_history"] = self._max_history
         return llm_config
 
-    def _resolve_asr_config(self) -> typing.Dict[str, typing.Any]:
+    def _resolve_asr_config(self, turn_detection_config: TurnDetectionConfig) -> typing.Dict[str, typing.Any]:
         asr_config = dict(self._stt or {})
-        asr_config.pop("language", None)
         if not asr_config:
             asr_config["vendor"] = "ares"
+        asr_config["language"] = self._field_value(turn_detection_config, "language")
         return asr_config
 
     def _resolve_turn_detection_config(self) -> TurnDetectionConfig:
-        existing_stt_language = self._stt.get("language") if self._stt is not None else None
         existing_turn_detection_language = self._field_value(self._turn_detection, "language")
         language = (
             existing_turn_detection_language
             if existing_turn_detection_language is not None
-            else existing_stt_language
-            if _is_turn_detection_language(existing_stt_language)
             else DEFAULT_TURN_DETECTION_LANGUAGE
         )
         language = _validate_turn_detection_language(language)

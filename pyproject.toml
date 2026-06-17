@@ -3,7 +3,7 @@ name = "agora-agents"
 
 [tool.poetry]
 name = "agora-agents"
-version = "v2.1.1"
+version = "v2.2.0"
 description = ""
 readme = "README.md"
 authors = []

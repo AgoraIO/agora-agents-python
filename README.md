@@ -20,7 +20,7 @@ pip install agora-agents
 ## Quick Start
 
 Start with the `Agent` builder: create a client with app credentials, choose your ASR, LLM, and TTS providers, then start a session. Omit vendor API keys for supported Agora-managed models, or provide keys when you want BYOK.
-Set Agora interaction language with `turn_detection.language`; provider-specific STT language values remain under `asr.params`.
+Set Agora interaction language with `turn_detection.language`; provider-specific STT language values remain under `asr.params`. Ares uses only the REST `asr.language` value sourced from `turn_detection.language`.
 
 ```python
 import os

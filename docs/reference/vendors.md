@@ -318,7 +318,7 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 
 ## STT Vendors
 
-Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. Provider-specific language values remain under `asr.params` and may use a different format.
+Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. Provider-specific language values remain under `asr.params` and may use a different format. AgentKit populates REST `asr.language` from `turn_detection.language`.
 
 ### `SpeechmaticsSTT`
 
@@ -336,6 +336,7 @@ Use `turn_detection.language` for Agora interaction language; it defaults to `en
 | `api_key` | `str` | BYOK only | `None` | Deepgram API key. Optional only for Agora-managed `nova-2` and `nova-3`. |
 | `model` | `str` | No | `None` | Model (e.g., `nova-2`) |
 | `language` | `str` | No | `None` | Language code (e.g., `en-US`) |
+| `keyterm` | `str` | No | `None` | Boost specialized terms and brands; serialized as `asr.params.keyterm` |
 | `smart_format` | `bool` | No | `None` | Enable smart formatting |
 | `punctuation` | `bool` | No | `None` | Enable punctuation |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
@@ -396,7 +397,6 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `language` | `str` | No | `None` | Language code |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 
 ### `SarvamSTT`
