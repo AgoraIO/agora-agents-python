@@ -350,54 +350,6 @@ class Agent:
     ... )
     """
 
-    if typing.TYPE_CHECKING:
-        _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
-
-        @typing.overload
-        def __new__(
-            cls,
-            client: "Agora[typing_extensions.Literal[Area.CN]]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "CNAgent":
-            ...
-
-        @typing.overload
-        def __new__(
-            cls,
-            client: "Agora[_GlobalArea]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "GlobalAgent":
-            ...
-
-        @typing.overload
-        def __new__(
-            cls,
-            client: "AsyncAgora[typing_extensions.Literal[Area.CN]]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "CNAgent":
-            ...
-
-        @typing.overload
-        def __new__(
-            cls,
-            client: "AsyncAgora[_GlobalArea]",
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "GlobalAgent":
-            ...
-
-        @typing.overload
-        def __new__(
-            cls,
-            client: typing.Any,
-            *args: typing.Any,
-            **kwargs: typing.Any,
-        ) -> "Agent":
-            ...
-
     def __new__(
         cls,
         client: typing.Any = None,
@@ -422,7 +374,7 @@ class Agent:
         self,
         client: typing.Any,
         instructions: typing.Optional[str] = None,
-        turn_detection: typing.Optional[TurnDetectionConfig] = None,
+        turn_detection: typing.Optional[typing.Union[TurnDetectionConfig, typing.Dict[str, typing.Any]]] = None,
         interruption: typing.Optional[InterruptionConfig] = None,
         sal: typing.Optional[SalConfig] = None,
         advanced_features: typing.Optional[AdvancedFeatures] = None,
@@ -733,7 +685,7 @@ class Agent:
         return self._mllm
 
     @property
-    def turn_detection(self) -> typing.Optional[TurnDetectionConfig]:
+    def turn_detection(self) -> typing.Optional[typing.Union[TurnDetectionConfig, typing.Dict[str, typing.Any]]]:
         return self._turn_detection
 
     @property
@@ -1072,7 +1024,10 @@ class Agent:
             llm_config["max_history"] = self._max_history
         return llm_config
 
-    def _resolve_asr_config(self, turn_detection_config: TurnDetectionConfig) -> typing.Dict[str, typing.Any]:
+    def _resolve_asr_config(
+        self,
+        turn_detection_config: typing.Union[TurnDetectionConfig, typing.Dict[str, typing.Any]],
+    ) -> typing.Dict[str, typing.Any]:
         asr_config = dict(self._stt or {})
         if not asr_config:
             asr_config["vendor"] = "ares"

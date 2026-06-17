@@ -108,30 +108,30 @@ GlobalAvatar = typing.Union[AkoolAvatar, LiveAvatarAvatar, AnamAvatar, GenericAv
 
 
 class CNAgent(Agent):
-    def with_stt(self, vendor: CNSTT) -> "CNAgent":
+    def with_stt(self, vendor: CNSTT) -> "CNAgent":  # type: ignore[override]
         return typing.cast("CNAgent", super().with_stt(typing.cast(BaseSTT, vendor)))
 
-    def with_llm(self, vendor: CNLLM) -> "CNAgent":
+    def with_llm(self, vendor: CNLLM) -> "CNAgent":  # type: ignore[override]
         return typing.cast("CNAgent", super().with_llm(typing.cast(BaseLLM, vendor)))
 
-    def with_tts(self, vendor: CNTTS) -> "CNAgent":
+    def with_tts(self, vendor: CNTTS) -> "CNAgent":  # type: ignore[override]
         return typing.cast("CNAgent", super().with_tts(typing.cast(BaseTTS, vendor)))
 
-    def with_avatar(self, vendor: CNAvatar) -> "CNAgent":
+    def with_avatar(self, vendor: CNAvatar) -> "CNAgent":  # type: ignore[override]
         return typing.cast("CNAgent", super().with_avatar(typing.cast(BaseAvatar, vendor)))
 
 
 class GlobalAgent(Agent):
-    def with_stt(self, vendor: GlobalSTT) -> "GlobalAgent":
+    def with_stt(self, vendor: GlobalSTT) -> "GlobalAgent":  # type: ignore[override]
         return typing.cast("GlobalAgent", super().with_stt(typing.cast(BaseSTT, vendor)))
 
-    def with_llm(self, vendor: GlobalLLM) -> "GlobalAgent":
+    def with_llm(self, vendor: GlobalLLM) -> "GlobalAgent":  # type: ignore[override]
         return typing.cast("GlobalAgent", super().with_llm(typing.cast(BaseLLM, vendor)))
 
-    def with_tts(self, vendor: GlobalTTS) -> "GlobalAgent":
+    def with_tts(self, vendor: GlobalTTS) -> "GlobalAgent":  # type: ignore[override]
         return typing.cast("GlobalAgent", super().with_tts(typing.cast(BaseTTS, vendor)))
 
-    def with_avatar(self, vendor: GlobalAvatar) -> "GlobalAgent":
+    def with_avatar(self, vendor: GlobalAvatar) -> "GlobalAgent":  # type: ignore[override]
         return typing.cast("GlobalAgent", super().with_avatar(typing.cast(BaseAvatar, vendor)))
 
 

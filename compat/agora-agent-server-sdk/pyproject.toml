@@ -13,7 +13,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -34,7 +33,7 @@ packages = [
 Repository = 'https://github.com/AgoraIO-Conversational-AI/agent-server-sdk-python'
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 agora-agents = ">=2.2.0,<3.0.0"
 
 [build-system]
