@@ -13,6 +13,36 @@ class MinimaxTtsParamsVoiceSetting(UncheckedBaseModel):
     Voice style identifier (e.g., English_captivating_female1)
     """
 
+    speed: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Speech speed multiplier.
+    """
+
+    vol: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Voice volume multiplier.
+    """
+
+    pitch: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Voice pitch adjustment.
+    """
+
+    emotion: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Emotion preset.
+    """
+
+    latex_read: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether to read LaTeX expressions.
+    """
+
+    english_normalization: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether to normalize English text before synthesis.
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:
