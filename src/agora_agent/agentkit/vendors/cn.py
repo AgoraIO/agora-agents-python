@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -148,7 +148,7 @@ class MicrosoftSTTOptions(BaseModel):
     key: str = Field(..., description="Azure subscription key")
     region: str = Field(..., description="Azure region (e.g., eastus)")
     language: str = Field(..., description="Language code (e.g., zh-CN)")
-    phrase_list: Optional[list[str]] = Field(default=None, description="Microsoft ASR phrase list")
+    phrase_list: Optional[List[str]] = Field(default=None, description="Microsoft ASR phrase list")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
 
@@ -183,7 +183,7 @@ class TencentTTSOptions(BaseModel):
     emotion_category: Optional[str] = Field(default=None, description="Tencent TTS emotion category")
     emotion_intensity: Optional[int] = Field(default=None, description="Tencent TTS emotion intensity")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Tencent TTS params")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
 
 class TencentTTS(_BaseTTSCompat):
@@ -239,7 +239,7 @@ class BytedanceTTSOptions(BaseModel):
     pitch_ratio: Optional[float] = Field(default=None, description="Bytedance TTS pitch ratio")
     emotion: Optional[str] = Field(default=None, description="Bytedance TTS emotion")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Bytedance TTS params")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
 
 class BytedanceTTS(_BaseTTSCompat):
@@ -290,7 +290,7 @@ class BytedanceDuplexTTSOptions(BaseModel):
     app_id: str = Field(..., description="Bytedance Duplex TTS app id")
     speaker: str = Field(..., description="Bytedance Duplex TTS speaker")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Bytedance Duplex TTS params")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
 
 class BytedanceDuplexTTS(_BaseTTSCompat):
@@ -333,7 +333,7 @@ class CosyVoiceTTSOptions(BaseModel):
     sample_rate: Optional[int] = Field(default=None, description="Output sample rate in Hz")
     voice: Optional[str] = Field(default=None, description="CosyVoice voice")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="CosyVoice TTS params from REST doc")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
 
 class CosyVoiceTTS(_BaseTTSCompat):
@@ -377,7 +377,7 @@ class StepFunTTSOptions(BaseModel):
     model: Optional[str] = Field(default=None, description="StepFun TTS model")
     voice_id: Optional[str] = Field(default=None, description="StepFun TTS voice id")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="StepFun TTS params from REST doc")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
 
 class StepFunTTS(_BaseTTSCompat):
@@ -420,7 +420,7 @@ class MicrosoftTTSOptions(BaseModel):
     speed: Optional[float] = Field(default=None, description="Speaking rate multiplier")
     volume: Optional[float] = Field(default=None, description="Audio volume")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Microsoft TTS params")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
 
 class MicrosoftTTS(_BaseTTSCompat):
@@ -463,12 +463,12 @@ class MiniMaxTTSOptions(BaseModel):
     emotion: Optional[str] = Field(default=None, description="Emotion style")
     latex_read: Optional[bool] = Field(default=None, description="Whether to read LaTeX expressions")
     english_normalization: Optional[bool] = Field(default=None, description="Whether to normalize English text")
-    timber_weights: Optional[list[Dict[str, Any]]] = Field(default=None, description="Alternative timbre mix config")
+    timber_weights: Optional[List[Dict[str, Any]]] = Field(default=None, description="Alternative timbre mix config")
     sample_rate: Optional[int] = Field(default=None, description="Output sample rate in Hz")
     pronunciation_dict: Optional[Dict[str, Any]] = Field(default=None, description="Pronunciation replacement dictionary")
     language_boost: Optional[str] = Field(default=None, description="Language boost strategy")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional MiniMax TTS params")
-    skip_patterns: Optional[list[int]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
 
     @model_validator(mode="after")
     def _validate_params(self) -> "MiniMaxTTSOptions":
@@ -556,7 +556,7 @@ class SenseTimeAvatarOptions(BaseModel):
     agora_uid: str = Field(..., description="Avatar RTC publisher uid")
     app_id: Optional[str] = Field(default=None, alias="appId", description="SenseTime app id")
     app_key: str = Field(..., description="SenseTime app key")
-    scene_list: list[Dict[str, Any]] = Field(..., alias="sceneList", description="SenseTime scene list")
+    scene_list: List[Dict[str, Any]] = Field(..., alias="sceneList", description="SenseTime scene list")
     enable: Optional[bool] = Field(default=None)
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
