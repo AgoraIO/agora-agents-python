@@ -5,6 +5,9 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .minimax_tts_params_audio_setting import MinimaxTtsParamsAudioSetting
+from .minimax_tts_params_pronunciation_dict import MinimaxTtsParamsPronunciationDict
+from .minimax_tts_params_timber_weights_item import MinimaxTtsParamsTimberWeightsItem
 from .minimax_tts_params_voice_setting import MinimaxTtsParamsVoiceSetting
 
 
@@ -18,18 +21,38 @@ class MinimaxTtsParams(UncheckedBaseModel):
     MiniMax API key
     """
 
-    group_id: str = pydantic.Field()
+    group_id: typing.Optional[str] = pydantic.Field(default=None)
     """
     MiniMax group identifier
     """
 
     model: str = pydantic.Field()
     """
-    TTS model (e.g., speech-02-turbo)
+    BYOK TTS model. Managed MiniMax preset models are selected through the top-level preset field instead.
     """
 
     voice_setting: MinimaxTtsParamsVoiceSetting
-    url: str = pydantic.Field()
+    audio_setting: typing.Optional[MinimaxTtsParamsAudioSetting] = pydantic.Field(default=None)
+    """
+    Audio output settings.
+    """
+
+    pronunciation_dict: typing.Optional[MinimaxTtsParamsPronunciationDict] = pydantic.Field(default=None)
+    """
+    Custom pronunciation dictionary settings.
+    """
+
+    timber_weights: typing.Optional[typing.List[MinimaxTtsParamsTimberWeightsItem]] = pydantic.Field(default=None)
+    """
+    Weighted voice blending configuration.
+    """
+
+    language_boost: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Language boost mode.
+    """
+
+    url: typing.Optional[str] = pydantic.Field(default=None)
     """
     WebSocket endpoint (e.g., wss://api-uw.minimax.io/ws/v1/t2a_v2)
     """

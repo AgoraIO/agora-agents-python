@@ -18,12 +18,46 @@ from .microsoft_asr_params import MicrosoftAsrParams
 from .open_ai_asr_params import OpenAiAsrParams
 from .sarvam_asr_params import SarvamAsrParams
 from .speechmatics_asr_params import SpeechmaticsAsrParams
+from .tencent_asr_params import TencentAsrParams
+from .xfyun_asr_params import XfyunAsrParams
+from .xfyun_bigmodel_asr_params import XfyunBigmodelAsrParams
+from .xfyun_dialect_asr_params import XfyunDialectAsrParams
 
 
 class Asr_Ares(UncheckedBaseModel):
     vendor: typing.Literal["ares"] = "ares"
     language: typing.Optional[AsrLanguage] = None
     params: typing.Optional[AresAsrParams] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_Fengming(UncheckedBaseModel):
+    vendor: typing.Literal["fengming"] = "fengming"
+    language: typing.Optional[AsrLanguage] = None
+    params: typing.Optional[typing.Dict[str, typing.Any]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_Tencent(UncheckedBaseModel):
+    vendor: typing.Literal["tencent"] = "tencent"
+    language: typing.Optional[AsrLanguage] = None
+    params: TencentAsrParams
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
@@ -155,9 +189,56 @@ class Asr_Sarvam(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Asr_Xfyun(UncheckedBaseModel):
+    vendor: typing.Literal["xfyun"] = "xfyun"
+    language: typing.Optional[AsrLanguage] = None
+    params: XfyunAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_XfyunBigmodel(UncheckedBaseModel):
+    vendor: typing.Literal["xfyun_bigmodel"] = "xfyun_bigmodel"
+    language: typing.Optional[AsrLanguage] = None
+    params: XfyunBigmodelAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_XfyunDialect(UncheckedBaseModel):
+    vendor: typing.Literal["xfyun_dialect"] = "xfyun_dialect"
+    language: typing.Optional[AsrLanguage] = None
+    params: XfyunDialectAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Asr = typing_extensions.Annotated[
     typing.Union[
         Asr_Ares,
+        Asr_Fengming,
+        Asr_Tencent,
         Asr_Microsoft,
         Asr_Deepgram,
         Asr_Openai,
@@ -166,6 +247,9 @@ Asr = typing_extensions.Annotated[
         Asr_Assemblyai,
         Asr_Speechmatics,
         Asr_Sarvam,
+        Asr_Xfyun,
+        Asr_XfyunBigmodel,
+        Asr_XfyunDialect,
     ],
     UnionMetadata(discriminant="vendor"),
 ]
