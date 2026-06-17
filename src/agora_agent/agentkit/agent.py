@@ -93,6 +93,7 @@ MllmVendor = GeneratedMllmVendor
 AvatarConfig = StartAgentsRequestPropertiesAvatar
 AvatarVendor = StartAgentsRequestPropertiesAvatarVendor
 TurnDetectionConfig = StartAgentsRequestPropertiesTurnDetection
+TurnDetectionInput = typing.Union[TurnDetectionConfig, typing.Dict[str, typing.Any]]
 SalConfig = StartAgentsRequestPropertiesSal
 SalMode = StartAgentsRequestPropertiesSalSalMode
 AdvancedFeatures = StartAgentsRequestPropertiesAdvancedFeatures
@@ -424,7 +425,7 @@ class Agent:
         self,
         client: typing.Any,
         instructions: typing.Optional[str] = None,
-        turn_detection: typing.Optional[TurnDetectionConfig] = None,
+        turn_detection: typing.Optional[TurnDetectionInput] = None,
         interruption: typing.Optional[InterruptionConfig] = None,
         sal: typing.Optional[SalConfig] = None,
         advanced_features: typing.Optional[AdvancedFeatures] = None,
@@ -543,7 +544,7 @@ class Agent:
         new_agent._avatar_required_sample_rate = required_sample_rate
         return new_agent
 
-    def with_turn_detection(self, config: TurnDetectionConfig) -> "Agent":
+    def with_turn_detection(self, config: TurnDetectionInput) -> "Agent":
         new_agent = self._clone()
         new_agent._turn_detection = config
         return new_agent
@@ -735,7 +736,7 @@ class Agent:
         return self._mllm
 
     @property
-    def turn_detection(self) -> typing.Optional[TurnDetectionConfig]:
+    def turn_detection(self) -> typing.Optional[TurnDetectionInput]:
         return self._turn_detection
 
     @property
@@ -1074,7 +1075,7 @@ class Agent:
             llm_config["max_history"] = self._max_history
         return llm_config
 
-    def _resolve_asr_config(self, turn_detection_config: TurnDetectionConfig) -> typing.Dict[str, typing.Any]:
+    def _resolve_asr_config(self, turn_detection_config: TurnDetectionInput) -> typing.Dict[str, typing.Any]:
         asr_config = dict(self._stt or {})
         if not asr_config:
             asr_config["vendor"] = "ares"
