@@ -19,8 +19,8 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
-| `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS` | `SenseTimeAvatar` |
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
 
@@ -85,6 +85,7 @@ tts = MiniMaxCNTTS(
 | `max_tokens` | `int` | No | `None` | Maximum tokens to generate |
 | `system_messages` | `List[Dict]` | No | `None` | System messages |
 | `greeting_message` | `str` | No | `None` | Greeting message |
+| `greeting_audio_url` | `str` | No | `None` | Publicly accessible greeting audio URL |
 | `failure_message` | `str` | No | `None` | Failure message |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
@@ -92,6 +93,8 @@ tts = MiniMaxCNTTS(
 | `headers` | `Dict[str, str]` | No | `None` | Custom HTTP headers forwarded to the LLM provider |
 | `greeting_configs` | `Dict[str, Any]` | No | `None` | Greeting playback configuration |
 | `template_variables` | `Dict[str, str]` | No | `None` | Template variables for messages |
+
+`greeting_configs` may also include `audio_download_timeout_ms`, `audio_pcm_sample_rate`, and `uninterruptible_asr_policy`.
 
 <!-- snippet: fragment -->
 ```python
@@ -378,6 +381,33 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `sample_rate` | `int` | No | `None` | Audio sample rate |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
+### `GenericTTS`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `url` | `str` | Yes | — | Callback address of the generic TTS service |
+| `headers` | `Dict[str, str]` | Yes | — | Custom headers to include in requests to the generic TTS service |
+| `model` | `str` | Yes | — | TTS model name |
+| `voice` | `str` | Yes | — | Voice name |
+| `api_key` | `str` | No | `None` | API key for the generic TTS service |
+| `speed` | `float` | No | `None` | Speech rate |
+| `sample_rate` | `int` | No | `None` | Output audio sample rate in Hz |
+| `response_format` | `str` | No | `None` | Output audio format; use `pcm` |
+| `instruction` | `str` | No | `None` | Additional voice style control instruction |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional generic TTS parameters |
+| `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
+
+### `XaiTTS`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | xAI API key |
+| `language` | `str` | Yes | — | BCP-47 language code for speech synthesis |
+| `voice_id` | `str` | No | `None` | xAI voice identifier |
+| `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional xAI TTS parameters |
+| `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
+
 ---
 
 ## STT Vendors
@@ -470,6 +500,16 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 | `api_key` | `str` | Yes | — | Sarvam API key |
 | `language` | `str` | Yes | — | Language code (e.g., `en`, `hi`) |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+
+### `XaiSTT`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | xAI API key |
+| `base_url` | `str` | No | `None` | WebSocket endpoint URL for the xAI streaming STT API |
+| `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
+| `language` | `str` | No | `None` | Language code for speech recognition |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional xAI STT parameters |
 
 ---
 
@@ -657,6 +697,21 @@ No constructor parameters. Use `FengmingSTT()`.
 | `sceneList` | `List[Dict[str, Any]]` | Yes | — | SenseTime scene list |
 | `enable` | `bool` | No | `None` | Whether to enable the avatar |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional SenseTime avatar parameters |
+
+#### `SpatiusAvatar`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `spatius_api_key` | `str` | Yes | — | Spatius API key |
+| `spatius_app_id` | `str` | Yes | — | Spatius application ID |
+| `spatius_avatar_id` | `str` | Yes | — | Spatius avatar ID |
+| `agora_uid` | `str` | Yes | — | Agora UID used by the avatar service |
+| `agora_token` | `str` | No | `None` | RTC token for avatar publisher; generated by AgentSession when omitted |
+| `region` | `str` | No | `None` | Spatius service region, for example `cn-beijing` |
+| `sample_rate` | `int` | No | `None` | Optional avatar-declared sample rate; TTS sample rate should match when set |
+| `session_expire_minutes` | `int` | No | `None` | Spatius session validity duration in minutes |
+| `enable` | `bool` | No | `None` | Whether to enable the avatar |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Spatius avatar parameters |
 
 ## MLLM Vendors
 

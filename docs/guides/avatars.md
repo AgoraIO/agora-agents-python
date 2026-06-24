@@ -18,12 +18,13 @@ Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline
 | Anam | `AnamAvatar` | None |
 | Generic | `GenericAvatar` | None |
 | SenseTime (CN) | `SenseTimeAvatar` | None |
+| Spatius (CN) | `SpatiusAvatar` | Optional avatar-declared sample rate |
 
 ## Token Model
 
 The agent and avatar join the same RTC channel with separate UIDs. The agent token is scoped to `agent_uid`; `avatar.params.agora_token` is scoped to the avatar `agora_uid`.
 
-When using `AgentSession.start()`, `agora_token` is optional for LiveAvatar, HeyGen, Generic, and SenseTime avatars. If omitted, AgentKit generates it with the same ConvoAI token path as the agent, using the avatar UID. You can still pass `agora_token` explicitly.
+When using `AgentSession.start()`, `agora_token` is optional for LiveAvatar, HeyGen, Generic, SenseTime, and Spatius avatars. If omitted, AgentKit generates it with the same ConvoAI token path as the agent, using the avatar UID. You can still pass `agora_token` explicitly.
 
 ## Sample Rate Constraint
 
@@ -122,6 +123,39 @@ agent = (
         app_key="your-sensetime-app-key",
         sceneList=[{"digital_role": {"face_feature_id": "role-1"}}],
         appId="your-sensetime-app-id",
+    ))
+)
+```
+
+## Spatius Avatar (CN)
+
+`SpatiusAvatar` is available for `Area.CN` sessions. Provide `spatius_api_key`, `spatius_app_id`, `spatius_avatar_id`, and `agora_uid` when constructing the avatar. `agora_token` is optional and is generated at session start when omitted, like SenseTime and Generic avatars.
+
+```python
+from agora_agent import Agora, Area, CNAgent, GenericTTS, SpatiusAvatar, TencentSTT
+
+client = Agora(
+    area=Area.CN,
+    app_id="your-app-id",
+    app_certificate="your-app-certificate",
+)
+
+agent = (
+    CNAgent(client=client)
+    .with_stt(TencentSTT(key="...", app_id="...", secret="...", engine_model_type="16k_zh", voice_id="..."))
+    .with_tts(GenericTTS(
+        url="https://tts.example.com/v1/audio",
+        headers={"Authorization": "Bearer token"},
+        model="tts-model",
+        voice="voice-1",
+    ))
+    .with_avatar(SpatiusAvatar(
+        spatius_api_key="your-spatius-api-key",
+        spatius_app_id="your-spatius-app-id",
+        spatius_avatar_id="your-spatius-avatar-id",
+        agora_uid="2",
+        region="cn-beijing",
+        sample_rate=16000,
     ))
 )
 ```
@@ -246,3 +280,18 @@ If you call `with_avatar()` before `with_tts()`, the sample rate check is deferr
 | `appId` | `str` | No | SenseTime application ID |
 | `enable` | `bool` | No | Whether to enable the avatar |
 | `additional_params` | `Dict[str, Any]` | No | Additional SenseTime avatar parameters |
+
+## Spatius Options
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `spatius_api_key` | `str` | Yes | Spatius API key |
+| `spatius_app_id` | `str` | Yes | Spatius application ID |
+| `spatius_avatar_id` | `str` | Yes | Spatius avatar ID |
+| `agora_uid` | `str` | Yes | Avatar publisher RTC UID |
+| `agora_token` | `str` | No | Avatar publisher RTC token; generated at session start when omitted |
+| `region` | `str` | No | Spatius service region, for example `cn-beijing` |
+| `sample_rate` | `int` | No | Optional avatar-declared sample rate. When set, TTS sample rate should match it. |
+| `session_expire_minutes` | `int` | No | Spatius session validity duration in minutes |
+| `enable` | `bool` | No | Whether to enable the avatar |
+| `additional_params` | `Dict[str, Any]` | No | Additional Spatius avatar parameters |
