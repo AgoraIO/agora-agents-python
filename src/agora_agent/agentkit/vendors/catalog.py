@@ -26,6 +26,7 @@ from .stt import (
     OpenAISTT,
     SarvamSTT,
     SpeechmaticsSTT,
+    XaiSTT,
 )
 from .tts import (
     AmazonTTS,
@@ -39,8 +40,10 @@ from .tts import (
     MiniMaxTTS,
     MurfTTS,
     OpenAITTS,
+    GenericTTS,
     RimeTTS,
     SarvamTTS,
+    XaiTTS,
 )
 
 
@@ -70,6 +73,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "assemblyai": AssemblyAISTT,
         "speechmatics": SpeechmaticsSTT,
         "sarvam": SarvamSTT,
+        "xai": XaiSTT,
     },
     llm={
         "openai": OpenAI,
@@ -95,6 +99,8 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "google": GoogleTTS,
         "amazon": AmazonTTS,
         "sarvam": SarvamTTS,
+        "generic": GenericTTS,
+        "xai": XaiTTS,
         "deepgram": DeepgramTTS,
     },
     avatar={
@@ -129,9 +135,11 @@ CN_VENDOR_NAMESPACE = VendorNamespace(
         "cosyvoice": cn_vendors.CosyVoiceTTS,
         "bytedance_duplex": cn_vendors.BytedanceDuplexTTS,
         "stepfun": cn_vendors.StepFunTTS,
+        "generic": GenericTTS,
     },
     avatar={
         "sensetime": cn_vendors.SenseTimeAvatar,
+        "spatius": cn_vendors.SpatiusAvatar,
     },
 )
 

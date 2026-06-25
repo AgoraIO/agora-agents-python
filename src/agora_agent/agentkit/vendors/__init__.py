@@ -26,6 +26,7 @@ from .cn import (
     MicrosoftTTS as MicrosoftCNTTS,
     MiniMaxTTS as MiniMaxCNTTS,
     SenseTimeAvatar,
+    SpatiusAvatar,
     StepFunTTS,
     TencentLLM,
     TencentSTT,
@@ -44,6 +45,7 @@ from .stt import (
     OpenAISTT,
     SarvamSTT,
     SpeechmaticsSTT,
+    XaiSTT,
 )
 from .tts import (
     AmazonTTS,
@@ -57,8 +59,10 @@ from .tts import (
     MiniMaxTTS,
     MurfTTS,
     OpenAITTS,
+    GenericTTS,
     RimeTTS,
     SarvamTTS,
+    XaiTTS,
 )
 
 __all__ = [
@@ -96,6 +100,8 @@ __all__ = [
     "MiniMaxCNTTS",
     "MurfTTS",
     "SarvamTTS",
+    "GenericTTS",
+    "XaiTTS",
     "MicrosoftCNTTS",
     "TencentTTS",
     "BytedanceTTS",
@@ -112,6 +118,7 @@ __all__ = [
     "AssemblyAISTT",
     "AresSTT",
     "SarvamSTT",
+    "XaiSTT",
     "TencentSTT",
     "FengmingSTT",
     "XfyunSTT",
@@ -130,5 +137,6 @@ __all__ = [
     "AkoolAvatar",
     "AnamAvatar",
     "GenericAvatar",
+    "SpatiusAvatar",
     "SenseTimeAvatar",
 ]

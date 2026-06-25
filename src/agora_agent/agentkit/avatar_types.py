@@ -26,6 +26,10 @@ def is_sensetime_avatar(config: typing.Dict[str, typing.Any]) -> bool:
     return config.get("vendor") == "sensetime"
 
 
+def is_spatius_avatar(config: typing.Dict[str, typing.Any]) -> bool:
+    return config.get("vendor") == "spatius"
+
+
 def is_avatar_token_managed(config: typing.Dict[str, typing.Any]) -> bool:
     """Return True when AgentKit manages the avatar RTC publisher identity."""
     return (
@@ -33,6 +37,7 @@ def is_avatar_token_managed(config: typing.Dict[str, typing.Any]) -> bool:
         or is_live_avatar_avatar(config)
         or is_generic_avatar(config)
         or is_sensetime_avatar(config)
+        or is_spatius_avatar(config)
     )
 
 
@@ -129,6 +134,18 @@ def validate_avatar_config(
             raise ValueError("SenseTime avatar requires agora_uid")
         if require_session_fields and not params.get("agora_token"):
             raise ValueError("SenseTime avatar requires agora_token")
+    elif is_spatius_avatar(config):
+        params = config.get("params", {})
+        if not params.get("spatius_api_key"):
+            raise ValueError("Spatius avatar requires spatius_api_key")
+        if not params.get("spatius_app_id"):
+            raise ValueError("Spatius avatar requires spatius_app_id")
+        if not params.get("spatius_avatar_id"):
+            raise ValueError("Spatius avatar requires spatius_avatar_id")
+        if not params.get("agora_uid"):
+            raise ValueError("Spatius avatar requires agora_uid")
+        if require_session_fields and not params.get("agora_token"):
+            raise ValueError("Spatius avatar requires agora_token")
 
 
 def validate_tts_sample_rate(
@@ -169,4 +186,12 @@ def validate_tts_sample_rate(
                 f"Your TTS is configured with {tts_sample_rate} Hz. "
                 f"Please update your TTS configuration to use 16kHz sample rate. "
                 f"See: https://docs.agora.io/en/conversational-ai/models/avatar/akool"
+            )
+    elif is_spatius_avatar(avatar_config):
+        expected_sample_rate = avatar_config.get("params", {}).get("sample_rate")
+        if isinstance(expected_sample_rate, int) and tts_sample_rate != expected_sample_rate:
+            raise ValueError(
+                f"Spatius avatar is configured with sample_rate {expected_sample_rate} Hz, "
+                f"but TTS is configured with {tts_sample_rate} Hz. "
+                f"Please align the TTS sample_rate with the avatar sample_rate."
             )

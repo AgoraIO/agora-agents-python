@@ -37,6 +37,7 @@ class OpenAIOptions(BaseModel):
     max_tokens: Optional[int] = Field(default=None, gt=0)
     system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
     greeting_message: Optional[str] = Field(default=None)
+    greeting_audio_url: Optional[str] = Field(default=None)
     failure_message: Optional[str] = Field(default=None)
     input_modalities: Optional[List[str]] = Field(default=None)
     params: Optional[Dict[str, Any]] = Field(default=None)
@@ -94,6 +95,8 @@ class OpenAI(BaseLLM):
             config["system_messages"] = self.options.system_messages
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
+        if self.options.greeting_audio_url is not None:
+            config["greeting_audio_url"] = self.options.greeting_audio_url
         if self.options.failure_message is not None:
             config["failure_message"] = self.options.failure_message
         if self.options.output_modalities is not None:
@@ -125,6 +128,7 @@ class AzureOpenAIOptions(BaseModel):
     max_tokens: Optional[int] = Field(default=None, gt=0)
     system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
     greeting_message: Optional[str] = Field(default=None)
+    greeting_audio_url: Optional[str] = Field(default=None)
     failure_message: Optional[str] = Field(default=None)
     input_modalities: Optional[List[str]] = Field(default=None)
     params: Optional[Dict[str, Any]] = Field(default=None)
@@ -171,6 +175,8 @@ class AzureOpenAI(BaseLLM):
             config["system_messages"] = self.options.system_messages
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
+        if self.options.greeting_audio_url is not None:
+            config["greeting_audio_url"] = self.options.greeting_audio_url
         if self.options.failure_message is not None:
             config["failure_message"] = self.options.failure_message
         if self.options.output_modalities is not None:
@@ -198,6 +204,7 @@ class AnthropicOptions(BaseModel):
     top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
     greeting_message: Optional[str] = Field(default=None)
+    greeting_audio_url: Optional[str] = Field(default=None)
     failure_message: Optional[str] = Field(default=None)
     input_modalities: Optional[List[str]] = Field(default=None)
     params: Optional[Dict[str, Any]] = Field(default=None)
@@ -236,6 +243,8 @@ class Anthropic(BaseLLM):
             config["system_messages"] = self.options.system_messages
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
+        if self.options.greeting_audio_url is not None:
+            config["greeting_audio_url"] = self.options.greeting_audio_url
         if self.options.failure_message is not None:
             config["failure_message"] = self.options.failure_message
         if self.options.output_modalities is not None:
@@ -266,6 +275,7 @@ class GeminiOptions(BaseModel):
     max_output_tokens: Optional[int] = Field(default=None, gt=0)
     system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
     greeting_message: Optional[str] = Field(default=None)
+    greeting_audio_url: Optional[str] = Field(default=None)
     failure_message: Optional[str] = Field(default=None)
     input_modalities: Optional[List[str]] = Field(default=None)
     params: Optional[Dict[str, Any]] = Field(default=None)
@@ -307,6 +317,8 @@ class Gemini(BaseLLM):
             config["headers"] = self.options.headers
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
+        if self.options.greeting_audio_url is not None:
+            config["greeting_audio_url"] = self.options.greeting_audio_url
         if self.options.failure_message is not None:
             config["failure_message"] = self.options.failure_message
         if self.options.output_modalities is not None:
@@ -398,6 +410,7 @@ class AmazonBedrockOptions(BaseModel):
     top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
     greeting_message: Optional[str] = Field(default=None)
+    greeting_audio_url: Optional[str] = Field(default=None)
     failure_message: Optional[str] = Field(default=None)
     input_modalities: Optional[List[str]] = Field(default=None)
     params: Optional[Dict[str, Any]] = Field(default=None)
@@ -439,6 +452,8 @@ class AmazonBedrock(BaseLLM):
             config["headers"] = self.options.headers
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
+        if self.options.greeting_audio_url is not None:
+            config["greeting_audio_url"] = self.options.greeting_audio_url
         if self.options.failure_message is not None:
             config["failure_message"] = self.options.failure_message
         if self.options.output_modalities is not None:
@@ -466,6 +481,7 @@ class DifyOptions(BaseModel):
     conversation_id: Optional[str] = Field(default=None, description="Dify conversation ID")
     system_messages: Optional[List[Dict[str, Any]]] = Field(default=None)
     greeting_message: Optional[str] = Field(default=None)
+    greeting_audio_url: Optional[str] = Field(default=None)
     failure_message: Optional[str] = Field(default=None)
     input_modalities: Optional[List[str]] = Field(default=None)
     params: Optional[Dict[str, Any]] = Field(default=None)
@@ -502,6 +518,8 @@ class Dify(BaseLLM):
             config["system_messages"] = self.options.system_messages
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
+        if self.options.greeting_audio_url is not None:
+            config["greeting_audio_url"] = self.options.greeting_audio_url
         if self.options.failure_message is not None:
             config["failure_message"] = self.options.failure_message
         if self.options.output_modalities is not None:

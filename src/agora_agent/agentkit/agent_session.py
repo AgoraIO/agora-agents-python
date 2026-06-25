@@ -31,6 +31,7 @@ from .avatar_types import (
     is_live_avatar_avatar,
     is_rtc_avatar,
     is_sensetime_avatar,
+    is_spatius_avatar,
     validate_avatar_config,
     validate_tts_sample_rate,
 )
@@ -221,6 +222,7 @@ class _AgentSessionBase:
             or is_anam_avatar(avatar)
             or is_generic_avatar(avatar)
             or is_sensetime_avatar(avatar)
+            or is_spatius_avatar(avatar)
         ):
             validate_avatar_config(avatar)
 
@@ -249,6 +251,13 @@ class _AgentSessionBase:
                 "Warning: Akool avatar detected but TTS sample_rate is not explicitly set. "
                 "Akool requires 16,000 Hz. Please ensure your TTS provider is configured for 16kHz."
             )
+        elif is_spatius_avatar(avatar):
+            avatar_sample_rate = avatar.get("params", {}).get("sample_rate")
+            if isinstance(avatar_sample_rate, int):
+                self._warn(
+                    "Warning: Spatius avatar declares a sample_rate but TTS sample_rate is not explicitly set. "
+                    "Please ensure your TTS provider matches the avatar sample_rate."
+                )
 
     def _enrich_avatar_for_session(
         self, properties: typing.Dict[str, typing.Any]

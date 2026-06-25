@@ -5,10 +5,23 @@ from agora_agent import (
     Agent,
     Area,
     DeepgramSTT,
+    GenericTTS,
     MiniMaxCNTTS,
     MiniMaxTTS,
     OpenAI,
+    SpatiusAvatar,
     TencentSTT,
+    XaiSTT,
+    XaiTTS,
+    XaiGrok,
+)
+from agora_agent.agentkit.vendors.region import (
+    CN_ASR_VENDORS,
+    CN_AVATAR_VENDORS,
+    CN_TTS_VENDORS,
+    GLOBAL_ASR_VENDORS,
+    GLOBAL_AVATAR_VENDORS,
+    GLOBAL_TTS_VENDORS,
 )
 
 
@@ -93,3 +106,74 @@ def test_direct_import_cn_vendors_work_with_bound_cn_client() -> None:
     )
 
     assert agent.__class__.__name__ == "CNAgent"
+
+
+def test_spatius_avatar_is_classified_as_cn_vendor() -> None:
+    assert "spatius" in CN_AVATAR_VENDORS
+    assert "spatius" not in GLOBAL_AVATAR_VENDORS
+
+    agent = Agent(client=_client(Area.CN)).with_avatar(
+        SpatiusAvatar(
+            spatius_api_key="spatius-key",
+            spatius_app_id="spatius-app",
+            spatius_avatar_id="spatius-avatar",
+            agora_uid="2",
+        )
+    )
+    assert agent.__class__.__name__ == "CNAgent"
+
+
+def test_generic_tts_is_classified_as_shared_vendor() -> None:
+    assert "generic" in CN_TTS_VENDORS
+    assert "generic" in GLOBAL_TTS_VENDORS
+
+    cn_agent = Agent(client=_client(Area.CN)).with_tts(
+        GenericTTS(
+            url="https://tts.example.com/v1/audio",
+            headers={"Authorization": "Bearer token"},
+            model="tts-model",
+            voice="voice-1",
+        )
+    )
+    global_agent = Agent(client=_client(Area.US)).with_tts(
+        GenericTTS(
+            url="https://tts.example.com/v1/audio",
+            headers={"Authorization": "Bearer token"},
+            model="tts-model",
+            voice="voice-1",
+        )
+    )
+
+    assert cn_agent.__class__.__name__ == "CNAgent"
+    assert global_agent.__class__.__name__ == "GlobalAgent"
+    assert cn_agent.tts is not None and cn_agent.tts["vendor"] == "generic"
+    assert global_agent.tts is not None and global_agent.tts["vendor"] == "generic"
+
+
+def test_xai_asr_and_tts_are_classified_as_global_vendors() -> None:
+    assert "xai" not in CN_ASR_VENDORS
+    assert "xai" in GLOBAL_ASR_VENDORS
+    assert "xai" not in CN_TTS_VENDORS
+    assert "xai" in GLOBAL_TTS_VENDORS
+
+    global_agent = (
+        Agent(client=_client(Area.US))
+        .with_stt(XaiSTT(api_key="xai-stt-key"))
+        .with_tts(
+            XaiTTS(
+                api_key="xai-tts-key",
+                language="en-US",
+            )
+        )
+    )
+
+    assert global_agent.__class__.__name__ == "GlobalAgent"
+    assert global_agent.stt is not None and global_agent.stt["vendor"] == "xai"
+    assert global_agent.tts is not None and global_agent.tts["vendor"] == "xai"
+
+
+def test_xai_grok_remains_mllm_vendor() -> None:
+    agent = Agent(client=_client(Area.US)).with_mllm(XaiGrok(api_key="xai-key"))
+
+    assert agent.__class__.__name__ == "GlobalAgent"
+    assert agent.mllm is not None and agent.mllm["vendor"] == "xai"

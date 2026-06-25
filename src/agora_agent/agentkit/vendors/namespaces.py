@@ -23,6 +23,7 @@ from .stt import (
     OpenAISTT,
     SarvamSTT,
     SpeechmaticsSTT,
+    XaiSTT,
 )
 from .tts import (
     AmazonTTS,
@@ -36,8 +37,10 @@ from .tts import (
     MiniMaxTTS,
     MurfTTS,
     OpenAITTS,
+    GenericTTS,
     RimeTTS,
     SarvamTTS,
+    XaiTTS,
 )
 
 
@@ -51,6 +54,7 @@ class GlobalSTTVendors:
     assemblyai = AssemblyAISTT
     speechmatics = SpeechmaticsSTT
     sarvam = SarvamSTT
+    xai = XaiSTT
 
 
 class CNSTTVendors:
@@ -94,6 +98,8 @@ class GlobalTTSVendors:
     google = GoogleTTS
     amazon = AmazonTTS
     sarvam = SarvamTTS
+    generic = GenericTTS
+    xai = XaiTTS
     deepgram = DeepgramTTS
 
 
@@ -105,6 +111,7 @@ class CNTTSVendors:
     cosyvoice = cn_vendors.CosyVoiceTTS
     bytedance_duplex = cn_vendors.BytedanceDuplexTTS
     stepfun = cn_vendors.StepFunTTS
+    generic = GenericTTS
 
 
 class GlobalAvatarVendors:
@@ -117,6 +124,7 @@ class GlobalAvatarVendors:
 
 class CNAvatarVendors:
     sensetime = cn_vendors.SenseTimeAvatar
+    spatius = cn_vendors.SpatiusAvatar
 
 
 class GlobalVendors:

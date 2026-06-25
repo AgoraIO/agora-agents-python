@@ -14,6 +14,7 @@ def test_root_exports_match_agentkit_for_common_symbols() -> None:
         "MiniMaxCNTTS",
         "TencentSTT",
         "OpenAI",
+        "SpatiusAvatar",
         "AgentPresets",
         "generate_rtc_token",
         "DataChannel",
@@ -46,5 +47,6 @@ def test_all_includes_agentkit_vendor_exports() -> None:
     assert "MiniMaxCNTTS" in agora_agent.__all__
     assert "TencentSTT" in agora_agent.__all__
     assert "OpenAI" in agora_agent.__all__
+    assert "SpatiusAvatar" in agora_agent.__all__
     assert "CNAgent" in agora_agent.__all__
     assert "AgentClient" in agora_agent.__all__

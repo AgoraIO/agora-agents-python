@@ -47,7 +47,7 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 | [Vendors](./concepts/vendors.md) | Browse all LLM, TTS, STT, MLLM, and Avatar providers |
 | [Cascading Flow](./guides/cascading-flow.md) | Build an ASR -> LLM -> TTS pipeline |
 | [MLLM Flow](./guides/mllm-flow.md) | Use OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok for end-to-end audio |
-| [Avatars](./guides/avatars.md) | Add a digital avatar with LiveAvatar, Akool, Anam, or Generic Avatar |
+| [Avatars](./guides/avatars.md) | Add a digital avatar with LiveAvatar, Akool, Anam, Generic Avatar, SenseTime, or Spatius |
 | [Regional Routing](./guides/regional-routing.md) | Route requests to the nearest region |
 | [Error Handling](./guides/error-handling.md) | Handle API errors with ApiError |
 | [Pagination](./guides/pagination.md) | Iterate over paginated list endpoints |

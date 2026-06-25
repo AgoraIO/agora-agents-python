@@ -582,3 +582,87 @@ class MurfTTS(BaseTTS):
         if self.options.skip_patterns is not None:
             result["skip_patterns"] = self.options.skip_patterns
         return result
+
+
+class GenericTTSOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    url: str = Field(..., description="Callback address of the generic TTS service")
+    headers: Dict[str, str] = Field(..., description="Custom headers to include in requests to the generic TTS service")
+    model: str = Field(..., description="TTS model name")
+    voice: str = Field(..., description="Voice name")
+    api_key: Optional[str] = Field(default=None, description="API key for the generic TTS service")
+    speed: Optional[float] = Field(default=None, description="Speech rate")
+    sample_rate: Optional[int] = Field(default=None, description="Output audio sample rate in Hz")
+    response_format: Optional[str] = Field(default=None, description="Output audio format")
+    instruction: Optional[str] = Field(default=None, description="Additional voice style control instruction")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional generic TTS params")
+    skip_patterns: Optional[List[int]] = Field(default=None)
+
+
+class GenericTTS(BaseTTS):
+    def __init__(self, **kwargs: Any):
+        self.options = GenericTTSOptions(**kwargs)
+
+    @property
+    def sample_rate(self) -> Optional[int]:
+        return self.options.sample_rate
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.options.additional_params or {})
+        if self.options.api_key is not None:
+            params["api_key"] = self.options.api_key
+        params["model"] = self.options.model
+        params["voice"] = self.options.voice
+        if self.options.speed is not None:
+            params["speed"] = self.options.speed
+        if self.options.sample_rate is not None:
+            params["sample_rate"] = self.options.sample_rate
+        if self.options.response_format is not None:
+            params["response_format"] = self.options.response_format
+        if self.options.instruction is not None:
+            params["instruction"] = self.options.instruction
+
+        result: Dict[str, Any] = {
+            "vendor": "generic",
+            "url": self.options.url,
+            "headers": self.options.headers,
+            "params": params,
+        }
+        if self.options.skip_patterns is not None:
+            result["skip_patterns"] = self.options.skip_patterns
+        return result
+
+
+class XaiTTSOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="xAI API key")
+    language: str = Field(..., description="BCP-47 language code for speech synthesis")
+    voice_id: Optional[str] = Field(default=None, description="xAI voice identifier")
+    sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional xAI TTS params")
+    skip_patterns: Optional[List[int]] = Field(default=None)
+
+
+class XaiTTS(BaseTTS):
+    def __init__(self, **kwargs: Any):
+        self.options = XaiTTSOptions(**kwargs)
+
+    @property
+    def sample_rate(self) -> Optional[int]:
+        return self.options.sample_rate
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.options.additional_params or {})
+        params["api_key"] = self.options.api_key
+        params["language"] = self.options.language
+        if self.options.voice_id is not None:
+            params["voice_id"] = self.options.voice_id
+        if self.options.sample_rate is not None:
+            params["sample_rate"] = self.options.sample_rate
+
+        result: Dict[str, Any] = {"vendor": "xai", "params": params}
+        if self.options.skip_patterns is not None:
+            result["skip_patterns"] = self.options.skip_patterns
+        return result

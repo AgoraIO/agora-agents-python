@@ -206,4 +206,3 @@ class AnamAvatar(BaseAvatar):
 
         enable = self.options.enable if self.options.enable is not None else True
         return {"enable": enable, "vendor": "anam", "params": params}
-

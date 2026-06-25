@@ -283,3 +283,34 @@ class SarvamSTT(BaseSTT):
             "params": params,
         }
         return config
+
+
+class XaiSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="xAI API key")
+    base_url: Optional[str] = Field(default=None, description="WebSocket endpoint URL for the xAI streaming STT API")
+    sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
+    language: Optional[str] = Field(default=None, description="Language code for speech recognition")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+
+class XaiSTT(BaseSTT):
+    def __init__(self, **kwargs: Any):
+        self.options = XaiSTTOptions(**kwargs)
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.options.additional_params or {})
+        params["api_key"] = self.options.api_key
+        if self.options.base_url is not None:
+            params["base_url"] = self.options.base_url
+        if self.options.sample_rate is not None:
+            params["sample_rate"] = self.options.sample_rate
+        if self.options.language is not None:
+            params["language"] = self.options.language
+
+        config: Dict[str, Any] = {
+            "vendor": "xai",
+            "params": params,
+        }
+        return config

@@ -15,6 +15,7 @@ from .vendors.cn import (
     MicrosoftSTT as MicrosoftCNSTT,
     MicrosoftTTS as MicrosoftCNTTS,
     SenseTimeAvatar,
+    SpatiusAvatar,
     StepFunTTS,
     TencentLLM,
     TencentSTT,
@@ -33,6 +34,7 @@ from .vendors.stt import (
     OpenAISTT,
     SarvamSTT,
     SpeechmaticsSTT,
+    XaiSTT,
 )
 from .vendors.llm import (
     AmazonBedrock,
@@ -57,15 +59,17 @@ from .vendors.tts import (
     MiniMaxTTS,
     MurfTTS,
     OpenAITTS,
+    GenericTTS,
     RimeTTS,
     SarvamTTS,
+    XaiTTS,
 )
 from .vendors.avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
 
 CNSTT = typing.Union[TencentSTT, FengmingSTT, MicrosoftCNSTT, XfyunSTT, XfyunBigModelSTT, XfyunDialectSTT]
-CNTTS = typing.Union[MiniMaxCNTTS, TencentTTS, BytedanceTTS, MicrosoftCNTTS, CosyVoiceTTS, BytedanceDuplexTTS, StepFunTTS]
+CNTTS = typing.Union[MiniMaxCNTTS, TencentTTS, BytedanceTTS, MicrosoftCNTTS, CosyVoiceTTS, BytedanceDuplexTTS, StepFunTTS, GenericTTS]
 CNLLM = typing.Union[AliyunLLM, BytedanceLLM, DeepSeekLLM, TencentLLM]
-CNAvatar = SenseTimeAvatar
+CNAvatar = typing.Union[SenseTimeAvatar, SpatiusAvatar]
 
 GlobalSTT = typing.Union[
     AresSTT,
@@ -77,6 +81,7 @@ GlobalSTT = typing.Union[
     AssemblyAISTT,
     SpeechmaticsSTT,
     SarvamSTT,
+    XaiSTT,
 ]
 GlobalTTS = typing.Union[
     MicrosoftTTS,
@@ -91,6 +96,8 @@ GlobalTTS = typing.Union[
     GoogleTTS,
     AmazonTTS,
     SarvamTTS,
+    GenericTTS,
+    XaiTTS,
     DeepgramTTS,
 ]
 GlobalLLM = typing.Union[

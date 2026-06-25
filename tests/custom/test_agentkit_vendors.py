@@ -2,7 +2,16 @@ import pytest
 from pydantic import ValidationError
 
 from agora_agent.agentkit import LlmGreetingConfigs
-from agora_agent.agentkit.vendors import GenericAvatar, OpenAI, OpenAIRealtime, XaiGrok
+from agora_agent.agentkit.vendors import (
+    GenericAvatar,
+    GenericTTS,
+    OpenAI,
+    OpenAIRealtime,
+    SpatiusAvatar,
+    XaiGrok,
+    XaiSTT,
+    XaiTTS,
+)
 
 
 def test_xai_grok_serializes_v27_shape_without_style():
@@ -114,3 +123,113 @@ def test_llm_greeting_configs_interruptable_serializes():
 
     assert config["greeting_configs"]["mode"] == "single_first"
     assert config["greeting_configs"]["interruptable"] is False
+
+
+def test_openai_llm_greeting_audio_url_serializes() -> None:
+    config = OpenAI(
+        api_key="openai-key",
+        model="gpt-4o",
+        base_url="https://api.openai.com/v1/chat/completions",
+        greeting_audio_url="https://cdn.example.com/greeting.wav",
+        greeting_configs={
+            "audio_download_timeout_ms": 2000,
+            "audio_pcm_sample_rate": 24000,
+            "uninterruptible_asr_policy": "context",
+        },
+    ).to_config()
+
+    assert config["greeting_audio_url"] == "https://cdn.example.com/greeting.wav"
+    assert config["greeting_configs"]["audio_download_timeout_ms"] == 2000
+    assert config["greeting_configs"]["audio_pcm_sample_rate"] == 24000
+    assert config["greeting_configs"]["uninterruptible_asr_policy"] == "context"
+
+
+def test_xai_stt_serializes() -> None:
+    config = XaiSTT(
+        api_key="xai-stt-key",
+        base_url="wss://api.x.ai/v1/stt",
+        sample_rate=24000,
+        language="en-US",
+    ).to_config()
+
+    assert config == {
+        "vendor": "xai",
+        "params": {
+            "api_key": "xai-stt-key",
+            "base_url": "wss://api.x.ai/v1/stt",
+            "sample_rate": 24000,
+            "language": "en-US",
+        },
+    }
+
+
+def test_generic_tts_serializes() -> None:
+    config = GenericTTS(
+        url="https://tts.example.com/v1/audio",
+        headers={"Authorization": "Bearer token"},
+        api_key="generic-key",
+        model="tts-model",
+        voice="voice-1",
+        sample_rate=16000,
+        response_format="pcm",
+        instruction="Speak warmly",
+        skip_patterns=[3, 4],
+    ).to_config()
+
+    assert config == {
+        "vendor": "generic",
+        "url": "https://tts.example.com/v1/audio",
+        "headers": {"Authorization": "Bearer token"},
+        "params": {
+            "api_key": "generic-key",
+            "model": "tts-model",
+            "voice": "voice-1",
+            "sample_rate": 16000,
+            "response_format": "pcm",
+            "instruction": "Speak warmly",
+        },
+        "skip_patterns": [3, 4],
+    }
+
+
+def test_xai_tts_serializes() -> None:
+    config = XaiTTS(
+        api_key="xai-tts-key",
+        language="en-US",
+        voice_id="voice-1",
+        sample_rate=24000,
+    ).to_config()
+
+    assert config == {
+        "vendor": "xai",
+        "params": {
+            "api_key": "xai-tts-key",
+            "language": "en-US",
+            "voice_id": "voice-1",
+            "sample_rate": 24000,
+        },
+    }
+
+
+def test_spatius_avatar_serializes() -> None:
+    config = SpatiusAvatar(
+        spatius_api_key="spatius-key",
+        spatius_app_id="spatius-app",
+        spatius_avatar_id="spatius-avatar",
+        agora_uid="2",
+        sample_rate=24000,
+        region="cn-beijing",
+    ).to_config()
+
+    assert config == {
+        "enable": True,
+        "vendor": "spatius",
+        "params": {
+            "spatius_api_key": "spatius-key",
+            "spatius_app_id": "spatius-app",
+            "spatius_avatar_id": "spatius-avatar",
+            "agora_uid": "2",
+            "sample_rate": 24000,
+            "region": "cn-beijing",
+        },
+    }

@@ -27,6 +27,7 @@ GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
     "assemblyai",
     "speechmatics",
     "sarvam",
+    "xai",
 )
 
 CN_TTS_VENDORS: typing.Tuple[str, ...] = (
@@ -37,6 +38,7 @@ CN_TTS_VENDORS: typing.Tuple[str, ...] = (
     "cosyvoice",
     "bytedance_duplex",
     "stepfun",
+    "generic",
 )
 GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
     "microsoft",
@@ -51,6 +53,8 @@ GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
     "google",
     "amazon",
     "sarvam",
+    "generic",
+    "xai",
     "deepgram",
 )
 
@@ -72,7 +76,7 @@ GLOBAL_LLM_VENDORS: typing.Tuple[str, ...] = (
     "custom",
 )
 
-CN_AVATAR_VENDORS: typing.Tuple[str, ...] = ("sensetime",)
+CN_AVATAR_VENDORS: typing.Tuple[str, ...] = ("sensetime", "spatius")
 GLOBAL_AVATAR_VENDORS: typing.Tuple[str, ...] = (
     "akool",
     "liveavatar",
@@ -100,5 +104,3 @@ def allowed_vendors_for_scope(scope: AreaScope) -> typing.Dict[str, typing.Tuple
         "llm": GLOBAL_LLM_VENDORS,
         "avatar": GLOBAL_AVATAR_VENDORS,
     }
-
-
