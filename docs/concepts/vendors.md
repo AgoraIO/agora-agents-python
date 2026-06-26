@@ -103,7 +103,7 @@ tts = ElevenLabsTTS(
 
 Used with `agent.with_stt()`.
 
-Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. STT vendor `language` options are serialized under `asr.params` using each provider's own format. Ares does not take a provider language option; AgentKit uses `turn_detection.language` for REST `asr.language`.
+Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. STT vendor `language` options are serialized under `asr.params` using each provider's own format. If `with_stt()` is omitted, AgentKit defaults to `AresSTT` for global clients and `FengmingSTT` for `Area.CN` clients. Ares does not take a provider language option; AgentKit uses `turn_detection.language` for REST `asr.language`.
 
 | Class | Provider | Required Parameters |
 |---|---|---|

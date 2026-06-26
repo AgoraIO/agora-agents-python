@@ -412,7 +412,7 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 
 ## STT Vendors
 
-Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. Provider-specific language values remain under `asr.params` and may use a different format. AgentKit populates REST `asr.language` from `turn_detection.language`.
+Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. Provider-specific language values remain under `asr.params` and may use a different format. If `with_stt()` is omitted, AgentKit defaults to `AresSTT` for global clients and `FengmingSTT` for `Area.CN` clients. AgentKit populates REST `asr.language` from `turn_detection.language`.
 
 ### `SpeechmaticsSTT`
 

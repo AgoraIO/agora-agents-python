@@ -1078,7 +1078,8 @@ class Agent:
     def _resolve_asr_config(self, turn_detection_config: TurnDetectionInput) -> typing.Dict[str, typing.Any]:
         asr_config = dict(self._stt or {})
         if not asr_config:
-            asr_config["vendor"] = "ares"
+            area_scope = getattr(self._client, "area_scope", None)
+            asr_config["vendor"] = "fengming" if area_scope == "cn" else "ares"
         asr_config["language"] = self._field_value(turn_detection_config, "language")
         return asr_config
 

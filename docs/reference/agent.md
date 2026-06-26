@@ -9,6 +9,7 @@ description: Full API reference for the Python Agent builder class.
 **Import:** `from agora_agent import Agent, CNAgent, GlobalAgent`
 
 Bind the client on every `Agent` builder via `Agent(client=client, ...)`, then pass vendor classes directly. The bound client sets the API routing region and provides area-specific IDE hints via `CNAgent` / `GlobalAgent`:
+it also selects the default ASR vendor when `with_stt()` is omitted (`Fengming` for `Area.CN`, otherwise `Ares`).
 
 > **`client` is required.** `create_session()` and `create_async_session()` raise `ValueError` if no client was bound on the agent.
 
