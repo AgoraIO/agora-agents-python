@@ -1,5 +1,9 @@
 name: ci
-on: [push]
+on:
+  push:
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
   compile:
     runs-on: ubuntu-latest
