@@ -66,6 +66,28 @@ def test_agent_constructor_auto_selects_area_aware_subclass() -> None:
     assert global_agent.__class__.__name__ == "GlobalAgent"
 
 
+def test_default_asr_vendor_is_area_aware_when_with_stt_is_omitted() -> None:
+    cn_properties = Agent(client=_client(Area.CN)).to_properties(
+        channel="room",
+        agent_uid="1",
+        remote_uids=["100"],
+        token="rtc-token",
+        allow_missing_vendor_categories={"llm", "tts"},
+    )
+    global_properties = Agent(client=_client(Area.US)).to_properties(
+        channel="room",
+        agent_uid="1",
+        remote_uids=["100"],
+        token="rtc-token",
+        allow_missing_vendor_categories={"llm", "tts"},
+    )
+
+    assert cn_properties.asr is not None
+    assert cn_properties.asr.vendor == "fengming"
+    assert global_properties.asr is not None
+    assert global_properties.asr.vendor == "ares"
+
+
 def test_cn_client_allows_global_only_vendor() -> None:
     client = _client(Area.CN)
     agent = Agent(client=client).with_stt(

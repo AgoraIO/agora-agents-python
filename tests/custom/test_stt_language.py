@@ -2,6 +2,7 @@ import pytest
 
 from agora_agent import (
     Agent,
+    Area,
     AmazonSTT,
     AssemblyAISTT,
     DeepgramSTT,
@@ -83,6 +84,18 @@ def test_default_turn_detection_language_is_sent_without_stt() -> None:
 
     assert props["asr"] == {"vendor": "ares", "language": "en-US"}
     assert props["turn_detection"] == {"language": "en-US"}
+
+
+def test_default_stt_vendor_depends_on_client_area_when_stt_is_omitted() -> None:
+    global_props = properties(base_agent())
+    cn_props = properties(
+        Agent(test_client(area=Area.CN))
+        .with_llm(OpenAI(api_key="llm-key", model="gpt-4o-mini", base_url="https://api.openai.com/v1/chat/completions"))
+        .with_tts(ElevenLabsTTS(key="tts-key", voice_id="voice", model_id="eleven_flash_v2_5", base_url="wss://api.elevenlabs.io/v1"))
+    )
+
+    assert global_props["asr"] == {"vendor": "ares", "language": "en-US"}
+    assert cn_props["asr"] == {"vendor": "fengming", "language": "en-US"}
 
 
 def test_stt_vendor_params_match_documented_shapes() -> None:

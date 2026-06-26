@@ -46,7 +46,7 @@ agent = Agent(client=client).with_llm(
 | `rtc` | `RtcConfig` | No | RTC media encryption |
 | `filler_words` | `FillerWordsConfig` | No | Filler words while waiting for LLM |
 
-When `client` is provided, `Agent(client=...)` returns `CNAgent` for `Area.CN` and `GlobalAgent` for global areas.
+When `client` is provided, `Agent(client=...)` returns `CNAgent` for `Area.CN` and `GlobalAgent` for global areas. If `with_stt()` is omitted, the bound client also determines the default ASR vendor: `Fengming` for `Area.CN`, otherwise `Ares`.
 
 ## Builder Methods
 

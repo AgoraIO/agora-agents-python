@@ -36,6 +36,7 @@ client = Agora(
 ## Recommended vendors by area
 
 Bind `client` into `Agent(client=client, ...)` and construct vendors directly with SDK classes. The bound client selects `CNAgent` or `GlobalAgent` for IDE hints based on `area`, but does not restrict which vendor classes you can configure.
+If you omit `with_stt()`, AgentKit uses `FengmingSTT` by default for `Area.CN` clients and `AresSTT` for global clients.
 
 | Client area | STT classes | LLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|
@@ -125,6 +126,7 @@ agent = Agent(client=client, turn_detection={"language": "zh-CN"})
 ```
 
 `Agent(client=...)` returns `CNAgent` for `Area.CN` and `GlobalAgent` for global areas. A bound `client` is required. The SDK does not reject mismatched vendor classes at build time or session start.
+The same bound client also controls the default ASR vendor when `with_stt()` is omitted.
 
 ## How the domain pool works
 
