@@ -181,14 +181,12 @@ class VertexAI(BaseMLLM):
 
         config: Dict[str, Any] = {
             "vendor": "vertexai",
+            "url": self.options.url if self.options.url is not None else "",
             "project_id": self.options.project_id,
             "location": self.options.location,
             "adc_credentials_string": self.options.adc_credentials_string,
             "params": params,
         }
-
-        if self.options.url is not None:
-            config["url"] = self.options.url
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
         if self.options.input_modalities is not None:
@@ -253,11 +251,9 @@ class GeminiLive(BaseMLLM):
         config: Dict[str, Any] = {
             "vendor": "gemini",
             "api_key": self.options.api_key,
+            "url": self.options.url if self.options.url is not None else "",
             "params": params,
         }
-
-        if self.options.url is not None:
-            config["url"] = self.options.url
         if self.options.greeting_message is not None:
             config["greeting_message"] = self.options.greeting_message
         if self.options.input_modalities is not None:

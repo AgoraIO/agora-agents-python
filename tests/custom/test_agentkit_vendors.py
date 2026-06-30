@@ -119,6 +119,19 @@ def test_vertex_ai_explicit_fields_override_additional_params():
     assert config["params"]["extra_key"] == "kept"
 
 
+def test_vertex_ai_defaults_url_to_empty_string():
+    from agora_agent.agentkit.vendors import VertexAI
+
+    config = VertexAI(
+        model="gemini-live-2.5-flash",
+        project_id="project-id",
+        location="us-central1",
+        adc_credentials_string="{}",
+    ).to_config()
+
+    assert config["url"] == ""
+
+
 def test_gemini_live_explicit_fields_override_additional_params():
     from agora_agent.agentkit.vendors import GeminiLive
 
@@ -133,6 +146,17 @@ def test_gemini_live_explicit_fields_override_additional_params():
 
     assert config["params"]["model"] == "explicit-model"
     assert config["params"]["extra_key"] == "kept"
+
+
+def test_gemini_live_defaults_url_to_empty_string():
+    from agora_agent.agentkit.vendors import GeminiLive
+
+    config = GeminiLive(
+        api_key="key",
+        model="gemini-live-2.5-flash",
+    ).to_config()
+
+    assert config["url"] == ""
 
 
 def test_llm_greeting_configs_interruptable_serializes():
