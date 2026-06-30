@@ -698,7 +698,7 @@ No constructor parameters. Use `FengmingSTT()`.
 | `agora_uid` | `str` | Yes | — | Avatar RTC publisher uid |
 | `appId` | `str` | No | `None` | SenseTime app id |
 | `app_key` | `str` | Yes | — | SenseTime app key |
-| `sceneList` | `List[Dict[str, Any]]` | Yes | — | SenseTime scene list |
+| `sceneList` | `List[Dict[str, Any]]` | No | `None` | SenseTime scene list |
 | `enable` | `bool` | No | `None` | Whether to enable the avatar |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional SenseTime avatar parameters |
 

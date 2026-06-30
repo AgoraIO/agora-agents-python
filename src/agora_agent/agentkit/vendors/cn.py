@@ -556,7 +556,7 @@ class SenseTimeAvatarOptions(BaseModel):
     agora_uid: str = Field(..., description="Avatar RTC publisher uid")
     app_id: Optional[str] = Field(default=None, alias="appId", description="SenseTime app id")
     app_key: str = Field(..., description="SenseTime app key")
-    scene_list: List[Dict[str, Any]] = Field(..., alias="sceneList", description="SenseTime scene list")
+    scene_list: Optional[List[Dict[str, Any]]] = Field(default=None, alias="sceneList", description="SenseTime scene list")
     enable: Optional[bool] = Field(default=None)
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
@@ -573,12 +573,13 @@ class SenseTimeAvatar(BaseAvatar):
         params: Dict[str, Any] = {
             "agora_uid": self.options.agora_uid,
             "app_key": self.options.app_key,
-            "sceneList": self.options.scene_list,
         }
         if self.options.agora_token is not None:
             params["agora_token"] = self.options.agora_token
         if self.options.app_id is not None:
             params["appId"] = self.options.app_id
+        if self.options.scene_list is not None:
+            params["sceneList"] = self.options.scene_list
         if self.options.additional_params is not None:
             params = {**self.options.additional_params, **params}
 

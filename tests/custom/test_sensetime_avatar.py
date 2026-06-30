@@ -74,14 +74,20 @@ def test_sensetime_avatar_to_config_omits_token_when_not_provided() -> None:
     assert config["params"]["agora_uid"] == "2"
 
 
+def test_sensetime_avatar_to_config_omits_scene_list_when_not_provided() -> None:
+    config = SenseTimeAvatar(
+        agora_uid="2",
+        app_key="sensetime-app-key",
+    ).to_config()
+
+    assert "sceneList" not in config["params"]
+    assert config["params"]["agora_uid"] == "2"
+
+
 @pytest.mark.parametrize(
     ("params", "message"),
     [
         ({}, "SenseTime avatar requires app_key"),
-        (
-            {"app_key": "key", "agora_uid": "2"},
-            "SenseTime avatar requires sceneList",
-        ),
         (
             {"app_key": "key", "sceneList": _scene_list()},
             "SenseTime avatar requires agora_uid",
@@ -108,6 +114,18 @@ def test_validate_avatar_config_requires_agora_token_at_session_time() -> None:
             },
             require_session_fields=True,
         )
+
+
+def test_validate_avatar_config_allows_missing_scene_list() -> None:
+    validate_avatar_config(
+        {
+            "vendor": "sensetime",
+            "params": {
+                "app_key": "key",
+                "agora_uid": "2",
+            },
+        }
+    )
 
 
 def test_sensetime_avatar_session_validation_and_token_passthrough() -> None:
@@ -173,3 +191,24 @@ def test_sensetime_avatar_user_token_is_not_overwritten() -> None:
     )
 
     assert properties["avatar"]["params"]["agora_token"] == "user-token"
+
+
+def test_sensetime_avatar_enrichment_without_scene_list() -> None:
+    agent = Agent(test_client()).with_avatar(
+        SenseTimeAvatar(
+            agora_uid="2",
+            app_key="sensetime-app-key",
+        )
+    )
+    session = _session(agent)
+
+    properties = session._build_start_properties(  # noqa: SLF001
+        {"app_id": APP_ID, "app_certificate": APP_CERTIFICATE},
+        skip_vendor_validation_categories=set(),
+        allow_missing_vendor_categories={"tts", "llm", "asr"},
+    )
+
+    params = properties["avatar"]["params"]
+    assert "sceneList" not in params
+    assert params["agora_uid"] == "2"
+    assert params["agora_token"]

@@ -103,7 +103,7 @@ agent = agent.with_avatar(GenericAvatar(
 
 ## SenseTime Avatar (CN)
 
-`SenseTimeAvatar` is available for `Area.CN` sessions. Provide `agora_uid`, `app_key`, and `sceneList` when constructing the avatar. `agora_token` is optional and is generated at session start when omitted, like LiveAvatar and Generic avatars.
+`SenseTimeAvatar` is available for `Area.CN` sessions. Provide `agora_uid` and `app_key` when constructing the avatar. `sceneList` is optional. `agora_token` is optional and is generated at session start when omitted, like LiveAvatar and Generic avatars.
 
 ```python
 from agora_agent import Agora, Area, CNAgent, MiniMaxCNTTS, SenseTimeAvatar, TencentSTT
@@ -276,7 +276,7 @@ If you call `with_avatar()` before `with_tts()`, the sample rate check is deferr
 | `agora_token` | `str` | No | Avatar publisher RTC token; generated at session start when omitted |
 | `agora_uid` | `str` | Yes | Avatar publisher RTC UID |
 | `app_key` | `str` | Yes | SenseTime application key |
-| `sceneList` | `List[Dict[str, Any]]` | Yes | SenseTime scene configuration list |
+| `sceneList` | `List[Dict[str, Any]]` | No | SenseTime scene configuration list |
 | `appId` | `str` | No | SenseTime application ID |
 | `enable` | `bool` | No | Whether to enable the avatar |
 | `additional_params` | `Dict[str, Any]` | No | Additional SenseTime avatar parameters |

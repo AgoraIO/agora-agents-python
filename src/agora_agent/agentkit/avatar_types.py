@@ -127,9 +127,6 @@ def validate_avatar_config(
         params = config.get("params", {})
         if not params.get("app_key"):
             raise ValueError("SenseTime avatar requires app_key")
-        scene_list = params.get("sceneList")
-        if not scene_list:
-            raise ValueError("SenseTime avatar requires sceneList")
         if not params.get("agora_uid"):
             raise ValueError("SenseTime avatar requires agora_uid")
         if require_session_fields and not params.get("agora_token"):
