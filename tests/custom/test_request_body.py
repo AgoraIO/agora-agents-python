@@ -1272,10 +1272,10 @@ def test_byok_vertex_ai_mllm_params() -> None:
     props = build_properties(agent)
     assert props["mllm"]["vendor"] == "vertexai"
     assert props["mllm"]["url"] == ""
-    assert props["mllm"]["project_id"] == "my-project"
-    assert props["mllm"]["location"] == "us-central1"
-    assert props["mllm"]["adc_credentials_string"] == "{}"
     assert props["mllm"]["params"]["model"] == "gemini-live-2.5-flash"
+    assert props["mllm"]["params"]["project_id"] == "my-project"
+    assert props["mllm"]["params"]["location"] == "us-central1"
+    assert props["mllm"]["params"]["adc_credentials_string"] == "{}"
 
 
 def test_byok_xai_grok_mllm_params() -> None:

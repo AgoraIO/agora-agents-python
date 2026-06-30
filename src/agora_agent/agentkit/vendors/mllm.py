@@ -164,6 +164,9 @@ class VertexAI(BaseMLLM):
         # matching the TypeScript SDK.
         params: Dict[str, Any] = dict(self.options.additional_params or {})
         params["model"] = self.options.model
+        params["project_id"] = self.options.project_id
+        params["location"] = self.options.location
+        params["adc_credentials_string"] = self.options.adc_credentials_string
         if self.options.instructions is not None:
             params["instructions"] = self.options.instructions
         if self.options.voice is not None:
@@ -182,9 +185,6 @@ class VertexAI(BaseMLLM):
         config: Dict[str, Any] = {
             "vendor": "vertexai",
             "url": self.options.url if self.options.url is not None else "",
-            "project_id": self.options.project_id,
-            "location": self.options.location,
-            "adc_credentials_string": self.options.adc_credentials_string,
             "params": params,
         }
         if self.options.greeting_message is not None:
