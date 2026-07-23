@@ -1265,6 +1265,7 @@ def test_byok_openai_realtime_mllm_params() -> None:
     props = build_properties(agent)
     assert props["mllm"]["vendor"] == "openai"
     assert props["mllm"]["api_key"] == "realtime-key"
+    assert props["mllm"]["url"] == "wss://api.openai.com/v1/realtime"
     assert props["mllm"]["params"]["model"] == "gpt-4o-realtime-preview"
     assert props["mllm"]["params"]["voice"] == "coral"
 

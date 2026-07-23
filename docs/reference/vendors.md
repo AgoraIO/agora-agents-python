@@ -780,7 +780,7 @@ No constructor parameters. Use `FengmingSTT()`.
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | OpenAI API key |
 | `model` | `str` | No | `None` | Model (e.g., `gpt-4o-realtime-preview`) |
-| `url` | `str` | No | `None` | Custom WebSocket URL |
+| `url` | `str` | No | `wss://api.openai.com/v1/realtime` | OpenAI Realtime WebSocket URL |
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |

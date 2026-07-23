@@ -16,7 +16,10 @@ class OpenAIRealtime(BaseMLLM):
     voice: Optional[str] = Field(default=None, description="Voice identifier")
     instructions: Optional[str] = Field(default=None, description="System instructions")
     input_audio_transcription: Optional[Dict[str, Any]] = Field(default=None, description="Audio transcription settings")
-    url: Optional[str] = Field(default=None, description="WebSocket URL")
+    url: str = Field(
+        default="wss://api.openai.com/v1/realtime",
+        description="OpenAI Realtime WebSocket URL",
+    )
     greeting_message: Optional[str] = Field(default=None, description="Agent greeting message")
     input_modalities: Optional[List[str]] = Field(default=None, description="Input modalities")
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
@@ -29,10 +32,9 @@ class OpenAIRealtime(BaseMLLM):
         config: Dict[str, Any] = {
             "vendor": "openai",
             "api_key": self.api_key,
+            "url": self.url,
         }
 
-        if self.url is not None:
-            config["url"] = self.url
         if (
             self.model is not None
             or self.params is not None

@@ -38,6 +38,26 @@ def test_xai_grok_serializes_v27_shape_without_style():
     assert "style" not in config
 
 
+def test_openai_realtime_uses_default_url_when_omitted():
+    config = OpenAIRealtime(api_key="openai-key").to_config()
+
+    assert config["url"] == "wss://api.openai.com/v1/realtime"
+
+
+def test_openai_realtime_preserves_custom_url():
+    config = OpenAIRealtime(
+        api_key="openai-key",
+        url="wss://openai.example.com/v1/realtime",
+    ).to_config()
+
+    assert config["url"] == "wss://openai.example.com/v1/realtime"
+
+
+def test_openai_realtime_rejects_none_url():
+    with pytest.raises(ValidationError):
+        OpenAIRealtime(api_key="openai-key", url=None)
+
+
 def test_xai_grok_emits_params_even_when_empty():
     assert XaiGrok(api_key="xai-key").to_config()["params"] == {}
 
