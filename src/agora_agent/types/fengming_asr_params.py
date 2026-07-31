@@ -5,17 +5,17 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .asr_language import AsrLanguage
-from .fengming_asr_params import FengmingAsrParams
 
 
-class FengmingAsr(UncheckedBaseModel):
+class FengmingAsrParams(UncheckedBaseModel):
     """
-    Agora Fengming ASR configuration.
+    Agora Fengming ASR configuration parameters.
     """
 
-    language: typing.Optional[AsrLanguage] = None
-    params: typing.Optional[FengmingAsrParams] = None
+    keywords: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    A list of hotwords to improve ASR accuracy.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

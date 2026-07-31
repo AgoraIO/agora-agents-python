@@ -51,6 +51,11 @@ class Mllm(UncheckedBaseModel):
     """
 
     params: typing.Optional[MllmParams] = None
+    max_history: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The number of conversation history messages cached in the MLLM. Applicable to Azure OpenAI Realtime API only.
+    """
+
     input_modalities: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
     MLLM input modalities.

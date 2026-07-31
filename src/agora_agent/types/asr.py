@@ -13,6 +13,7 @@ from .ares_asr_params import AresAsrParams
 from .asr_language import AsrLanguage
 from .assembly_ai_asr_params import AssemblyAiAsrParams
 from .deepgram_asr_params import DeepgramAsrParams
+from .fengming_asr_params import FengmingAsrParams
 from .google_asr_params import GoogleAsrParams
 from .microsoft_asr_params import MicrosoftAsrParams
 from .open_ai_asr_params import OpenAiAsrParams
@@ -43,7 +44,7 @@ class Asr_Ares(UncheckedBaseModel):
 class Asr_Fengming(UncheckedBaseModel):
     vendor: typing.Literal["fengming"] = "fengming"
     language: typing.Optional[AsrLanguage] = None
-    params: typing.Optional[typing.Dict[str, typing.Any]] = None
+    params: typing.Optional[FengmingAsrParams] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

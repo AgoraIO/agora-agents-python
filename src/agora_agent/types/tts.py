@@ -30,6 +30,7 @@ from .rime_tts_params import RimeTtsParams
 from .sarvam_tts_params import SarvamTtsParams
 from .stepfun_tts_params import StepfunTtsParams
 from .tencent_tts_params import TencentTtsParams
+from .typecast_tts_params import TypecastTtsParams
 from .x_ai_tts_params import XAiTtsParams
 
 
@@ -366,6 +367,21 @@ class Tts_Mistral(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Tts_Typecast(UncheckedBaseModel):
+    vendor: typing.Literal["typecast"] = "typecast"
+    params: TypecastTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Tts = typing_extensions.Annotated[
     typing.Union[
         Tts_Tencent,
@@ -390,6 +406,7 @@ Tts = typing_extensions.Annotated[
         Tts_Stepfun,
         Tts_Gradium,
         Tts_Mistral,
+        Tts_Typecast,
     ],
     UnionMetadata(discriminant="vendor"),
 ]
