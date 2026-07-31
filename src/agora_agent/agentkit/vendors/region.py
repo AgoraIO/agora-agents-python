@@ -58,6 +58,16 @@ GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
     "deepgram",
     "gradium",
     "mistral",
+    "typecast",
+)
+
+CN_MLLM_VENDORS: typing.Tuple[str, ...] = ("qwen_omni",)
+GLOBAL_MLLM_VENDORS: typing.Tuple[str, ...] = (
+    "openai",
+    "azure",
+    "gemini",
+    "vertexai",
+    "xai",
 )
 
 CN_LLM_VENDORS: typing.Tuple[str, ...] = (
@@ -98,11 +108,13 @@ def allowed_vendors_for_scope(scope: AreaScope) -> typing.Dict[str, typing.Tuple
             "asr": CN_ASR_VENDORS,
             "tts": CN_TTS_VENDORS,
             "llm": CN_LLM_VENDORS,
+            "mllm": CN_MLLM_VENDORS,
             "avatar": CN_AVATAR_VENDORS,
         }
     return {
         "asr": GLOBAL_ASR_VENDORS,
         "tts": GLOBAL_TTS_VENDORS,
         "llm": GLOBAL_LLM_VENDORS,
+        "mllm": GLOBAL_MLLM_VENDORS,
         "avatar": GLOBAL_AVATAR_VENDORS,
     }

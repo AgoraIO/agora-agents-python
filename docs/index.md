@@ -17,12 +17,12 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 
 **Cascading flow** uses ASR -> LLM -> TTS and supports the broadest set of vendor combinations.
 
-**MLLM flow** uses a multimodal model such as OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok for end-to-end audio.
+**MLLM flow** uses a multimodal model such as OpenAI Realtime, Azure OpenAI Realtime, Gemini Live, Vertex AI, xAI Grok, or Qwen Omni for end-to-end audio.
 
 ## Start here
 
 - Start with [Quick Start](./getting-started/quick-start.md). It shows the baseline app-credentials setup and starts a cascading ASR -> LLM -> TTS agent.
-- Use [MLLM Flow](./guides/mllm-flow.md) when your agent uses one realtime multimodal model, such as OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok.
+- Use [MLLM Flow](./guides/mllm-flow.md) when your agent uses one supported realtime multimodal model.
 - Use [Cascading Flow](./guides/cascading-flow.md) for more examples of the default ASR -> LLM -> TTS flow, including provider-specific configuration.
 
 ## How the SDK is organized
@@ -46,7 +46,7 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 | [AgentSession](./concepts/session.md) | Manage the agent lifecycle |
 | [Vendors](./concepts/vendors.md) | Browse all LLM, TTS, STT, MLLM, and Avatar providers |
 | [Cascading Flow](./guides/cascading-flow.md) | Build an ASR -> LLM -> TTS pipeline |
-| [MLLM Flow](./guides/mllm-flow.md) | Use OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok for end-to-end audio |
+| [MLLM Flow](./guides/mllm-flow.md) | Use a global or CN realtime multimodal model for end-to-end audio |
 | [Avatars](./guides/avatars.md) | Add a digital avatar with LiveAvatar, Akool, Anam, Generic Avatar, SenseTime, or Spatius |
 | [Regional Routing](./guides/regional-routing.md) | Route requests to the nearest region |
 | [Error Handling](./guides/error-handling.md) | Handle API errors with ApiError |

@@ -4,7 +4,7 @@
 Import CN vendors explicitly from this module so they stay separate from the global
 top-level namespace::
 
-    from agora_agent.cn import AliyunLLM, MiniMaxTTS, TencentSTT
+    from agora_agent.cn import AliyunLLM, MiniMaxTTS, QwenOmni, TencentSTT
 
 ``MicrosoftSTT`` / ``MicrosoftTTS`` / ``MiniMaxTTS`` here are the CN variants; the
 global variants of those names are available from the top-level package
@@ -22,6 +22,7 @@ from .agentkit.vendors.cn import (
     MicrosoftSTT,
     MicrosoftTTS,
     MiniMaxTTS,
+    QwenOmni,
     SenseTimeAvatar,
     SpatiusAvatar,
     StepFunTTS,
@@ -54,6 +55,8 @@ __all__ = [
     "BytedanceLLM",
     "DeepSeekLLM",
     "TencentLLM",
+    # MLLM
+    "QwenOmni",
     # Avatar
     "SenseTimeAvatar",
     "SpatiusAvatar",

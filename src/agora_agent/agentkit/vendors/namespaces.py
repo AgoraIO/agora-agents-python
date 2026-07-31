@@ -13,6 +13,7 @@ from .llm import (
     OpenAI,
     VertexAILLM,
 )
+from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
     AmazonSTT,
     AresSTT,
@@ -42,6 +43,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    TypecastTTS,
     XaiTTS,
 )
 
@@ -87,6 +89,18 @@ class CNLLMVendors:
     tencent = cn_vendors.TencentLLM
 
 
+class GlobalMLLMVendors:
+    openai = OpenAIRealtime
+    azure = AzureOpenAIRealtime
+    gemini = GeminiLive
+    vertexai = VertexAI
+    xai = XaiGrok
+
+
+class CNMLLMVendors:
+    qwen_omni = cn_vendors.QwenOmni
+
+
 class GlobalTTSVendors:
     microsoft = MicrosoftTTS
     elevenlabs = ElevenLabsTTS
@@ -105,6 +119,7 @@ class GlobalTTSVendors:
     deepgram = DeepgramTTS
     gradium = GradiumTTS
     mistral = MistralTTS
+    typecast = TypecastTTS
 
 
 class CNTTSVendors:
@@ -134,12 +149,14 @@ class CNAvatarVendors:
 class GlobalVendors:
     stt: GlobalSTTVendors
     llm: GlobalLLMVendors
+    mllm: GlobalMLLMVendors
     tts: GlobalTTSVendors
     avatar: GlobalAvatarVendors
 
     def __init__(self) -> None:
         self.stt = GlobalSTTVendors()
         self.llm = GlobalLLMVendors()
+        self.mllm = GlobalMLLMVendors()
         self.tts = GlobalTTSVendors()
         self.avatar = GlobalAvatarVendors()
 
@@ -147,11 +164,13 @@ class GlobalVendors:
 class CNVendors:
     stt: CNSTTVendors
     llm: CNLLMVendors
+    mllm: CNMLLMVendors
     tts: CNTTSVendors
     avatar: CNAvatarVendors
 
     def __init__(self) -> None:
         self.stt = CNSTTVendors()
         self.llm = CNLLMVendors()
+        self.mllm = CNMLLMVendors()
         self.tts = CNTTSVendors()
         self.avatar = CNAvatarVendors()

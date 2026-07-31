@@ -10,17 +10,18 @@ All vendor classes are available from `agora_agent`:
 
 <!-- snippet: fragment -->
 ```python
-from agora_agent import OpenAI, ElevenLabsTTS, DeepgramTTS, DeepgramSTT, OpenAIRealtime, XaiGrok, GenericAvatar
+from agora_agent import AzureOpenAIRealtime, DeepgramSTT, OpenAI, TypecastTTS
+from agora_agent.cn import QwenOmni
 ```
 
 ## Recommended vendors by area
 
 Construct vendors directly from `agora_agent`, then bind a client with `Agent(client=client, ...)`. The bound client selects `CNAgent` or `GlobalAgent` for IDE hints based on `area`, but does not restrict which vendor classes you can configure.
 
-| Area | STT classes | LLM classes | TTS classes | Avatar classes |
-|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
-| `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
+| Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
+|---|---|---|---|---|---|
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
 
@@ -411,6 +412,16 @@ AgentKit serializes `credential_mode` at the top level of the Rime TTS configura
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional Mistral TTS parameters, flattened into `params` |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
+### `TypecastTTS`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Typecast API key |
+| `voice_id` | `str` | Yes | — | Typecast voice identifier |
+| `model` | `str` | Yes | — | Typecast TTS model name, for example `ssfm-v30` |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Typecast parameters, flattened into `params` |
+| `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
+
 ### `MurfTTS`
 
 | Parameter | Type | Required | Default | Description |
@@ -550,6 +561,7 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
+| `keywords` | `List[str]` | No | `None` | Hotwords that improve ASR accuracy |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 
 ### `SarvamSTT`
@@ -700,7 +712,9 @@ All CN TTS vendor classes support `skip_patterns` and `additional_params`.
 
 #### `FengmingSTT`
 
-No constructor parameters. Use `FengmingSTT()`.
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `keywords` | `List[str]` | No | `None` | Hotwords that improve ASR accuracy |
 
 #### `XfyunSTT`
 
@@ -788,6 +802,46 @@ No constructor parameters. Use `FengmingSTT()`.
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 | `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
+
+### `AzureOpenAIRealtime`
+
+Global Azure OpenAI Realtime vendor (`mllm.vendor`: `"azure"`).
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Azure OpenAI API key |
+| `url` | `str` | Yes | — | Azure OpenAI Realtime WebSocket URL |
+| `model` | `str` | No | `None` | Model or deployment name |
+| `voice` | `str` | No | `None` | Voice identifier |
+| `instructions` | `str` | No | `None` | System instructions |
+| `input_audio_transcription` | `Dict[str, Any]` | No | `None` | Audio transcription settings |
+| `max_history` | `int` | No | `None` | Number of conversation history messages to cache; Azure-only MLLM field |
+| `greeting_message` | `str` | No | `None` | Greeting message |
+| `failure_message` | `str` | No | `None` | Message played when the model call fails |
+| `output_modalities` | `List[str]` | No | `None` | Output modalities |
+| `messages` | `List[Dict]` | No | `None` | Conversation messages |
+| `params` | `Dict[str, Any]` | No | `None` | Additional Azure OpenAI parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | Yes | — | Required MLLM turn detection configuration; overrides top-level `turn_detection` |
+
+### `QwenOmni`
+
+CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Import it with `from agora_agent.cn import QwenOmni`.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Alibaba Cloud Model Studio API key |
+| `url` | `str` | No | `None` | Qwen Omni Realtime WebSocket URL |
+| `model` | `str` | No | `None` | Qwen Omni Realtime model name |
+| `voice` | `str` | No | `None` | Voice identifier |
+| `instructions` | `str` | No | `None` | System instructions |
+| `input_audio_transcription` | `Dict[str, Any]` | No | `None` | Audio transcription settings |
+| `greeting_message` | `str` | No | `None` | Greeting message |
+| `failure_message` | `str` | No | `None` | Message played when the model call fails |
+| `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `output_modalities` | `List[str]` | No | `None` | Output modalities |
+| `messages` | `List[Dict]` | No | `None` | Conversation messages |
+| `params` | `Dict[str, Any]` | No | `None` | Additional Qwen Omni parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | Yes | — | Required MLLM turn detection configuration; overrides top-level `turn_detection` |
 
 ### `GeminiLive`
 

@@ -13,7 +13,7 @@ from .base import (
 )
 from .avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
 from .llm import AmazonBedrock, Anthropic, AzureOpenAI, CustomLLM, Dify, Gemini, Groq, OpenAI, VertexAILLM
-from .mllm import GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
+from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
 from .cn import (
     AliyunLLM,
     BytedanceDuplexTTS,
@@ -25,6 +25,7 @@ from .cn import (
     MicrosoftSTT as MicrosoftCNSTT,
     MicrosoftTTS as MicrosoftCNTTS,
     MiniMaxTTS as MiniMaxCNTTS,
+    QwenOmni,
     SenseTimeAvatar,
     SpatiusAvatar,
     StepFunTTS,
@@ -64,6 +65,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    TypecastTTS,
     XaiTTS,
 )
 
@@ -102,6 +104,7 @@ __all__ = [
     "MiniMaxTTS",
     "MiniMaxCNTTS",
     "MistralTTS",
+    "TypecastTTS",
     "MurfTTS",
     "SarvamTTS",
     "GenericTTS",
@@ -133,7 +136,9 @@ __all__ = [
     "DeepSeekLLM",
     "TencentLLM",
     "OpenAIRealtime",
+    "AzureOpenAIRealtime",
     "GeminiLive",
+    "QwenOmni",
     "VertexAI",
     "XaiGrok",
     "HeyGenAvatar",
