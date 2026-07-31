@@ -5,17 +5,19 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .asr_language import AsrLanguage
-from .fengming_asr_params import FengmingAsrParams
+from .typecast_tts_params import TypecastTtsParams
 
 
-class FengmingAsr(UncheckedBaseModel):
+class TypecastTts(UncheckedBaseModel):
     """
-    Agora Fengming ASR configuration.
+    Typecast Text-to-Speech configuration.
     """
 
-    language: typing.Optional[AsrLanguage] = None
-    params: typing.Optional[FengmingAsrParams] = None
+    params: TypecastTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = pydantic.Field(default=None)
+    """
+    Controls whether the TTS module skips bracketed content when reading LLM response text.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

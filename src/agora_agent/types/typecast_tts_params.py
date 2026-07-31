@@ -5,17 +5,27 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .asr_language import AsrLanguage
-from .fengming_asr_params import FengmingAsrParams
 
 
-class FengmingAsr(UncheckedBaseModel):
+class TypecastTtsParams(UncheckedBaseModel):
     """
-    Agora Fengming ASR configuration.
+    Typecast TTS configuration parameters.
     """
 
-    language: typing.Optional[AsrLanguage] = None
-    params: typing.Optional[FengmingAsrParams] = None
+    api_key: str = pydantic.Field()
+    """
+    Typecast API key.
+    """
+
+    voice_id: str = pydantic.Field()
+    """
+    Typecast voice identifier (for example, "tc_60e5426de8b95f1d3000d7b5").
+    """
+
+    model: str = pydantic.Field()
+    """
+    Typecast TTS model name (for example, "ssfm-v30").
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
