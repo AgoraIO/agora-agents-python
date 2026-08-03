@@ -4,8 +4,9 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import ConfigDict, Field, model_validator
 
+from ...types.mllm_turn_detection import MllmTurnDetection
 from .avatar import BaseAvatar
-from .base import BaseLLM
+from .base import BaseLLM, BaseMLLM
 from .llm import (
     _OPENAI_MANAGED_MODELS,
     LlmGreetingConfigs,
@@ -43,8 +44,13 @@ class TencentSTT(_BaseSTTCompat):
 class FengmingSTT(_BaseSTTCompat):
     model_config = ConfigDict(extra="forbid")
 
+    keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
+
     def to_config(self) -> Dict[str, Any]:
-        return {"vendor": "fengming"}
+        config: Dict[str, Any] = {"vendor": "fengming"}
+        if self.keywords is not None:
+            config["params"] = {"keywords": self.keywords}
+        return config
 
 
 class XfyunSTT(_BaseSTTCompat):
@@ -785,6 +791,60 @@ class TencentLLM(BaseLLM):
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
+        return config
+
+
+class QwenOmni(BaseMLLM):
+    """Alibaba Cloud Qwen Omni Realtime MLLM vendor (`mllm.vendor`: ``qwen_omni``)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Alibaba Cloud Model Studio API key")
+    url: Optional[str] = Field(default=None, description="Qwen Omni Realtime WebSocket URL")
+    model: Optional[str] = Field(default=None, description="Qwen Omni Realtime model name")
+    voice: Optional[str] = Field(default=None, description="Voice identifier")
+    instructions: Optional[str] = Field(default=None, description="System instructions")
+    input_audio_transcription: Optional[Dict[str, Any]] = Field(
+        default=None, description="Audio transcription settings"
+    )
+    greeting_message: Optional[str] = Field(default=None, description="Agent greeting message")
+    input_modalities: Optional[List[str]] = Field(default=None, description="Input modalities")
+    output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
+    messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
+    params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Qwen Omni parameters")
+    turn_detection: MllmTurnDetection = Field(..., description="MLLM turn detection configuration")
+    failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+
+    def to_config(self) -> Dict[str, Any]:
+        inner_params: Dict[str, Any] = dict(self.params or {})
+        if self.model is not None:
+            inner_params["model"] = self.model
+        if self.voice is not None:
+            inner_params["voice"] = self.voice
+        if self.instructions is not None:
+            inner_params["instructions"] = self.instructions
+        if self.input_audio_transcription is not None:
+            inner_params["input_audio_transcription"] = self.input_audio_transcription
+
+        config: Dict[str, Any] = {
+            "vendor": "qwen_omni",
+            "api_key": self.api_key,
+        }
+        if self.url is not None:
+            config["url"] = self.url
+        if inner_params:
+            config["params"] = inner_params
+        if self.greeting_message is not None:
+            config["greeting_message"] = self.greeting_message
+        if self.input_modalities is not None:
+            config["input_modalities"] = self.input_modalities
+        if self.output_modalities is not None:
+            config["output_modalities"] = self.output_modalities
+        if self.messages is not None:
+            config["messages"] = self.messages
+        if self.failure_message is not None:
+            config["failure_message"] = self.failure_message
+        config["turn_detection"] = self.turn_detection
         return config
 
 

@@ -507,6 +507,31 @@ class MistralTTS(BaseTTS):
         return result
 
 
+class TypecastTTS(BaseTTS):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Typecast API key")
+    voice_id: str = Field(..., description="Typecast voice identifier")
+    model: str = Field(..., description="Typecast TTS model name")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Typecast TTS parameters")
+    skip_patterns: Optional[List[int]] = Field(default=None)
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update(
+            {
+                "api_key": self.api_key,
+                "voice_id": self.voice_id,
+                "model": self.model,
+            }
+        )
+
+        result: Dict[str, Any] = {"vendor": "typecast", "params": params}
+        if self.skip_patterns is not None:
+            result["skip_patterns"] = self.skip_patterns
+        return result
+
+
 class SarvamTTS(BaseTTS):
     model_config = ConfigDict(extra="forbid")
 

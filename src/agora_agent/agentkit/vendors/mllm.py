@@ -70,6 +70,61 @@ class OpenAIRealtime(BaseMLLM):
         return config
 
 
+class AzureOpenAIRealtime(BaseMLLM):
+    """Azure OpenAI Realtime MLLM vendor (`mllm.vendor`: ``azure``)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Azure OpenAI API key")
+    url: str = Field(..., description="Azure OpenAI Realtime WebSocket URL")
+    model: Optional[str] = Field(default=None, description="Azure OpenAI Realtime model or deployment name")
+    voice: Optional[str] = Field(default=None, description="Voice identifier")
+    instructions: Optional[str] = Field(default=None, description="System instructions")
+    input_audio_transcription: Optional[Dict[str, Any]] = Field(
+        default=None, description="Audio transcription settings"
+    )
+    max_history: Optional[int] = Field(
+        default=None, gt=0, description="Number of conversation history messages to cache"
+    )
+    greeting_message: Optional[str] = Field(default=None, description="Agent greeting message")
+    output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
+    messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
+    params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Azure OpenAI parameters")
+    turn_detection: MllmTurnDetectionConfig = Field(..., description="MLLM turn detection configuration")
+    failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+
+    def to_config(self) -> Dict[str, Any]:
+        inner_params: Dict[str, Any] = dict(self.params or {})
+        if self.model is not None:
+            inner_params["model"] = self.model
+        if self.voice is not None:
+            inner_params["voice"] = self.voice
+        if self.instructions is not None:
+            inner_params["instructions"] = self.instructions
+        if self.input_audio_transcription is not None:
+            inner_params["input_audio_transcription"] = self.input_audio_transcription
+
+        config: Dict[str, Any] = {
+            "vendor": "azure",
+            "api_key": self.api_key,
+            "url": self.url,
+        }
+        if inner_params:
+            config["params"] = inner_params
+        if self.max_history is not None:
+            config["max_history"] = self.max_history
+        if self.greeting_message is not None:
+            config["greeting_message"] = self.greeting_message
+        if self.output_modalities is not None:
+            config["output_modalities"] = self.output_modalities
+        if self.messages is not None:
+            config["messages"] = self.messages
+        if self.failure_message is not None:
+            config["failure_message"] = self.failure_message
+        config["turn_detection"] = self.turn_detection
+        return config
+
+
 # xAI MLLM: use XaiGrok (product name, mllm.vendor "xai"). Do not use XaiRealtime—that name
 # is deprecated and reserved naming for future XaiSTT / XaiTTS cascading vendors.
 

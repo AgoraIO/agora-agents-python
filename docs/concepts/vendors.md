@@ -70,6 +70,7 @@ Used with `agent.with_tts()`. Each TTS vendor produces audio at a specific sampl
 | `DeepgramTTS` | Deepgram | `api_key`, `model` | Configurable |
 | `GradiumTTS` | Gradium | `api_key` | Configurable |
 | `MistralTTS` | Mistral | `api_key` | — |
+| `TypecastTTS` | Typecast | `api_key`, `voice_id`, `model` | — |
 | `SarvamTTS` | Sarvam | `api_key` | — |
 | `XaiTTS` | xAI | `api_key`, `language` | Configurable |
 
@@ -109,6 +110,8 @@ Used with `agent.with_stt()`.
 
 Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. STT vendor `language` options are serialized under `asr.params` using each provider's own format. If `with_stt()` is omitted, AgentKit defaults to `AresSTT` for global clients and `FengmingSTT` for `Area.CN` clients. Ares does not take a provider language option; AgentKit uses `turn_detection.language` for REST `asr.language`.
 
+`AresSTT` and `FengmingSTT` accept an optional `keywords: List[str]` hotword list.
+
 | Class | Provider | Required Parameters |
 |---|---|---|
 | `SpeechmaticsSTT` | Speechmatics | `api_key`, `language` |
@@ -146,18 +149,26 @@ stt = DeepgramSTT(api_key='your-deepgram-key', language='en-US', model='nova-2')
 
 Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These handle audio input and output end-to-end.
 
-| Class | Provider | Required Parameters |
-|---|---|---|
-| `OpenAIRealtime` | OpenAI Realtime | `api_key`; optional `turn_detection` |
-| `GeminiLive` | Google Gemini Live API | `api_key`, `model`; optional `turn_detection` |
-| `VertexAI` | Vertex AI (Gemini Live) | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |
-| `XaiGrok` | xAI Grok (`mllm.vendor`: `xai`) | `api_key`; optional `voice`, `language`, `sample_rate`, `turn_detection` |
+| Class | Provider | Area | Required Parameters |
+|---|---|---|---|
+| `OpenAIRealtime` | OpenAI Realtime | Global | `api_key`; optional `turn_detection` |
+| `AzureOpenAIRealtime` | Azure OpenAI Realtime | Global | `api_key`, `url`, `turn_detection`; optional `max_history` |
+| `GeminiLive` | Google Gemini Live API | Global | `api_key`, `model`; optional `turn_detection` |
+| `VertexAI` | Vertex AI (Gemini Live) | Global | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |
+| `XaiGrok` | xAI Grok (`mllm.vendor`: `xai`) | Global | `api_key`; optional `voice`, `language`, `sample_rate`, `turn_detection` |
+| `QwenOmni` | Alibaba Cloud Qwen Omni Realtime | CN | `api_key`, `turn_detection`; optional `url` |
 
 <!-- snippet: executable -->
 ```python
 from agora_agent import OpenAIRealtime
 
 mllm = OpenAIRealtime(api_key='your-openai-key', model='gpt-4o-realtime-preview')
+```
+
+Import the CN-only Qwen helper from `agora_agent.cn`:
+
+```python
+from agora_agent.cn import QwenOmni
 ```
 
 ## Avatar Vendors

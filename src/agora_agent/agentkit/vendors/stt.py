@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -216,12 +216,17 @@ class AssemblyAISTT(BaseSTT):
 class AresSTT(BaseSTT):
     model_config = ConfigDict(extra="forbid")
 
+    keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
     def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        if self.keywords is not None:
+            params["keywords"] = self.keywords
+
         config: Dict[str, Any] = {"vendor": "ares"}
-        if self.additional_params:
-            config["params"] = self.additional_params
+        if params:
+            config["params"] = params
         return config
 
 

@@ -16,6 +16,7 @@ from .llm import (
     OpenAI,
     VertexAILLM,
 )
+from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
     AmazonSTT,
     AresSTT,
@@ -45,6 +46,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    TypecastTTS,
     XaiTTS,
 )
 
@@ -55,11 +57,13 @@ class VendorNamespace:
         *,
         asr: typing.Mapping[str, typing.Any],
         llm: typing.Mapping[str, typing.Any],
+        mllm: typing.Mapping[str, typing.Any],
         tts: typing.Mapping[str, typing.Any],
         avatar: typing.Mapping[str, typing.Any],
     ) -> None:
         self.asr = dict(asr)
         self.llm = dict(llm)
+        self.mllm = dict(mllm)
         self.tts = dict(tts)
         self.avatar = dict(avatar)
 
@@ -88,6 +92,13 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "dify": Dify,
         "custom": CustomLLM,
     },
+    mllm={
+        "openai": OpenAIRealtime,
+        "azure": AzureOpenAIRealtime,
+        "gemini": GeminiLive,
+        "vertexai": VertexAI,
+        "xai": XaiGrok,
+    },
     tts={
         "microsoft": MicrosoftTTS,
         "elevenlabs": ElevenLabsTTS,
@@ -106,6 +117,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "deepgram": DeepgramTTS,
         "gradium": GradiumTTS,
         "mistral": MistralTTS,
+        "typecast": TypecastTTS,
     },
     avatar={
         "akool": AkoolAvatar,
@@ -130,6 +142,9 @@ CN_VENDOR_NAMESPACE = VendorNamespace(
         "bytedance": cn_vendors.BytedanceLLM,
         "deepseek": cn_vendors.DeepSeekLLM,
         "tencent": cn_vendors.TencentLLM,
+    },
+    mllm={
+        "qwen_omni": cn_vendors.QwenOmni,
     },
     tts={
         "minimax": cn_vendors.MiniMaxTTS,

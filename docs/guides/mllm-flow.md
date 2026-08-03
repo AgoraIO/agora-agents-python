@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: MLLM Flow (Multimodal)
-description: Use OpenAI Realtime, Gemini Live, Vertex AI, or xAI for end-to-end audio processing.
+description: Use supported global or CN realtime multimodal models for end-to-end audio processing.
 ---
 
 # MLLM Flow (Multimodal)
@@ -11,9 +11,11 @@ The MLLM (Multimodal LLM) flow uses a single model to handle both audio input an
 MLLM vendors supported by AgentKit:
 
 - **OpenAI Realtime** — `gpt-4o-realtime-preview` and related models
+- **Azure OpenAI Realtime** — global Azure-hosted realtime deployments
 - **Gemini Live** — direct Google AI API access for audio-native Gemini models
 - **Vertex AI** — Gemini Live through Google Cloud Vertex AI
 - **xAI Grok** — xAI Realtime API
+- **Qwen Omni** — Alibaba Cloud Qwen Omni Realtime for `Area.CN`
 
 ## Enable MLLM Mode
 
@@ -167,7 +169,7 @@ mllm = OpenAIRealtime(
 |---|---|---|
 | Latency | Lower — single model, no pipeline | Higher — three models in sequence |
 | Voice control | Model-dependent | Full vendor choice for TTS |
-| Vendor flexibility | Limited to supported MLLM providers (OpenAI Realtime, Gemini Live, Vertex AI, xAI Grok) | Mix and match LLM, TTS, and STT vendors |
+| Vendor flexibility | Limited to supported global and CN MLLM providers | Mix and match LLM, TTS, and STT vendors |
 | Audio understanding | Model hears tone, pacing, emotion | STT produces text only |
 
 ## Next Steps

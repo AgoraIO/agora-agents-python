@@ -19,9 +19,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+from pydantic import ValidationError
 
 from agora_agent import (
     Agent,
+    Area,
     AmazonBedrock,
     AmazonSTT,
     AmazonTTS,
@@ -29,6 +31,7 @@ from agora_agent import (
     AresSTT,
     AssemblyAISTT,
     AzureOpenAI,
+    AzureOpenAIRealtime,
     CartesiaTTS,
     CredentialMode,
     CustomLLM,
@@ -61,6 +64,7 @@ from agora_agent import (
 )
 from agora_agent.agentkit import AgentSession
 from agora_agent.agentkit.presets import resolve_session_presets
+from agora_agent.cn import QwenOmni
 from test_helpers import test_client
 
 
@@ -1268,6 +1272,80 @@ def test_byok_openai_realtime_mllm_params() -> None:
     assert props["mllm"]["url"] == "wss://api.openai.com/v1/realtime"
     assert props["mllm"]["params"]["model"] == "gpt-4o-realtime-preview"
     assert props["mllm"]["params"]["voice"] == "coral"
+
+
+def test_byok_azure_openai_realtime_mllm_params() -> None:
+    agent = Agent(test_client()).with_mllm(
+        AzureOpenAIRealtime(
+            url="AZURE_URL",
+            api_key="APIKEY",
+            messages=[
+                {"role": "user", "content": "can you please count to 3 after greeting。"}
+            ],
+            params={
+                "instructions": "You are a Conversational AI Agent, developed by Agora.",
+                "model": "gpt-realtime-2",
+                "voice": "alloy",
+            },
+            output_modalities=["audio"],
+            max_history=20,
+            greeting_message="Hey There Sir",
+            turn_detection={"mode": "server_vad"},
+        )
+    )
+
+    props = build_properties(agent)
+
+    assert props["mllm"] == {
+        "enable": True,
+        "url": "AZURE_URL",
+        "api_key": "APIKEY",
+        "messages": [
+            {"role": "user", "content": "can you please count to 3 after greeting。"}
+        ],
+        "params": {
+            "instructions": "You are a Conversational AI Agent, developed by Agora.",
+            "model": "gpt-realtime-2",
+            "voice": "alloy",
+        },
+        "output_modalities": ["audio"],
+        "max_history": 20,
+        "greeting_message": "Hey There Sir",
+        "vendor": "azure",
+        "turn_detection": {"mode": "server_vad"},
+    }
+
+
+def test_azure_openai_realtime_rejects_input_modalities() -> None:
+    with pytest.raises(ValidationError):
+        AzureOpenAIRealtime(
+            url="AZURE_URL",
+            api_key="APIKEY",
+            input_modalities=["audio"],
+            turn_detection={"mode": "server_vad"},
+        )
+
+
+def test_azure_and_qwen_mllm_require_turn_detection() -> None:
+    with pytest.raises(ValidationError):
+        AzureOpenAIRealtime(url="AZURE_URL", api_key="APIKEY")  # type: ignore[call-arg]
+
+    with pytest.raises(ValidationError):
+        QwenOmni(api_key="APIKEY")  # type: ignore[call-arg]
+
+
+def test_byok_qwen_omni_mllm_requires_and_serializes_turn_detection() -> None:
+    agent = Agent(test_client(area=Area.CN)).with_mllm(
+        QwenOmni(
+            api_key="APIKEY",
+            turn_detection={"mode": "server_vad"},
+        )
+    )
+
+    props = build_properties(agent)
+
+    assert props["mllm"]["vendor"] == "qwen_omni"
+    assert props["mllm"]["turn_detection"] == {"mode": "server_vad"}
 
 
 def test_byok_gemini_live_mllm_params() -> None:
