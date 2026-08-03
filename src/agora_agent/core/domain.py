@@ -41,7 +41,7 @@ CN_NORTH_REGION_DOMAIN_PREFIX = "api-cn-north-1"
 GLOBAL_API_PATH_SUFFIX = "/api/conversational-ai-agent"
 CN_API_PATH_SUFFIX = "/cn/api/conversational-ai-agent"
 
-_INTERNAL_API_BASE_URL_ENV = "AGORA_AGENTS_INTERNAL_API_BASE_URL"
+_API_BASE_URL_ENV = "AGORA_AGENTS_API_BASE_URL"
 
 
 def _convo_ai_api_path_suffix(area: Area) -> str:
@@ -50,8 +50,8 @@ def _convo_ai_api_path_suffix(area: Area) -> str:
     return GLOBAL_API_PATH_SUFFIX
 
 
-def _internal_fixed_base_url(area: Area) -> Optional[str]:
-    raw_base_url = os.getenv(_INTERNAL_API_BASE_URL_ENV, "").strip()
+def _get_configured_base_url(area: Area) -> Optional[str]:
+    raw_base_url = os.getenv(_API_BASE_URL_ENV, "").strip()
     if not raw_base_url:
         return None
 
@@ -60,7 +60,7 @@ def _internal_fixed_base_url(area: Area) -> Optional[str]:
         path = posixpath.join(parsed_url.path, _convo_ai_api_path_suffix(area).lstrip("/"))
         return parsed_url._replace(path=path).geturl()
     except ValueError as exc:
-        raise ValueError(f"invalid {_INTERNAL_API_BASE_URL_ENV}: {exc}") from exc
+        raise ValueError(f"invalid {_API_BASE_URL_ENV}: {exc}") from exc
 
 
 class Domain:
@@ -166,7 +166,7 @@ class Pool:
             raise ValueError("invalid domain area")
 
         self._domain_area = domain_area
-        self._fixed_base_url = _internal_fixed_base_url(domain_area)
+        self._configured_base_url = _get_configured_base_url(domain_area)
         self._domain_suffixes = list(domain_config.major_domain_suffixes)
         self._region_prefixes = list(domain_config.region_domain_prefixes)
         self._current_region_prefixes = list(self._region_prefixes)
@@ -181,7 +181,7 @@ class Pool:
 
     def select_best_domain(self) -> None:
         """SelectBestDomain uses DNS resolution to select the best available domain (sync)"""
-        if self._fixed_base_url is not None:
+        if self._configured_base_url is not None:
             return
 
         if not self._domain_need_update():
@@ -194,7 +194,7 @@ class Pool:
 
     async def select_best_domain_async(self) -> None:
         """SelectBestDomain uses DNS resolution to select the best available domain (async)"""
-        if self._fixed_base_url is not None:
+        if self._configured_base_url is not None:
             return
 
         if not self._domain_need_update():
@@ -209,7 +209,7 @@ class Pool:
 
     def next_region(self) -> None:
         """NextRegion cycles to the next region prefix in the pool"""
-        if self._fixed_base_url is not None:
+        if self._configured_base_url is not None:
             return
 
         with self._lock:
@@ -225,8 +225,8 @@ class Pool:
     def get_current_url(self) -> str:
         """GetCurrentURL returns the current URL based on the selected region and domain"""
         with self._lock:
-            if self._fixed_base_url is not None:
-                return self._fixed_base_url
+            if self._configured_base_url is not None:
+                return self._configured_base_url
 
             current_region = self._current_region_prefixes[0]
             current_domain = self._current_domain

@@ -6,7 +6,7 @@ import pytest
 from agora_agent import Agora
 from agora_agent.core.domain import Area, AsyncResolverImpl, Pool, ResolverImpl
 
-_INTERNAL_API_BASE_URL_ENV = "AGORA_AGENTS_INTERNAL_API_BASE_URL"
+_API_BASE_URL_ENV = "AGORA_AGENTS_API_BASE_URL"
 
 
 @pytest.mark.parametrize(
@@ -18,12 +18,12 @@ _INTERNAL_API_BASE_URL_ENV = "AGORA_AGENTS_INTERNAL_API_BASE_URL"
         (Area.CN, "https://api-test.agora.io/cn/api/conversational-ai-agent"),
     ],
 )
-def test_pool_uses_internal_fixed_base_url(
+def test_pool_uses_configured_base_url(
     monkeypatch: pytest.MonkeyPatch,
     area: Area,
     expected: str,
 ) -> None:
-    monkeypatch.setenv(_INTERNAL_API_BASE_URL_ENV, "https://api-test.agora.io/")
+    monkeypatch.setenv(_API_BASE_URL_ENV, "https://api-test.agora.io/")
 
     assert Pool(area).get_current_url() == expected
 
@@ -50,13 +50,13 @@ def test_pool_accepts_configured_base_url(
     base_url: str,
     expected: str,
 ) -> None:
-    monkeypatch.setenv(_INTERNAL_API_BASE_URL_ENV, base_url)
+    monkeypatch.setenv(_API_BASE_URL_ENV, base_url)
 
     assert Pool(Area.US).get_current_url() == expected
 
 
-def test_fixed_base_url_disables_dynamic_routing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(_INTERNAL_API_BASE_URL_ENV, "https://api-test.agora.io")
+def test_configured_base_url_disables_dynamic_routing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(_API_BASE_URL_ENV, "https://api-test.agora.io")
     pool = Pool(Area.US)
     pool._resolver = _FailingResolver()
 
@@ -68,8 +68,8 @@ def test_fixed_base_url_disables_dynamic_routing(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_fixed_base_url_disables_async_domain_selection(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(_INTERNAL_API_BASE_URL_ENV, "https://api-test.agora.io")
+async def test_configured_base_url_disables_async_domain_selection(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(_API_BASE_URL_ENV, "https://api-test.agora.io")
     pool = Pool(Area.CN)
     pool._async_resolver = _FailingAsyncResolver()
 
@@ -78,8 +78,8 @@ async def test_fixed_base_url_disables_async_domain_selection(monkeypatch: pytes
     assert pool.get_current_url() == "https://api-test.agora.io/cn/api/conversational-ai-agent"
 
 
-def test_pool_without_internal_base_url_keeps_regional_routing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(_INTERNAL_API_BASE_URL_ENV, raising=False)
+def test_pool_without_configured_base_url_keeps_regional_routing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(_API_BASE_URL_ENV, raising=False)
     pool = Pool(Area.US)
 
     assert pool.get_current_url() == "https://api-us-west-1.agora.io/api/conversational-ai-agent"
@@ -89,8 +89,8 @@ def test_pool_without_internal_base_url_keeps_regional_routing(monkeypatch: pyte
     assert pool.get_current_url() == "https://api-us-east-1.agora.io/api/conversational-ai-agent"
 
 
-def test_client_uses_internal_fixed_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(_INTERNAL_API_BASE_URL_ENV, "https://api-test.agora.io")
+def test_client_uses_configured_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(_API_BASE_URL_ENV, "https://api-test.agora.io")
 
     with httpx.Client() as httpx_client:
         client = Agora(
