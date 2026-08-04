@@ -156,7 +156,7 @@ Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These
 | `GeminiLive` | Google Gemini Live API | Global | `api_key`, `model`; optional `turn_detection` |
 | `VertexAI` | Vertex AI (Gemini Live) | Global | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |
 | `XaiGrok` | xAI Grok (`mllm.vendor`: `xai`) | Global | `api_key`; optional `voice`, `language`, `sample_rate`, `turn_detection` |
-| `QwenOmni` | Alibaba Cloud Qwen Omni Realtime | CN | `api_key`, `turn_detection`; optional `url` |
+| `QwenOmni` | Alibaba Cloud Qwen Omni Realtime | CN | `api_key`, `url`; optional `turn_detection` |
 
 <!-- snippet: executable -->
 ```python

@@ -800,7 +800,7 @@ class QwenOmni(BaseMLLM):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Alibaba Cloud Model Studio API key")
-    url: Optional[str] = Field(default=None, description="Qwen Omni Realtime WebSocket URL")
+    url: str = Field(..., description="Qwen Omni Realtime WebSocket URL")
     model: Optional[str] = Field(default=None, description="Qwen Omni Realtime model name")
     voice: Optional[str] = Field(default=None, description="Voice identifier")
     instructions: Optional[str] = Field(default=None, description="System instructions")
@@ -812,7 +812,7 @@ class QwenOmni(BaseMLLM):
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
     messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Qwen Omni parameters")
-    turn_detection: MllmTurnDetection = Field(..., description="MLLM turn detection configuration")
+    turn_detection: Optional[MllmTurnDetection] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
 
     def to_config(self) -> Dict[str, Any]:
@@ -829,9 +829,8 @@ class QwenOmni(BaseMLLM):
         config: Dict[str, Any] = {
             "vendor": "qwen_omni",
             "api_key": self.api_key,
+            "url": self.url,
         }
-        if self.url is not None:
-            config["url"] = self.url
         if inner_params:
             config["params"] = inner_params
         if self.greeting_message is not None:
@@ -844,7 +843,8 @@ class QwenOmni(BaseMLLM):
             config["messages"] = self.messages
         if self.failure_message is not None:
             config["failure_message"] = self.failure_message
-        config["turn_detection"] = self.turn_detection
+        if self.turn_detection is not None:
+            config["turn_detection"] = self.turn_detection
         return config
 
 
