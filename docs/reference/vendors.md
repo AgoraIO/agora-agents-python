@@ -830,7 +830,7 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Alibaba Cloud Model Studio API key |
-| `url` | `str` | No | `None` | Qwen Omni Realtime WebSocket URL |
+| `url` | `str` | Yes | — | Qwen Omni Realtime WebSocket URL |
 | `model` | `str` | No | `None` | Qwen Omni Realtime model name |
 | `voice` | `str` | No | `None` | Voice identifier |
 | `instructions` | `str` | No | `None` | System instructions |
@@ -841,7 +841,7 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `params` | `Dict[str, Any]` | No | `None` | Additional Qwen Omni parameters |
-| `turn_detection` | `MllmTurnDetectionConfig` | Yes | — | Required MLLM turn detection configuration; overrides top-level `turn_detection` |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
 ### `GeminiLive`
 

@@ -1326,18 +1326,42 @@ def test_azure_openai_realtime_rejects_input_modalities() -> None:
         )
 
 
-def test_azure_and_qwen_mllm_require_turn_detection() -> None:
+def test_azure_mllm_requires_turn_detection_and_qwen_mllm_requires_url() -> None:
     with pytest.raises(ValidationError):
         AzureOpenAIRealtime(url="AZURE_URL", api_key="APIKEY")  # type: ignore[call-arg]
 
     with pytest.raises(ValidationError):
-        QwenOmni(api_key="APIKEY")  # type: ignore[call-arg]
+        QwenOmni(  # type: ignore[call-arg]
+            api_key="APIKEY",
+            turn_detection={"mode": "server_vad"},
+        )
 
 
-def test_byok_qwen_omni_mllm_requires_and_serializes_turn_detection() -> None:
+def test_byok_qwen_omni_mllm_allows_omitting_turn_detection() -> None:
+    agent = Agent(test_client(area=Area.CN)).with_mllm(
+        QwenOmni(
+            api_key="xxxxxxxx",
+            url="wss://dashscope.aliyuncs.com/api-ws/v1/realtime",
+            model="qwen3.5-omni-plus-realtime",
+        )
+    )
+
+    props = build_properties(agent)
+
+    assert props["mllm"] == {
+        "enable": True,
+        "vendor": "qwen_omni",
+        "url": "wss://dashscope.aliyuncs.com/api-ws/v1/realtime",
+        "api_key": "xxxxxxxx",
+        "params": {"model": "qwen3.5-omni-plus-realtime"},
+    }
+
+
+def test_byok_qwen_omni_mllm_serializes_optional_turn_detection() -> None:
     agent = Agent(test_client(area=Area.CN)).with_mllm(
         QwenOmni(
             api_key="APIKEY",
+            url="QWEN_URL",
             turn_detection={"mode": "server_vad"},
         )
     )
@@ -1345,6 +1369,7 @@ def test_byok_qwen_omni_mllm_requires_and_serializes_turn_detection() -> None:
     props = build_properties(agent)
 
     assert props["mllm"]["vendor"] == "qwen_omni"
+    assert props["mllm"]["url"] == "QWEN_URL"
     assert props["mllm"]["turn_detection"] == {"mode": "server_vad"}
 
 
