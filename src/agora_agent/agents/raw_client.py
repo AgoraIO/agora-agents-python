@@ -9,7 +9,6 @@ from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pagination import AsyncPager, SyncPager
 from ..core.request_options import RequestOptions
-from ..core.serialization import convert_and_respect_annotation_metadata
 from ..core.unchecked_base_model import construct_type
 from .types.get_agents_response import GetAgentsResponse
 from .types.get_history_agents_response import GetHistoryAgentsResponse
@@ -82,9 +81,7 @@ class RawAgentsClient:
                 "name": name,
                 "preset": preset,
                 "pipeline_id": pipeline_id,
-                "properties": convert_and_respect_annotation_metadata(
-                    object_=properties, annotation=StartAgentsRequestProperties, direction="write"
-                ),
+                "properties": properties,
             },
             headers={
                 "content-type": "application/json",
@@ -420,9 +417,7 @@ class RawAgentsClient:
             f"v2/projects/{jsonable_encoder(appid)}/agents/{jsonable_encoder(agent_id)}/update",
             method="POST",
             json={
-                "properties": convert_and_respect_annotation_metadata(
-                    object_=properties, annotation=UpdateAgentsRequestProperties, direction="write"
-                ),
+                "properties": properties,
             },
             headers={
                 "content-type": "application/json",
@@ -623,9 +618,7 @@ class AsyncRawAgentsClient:
                 "name": name,
                 "preset": preset,
                 "pipeline_id": pipeline_id,
-                "properties": convert_and_respect_annotation_metadata(
-                    object_=properties, annotation=StartAgentsRequestProperties, direction="write"
-                ),
+                "properties": properties,
             },
             headers={
                 "content-type": "application/json",
@@ -964,9 +957,7 @@ class AsyncRawAgentsClient:
             f"v2/projects/{jsonable_encoder(appid)}/agents/{jsonable_encoder(agent_id)}/update",
             method="POST",
             json={
-                "properties": convert_and_respect_annotation_metadata(
-                    object_=properties, annotation=UpdateAgentsRequestProperties, direction="write"
-                ),
+                "properties": properties,
             },
             headers={
                 "content-type": "application/json",

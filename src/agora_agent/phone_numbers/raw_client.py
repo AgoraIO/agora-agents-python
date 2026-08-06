@@ -8,7 +8,6 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.request_options import RequestOptions
-from ..core.serialization import convert_and_respect_annotation_metadata
 from ..core.unchecked_base_model import construct_type
 from .types.add_phone_numbers_request_inbound_config import AddPhoneNumbersRequestInboundConfig
 from .types.add_phone_numbers_request_outbound_config import AddPhoneNumbersRequestOutboundConfig
@@ -121,12 +120,8 @@ class RawPhoneNumbersClient:
                 "label": label,
                 "inbound": inbound,
                 "outbound": outbound,
-                "inbound_config": convert_and_respect_annotation_metadata(
-                    object_=inbound_config, annotation=AddPhoneNumbersRequestInboundConfig, direction="write"
-                ),
-                "outbound_config": convert_and_respect_annotation_metadata(
-                    object_=outbound_config, annotation=AddPhoneNumbersRequestOutboundConfig, direction="write"
-                ),
+                "inbound_config": inbound_config,
+                "outbound_config": outbound_config,
             },
             headers={
                 "content-type": "application/json",
@@ -256,16 +251,8 @@ class RawPhoneNumbersClient:
             f"v2/phone-numbers/{jsonable_encoder(phone_number)}",
             method="PATCH",
             json={
-                "inbound_config": convert_and_respect_annotation_metadata(
-                    object_=inbound_config,
-                    annotation=typing.Optional[UpdatePhoneNumbersRequestInboundConfig],
-                    direction="write",
-                ),
-                "outbound_config": convert_and_respect_annotation_metadata(
-                    object_=outbound_config,
-                    annotation=typing.Optional[UpdatePhoneNumbersRequestOutboundConfig],
-                    direction="write",
-                ),
+                "inbound_config": inbound_config,
+                "outbound_config": outbound_config,
             },
             headers={
                 "content-type": "application/json",
@@ -386,12 +373,8 @@ class AsyncRawPhoneNumbersClient:
                 "label": label,
                 "inbound": inbound,
                 "outbound": outbound,
-                "inbound_config": convert_and_respect_annotation_metadata(
-                    object_=inbound_config, annotation=AddPhoneNumbersRequestInboundConfig, direction="write"
-                ),
-                "outbound_config": convert_and_respect_annotation_metadata(
-                    object_=outbound_config, annotation=AddPhoneNumbersRequestOutboundConfig, direction="write"
-                ),
+                "inbound_config": inbound_config,
+                "outbound_config": outbound_config,
             },
             headers={
                 "content-type": "application/json",
@@ -521,16 +504,8 @@ class AsyncRawPhoneNumbersClient:
             f"v2/phone-numbers/{jsonable_encoder(phone_number)}",
             method="PATCH",
             json={
-                "inbound_config": convert_and_respect_annotation_metadata(
-                    object_=inbound_config,
-                    annotation=typing.Optional[UpdatePhoneNumbersRequestInboundConfig],
-                    direction="write",
-                ),
-                "outbound_config": convert_and_respect_annotation_metadata(
-                    object_=outbound_config,
-                    annotation=typing.Optional[UpdatePhoneNumbersRequestOutboundConfig],
-                    direction="write",
-                ),
+                "inbound_config": inbound_config,
+                "outbound_config": outbound_config,
             },
             headers={
                 "content-type": "application/json",

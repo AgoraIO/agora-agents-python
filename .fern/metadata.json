@@ -9,9 +9,10 @@
       "filename": "client.py"
     },
     "pydantic_config": {
-      "skip_validation": true
+      "skip_validation": true,
+      "use_pydantic_field_aliases": true
     },
     "exclude_types_from_init_exports": true
   },
-  "originGitCommit": "8994613e045586856dab7b5eab43920dce0154c4"
+  "originGitCommit": "91f10c5510b7b9689bba8fa654f1da228ac7ad6e"
 }

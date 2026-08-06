@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
-from ..core.serialization import FieldMetadata
 from ..core.unchecked_base_model import UncheckedBaseModel
 from .sensetime_avatar_params_scene_list_item import SensetimeAvatarParamsSceneListItem
 
@@ -25,7 +23,7 @@ class SensetimeAvatarParams(UncheckedBaseModel):
     Numeric Agora UID string used by the avatar service.
     """
 
-    app_id: typing_extensions.Annotated[str, FieldMetadata(alias="appId")] = pydantic.Field()
+    app_id: str = pydantic.Field(alias="appId")
     """
     SenseTime application ID.
     """
@@ -35,9 +33,7 @@ class SensetimeAvatarParams(UncheckedBaseModel):
     SenseTime application key.
     """
 
-    scene_list: typing_extensions.Annotated[
-        typing.List[SensetimeAvatarParamsSceneListItem], FieldMetadata(alias="sceneList")
-    ] = pydantic.Field()
+    scene_list: typing.List[SensetimeAvatarParamsSceneListItem] = pydantic.Field(alias="sceneList")
     """
     SenseTime scene configuration list.
     """
