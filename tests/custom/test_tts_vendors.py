@@ -1,9 +1,16 @@
+import json
+
+import httpx
 import pytest
 
 from agora_agent import (
+    Agent,
+    Agora,
     AmazonTTS,
+    Area,
     CartesiaTTS,
     CredentialMode,
+    DeepgramSTT,
     DeepgramTTS,
     ElevenLabsTTS,
     FishAudioTTS,
@@ -14,13 +21,12 @@ from agora_agent import (
     MiniMaxTTS,
     MistralTTS,
     MurfTTS,
+    OpenAI,
     OpenAITTS,
     RimeTTS,
     SarvamTTS,
+    TypecastTTS,
 )
-from agora_agent.agents.types.start_agents_request_properties import StartAgentsRequestProperties
-from agora_agent.core.jsonable_encoder import jsonable_encoder
-from agora_agent.core.pydantic_utilities import parse_obj_as
 
 
 def test_tts_vendor_params_match_generated_core_shapes() -> None:
@@ -309,84 +315,192 @@ def test_rime_tts_rejects_unknown_credential_mode() -> None:
         RimeTTS(credential_mode="unknown", base_url="wss://users.rime.ai/ws", model_id="mist")  # type: ignore[arg-type]
 
 
-def test_tts_wire_serialization_applies_fern_aliases() -> None:
-    """Verify alias-sensitive TTS params keep the exact provider wire keys."""
-    _BASE = dict(channel="ch", token="tok", agent_rtc_uid="1", remote_rtc_uids=["100"])
+def _capture_start_request(tts) -> dict:
+    requests = []
 
-    google_config = GoogleTTS(
-        key="{}", voice_name="en-US-JennyNeural", language_code="en-US", sample_rate_hertz=24000
-    ).to_config()
-    assert "VoiceSelectionParams" in google_config["params"]
-    google_wire = jsonable_encoder(parse_obj_as(StartAgentsRequestProperties, {**_BASE, "tts": google_config}))
-    google_params = google_wire["tts"]["params"]
-    assert "VoiceSelectionParams" in google_params, f"wire missing VoiceSelectionParams, got: {list(google_params)}"
-    assert "voice_selection_params" not in google_params
-    assert "AudioConfig" in google_params
-    assert "audio_config" not in google_params
+    def handle_request(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"agent_id": "agent-id"})
 
-    rime_config = RimeTTS(key="rime-key", speaker="speaker", model_id="mist").to_config()
-    assert "modelId" in rime_config["params"]
-    rime_wire = jsonable_encoder(parse_obj_as(StartAgentsRequestProperties, {**_BASE, "tts": rime_config}))
-    rime_params = rime_wire["tts"]["params"]
-    assert "modelId" in rime_params, f"wire missing modelId, got: {list(rime_params)}"
-    assert "model_id" not in rime_params
+    with httpx.Client(transport=httpx.MockTransport(handle_request)) as httpx_client:
+        client = Agora(
+            area=Area.US,
+            app_id="0" * 32,
+            app_certificate="1" * 32,
+            customer_id="customer-id",
+            customer_secret="customer-secret",
+            httpx_client=httpx_client,
+        )
+        agent = (
+            Agent(client)
+            .with_stt(DeepgramSTT(api_key="deepgram-key", model="nova-3", language="en"))
+            .with_llm(
+                OpenAI(
+                    api_key="openai-key",
+                    base_url="https://api.openai.com/v1/chat/completions",
+                    model="gpt-4o-mini",
+                )
+            )
+            .with_tts(tts)
+        )
+        agent_id = agent.create_session(
+            channel="ch",
+            token="tok",
+            agent_uid="1",
+            remote_uids=["100"],
+            name="alias-test",
+        ).start()
 
-    managed_rime_config = RimeTTS(
-        credential_mode=CredentialMode.MANAGED,
-        base_url="wss://users.rime.ai/ws",
-        model_id="mist",
-    ).to_config()
-    managed_rime_wire = jsonable_encoder(
-        parse_obj_as(StartAgentsRequestProperties, {**_BASE, "tts": managed_rime_config})
-    )
-    assert managed_rime_wire["tts"] == {
-        "vendor": "rime",
-        "credential_mode": "managed",
-        "params": {
-            "modelId": "mist",
-            "base_url": "wss://users.rime.ai/ws",
-        },
-    }
+    assert agent_id == "agent-id"
+    assert len(requests) == 1
+    assert requests[0].method == "POST"
+    assert requests[0].url.path == f"/api/conversational-ai-agent/v2/projects/{'0' * 32}/join"
+    return json.loads(requests[0].content)["properties"]["tts"]
 
-    gradium_config = GradiumTTS(
-        api_key="gradium-key",
-        model_name="default",
-        voice_id="voice",
-        sample_rate=16000,
-        additional_params={"custom_gain": 0.5},
-    ).to_config()
-    gradium_wire = jsonable_encoder(parse_obj_as(StartAgentsRequestProperties, {**_BASE, "tts": gradium_config}))
-    assert gradium_wire["tts"] == {
-        "vendor": "gradium",
-        "params": {
-            "api_key": "gradium-key",
-            "model_name": "default",
-            "voiceId": "voice",
-            "sample_rate": 16000,
-            "custom_gain": 0.5,
-        },
-    }
 
-    mistral_config = MistralTTS(
-        api_key="mistral-key",
-        model="voxtral-mini-tts-2603",
-        voice="voice",
-        additional_params={"speed": 1.1},
-    ).to_config()
-    mistral_wire = jsonable_encoder(parse_obj_as(StartAgentsRequestProperties, {**_BASE, "tts": mistral_config}))
-    assert mistral_wire["tts"] == {
-        "vendor": "mistral",
-        "params": {
-            "api_key": "mistral-key",
-            "model": "voxtral-mini-tts-2603",
-            "voice": "voice",
-            "speed": 1.1,
-        },
-    }
-
-    murf_config = MurfTTS(key="murf-key", voice_id="Ariana").to_config()
-    assert "voiceId" in murf_config["params"]
-    murf_wire = jsonable_encoder(parse_obj_as(StartAgentsRequestProperties, {**_BASE, "tts": murf_config}))
-    murf_params = murf_wire["tts"]["params"]
-    assert "voiceId" in murf_params, f"wire missing voiceId, got: {list(murf_params)}"
-    assert murf_params["voiceId"] == "Ariana"
+@pytest.mark.parametrize(
+    ("tts", "expected_tts"),
+    [
+        pytest.param(
+            TypecastTTS(api_key="typecast-key", voice_id="typecast-voice", model="nova-3"),
+            {
+                "vendor": "typecast",
+                "params": {
+                    "api_key": "typecast-key",
+                    "voice_id": "typecast-voice",
+                    "model": "nova-3",
+                },
+            },
+            id="typecast-keeps-voice-id",
+        ),
+        pytest.param(
+            ElevenLabsTTS(
+                key="eleven-key",
+                model_id="eleven_flash_v2_5",
+                voice_id="eleven-voice",
+                base_url="wss://api.elevenlabs.io/v1",
+            ),
+            {
+                "vendor": "elevenlabs",
+                "params": {
+                    "key": "eleven-key",
+                    "base_url": "wss://api.elevenlabs.io/v1",
+                    "model_id": "eleven_flash_v2_5",
+                    "voice_id": "eleven-voice",
+                },
+            },
+            id="elevenlabs-keeps-model-id-and-voice-id",
+        ),
+        pytest.param(
+            CartesiaTTS(api_key="cartesia-key", voice_id="cartesia-voice", model_id="sonic-2"),
+            {
+                "vendor": "cartesia",
+                "params": {
+                    "api_key": "cartesia-key",
+                    "model_id": "sonic-2",
+                    "voice": {"mode": "id", "id": "cartesia-voice"},
+                },
+            },
+            id="cartesia-keeps-model-id",
+        ),
+        pytest.param(
+            GradiumTTS(
+                api_key="gradium-key",
+                model_name="default",
+                voice_id="gradium-voice",
+                sample_rate=16000,
+                additional_params={"custom_gain": 0.5},
+            ),
+            {
+                "vendor": "gradium",
+                "params": {
+                    "api_key": "gradium-key",
+                    "model_name": "default",
+                    "voice_id": "gradium-voice",
+                    "sample_rate": 16000,
+                    "custom_gain": 0.5,
+                },
+            },
+            id="gradium-keeps-voice-id",
+        ),
+        pytest.param(
+            GoogleTTS(
+                key="{}",
+                voice_name="en-US-JennyNeural",
+                language_code="en-US",
+                sample_rate_hertz=24000,
+            ),
+            {
+                "vendor": "google",
+                "params": {
+                    "credentials": "{}",
+                    "VoiceSelectionParams": {
+                        "name": "en-US-JennyNeural",
+                        "language_code": "en-US",
+                    },
+                    "AudioConfig": {"sample_rate_hertz": 24000},
+                },
+            },
+            id="google-keeps-pascal-case-aliases",
+        ),
+        pytest.param(
+            RimeTTS(key="rime-key", speaker="speaker", model_id="mist"),
+            {
+                "vendor": "rime",
+                "params": {
+                    "api_key": "rime-key",
+                    "speaker": "speaker",
+                    "modelId": "mist",
+                },
+            },
+            id="rime-applies-model-id-alias",
+        ),
+        pytest.param(
+            RimeTTS(
+                credential_mode=CredentialMode.MANAGED,
+                base_url="wss://users.rime.ai/ws",
+                model_id="mist",
+            ),
+            {
+                "vendor": "rime",
+                "credential_mode": "managed",
+                "params": {
+                    "modelId": "mist",
+                    "base_url": "wss://users.rime.ai/ws",
+                },
+            },
+            id="managed-rime-applies-model-id-alias",
+        ),
+        pytest.param(
+            MurfTTS(key="murf-key", voice_id="Ariana"),
+            {
+                "vendor": "murf",
+                "params": {
+                    "api_key": "murf-key",
+                    "voiceId": "Ariana",
+                },
+            },
+            id="murf-applies-voice-id-alias",
+        ),
+        pytest.param(
+            MistralTTS(
+                api_key="mistral-key",
+                model="voxtral-mini-tts-2603",
+                voice="voice",
+                additional_params={"speed": 1.1},
+            ),
+            {
+                "vendor": "mistral",
+                "params": {
+                    "api_key": "mistral-key",
+                    "model": "voxtral-mini-tts-2603",
+                    "voice": "voice",
+                    "speed": 1.1,
+                },
+            },
+            id="mistral-keeps-additional-params",
+        ),
+    ],
+)
+def test_tts_http_request_preserves_vendor_specific_wire_keys(tts, expected_tts: dict) -> None:
+    assert _capture_start_request(tts) == expected_tts
