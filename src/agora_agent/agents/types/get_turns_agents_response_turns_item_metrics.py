@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ...core.pydantic_utilities import IS_PYDANTIC_V2
-from ...core.serialization import FieldMetadata
 from ...core.unchecked_base_model import UncheckedBaseModel
 from .get_turns_agents_response_turns_item_metrics_segmented_latency_ms_item import (
     GetTurnsAgentsResponseTurnsItemMetricsSegmentedLatencyMsItem,
@@ -17,9 +15,7 @@ class GetTurnsAgentsResponseTurnsItemMetrics(UncheckedBaseModel):
     Latency metrics for the turn.
     """
 
-    e_2_e_latency_ms: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="e2e_latency_ms")] = (
-        pydantic.Field(default=None)
-    )
+    e_2_e_latency_ms: typing.Optional[int] = pydantic.Field(alias="e2e_latency_ms", default=None)
     """
     The end-to-end latency in milliseconds for the turn.
     """

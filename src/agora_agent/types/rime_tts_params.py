@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
-from ..core.serialization import FieldMetadata
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
@@ -24,7 +22,7 @@ class RimeTtsParams(UncheckedBaseModel):
     Rime speaker ID
     """
 
-    model_id: typing_extensions.Annotated[str, FieldMetadata(alias="modelId")] = pydantic.Field()
+    model_id: str = pydantic.Field(alias="modelId")
     """
     Rime TTS model ID
     """

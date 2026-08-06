@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
-from ..core.serialization import FieldMetadata
 from ..core.unchecked_base_model import UncheckedBaseModel
 from .google_tts_audio_config import GoogleTtsAudioConfig
 from .google_tts_voice_selection_params import GoogleTtsVoiceSelectionParams
@@ -21,12 +19,8 @@ class GoogleTtsParams(UncheckedBaseModel):
     Google Cloud service account credentials JSON string
     """
 
-    voice_selection_params: typing_extensions.Annotated[
-        GoogleTtsVoiceSelectionParams, FieldMetadata(alias="VoiceSelectionParams")
-    ]
-    audio_config: typing_extensions.Annotated[
-        typing.Optional[GoogleTtsAudioConfig], FieldMetadata(alias="AudioConfig")
-    ] = None
+    voice_selection_params: GoogleTtsVoiceSelectionParams = pydantic.Field(alias="VoiceSelectionParams")
+    audio_config: typing.Optional[GoogleTtsAudioConfig] = pydantic.Field(alias="AudioConfig", default=None)
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

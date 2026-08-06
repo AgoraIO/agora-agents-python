@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ...core.pydantic_utilities import IS_PYDANTIC_V2
-from ...core.serialization import FieldMetadata
 from ...core.unchecked_base_model import UncheckedBaseModel
 from .list_telephony_response_data_list_item import ListTelephonyResponseDataListItem
 
@@ -20,9 +18,7 @@ class ListTelephonyResponseData(UncheckedBaseModel):
     The number of calls returned in this response.
     """
 
-    list_: typing_extensions.Annotated[typing.List[ListTelephonyResponseDataListItem], FieldMetadata(alias="list")] = (
-        pydantic.Field()
-    )
+    list_: typing.List[ListTelephonyResponseDataListItem] = pydantic.Field(alias="list")
     """
     A list of calls that meet the criteria.
     """

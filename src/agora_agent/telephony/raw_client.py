@@ -9,7 +9,6 @@ from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.jsonable_encoder import jsonable_encoder
 from ..core.pagination import AsyncPager, SyncPager
 from ..core.request_options import RequestOptions
-from ..core.serialization import convert_and_respect_annotation_metadata
 from ..core.unchecked_base_model import construct_type
 from .types.call_telephony_request_properties import CallTelephonyRequestProperties
 from .types.call_telephony_request_sip import CallTelephonyRequestSip
@@ -170,13 +169,9 @@ class RawTelephonyClient:
             method="POST",
             json={
                 "name": name,
-                "sip": convert_and_respect_annotation_metadata(
-                    object_=sip, annotation=CallTelephonyRequestSip, direction="write"
-                ),
+                "sip": sip,
                 "pipeline_id": pipeline_id,
-                "properties": convert_and_respect_annotation_metadata(
-                    object_=properties, annotation=CallTelephonyRequestProperties, direction="write"
-                ),
+                "properties": properties,
             },
             headers={
                 "content-type": "application/json",
@@ -438,13 +433,9 @@ class AsyncRawTelephonyClient:
             method="POST",
             json={
                 "name": name,
-                "sip": convert_and_respect_annotation_metadata(
-                    object_=sip, annotation=CallTelephonyRequestSip, direction="write"
-                ),
+                "sip": sip,
                 "pipeline_id": pipeline_id,
-                "properties": convert_and_respect_annotation_metadata(
-                    object_=properties, annotation=CallTelephonyRequestProperties, direction="write"
-                ),
+                "properties": properties,
             },
             headers={
                 "content-type": "application/json",
