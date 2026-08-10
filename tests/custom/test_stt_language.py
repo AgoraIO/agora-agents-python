@@ -163,12 +163,12 @@ def test_stt_vendor_params_match_documented_shapes() -> None:
         "language_code": "en-US",
     }
 
-    assemblyai_config = AssemblyAISTT(api_key="assembly-key", language="en-US", uri="wss://example.test/ws").to_config()
+    assemblyai_config = AssemblyAISTT(api_key="assembly-key", language="en-US", ws_url="wss://example.test/ws").to_config()
     assert "language" not in assemblyai_config
     assert assemblyai_config["params"] == {
         "api_key": "assembly-key",
         "language": "en-US",
-        "uri": "wss://example.test/ws",
+        "ws_url": "wss://example.test/ws",
     }
 
     assert MicrosoftSTT(key="ms-key", region="eastus", language="en-US").to_config()["params"] == {
@@ -193,7 +193,7 @@ def test_assemblyai_params_stay_nested_and_asr_language_comes_from_turn_detectio
         Agent(test_client(), turn_detection=TurnDetectionConfig(language="fr-FR"))
         .with_llm(OpenAI(api_key="llm-key", model="gpt-4o-mini", base_url="https://api.openai.com/v1/chat/completions"))
         .with_tts(ElevenLabsTTS(key="tts-key", voice_id="voice", model_id="eleven_flash_v2_5", base_url="wss://api.elevenlabs.io/v1"))
-        .with_stt(AssemblyAISTT(api_key="assembly-key", language="en-US", uri="wss://example.test/ws"))
+        .with_stt(AssemblyAISTT(api_key="assembly-key", language="en-US", ws_url="wss://example.test/ws"))
     )
 
     assert props["asr"] == {
@@ -202,7 +202,7 @@ def test_assemblyai_params_stay_nested_and_asr_language_comes_from_turn_detectio
         "params": {
             "api_key": "assembly-key",
             "language": "en-US",
-            "uri": "wss://example.test/ws",
+            "ws_url": "wss://example.test/ws",
         },
     }
     assert props["turn_detection"] == {"language": "fr-FR"}
