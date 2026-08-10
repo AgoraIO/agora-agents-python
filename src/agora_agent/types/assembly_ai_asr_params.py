@@ -22,7 +22,7 @@ class AssemblyAiAsrParams(UncheckedBaseModel):
     Language code for speech recognition
     """
 
-    uri: typing.Optional[str] = pydantic.Field(default=None)
+    ws_url: typing.Optional[str] = pydantic.Field(default=None)
     """
     WebSocket URL for AssemblyAI's streaming API
     """
