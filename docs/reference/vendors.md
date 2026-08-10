@@ -554,7 +554,7 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | AssemblyAI API key |
 | `language` | `str` | Yes | — | Language code |
-| `uri` | `str` | No | `None` | AssemblyAI streaming WebSocket URL |
+| `ws_url` | `str` | No | `None` | AssemblyAI streaming WebSocket URL |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 
 ### `AresSTT`

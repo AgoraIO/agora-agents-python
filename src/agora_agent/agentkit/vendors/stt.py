@@ -195,7 +195,7 @@ class AssemblyAISTT(BaseSTT):
 
     api_key: str = Field(..., description="AssemblyAI API key")
     language: str = Field(..., description="Language code")
-    uri: Optional[str] = Field(default=None, description="AssemblyAI streaming WebSocket URL")
+    ws_url: Optional[str] = Field(default=None, description="AssemblyAI streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
     def to_config(self) -> Dict[str, Any]:
@@ -203,8 +203,8 @@ class AssemblyAISTT(BaseSTT):
         params["api_key"] = self.api_key
         if self.language is not None:
             params["language"] = self.language
-        if self.uri is not None:
-            params["uri"] = self.uri
+        if self.ws_url is not None:
+            params["ws_url"] = self.ws_url
 
         config: Dict[str, Any] = {
             "vendor": "assemblyai",
