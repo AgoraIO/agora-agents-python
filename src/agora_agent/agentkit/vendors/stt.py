@@ -1,13 +1,12 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import ConfigDict, Field, model_validator
-
 from .base import BaseSTT
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
 
 
-class SpeechmaticsSTT(BaseSTT):
+class SpeechmaticsSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Speechmatics API key")
@@ -16,6 +15,8 @@ class SpeechmaticsSTT(BaseSTT):
     uri: Optional[str] = Field(default=None, description="Speechmatics streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class SpeechmaticsSTT(SpeechmaticsSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -34,7 +35,7 @@ class SpeechmaticsSTT(BaseSTT):
         return config
 
 
-class DeepgramSTT(BaseSTT):
+class DeepgramSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="Deepgram API key")
@@ -46,11 +47,13 @@ class DeepgramSTT(BaseSTT):
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
     @model_validator(mode="after")
-    def _validate_managed_model(self) -> "DeepgramSTT":
+    def _validate_managed_model(self) -> "DeepgramSTTOptions":
         if self.api_key is None and (self.model is None or self.model.strip().lower() not in _DEEPGRAM_MANAGED_MODELS):
             raise ValueError("DeepgramSTT requires api_key unless using a supported Agora-managed model")
         return self
 
+
+class DeepgramSTT(DeepgramSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
 
@@ -73,7 +76,7 @@ class DeepgramSTT(BaseSTT):
         return config
 
 
-class MicrosoftSTT(BaseSTT):
+class MicrosoftSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Azure subscription key")
@@ -81,6 +84,8 @@ class MicrosoftSTT(BaseSTT):
     language: str = Field(..., description="Language code (e.g., en-US)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class MicrosoftSTT(MicrosoftSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -97,7 +102,7 @@ class MicrosoftSTT(BaseSTT):
         return config
 
 
-class OpenAISTT(BaseSTT):
+class OpenAISTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="OpenAI API key")
@@ -107,6 +112,8 @@ class OpenAISTT(BaseSTT):
     input_audio_transcription: Optional[Dict[str, Any]] = Field(default=None, description="OpenAI transcription settings")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class OpenAISTT(OpenAISTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key
@@ -134,7 +141,7 @@ class OpenAISTT(BaseSTT):
         return config
 
 
-class GoogleSTT(BaseSTT):
+class GoogleSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     project_id: str = Field(..., description="Google Cloud project ID")
@@ -144,6 +151,8 @@ class GoogleSTT(BaseSTT):
     model: Optional[str] = Field(default=None, description="Recognition model")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class GoogleSTT(GoogleSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -164,7 +173,7 @@ class GoogleSTT(BaseSTT):
         return config
 
 
-class AmazonSTT(BaseSTT):
+class AmazonSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     access_key: str = Field(..., description="AWS Access Key ID")
@@ -173,6 +182,8 @@ class AmazonSTT(BaseSTT):
     language: str = Field(..., description="Language code")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class AmazonSTT(AmazonSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -190,7 +201,7 @@ class AmazonSTT(BaseSTT):
         return config
 
 
-class AssemblyAISTT(BaseSTT):
+class AssemblyAISTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="AssemblyAI API key")
@@ -198,6 +209,8 @@ class AssemblyAISTT(BaseSTT):
     ws_url: Optional[str] = Field(default=None, description="AssemblyAI streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class AssemblyAISTT(AssemblyAISTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key
@@ -213,12 +226,14 @@ class AssemblyAISTT(BaseSTT):
         return config
 
 
-class AresSTT(BaseSTT):
+class AresSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class AresSTT(AresSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.keywords is not None:
@@ -230,7 +245,7 @@ class AresSTT(BaseSTT):
         return config
 
 
-class SarvamSTT(BaseSTT):
+class SarvamSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Sarvam API key")
@@ -238,6 +253,8 @@ class SarvamSTT(BaseSTT):
     model: Optional[str] = Field(default=None, description="Model name")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class SarvamSTT(SarvamSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -254,7 +271,7 @@ class SarvamSTT(BaseSTT):
         return config
 
 
-class XaiSTT(BaseSTT):
+class XaiSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="xAI API key")
@@ -263,6 +280,8 @@ class XaiSTT(BaseSTT):
     language: Optional[str] = Field(default=None, description="Language code for speech recognition")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class XaiSTT(XaiSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key

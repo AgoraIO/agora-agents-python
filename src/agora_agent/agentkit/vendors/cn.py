@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import ConfigDict, Field, model_validator
-
 from ...types.mllm_turn_detection import MllmTurnDetection
 from .avatar import BaseAvatar
 from .base import BaseLLM, BaseMLLM
@@ -15,9 +13,10 @@ from .llm import (
 )
 from .stt import BaseSTT as _BaseSTTCompat
 from .tts import BaseTTS as _BaseTTSCompat
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-class TencentSTT(_BaseSTTCompat):
+class TencentSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Tencent ASR secret key")
@@ -27,6 +26,8 @@ class TencentSTT(_BaseSTTCompat):
     voice_id: str = Field(..., description="Tencent ASR voice id")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class TencentSTT(TencentSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update(
@@ -41,11 +42,13 @@ class TencentSTT(_BaseSTTCompat):
         return {"vendor": "tencent", "params": params}
 
 
-class FengmingSTT(_BaseSTTCompat):
+class FengmingSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
 
+
+class FengmingSTT(FengmingSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         config: Dict[str, Any] = {"vendor": "fengming"}
         if self.keywords is not None:
@@ -53,7 +56,7 @@ class FengmingSTT(_BaseSTTCompat):
         return config
 
 
-class XfyunSTT(_BaseSTTCompat):
+class XfyunSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="Xfyun ASR API key")
@@ -62,6 +65,8 @@ class XfyunSTT(_BaseSTTCompat):
     language: Optional[str] = Field(default=None, description="Xfyun ASR language")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class XfyunSTT(XfyunSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.api_key is not None:
@@ -78,7 +83,7 @@ class XfyunSTT(_BaseSTTCompat):
         }
 
 
-class XfyunBigModelSTT(_BaseSTTCompat):
+class XfyunBigModelSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="Xfyun BigModel ASR API key")
@@ -88,6 +93,8 @@ class XfyunBigModelSTT(_BaseSTTCompat):
     language: Optional[str] = Field(default=None, description="Xfyun BigModel ASR language")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class XfyunBigModelSTT(XfyunBigModelSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.api_key is not None:
@@ -106,7 +113,7 @@ class XfyunBigModelSTT(_BaseSTTCompat):
         }
 
 
-class XfyunDialectSTT(_BaseSTTCompat):
+class XfyunDialectSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     app_id: Optional[str] = Field(default=None, description="Xfyun Dialect ASR app id")
@@ -115,6 +122,8 @@ class XfyunDialectSTT(_BaseSTTCompat):
     language: Optional[str] = Field(default=None, description="Xfyun Dialect ASR language")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class XfyunDialectSTT(XfyunDialectSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.app_id is not None:
@@ -131,7 +140,7 @@ class XfyunDialectSTT(_BaseSTTCompat):
         }
 
 
-class MicrosoftSTT(_BaseSTTCompat):
+class MicrosoftSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Azure subscription key")
@@ -140,6 +149,8 @@ class MicrosoftSTT(_BaseSTTCompat):
     phrase_list: Optional[List[str]] = Field(default=None, description="Microsoft ASR phrase list")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class MicrosoftSTT(MicrosoftSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -155,7 +166,7 @@ class MicrosoftSTT(_BaseSTTCompat):
         }
 
 
-class TencentTTS(_BaseTTSCompat):
+class TencentTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     app_id: str = Field(..., description="Tencent TTS app id")
@@ -169,6 +180,8 @@ class TencentTTS(_BaseTTSCompat):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Tencent TTS params")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class TencentTTS(TencentTTSOptions, _BaseTTSCompat):
     @property
     def sample_rate(self) -> Optional[int]:
         audio_setting = (self.additional_params or {}).get("audio_setting")
@@ -206,7 +219,7 @@ class TencentTTS(_BaseTTSCompat):
         return result
 
 
-class BytedanceTTS(_BaseTTSCompat):
+class BytedanceTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     token: str = Field(..., description="Bytedance TTS auth token")
@@ -220,6 +233,8 @@ class BytedanceTTS(_BaseTTSCompat):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Bytedance TTS params")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class BytedanceTTS(BytedanceTTSOptions, _BaseTTSCompat):
     @property
     def sample_rate(self) -> Optional[int]:
         audio_setting = (self.additional_params or {}).get("audio_setting")
@@ -257,7 +272,7 @@ class BytedanceTTS(_BaseTTSCompat):
         return result
 
 
-class BytedanceDuplexTTS(_BaseTTSCompat):
+class BytedanceDuplexTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     token: str = Field(..., description="Bytedance Duplex TTS auth token")
@@ -266,6 +281,8 @@ class BytedanceDuplexTTS(_BaseTTSCompat):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Bytedance Duplex TTS params")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class BytedanceDuplexTTS(BytedanceDuplexTTSOptions, _BaseTTSCompat):
     @property
     def sample_rate(self) -> Optional[int]:
         audio_setting = (self.additional_params or {}).get("audio_setting")
@@ -294,7 +311,7 @@ class BytedanceDuplexTTS(_BaseTTSCompat):
         return result
 
 
-class CosyVoiceTTS(_BaseTTSCompat):
+class CosyVoiceTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="CosyVoice API key")
@@ -304,6 +321,8 @@ class CosyVoiceTTS(_BaseTTSCompat):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="CosyVoice TTS params from REST doc")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class CosyVoiceTTS(CosyVoiceTTSOptions, _BaseTTSCompat):
     @property
     def resolved_sample_rate(self) -> Optional[int]:
         if self.sample_rate is not None:
@@ -334,7 +353,7 @@ class CosyVoiceTTS(_BaseTTSCompat):
         return result
 
 
-class StepFunTTS(_BaseTTSCompat):
+class StepFunTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="StepFun TTS API key")
@@ -343,6 +362,8 @@ class StepFunTTS(_BaseTTSCompat):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="StepFun TTS params from REST doc")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class StepFunTTS(StepFunTTSOptions, _BaseTTSCompat):
     @property
     def sample_rate(self) -> Optional[int]:
         audio_setting = (self.additional_params or {}).get("audio_setting")
@@ -369,7 +390,7 @@ class StepFunTTS(_BaseTTSCompat):
         return result
 
 
-class MicrosoftTTS(_BaseTTSCompat):
+class MicrosoftTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Azure subscription key")
@@ -381,6 +402,8 @@ class MicrosoftTTS(_BaseTTSCompat):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Microsoft TTS params")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class MicrosoftTTS(MicrosoftTTSOptions, _BaseTTSCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -401,7 +424,7 @@ class MicrosoftTTS(_BaseTTSCompat):
         return result
 
 
-class MiniMaxTTS(_BaseTTSCompat):
+class MiniMaxTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: Optional[str] = Field(default=None, description="MiniMax API key")
@@ -421,13 +444,15 @@ class MiniMaxTTS(_BaseTTSCompat):
     skip_patterns: Optional[List[int]] = Field(default=None)
 
     @model_validator(mode="after")
-    def _validate_params(self) -> "MiniMaxTTS":
+    def _validate_params(self) -> "MiniMaxTTSOptions":
         if self.voice_id is not None and self.timber_weights is not None:
             raise ValueError("MiniMaxTTS requires exactly one of voice_id or timber_weights")
         if self.voice_id is None and self.timber_weights is None:
             raise ValueError("MiniMaxTTS requires exactly one of voice_id or timber_weights")
         return self
 
+
+class MiniMaxTTS(MiniMaxTTSOptions, _BaseTTSCompat):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.key is not None:
@@ -466,7 +491,7 @@ class MiniMaxTTS(_BaseTTSCompat):
         return result
 
 
-class AliyunLLM(BaseLLM):
+class AliyunLLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -490,7 +515,7 @@ class AliyunLLM(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "AliyunLLM":
+    def _validate_byok_params(self) -> "AliyunLLMOptions":
         if not self.model:
             raise ValueError("AliyunLLM requires model")
         if self.api_key is not None and self.base_url is None:
@@ -503,6 +528,8 @@ class AliyunLLM(BaseLLM):
             raise ValueError("AliyunLLM Agora-managed mode does not allow vendor")
         return self
 
+
+class AliyunLLM(AliyunLLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -548,7 +575,7 @@ class AliyunLLM(BaseLLM):
         return config
 
 
-class BytedanceLLM(BaseLLM):
+class BytedanceLLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -572,7 +599,7 @@ class BytedanceLLM(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "BytedanceLLM":
+    def _validate_byok_params(self) -> "BytedanceLLMOptions":
         if not self.model:
             raise ValueError("BytedanceLLM requires model")
         if self.api_key is not None and self.base_url is None:
@@ -585,6 +612,8 @@ class BytedanceLLM(BaseLLM):
             raise ValueError("BytedanceLLM Agora-managed mode does not allow vendor")
         return self
 
+
+class BytedanceLLM(BytedanceLLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -630,7 +659,7 @@ class BytedanceLLM(BaseLLM):
         return config
 
 
-class DeepSeekLLM(BaseLLM):
+class DeepSeekLLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -654,7 +683,7 @@ class DeepSeekLLM(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "DeepSeekLLM":
+    def _validate_byok_params(self) -> "DeepSeekLLMOptions":
         if not self.model:
             raise ValueError("DeepSeekLLM requires model")
         if self.api_key is not None and self.base_url is None:
@@ -667,6 +696,8 @@ class DeepSeekLLM(BaseLLM):
             raise ValueError("DeepSeekLLM Agora-managed mode does not allow vendor")
         return self
 
+
+class DeepSeekLLM(DeepSeekLLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -712,7 +743,7 @@ class DeepSeekLLM(BaseLLM):
         return config
 
 
-class TencentLLM(BaseLLM):
+class TencentLLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -736,7 +767,7 @@ class TencentLLM(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "TencentLLM":
+    def _validate_byok_params(self) -> "TencentLLMOptions":
         if not self.model:
             raise ValueError("TencentLLM requires model")
         if self.api_key is not None and self.base_url is None:
@@ -749,6 +780,8 @@ class TencentLLM(BaseLLM):
             raise ValueError("TencentLLM Agora-managed mode does not allow vendor")
         return self
 
+
+class TencentLLM(TencentLLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -794,7 +827,7 @@ class TencentLLM(BaseLLM):
         return config
 
 
-class QwenOmni(BaseMLLM):
+class QwenOmniOptions(BaseModel):
     """Alibaba Cloud Qwen Omni Realtime MLLM vendor (`mllm.vendor`: ``qwen_omni``)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -814,6 +847,10 @@ class QwenOmni(BaseMLLM):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Qwen Omni parameters")
     turn_detection: Optional[MllmTurnDetection] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+
+
+class QwenOmni(QwenOmniOptions, BaseMLLM):
+    """Alibaba Cloud Qwen Omni Realtime MLLM vendor (`mllm.vendor`: ``qwen_omni``)."""
 
     def to_config(self) -> Dict[str, Any]:
         inner_params: Dict[str, Any] = dict(self.params or {})
@@ -848,7 +885,7 @@ class QwenOmni(BaseMLLM):
         return config
 
 
-class SenseTimeAvatar(BaseAvatar):
+class SenseTimeAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     agora_token: Optional[str] = Field(default=None, description="RTC token for avatar publisher; generated by AgentSession when omitted")
@@ -859,6 +896,8 @@ class SenseTimeAvatar(BaseAvatar):
     enable: Optional[bool] = Field(default=None)
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class SenseTimeAvatar(SenseTimeAvatarOptions, BaseAvatar):
     @property
     def required_sample_rate(self) -> int:
         return 0
@@ -881,7 +920,7 @@ class SenseTimeAvatar(BaseAvatar):
         return {"enable": enable, "vendor": "sensetime", "params": params}
 
 
-class SpatiusAvatar(BaseAvatar):
+class SpatiusAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     spatius_api_key: str = Field(..., description="Spatius API key")
@@ -895,6 +934,8 @@ class SpatiusAvatar(BaseAvatar):
     enable: Optional[bool] = Field(default=None)
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class SpatiusAvatar(SpatiusAvatarOptions, BaseAvatar):
     @property
     def required_sample_rate(self) -> int:
         return self.sample_rate or 0

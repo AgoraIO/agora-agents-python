@@ -1,14 +1,13 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import ConfigDict, Field
-
 from ...types.mllm_turn_detection import MllmTurnDetection
 from .base import BaseMLLM
+from pydantic import BaseModel, ConfigDict, Field
 
 MllmTurnDetectionConfig = MllmTurnDetection
 
 
-class OpenAIRealtime(BaseMLLM):
+class OpenAIRealtimeOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="OpenAI API key")
@@ -28,6 +27,8 @@ class OpenAIRealtime(BaseMLLM):
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
 
+
+class OpenAIRealtime(OpenAIRealtimeOptions, BaseMLLM):
     def to_config(self) -> Dict[str, Any]:
         config: Dict[str, Any] = {
             "vendor": "openai",
@@ -70,7 +71,7 @@ class OpenAIRealtime(BaseMLLM):
         return config
 
 
-class AzureOpenAIRealtime(BaseMLLM):
+class AzureOpenAIRealtimeOptions(BaseModel):
     """Azure OpenAI Realtime MLLM vendor (`mllm.vendor`: ``azure``)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -92,6 +93,10 @@ class AzureOpenAIRealtime(BaseMLLM):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Azure OpenAI parameters")
     turn_detection: MllmTurnDetectionConfig = Field(..., description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+
+
+class AzureOpenAIRealtime(AzureOpenAIRealtimeOptions, BaseMLLM):
+    """Azure OpenAI Realtime MLLM vendor (`mllm.vendor`: ``azure``)."""
 
     def to_config(self) -> Dict[str, Any]:
         inner_params: Dict[str, Any] = dict(self.params or {})
@@ -129,7 +134,7 @@ class AzureOpenAIRealtime(BaseMLLM):
 # is deprecated and reserved naming for future XaiSTT / XaiTTS cascading vendors.
 
 
-class XaiGrok(BaseMLLM):
+class XaiGrokOptions(BaseModel):
     """xAI Grok MLLM vendor (`mllm.vendor`: ``xai``)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -146,6 +151,10 @@ class XaiGrok(BaseMLLM):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional xAI parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+
+
+class XaiGrok(XaiGrokOptions, BaseMLLM):
+    """xAI Grok MLLM vendor (`mllm.vendor`: ``xai``)."""
 
     def to_config(self) -> Dict[str, Any]:
         inner_params: Dict[str, Any] = dict(self.params or {})
@@ -179,7 +188,7 @@ class XaiGrok(BaseMLLM):
         return config
 
 
-class VertexAI(BaseMLLM):
+class VertexAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     model: str = Field(..., description="Model name")
@@ -202,6 +211,8 @@ class VertexAI(BaseMLLM):
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
 
+
+class VertexAI(VertexAIOptions, BaseMLLM):
     def to_config(self) -> Dict[str, Any]:
         # additional_params spread first so that explicit fields always win,
         # matching the TypeScript SDK.
@@ -246,7 +257,7 @@ class VertexAI(BaseMLLM):
         return config
 
 
-class GeminiLive(BaseMLLM):
+class GeminiLiveOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Google API key")
@@ -267,6 +278,8 @@ class GeminiLive(BaseMLLM):
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
 
+
+class GeminiLive(GeminiLiveOptions, BaseMLLM):
     def to_config(self) -> Dict[str, Any]:
         inner_params: Dict[str, Any] = {}
         if self.additional_params is not None:
