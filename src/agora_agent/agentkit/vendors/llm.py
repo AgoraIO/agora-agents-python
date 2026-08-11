@@ -1,8 +1,7 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import ConfigDict, Field, model_validator
-
 from .base import BaseLLM
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 LlmGreetingConfigs = Dict[str, Any]
 _OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}
@@ -27,7 +26,7 @@ def _dump_optional_model(value: Any) -> Any:
     return value
 
 
-class OpenAI(BaseLLM):
+class OpenAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -51,7 +50,7 @@ class OpenAI(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "OpenAI":
+    def _validate_byok_params(self) -> "OpenAIOptions":
         if not self.model:
             raise ValueError("OpenAI requires model")
         if self.api_key is not None and self.base_url is None:
@@ -64,6 +63,8 @@ class OpenAI(BaseLLM):
             raise ValueError("OpenAI Agora-managed mode does not allow vendor")
         return self
 
+
+class OpenAI(OpenAIOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # model is the default; explicit params entries extend/override it.
         # This matches the TS SDK behaviour: { model, ...params }.
@@ -112,7 +113,7 @@ class OpenAI(BaseLLM):
         return config
 
 
-class AzureOpenAI(BaseLLM):
+class AzureOpenAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Azure OpenAI API key")
@@ -137,6 +138,8 @@ class AzureOpenAI(BaseLLM):
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class AzureOpenAI(AzureOpenAIOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         url = (
             f"{self.endpoint}/openai/deployments/"
@@ -186,7 +189,7 @@ class AzureOpenAI(BaseLLM):
         return config
 
 
-class Anthropic(BaseLLM):
+class AnthropicOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Anthropic API key")
@@ -209,6 +212,8 @@ class Anthropic(BaseLLM):
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class Anthropic(AnthropicOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # Named fields take precedence over anything in the generic params dict.
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
@@ -252,7 +257,7 @@ class Anthropic(BaseLLM):
         return config
 
 
-class Gemini(BaseLLM):
+class GeminiOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Google AI API key")
@@ -276,6 +281,8 @@ class Gemini(BaseLLM):
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class Gemini(GeminiOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # Named fields take precedence over anything in the generic params dict.
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
@@ -324,7 +331,7 @@ class Gemini(BaseLLM):
         return config
 
 
-class Groq(BaseLLM):
+class GroqOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Groq API key")
@@ -348,11 +355,13 @@ class Groq(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "Groq":
+    def _validate_byok_params(self) -> "GroqOptions":
         if not self.model:
             raise ValueError("Groq requires model")
         return self
 
+
+class Groq(GroqOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -398,7 +407,7 @@ class Groq(BaseLLM):
         return config
 
 
-class CustomLLM(BaseLLM):
+class CustomLLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Custom LLM API key")
@@ -422,11 +431,13 @@ class CustomLLM(BaseLLM):
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "CustomLLM":
+    def _validate_byok_params(self) -> "CustomLLMOptions":
         if not self.model:
             raise ValueError("CustomLLM requires model")
         return self
 
+
+class CustomLLM(CustomLLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -473,7 +484,7 @@ class CustomLLM(BaseLLM):
         return config
 
 
-class VertexAILLM(BaseLLM):
+class VertexAILLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Vertex AI access token or API key")
@@ -499,6 +510,8 @@ class VertexAILLM(BaseLLM):
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class VertexAILLM(VertexAILLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # Named fields take precedence over anything in the generic params dict.
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
@@ -551,7 +564,7 @@ class VertexAILLM(BaseLLM):
         return config
 
 
-class AmazonBedrock(BaseLLM):
+class AmazonBedrockOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     access_key: str = Field(..., description="AWS access key ID")
@@ -576,6 +589,8 @@ class AmazonBedrock(BaseLLM):
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.params or {})
         if self.max_tokens is not None:
@@ -620,7 +635,7 @@ class AmazonBedrock(BaseLLM):
         return config
 
 
-class Dify(BaseLLM):
+class DifyOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Dify API key")
@@ -642,6 +657,8 @@ class Dify(BaseLLM):
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0)
 
+
+class Dify(DifyOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
         if self.user is not None:
