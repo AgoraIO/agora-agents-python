@@ -29,6 +29,7 @@ from .xfyun_dialect_asr_params import XfyunDialectAsrParams
 class Asr_Ares(UncheckedBaseModel):
     vendor: typing.Literal["ares"] = "ares"
     language: typing.Optional[AsrLanguage] = None
+    keywords: typing.Optional[typing.List[str]] = None
     params: typing.Optional[AresAsrParams] = None
 
     if IS_PYDANTIC_V2:
@@ -44,6 +45,7 @@ class Asr_Ares(UncheckedBaseModel):
 class Asr_Fengming(UncheckedBaseModel):
     vendor: typing.Literal["fengming"] = "fengming"
     language: typing.Optional[AsrLanguage] = None
+    keywords: typing.Optional[typing.List[str]] = None
     params: typing.Optional[FengmingAsrParams] = None
 
     if IS_PYDANTIC_V2:

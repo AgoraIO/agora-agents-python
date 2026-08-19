@@ -5,6 +5,12 @@ import typing
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2
 from ...core.unchecked_base_model import UncheckedBaseModel
+from .start_agents_request_properties_filler_words_content_generated_config import (
+    StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig,
+)
+from .start_agents_request_properties_filler_words_content_mode import (
+    StartAgentsRequestPropertiesFillerWordsContentMode,
+)
 from .start_agents_request_properties_filler_words_content_static_config import (
     StartAgentsRequestPropertiesFillerWordsContentStaticConfig,
 )
@@ -15,17 +21,26 @@ class StartAgentsRequestPropertiesFillerWordsContent(UncheckedBaseModel):
     Filler word content configuration. Defines the source and selection rules for filler words.
     """
 
-    mode: typing.Optional[typing.Literal["static"]] = pydantic.Field(default=None)
+    mode: typing.Optional[StartAgentsRequestPropertiesFillerWordsContentMode] = pydantic.Field(default=None)
     """
     Filler word content mode:
     - `static`: Static filler words. Uses a predefined list of filler words.
+    - `generated`: LLM-generated filler words based on the last user message. Falls back to static filler words when generation is not ready, fails, or returns empty text.
     """
 
     static_config: typing.Optional[StartAgentsRequestPropertiesFillerWordsContentStaticConfig] = pydantic.Field(
         default=None
     )
     """
-    Static filler word configuration. Used when `mode` is `static`.
+    Static filler word configuration. Required when `mode` is `static`.
+    Also required whenever `filler_words.enable` is `true`, including when `mode` is `generated`, because generated mode uses static filler words as fallback.
+    """
+
+    generated_config: typing.Optional[StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig] = pydantic.Field(
+        default=None
+    )
+    """
+    Generated filler word configuration. Required when `content.mode` is `generated`.
     """
 
     if IS_PYDANTIC_V2:

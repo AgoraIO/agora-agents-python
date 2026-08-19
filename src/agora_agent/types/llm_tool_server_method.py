@@ -2,4 +2,4 @@
 
 import typing
 
-FengmingAsrParams = typing.Dict[str, typing.Any]
+LlmToolServerMethod = typing.Union[typing.Literal["GET", "POST"], typing.Any]

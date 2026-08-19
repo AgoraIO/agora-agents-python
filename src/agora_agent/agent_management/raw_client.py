@@ -67,16 +67,19 @@ class RawAgentManagementClient:
             - `inject`: Inject the custom text instruction into the current turn without interrupting it.
             - `interrupt`: Immediately interrupt the current flow and initiate a new round of dialogue.
             - `ignore`: Ignore the request.
+            - `append`: Do not interrupt the user. Wait for the user's ASR text to be sent to the LLM and for the resulting response to finish, then send the custom text instruction to the LLM.
 
         on_thinking_action : typing.Optional[AgentThinkAgentManagementRequestOnThinkingAction]
             The action to take when the agent is in a thinking state:
             - `interrupt`: Interrupt the current state and start a new conversation turn.
             - `ignore`: Ignore the request.
+            - `append`: Do not interrupt the current LLM inference. Allow the current turn to finish generating and playing its response first. After the current turn's LLM output is complete, send the queued custom text instruction to the LLM.
 
         on_speaking_action : typing.Optional[AgentThinkAgentManagementRequestOnSpeakingAction]
             The action to take when the agent is in a speaking state:
             - `interrupt`: Interrupt the current state and start a new conversation turn.
             - `ignore`: Ignore the request.
+            - `append`: Do not interrupt the current TTS playback; the audio stream continues. After the current turn's LLM output is complete, send the custom text instruction directly to the LLM.
 
         interruptable : typing.Optional[bool]
             Whether user speech can interrupt the injected instruction:
@@ -170,16 +173,19 @@ class AsyncRawAgentManagementClient:
             - `inject`: Inject the custom text instruction into the current turn without interrupting it.
             - `interrupt`: Immediately interrupt the current flow and initiate a new round of dialogue.
             - `ignore`: Ignore the request.
+            - `append`: Do not interrupt the user. Wait for the user's ASR text to be sent to the LLM and for the resulting response to finish, then send the custom text instruction to the LLM.
 
         on_thinking_action : typing.Optional[AgentThinkAgentManagementRequestOnThinkingAction]
             The action to take when the agent is in a thinking state:
             - `interrupt`: Interrupt the current state and start a new conversation turn.
             - `ignore`: Ignore the request.
+            - `append`: Do not interrupt the current LLM inference. Allow the current turn to finish generating and playing its response first. After the current turn's LLM output is complete, send the queued custom text instruction to the LLM.
 
         on_speaking_action : typing.Optional[AgentThinkAgentManagementRequestOnSpeakingAction]
             The action to take when the agent is in a speaking state:
             - `interrupt`: Interrupt the current state and start a new conversation turn.
             - `ignore`: Ignore the request.
+            - `append`: Do not interrupt the current TTS playback; the audio stream continues. After the current turn's LLM output is complete, send the custom text instruction directly to the LLM.
 
         interruptable : typing.Optional[bool]
             Whether user speech can interrupt the injected instruction:

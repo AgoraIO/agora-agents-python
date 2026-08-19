@@ -12,6 +12,7 @@ from .start_agents_request_properties_filler_words_trigger import StartAgentsReq
 class StartAgentsRequestPropertiesFillerWords(UncheckedBaseModel):
     """
     Filler word configuration. Plays filler words while waiting for LLM responses to reduce user anxiety and improve conversation flow.
+    When `enable` is `true`, `content.static_config.phrases` must be present and non-empty, even when `content.mode` is `generated`, because generated mode still falls back to static filler words.
     """
 
     enable: typing.Optional[bool] = pydantic.Field(default=None)
