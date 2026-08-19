@@ -12,9 +12,17 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
     Speechmatics ASR configuration parameters.
     """
 
-    api_key: str = pydantic.Field()
+    key: str = pydantic.Field()
     """
     Speechmatics API key
+    """
+
+    api_key: typing.Optional[str] = pydantic.Field(
+        default=None,
+        deprecated="Use key instead.",
+    )
+    """
+    Deprecated alias for key. The SDK normalizes it to key during validation.
     """
 
     language: str = pydantic.Field()
@@ -26,6 +34,29 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
     """
     WebSocket URL for the Speechmatics streaming API
     """
+
+    if IS_PYDANTIC_V2:
+
+        @pydantic.model_validator(mode="before")
+        @classmethod
+        def _normalize_api_key(cls, values: typing.Any) -> typing.Any:
+            if not isinstance(values, typing.Mapping):
+                return values
+            normalized = dict(values)
+            legacy_key = normalized.pop("api_key", None)
+            if legacy_key is not None:
+                normalized.setdefault("key", legacy_key)
+            return normalized
+
+    else:
+
+        @pydantic.root_validator(pre=True)
+        def _normalize_api_key(cls, values: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+            normalized = dict(values)
+            legacy_key = normalized.pop("api_key", None)
+            if legacy_key is not None:
+                normalized.setdefault("key", legacy_key)
+            return normalized
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

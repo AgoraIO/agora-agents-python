@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Dict, List, Optional
 
 from .base import BaseSTT
@@ -9,18 +10,40 @@ _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
 class SpeechmaticsSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    api_key: str = Field(..., description="Speechmatics API key")
+    key: Optional[str] = Field(default=None, description="Speechmatics API key")
+    api_key: Optional[str] = Field(
+        default=None,
+        description="Deprecated alias for key; normalized to the REST API key field",
+        deprecated="Use key instead.",
+    )
     language: str = Field(..., description="Language code (e.g., en, es, fr)")
     model: Optional[str] = Field(default=None, description="Model name")
     uri: Optional[str] = Field(default=None, description="Speechmatics streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _warn_deprecated_api_key(cls, values: Any) -> Any:
+        if isinstance(values, dict) and "api_key" in values:
+            warnings.warn(
+                "SpeechmaticsSTT.api_key is deprecated; use key instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return values
+
+    @model_validator(mode="after")
+    def _validate_key(self) -> "SpeechmaticsSTT":
+        if self.key is None and self.__dict__.get("api_key") is None:
+            raise ValueError("SpeechmaticsSTT requires key")
+        return self
 
 class SpeechmaticsSTT(SpeechmaticsSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
+        params.pop("api_key", None)
         params.update({
-            "api_key": self.api_key,
+            "key": self.key if self.key is not None else self.__dict__.get("api_key"),
             "language": self.language,
         })
         if self.model is not None:

@@ -178,7 +178,7 @@ def test_stt_vendor_params_match_documented_shapes() -> None:
     }
 
     assert SpeechmaticsSTT(api_key="sm-key", language="en").to_config()["params"] == {
-        "api_key": "sm-key",
+        "key": "sm-key",
         "language": "en",
     }
 

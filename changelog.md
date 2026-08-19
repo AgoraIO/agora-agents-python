@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Speechmatics credential field** — `SpeechmaticsSTT` now emits the REST-compatible `asr.params.key`. The `key` field is preferred; deprecated `api_key` remains supported, warns, and is normalized to `key`.
+
 ## [v2.6.0] — 2026-08-10
 
 ### Added
@@ -19,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 - **AssemblyAI STT WebSocket URL** — `AssemblyAISTT.uri` and `AssemblyAiAsrParams.uri` are renamed to `ws_url`, and the field is serialized as `asr.params.ws_url`. This is a breaking rename for callers that set `uri`.
 - **Generated model aliasing** — Wire-key aliases (`VoiceSelectionParams`, `AudioConfig`, `voiceId`, `modelId`, `appId`, `sceneList`) now use native pydantic field aliases with population by field name, instead of annotation-metadata conversion on every request and response.
+
 
 ## [v2.4.0] — 2026-06-30
 
