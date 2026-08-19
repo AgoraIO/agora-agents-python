@@ -860,6 +860,11 @@ def test_generated_speechmatics_params_normalizes_deprecated_api_key() -> None:
     assert dump(params) == {"key": "legacy-key", "language": "en"}
 
 
+def test_generated_speechmatics_params_requires_a_key() -> None:
+    with pytest.raises(ValueError, match="requires key"):
+        SpeechmaticsAsrParams(language="en")
+
+
 def test_byok_sarvam_stt_params() -> None:
     agent = Agent(test_client()).with_stt(SarvamSTT(api_key="sarvam-key", language="en-IN"))
     props = build_properties(agent, allow_missing={"llm", "tts"})

@@ -12,7 +12,7 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
     Speechmatics ASR configuration parameters.
     """
 
-    key: str = pydantic.Field()
+    key: typing.Optional[str] = pydantic.Field(default=None)
     """
     Speechmatics API key
     """
@@ -46,6 +46,8 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
             legacy_key = normalized.pop("api_key", None)
             if legacy_key is not None:
                 normalized.setdefault("key", legacy_key)
+            if normalized.get("key") is None:
+                raise ValueError("SpeechmaticsAsrParams requires key")
             return normalized
 
     else:
@@ -56,6 +58,8 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
             legacy_key = normalized.pop("api_key", None)
             if legacy_key is not None:
                 normalized.setdefault("key", legacy_key)
+            if normalized.get("key") is None:
+                raise ValueError("SpeechmaticsAsrParams requires key")
             return normalized
 
     if IS_PYDANTIC_V2:

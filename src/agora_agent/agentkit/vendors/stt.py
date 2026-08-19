@@ -33,7 +33,7 @@ class SpeechmaticsSTTOptions(BaseModel):
         return values
 
     @model_validator(mode="after")
-    def _validate_key(self) -> "SpeechmaticsSTT":
+    def _validate_key(self) -> "SpeechmaticsSTTOptions":
         if self.key is None and self.__dict__.get("api_key") is None:
             raise ValueError("SpeechmaticsSTT requires key")
         return self
