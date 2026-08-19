@@ -42,14 +42,20 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-current_generation: d45d59e496f49e87c4b94f49f4b80449e3d84dac
+  - commit_sha: c210d15d50ce28b5edf1a02b33fe0f2855b69b8f
+    tree_hash: 8c6c3d9abe19637590b92d95cddeb93f06ec030b
+    timestamp: 2026-08-19T13:29:49.213Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+current_generation: c210d15d50ce28b5edf1a02b33fe0f2855b69b8f
 patches:
   - id: patch-13d8e068
     content_hash: sha256:97d879ab169016b9abaf1866427a8ebc45af608f69e063a07e5126c9613c329b
     original_commit: 13d8e0683ffa08bcfc9a381eb9604adf5abdbe0b
     original_message: "chore: ignore local venv and planning docs"
     original_author: plutoless <qianze.zhang@hotmail.com>
-    base_generation: d45d59e496f49e87c4b94f49f4b80449e3d84dac
+    base_generation: c210d15d50ce28b5edf1a02b33fe0f2855b69b8f
     files:
       - .gitignore
     patch_content: |
