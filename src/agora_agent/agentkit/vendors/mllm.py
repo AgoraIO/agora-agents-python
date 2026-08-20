@@ -91,7 +91,9 @@ class AzureOpenAIRealtimeOptions(BaseModel):
     output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
     messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Azure OpenAI parameters")
-    turn_detection: MllmTurnDetectionConfig = Field(..., description="MLLM turn detection configuration")
+    turn_detection: Optional[MllmTurnDetectionConfig] = Field(
+        default=None, description="MLLM turn detection configuration"
+    )
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
 
 
@@ -126,7 +128,8 @@ class AzureOpenAIRealtime(AzureOpenAIRealtimeOptions, BaseMLLM):
             config["messages"] = self.messages
         if self.failure_message is not None:
             config["failure_message"] = self.failure_message
-        config["turn_detection"] = self.turn_detection
+        if self.turn_detection is not None:
+            config["turn_detection"] = self.turn_detection
         return config
 
 

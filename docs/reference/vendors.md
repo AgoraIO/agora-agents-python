@@ -821,7 +821,7 @@ Global Azure OpenAI Realtime vendor (`mllm.vendor`: `"azure"`).
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `params` | `Dict[str, Any]` | No | `None` | Additional Azure OpenAI parameters |
-| `turn_detection` | `MllmTurnDetectionConfig` | Yes | — | Required MLLM turn detection configuration; overrides top-level `turn_detection` |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | Optional MLLM turn detection configuration; overrides top-level `turn_detection` when provided |
 
 ### `QwenOmni`
 
