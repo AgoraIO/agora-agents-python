@@ -23,6 +23,7 @@ GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
     "microsoft",
     "openai",
     "google",
+    "gemini",
     "amazon",
     "assemblyai",
     "speechmatics",
@@ -64,6 +65,7 @@ GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
 CN_MLLM_VENDORS: typing.Tuple[str, ...] = ("qwen_omni",)
 GLOBAL_MLLM_VENDORS: typing.Tuple[str, ...] = (
     "openai",
+    "openai_gpt_live",
     "azure",
     "gemini",
     "vertexai",

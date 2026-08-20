@@ -13,13 +13,14 @@ from .llm import (
     OpenAI,
     VertexAILLM,
 )
-from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
+from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIGptLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
     AmazonSTT,
     AresSTT,
     AssemblyAISTT,
     DeepgramSTT,
     GoogleSTT,
+    GeminiSTT,
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
@@ -54,6 +55,7 @@ class GlobalSTTVendors:
     microsoft = MicrosoftSTT
     openai = OpenAISTT
     google = GoogleSTT
+    gemini = GeminiSTT
     amazon = AmazonSTT
     assemblyai = AssemblyAISTT
     speechmatics = SpeechmaticsSTT
@@ -91,6 +93,7 @@ class CNLLMVendors:
 
 class GlobalMLLMVendors:
     openai = OpenAIRealtime
+    openai_gpt_live = OpenAIGptLive
     azure = AzureOpenAIRealtime
     gemini = GeminiLive
     vertexai = VertexAI

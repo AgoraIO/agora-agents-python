@@ -2,4 +2,6 @@
 
 import typing
 
-MllmVendor = typing.Union[typing.Literal["openai", "azure", "gemini", "vertexai", "xai", "qwen_omni"], typing.Any]
+MllmVendor = typing.Union[
+    typing.Literal["openai", "azure", "gemini", "vertexai", "xai", "qwen_omni", "openai_gpt_live"], typing.Any
+]

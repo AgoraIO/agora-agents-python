@@ -183,7 +183,7 @@ await session.update(properties)
 
 Inject a custom text instruction into the running agent.
 
-In API v2.7, omitting `on_listening_action` uses the server default `interrupt`. Pass `on_listening_action='inject'` explicitly to preserve the pre-v2.7 behavior.
+In API v2.7, omitting `on_listening_action` uses the server default `interrupt`. Supported listening, thinking, and speaking actions include `interrupt`, `ignore`, and `append` where applicable. `append` queues the instruction until the current user/LLM/TTS turn completes without interrupting it. Pass `on_listening_action='inject'` explicitly to preserve the pre-v2.7 behavior.
 
 ```python
 session.think('Summarize the last answer', on_listening_action='inject')

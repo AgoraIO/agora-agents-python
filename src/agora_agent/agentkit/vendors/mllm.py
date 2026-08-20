@@ -71,6 +71,63 @@ class OpenAIRealtime(OpenAIRealtimeOptions, BaseMLLM):
         return config
 
 
+class OpenAIGptLiveOptions(BaseModel):
+    """Options for the distinct OpenAI GPT Live MLLM vendor."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="OpenAI API key")
+    model: Optional[str] = Field(default=None, description="Model name")
+    voice: Optional[str] = Field(default=None, description="Voice identifier")
+    instructions: Optional[str] = Field(default=None, description="System instructions")
+    input_audio_transcription: Optional[Dict[str, Any]] = Field(default=None, description="Audio transcription settings")
+    url: str = Field(default="wss://api.openai.com/v1/live", description="OpenAI GPT Live WebSocket URL")
+    greeting_message: Optional[str] = Field(default=None, description="Greeting message for the OpenAI GPT Live session")
+    input_modalities: Optional[List[str]] = Field(default=None, description="Input modalities")
+    output_modalities: Optional[List[str]] = Field(default=None, description="Output modalities")
+    messages: Optional[List[Dict[str, Any]]] = Field(default=None, description="Conversation messages")
+    params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
+    turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
+    failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+
+
+class OpenAIGptLive(OpenAIGptLiveOptions, BaseMLLM):
+    def to_config(self) -> Dict[str, Any]:
+        config: Dict[str, Any] = {"vendor": "openai_gpt_live", "api_key": self.api_key, "url": self.url}
+        if (
+            self.model is not None
+            or self.params is not None
+            or self.voice is not None
+            or self.instructions is not None
+            or self.input_audio_transcription is not None
+        ):
+            inner_params: Dict[str, Any] = {}
+            if self.model is not None:
+                inner_params["model"] = self.model
+            if self.params is not None:
+                inner_params.update(self.params)
+            if self.voice is not None:
+                inner_params["voice"] = self.voice
+            if self.instructions is not None:
+                inner_params["instructions"] = self.instructions
+            if self.input_audio_transcription is not None:
+                inner_params["input_audio_transcription"] = self.input_audio_transcription
+            config["params"] = inner_params
+        if self.greeting_message is not None:
+            config["greeting_message"] = self.greeting_message
+        if self.input_modalities is not None:
+            config["input_modalities"] = self.input_modalities
+        if self.output_modalities is not None:
+            config["output_modalities"] = self.output_modalities
+        if self.messages is not None:
+            config["messages"] = self.messages
+        if self.failure_message is not None:
+            config["failure_message"] = self.failure_message
+        if self.turn_detection is not None:
+            config["turn_detection"] = self.turn_detection
+        return config
+
+
 class AzureOpenAIRealtimeOptions(BaseModel):
     """Azure OpenAI Realtime MLLM vendor (`mllm.vendor`: ``azure``)."""
 

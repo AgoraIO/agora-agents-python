@@ -71,6 +71,11 @@ class Mllm(UncheckedBaseModel):
     Agent greeting message.
     """
 
+    greeting: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Greeting message for the MLLM session.
+    """
+
     failure_message: typing.Optional[str] = pydantic.Field(default=None)
     """
     Agent failure message.
