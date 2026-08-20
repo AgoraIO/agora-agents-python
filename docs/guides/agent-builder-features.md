@@ -26,7 +26,7 @@ Pass `client=client` to every `Agent(...)` builder. `create_session()` and `crea
 |---|---|---|
 | `sal` | `with_sal(config)` | Selective Attention Locking — speaker recognition and noise suppression |
 | `advanced_features` | `with_advanced_features(features)` | Enable MLLM, RTM, SAL, tools |
-| `tools` | `with_tools(enabled=True)` | Enable MCP tool invocation |
+| `tools` | `with_tools(enabled=True)` | Enable MCP and inline LLM tool invocation |
 | `parameters` | `with_parameters(params)` | Silence config, farewell config, data channel |
 | `failure_message` | LLM/MLLM vendor option | Message spoken when LLM fails |
 | `max_history` | LLM vendor option | Max conversation turns in LLM context |
@@ -217,6 +217,8 @@ from agora_agent import (
     FillerWordsTriggerFixedTimeConfig,
     FillerWordsContent,
     FillerWordsContentStaticConfig,
+    FillerWordsContentGeneratedConfig,
+    FillerWordsContentGeneratedConfigLlmProvider,
     FillerWordsSelectionRule,
 )
 
@@ -240,6 +242,37 @@ agent = (
     .with_tts(ElevenLabsTTS(key='...', model_id='...', voice_id='...', base_url='wss://api.elevenlabs.io/v1', sample_rate=24000))
     .with_stt(DeepgramSTT(api_key='...', model='nova-2'))
 )
+```
+
+Generated filler words use an OpenAI-compatible LLM and fall back to the static phrases when generation is unavailable. `static_config.phrases` is required and must be non-empty whenever filler words are enabled.
+
+```python
+from agora_agent import (
+    FillerWordsConfig,
+    FillerWordsContent,
+    FillerWordsContentStaticConfig,
+    FillerWordsContentGeneratedConfig,
+    FillerWordsContentGeneratedConfigLlmProvider,
+)
+
+generated = FillerWordsConfig(
+    enable=True,
+    content=FillerWordsContent(
+        mode='generated',
+        static_config=FillerWordsContentStaticConfig(
+            phrases=['Let me think...', 'One moment...'],
+        ),
+        generated_config=FillerWordsContentGeneratedConfig(
+            llm_provider=FillerWordsContentGeneratedConfigLlmProvider(
+                base_url='https://api.openai.com/v1/chat/completions',
+                api_key='your-filler-llm-key',
+                params={'model': 'gpt-4o-mini'},
+            ),
+            prompt='Generate a short conversational filler phrase; do not answer the user.',
+        ),
+    ),
+)
+agent = Agent(client=client).with_filler_words(generated)
 ```
 
 ## Properties (Getters)

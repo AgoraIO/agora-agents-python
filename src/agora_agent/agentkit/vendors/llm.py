@@ -47,6 +47,7 @@ class OpenAIOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -107,6 +108,8 @@ class OpenAI(OpenAIOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -136,6 +139,7 @@ class AzureOpenAIOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -183,6 +187,8 @@ class AzureOpenAI(AzureOpenAIOptions, BaseLLM):
             config["template_variables"] = self.template_variables
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -210,6 +216,7 @@ class AnthropicOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -251,6 +258,8 @@ class Anthropic(AnthropicOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -279,6 +288,7 @@ class GeminiOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -325,6 +335,8 @@ class Gemini(GeminiOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -352,6 +364,7 @@ class GroqOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -401,6 +414,8 @@ class Groq(GroqOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -428,6 +443,7 @@ class CustomLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -477,6 +493,8 @@ class CustomLLM(CustomLLMOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -508,6 +526,7 @@ class VertexAILLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -557,6 +576,8 @@ class VertexAILLM(VertexAILLMOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -587,6 +608,7 @@ class AmazonBedrockOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -630,6 +652,8 @@ class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
         return config
@@ -655,6 +679,7 @@ class DifyOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0)
 
 
@@ -693,6 +718,8 @@ class Dify(DifyOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
         return config

@@ -8,6 +8,7 @@ from agora_agent.agentkit.vendors import (
     GenericAvatar,
     LiveAvatarAvatar,
     OpenAI,
+    OpenAIGptLive,
     OpenAIRealtime,
 )
 from agora_agent.agents.types.get_turns_agents_response import GetTurnsAgentsResponse
@@ -186,6 +187,24 @@ def test_session_start_properties_applies_mllm_agent_level_defaults():
     assert properties["mllm"]["greeting_message"] == "agent greeting"
     assert properties["mllm"]["failure_message"] == "agent failure"
     assert "max_history" not in properties["mllm"]
+
+
+def test_session_start_properties_uses_greeting_message_for_openai_gpt_live():
+    agent = (
+        Agent(test_client())
+        .with_mllm(OpenAIGptLive(api_key="gpt-live-key"))
+        .with_greeting("agent greeting")
+    )
+    session = _session(agent)
+
+    properties = session._build_start_properties(  # noqa: SLF001
+        {"app_id": APP_ID, "app_certificate": APP_CERTIFICATE},
+        skip_vendor_validation_categories=set(),
+        allow_missing_vendor_categories=set(),
+    )
+
+    assert properties["mllm"]["greeting_message"] == "agent greeting"
+    assert "greeting" not in properties["mllm"]
 
 
 def test_session_start_properties_preserves_mllm_vendor_defaults():

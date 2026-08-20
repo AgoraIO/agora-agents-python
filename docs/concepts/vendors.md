@@ -110,7 +110,7 @@ Used with `agent.with_stt()`.
 
 Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. STT vendor `language` options are serialized under `asr.params` using each provider's own format. If `with_stt()` is omitted, AgentKit defaults to `AresSTT` for global clients and `FengmingSTT` for `Area.CN` clients. Ares does not take a provider language option; AgentKit uses `turn_detection.language` for REST `asr.language`.
 
-`AresSTT` and `FengmingSTT` accept an optional `keywords: List[str]` hotword list.
+`AresSTT` and `FengmingSTT` accept an optional `keywords: List[str]` hotword list. For Ares, this is serialized as top-level `asr.keywords`, not inside `asr.params`.
 
 | Class | Provider | Required Parameters |
 |---|---|---|
@@ -119,6 +119,7 @@ Use `turn_detection.language` for Agora interaction language; it defaults to `en
 | `MicrosoftSTT` | Microsoft Azure | `key`, `region`, `language` |
 | `OpenAISTT` | OpenAI | `api_key` |
 | `GoogleSTT` | Google Cloud | `project_id`, `location`, `adc_credentials_string`, `language` |
+| `GeminiSTT` | Google Gemini | `api_key`, `model`; optional `sample_rate`, `language`, `word_timestamp` |
 | `AmazonSTT` | Amazon Transcribe | `access_key`, `secret_key`, `region`, `language` |
 | `AssemblyAISTT` | AssemblyAI | `api_key`, `language` |
 | `AresSTT` | Ares | — (all optional) |
@@ -152,6 +153,7 @@ Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These
 | Class | Provider | Area | Required Parameters |
 |---|---|---|---|
 | `OpenAIRealtime` | OpenAI Realtime | Global | `api_key`; optional `turn_detection` |
+| `OpenAIGptLive` | OpenAI GPT Live (`mllm.vendor`: `openai_gpt_live`) | Global | `api_key`; optional `model`, `greeting_message`, `turn_detection` |
 | `AzureOpenAIRealtime` | Azure OpenAI Realtime | Global | `api_key`, `url`, `turn_detection`; optional `max_history` |
 | `GeminiLive` | Google Gemini Live API | Global | `api_key`, `model`; optional `turn_detection` |
 | `VertexAI` | Vertex AI (Gemini Live) | Global | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |

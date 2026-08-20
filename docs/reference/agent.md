@@ -53,7 +53,7 @@ Agent(
 | `sal` | `Optional[SalConfig]` | `None` | Speech Activity Level configuration |
 | `advanced_features` | `Optional[Dict[str, Any]]` | `None` | Advanced features dict (e.g., `{'enable_rtm': True}`) |
 | `parameters` | `Optional[SessionParams]` | `None` | Additional session parameters |
-| `greeting` | `Optional[str]` | `None` | Deprecated. Use LLM/MLLM vendor `greeting_message` instead. |
+| `greeting` | `Optional[str]` | `None` | Deprecated. Use the LLM/MLLM vendor `greeting_message` instead. |
 | `failure_message` | `Optional[str]` | `None` | Deprecated. Use LLM/MLLM vendor `failure_message` instead. |
 | `max_history` | `Optional[int]` | `None` | Deprecated. Use LLM vendor `max_history` instead. |
 | `geofence` | `Optional[GeofenceConfig]` | `None` | Regional access restriction |
@@ -173,7 +173,7 @@ When `enable_rtm=True`, AgentKit defaults `parameters.data_channel` to `"rtm"` u
 
 ### `with_tools(enabled: bool = True) -> Agent`
 
-Enable or disable MCP tool invocation by setting `advanced_features.enable_tools`.
+Enable or disable MCP and inline LLM tool invocation by setting `advanced_features.enable_tools`. LLM `tools` definitions require this feature to be enabled, just like `mcp_servers`; call `.with_tools()` explicitly when using either configuration.
 
 ### `with_parameters(parameters: SessionParams) -> Agent`
 
@@ -334,6 +334,6 @@ to_properties(
 
 ## Type aliases
 
-Public aliases over Fern-generated types: `LlmConfig`, `SttConfig`, `AsrConfig` (= `SttConfig`), `MllmConfig`, `AvatarConfig`, session/conversation types, and think types (`ThinkOnListeningAction`, etc.).
+Public aliases over Fern-generated types: `LlmConfig`, `SttConfig`, `AsrConfig` (= `SttConfig`), `MllmConfig`, `AvatarConfig`, session/conversation types, think types (`ThinkOnListeningAction`, etc.), generated filler-word types, and inline REST tool types (`LlmToolConfig`, `LlmToolServerConfig`, and related aliases).
 
-Think value constants: `ThinkOnListeningActionInject`, `ThinkOnListeningActionInterrupt`, `ThinkOnListeningActionIgnore`, `ThinkOnThinkingActionInterrupt`, `ThinkOnThinkingActionIgnore`, `ThinkOnSpeakingActionInterrupt`, `ThinkOnSpeakingActionIgnore`.
+Think value constants: `ThinkOnListeningActionInject`, `ThinkOnListeningActionInterrupt`, `ThinkOnListeningActionIgnore`, `ThinkOnListeningActionAppend`, `ThinkOnThinkingActionInterrupt`, `ThinkOnThinkingActionIgnore`, `ThinkOnThinkingActionAppend`, `ThinkOnSpeakingActionInterrupt`, `ThinkOnSpeakingActionIgnore`, `ThinkOnSpeakingActionAppend`.

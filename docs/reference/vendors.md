@@ -20,7 +20,7 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `GeminiSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `OpenAIGptLive`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
 | `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
@@ -538,6 +538,18 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 | `model` | `str` | No | `None` | Recognition model |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 
+### `GeminiSTT`
+
+Google Gemini transcription vendor. The generated request is `asr.vendor="gemini"` with the provider settings under `asr.params`.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Google Gemini API key |
+| `model` | `str` | Yes | — | Gemini transcription model identifier |
+| `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
+| `language` | `str` | No | `None` | Language code for speech recognition |
+| `word_timestamp` | `bool` | No | `None` | Include word-level timestamps |
+
 ### `AmazonSTT`
 
 | Parameter | Type | Required | Default | Description |
@@ -561,7 +573,7 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `keywords` | `List[str]` | No | `None` | Hotwords that improve ASR accuracy |
+| `keywords` | `List[str]` | No | `None` | Hotwords that improve ASR accuracy; serialized as top-level `asr.keywords` |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 
 ### `SarvamSTT`
@@ -802,6 +814,63 @@ All CN TTS vendor classes support `skip_patterns` and `additional_params`.
 | `messages` | `List[Dict]` | No | `None` | Conversation messages |
 | `params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 | `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
+
+### `OpenAIGptLive`
+
+OpenAI GPT Live is a separate vendor from `OpenAIRealtime` and serializes as `mllm.vendor="openai_gpt_live"`.
+
+It accepts the realtime connection options `api_key`, `model`, `url`, `params`, and `turn_detection`. Its greeting field is `greeting_message`.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | OpenAI API key |
+| `model` | `str` | No | `None` | GPT Live model name |
+| `voice` | `str` | No | `None` | Voice identifier |
+| `instructions` | `str` | No | `None` | System instructions |
+| `input_audio_transcription` | `Dict[str, Any]` | No | `None` | Audio transcription settings |
+| `url` | `str` | No | `wss://api.openai.com/v1/live` | OpenAI GPT Live WebSocket URL |
+| `greeting_message` | `str` | No | `None` | Greeting message |
+| `input_modalities` | `List[str]` | No | `None` | Input modalities |
+| `output_modalities` | `List[str]` | No | `None` | Output modalities |
+| `messages` | `List[Dict[str, Any]]` | No | `None` | Conversation messages |
+| `params` | `Dict[str, Any]` | No | `None` | Additional model parameters |
+| `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration |
+| `failure_message` | `str` | No | `None` | Message played when the model call fails |
+
+### Inline REST LLM tools
+
+`LlmConfig.tools` accepts a list of dictionaries for synchronous pass-through REST tools, using the same public shape as `mcp_servers`. This is the inline equivalent of `mcp_servers`, and it requires `advanced_features.enable_tools=True` to execute. Enable it explicitly with `Agent.with_tools()`.
+
+Each tool requires `function.name`, an object-shaped `function.parameters`, `server.method` (`GET` or `POST`), and `server.url`.
+
+```python
+from agora_agent import Agent, LlmConfig, OpenAI
+
+llm = OpenAI(
+    api_key='your-openai-key',
+    base_url='https://api.openai.com/v1/chat/completions',
+    model='gpt-4o-mini',
+    tools=[{
+        'type': 'function',
+        'function': {
+            'name': 'lookup_order',
+            'description': 'Look up an order by ID.',
+            'parameters': {
+                'type': 'object',
+                'properties': {'order_id': {'type': 'string'}},
+                'required': ['order_id'],
+            },
+        },
+        'server': {
+            'method': 'GET',
+            'url': 'https://api.example.com/orders/{{args.order_id}}',
+        },
+    }],
+)
+agent = Agent(client=client).with_llm(llm).with_tools()
+```
+
+`server.body` is only valid for `POST`. Template values may use `{{args.name}}` in URLs and bodies, and `{{template_variables.name}}` or `{{tool_call_id}}` in URLs, headers, and bodies. `execution.mode` currently supports only `sync`; `timeout_ms` must be between `1000` and `100000`.
 
 ### `AzureOpenAIRealtime`
 
