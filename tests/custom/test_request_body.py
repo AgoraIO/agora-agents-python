@@ -1326,9 +1326,10 @@ def test_azure_openai_realtime_rejects_input_modalities() -> None:
         )
 
 
-def test_azure_mllm_requires_turn_detection_and_qwen_mllm_requires_url() -> None:
-    with pytest.raises(ValidationError):
-        AzureOpenAIRealtime(url="AZURE_URL", api_key="APIKEY")  # type: ignore[call-arg]
+def test_azure_mllm_allows_omitting_turn_detection_and_qwen_mllm_requires_url() -> None:
+    agent = Agent(test_client()).with_mllm(AzureOpenAIRealtime(url="AZURE_URL", api_key="APIKEY"))
+    props = build_properties(agent)
+    assert "turn_detection" not in props["mllm"]
 
     with pytest.raises(ValidationError):
         QwenOmni(  # type: ignore[call-arg]
