@@ -15,6 +15,8 @@ from ..agent_management.types.agent_think_agent_management_response import (
     AgentThinkAgentManagementResponse as AgentThinkResponse,
 )
 from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
+from .debug import redact_secrets
+from .preview.client import apply_preview_shape, assert_preview_support
 from .agent import (
     Agent,
     GetTurnsOptions,
@@ -29,7 +31,6 @@ from .avatar_types import (
     is_generic_avatar,
     is_heygen_avatar,
     is_live_avatar_avatar,
-    is_rtc_avatar,
     is_sensetime_avatar,
     is_spatius_avatar,
     validate_avatar_config,
@@ -604,17 +605,26 @@ class AgentSession(_AgentSessionBase):
                 properties,
             )
 
+            assert_preview_support(self._client, resolved_properties)
+            # Retarget MLLM fields the shared builder wrote with production
+            # spellings, so a preview config follows the preview route's structure.
+            apply_preview_shape(resolved_properties)
+
             if self._debug:
                 print("[Agora Debug] Starting agent session...")
+                if hasattr(self._client, "get_current_url"):
+                    print("[Agora Debug] API Endpoint:", self._client.get_current_url())
                 print(
                     "[Agora Debug] Request:",
-                    {
-                        "appid": self._app_id,
-                        "name": self._name,
-                        "preset": resolved_preset,
-                        "pipeline_id": pipeline_id,
-                        "properties": resolved_properties,
-                    },
+                    redact_secrets(
+                        {
+                            "appid": self._app_id,
+                            "name": self._name,
+                            "preset": resolved_preset,
+                            "pipeline_id": pipeline_id,
+                            "properties": resolved_properties,
+                        }
+                    ),
                 )
 
             request_properties = self._request_properties_for_start(
@@ -965,17 +975,26 @@ class AsyncAgentSession(_AgentSessionBase):
                 properties,
             )
 
+            assert_preview_support(self._client, resolved_properties)
+            # Retarget MLLM fields the shared builder wrote with production
+            # spellings, so a preview config follows the preview route's structure.
+            apply_preview_shape(resolved_properties)
+
             if self._debug:
                 print("[Agora Debug] Starting agent session...")
+                if hasattr(self._client, "get_current_url"):
+                    print("[Agora Debug] API Endpoint:", self._client.get_current_url())
                 print(
                     "[Agora Debug] Request:",
-                    {
-                        "appid": self._app_id,
-                        "name": self._name,
-                        "preset": resolved_preset,
-                        "pipeline_id": pipeline_id,
-                        "properties": resolved_properties,
-                    },
+                    redact_secrets(
+                        {
+                            "appid": self._app_id,
+                            "name": self._name,
+                            "preset": resolved_preset,
+                            "pipeline_id": pipeline_id,
+                            "properties": resolved_properties,
+                        }
+                    ),
                 )
 
             request_properties = self._request_properties_for_start(

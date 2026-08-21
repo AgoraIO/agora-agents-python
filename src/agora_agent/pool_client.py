@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import logging
 import typing
 
@@ -15,6 +16,7 @@ from .client import Agora as BaseAgora
 from .client import AsyncAgora as BaseAsyncAgora
 from .core.api_error import ApiError
 from .core.domain import Area, Pool
+from .agentkit.debug import redact_secrets
 from .agentkit.token import generate_convo_ai_token
 
 _AUTH_MODE = typing.Literal["app-credentials", "basic", "token"]
@@ -41,15 +43,24 @@ def _redact_headers(headers: typing.Mapping[str, str]) -> typing.Dict[str, str]:
 
 
 def _debug_request(request: httpx.Request) -> None:
-    """Log HTTP request when debug is enabled."""
+    """Log HTTP request when debug is enabled.
+
+    The body is JSON-decoded and redacted before logging: it carries vendor API
+    keys, the RTC token, and the App ID, none of which may reach a log that gets
+    pasted into an issue. A body that is not JSON is described, never echoed.
+    """
     headers = _redact_headers(request.headers)
     body_preview = ""
     if request.content:
         try:
-            preview = request.content[:500] if len(request.content) > 500 else request.content
-            body_preview = f" body={preview!r}..."
+            decoded = json.loads(request.content)
         except Exception:
-            body_preview = " body=<unable to read>"
+            body_preview = f" body=<{len(request.content)} bytes, not JSON>"
+        else:
+            redacted = json.dumps(redact_secrets(decoded))
+            if len(redacted) > 2000:
+                redacted = redacted[:2000] + "..."
+            body_preview = f" body={redacted}"
     _DEBUG_LOGGER.debug(
         "HTTP request: %s %s headers=%s%s",
         request.method,

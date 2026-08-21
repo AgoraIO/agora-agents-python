@@ -145,6 +145,8 @@ from agora_agent import DeepgramSTT
 stt = DeepgramSTT(api_key='your-deepgram-key', language='en-US', model='nova-2')
 ```
 
+> **Preview providers** — `GeminiWalkieTalkie` and `GeminiCleverChatter` (MLLM) live in `agora_agent.agentkit.preview`, are served only by the preview gateway, and require `AgoraPreview`. See [Preview Endpoint](../guides/preview-endpoint.md).
+
 ## MLLM Vendors
 
 Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These handle audio input and output end-to-end.

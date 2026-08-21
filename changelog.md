@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- **Preview endpoint support** — `AgoraPreview` and `AsyncAgoraPreview` route every request to the preview gateway and pin the `agora-feature` gate header, which is merged after caller-supplied `headers` so it cannot be dropped or blanked.
+- **Gemini preview MLLMs** — `GeminiWalkieTalkie` (`walkie-talkie`) and `GeminiCleverChatter` (`clever-chatter`), under `agora_agent.agentkit.preview`. `thinking_level` is exclusive to clever-chatter, so passing it to the walkie-talkie is a validation error rather than a silently ignored argument.
+- **Preview MLLM rename constants** — `GeminiPreviewMllmModels.LIVE_35` (`gemini-3.5-live`) and `.LIVE_35_THINKING` (`gemini-3.5-live-thinking`) are the post-rename IDs for walkie-talkie and clever-chatter. Both spellings are accepted by `required_preview_features`, so the guard works throughout Google's rollout. The vendor classes still send the codenames — see `GEMINI_PREVIEW_MLLM_DEFAULTS`.
+- **Preview MLLM language** — `language_codes` serializes to `params.language_codes`, omitted when unset. The preview MLLMs never send the singular `params.language`: that field belongs to xAI Grok in the Agora schema, and the production Gemini Live provider sends no language field at all.
+- **Preview MLLM greeting** — the argument is `greeting` (not `greeting_message`) and serializes to `greeting`, the spelling the new Gemini preview models read. An agent-level `greeting` also works — the builder writes it as `mllm.greeting_message` and `apply_preview_shape` retargets it.
+- **Preview wire-shape translation** — `apply_preview_shape` runs at session start and retargets MLLM fields the shared builder wrote with production spellings, so an agent-level `greeting` reaches the preview models as `greeting` rather than the `greeting_message` they ignore. A hand-written `greeting_message` migrates too, so an existing config keeps working after only swapping the model. `failure_message` is left alone as an Agora engine field, and production MLLMs are untouched.
+- **Preview support guard** — `assert_preview_support` raises before any request when preview providers are paired with a plain `Agora` client.
+- **Debug redaction** — `redact_secrets` replaces vendor API keys, RTC tokens, and the App ID with `[REDACTED]`. Empty strings stay visible so an unset environment variable remains diagnosable.
+
+### Fixed
+
+- **Debug logging leaked credentials** — the httpx debug hook logged raw request bodies, so vendor API keys and RTC tokens reached the log unredacted. Bodies are now JSON-decoded and redacted; a non-JSON body is described by size rather than echoed.
+- **Malformed credentials are rejected before signing** — the Python signing path HMACs whatever it is given, so an `app_id` or `app_certificate` with a trailing newline or a truncated paste produced a well-formed token that the gateway rejected with an error naming neither field. `generate_rtc_token` and `generate_convo_ai_token` now raise `ValueError` and say which field is the wrong length. Credential values are never included in the message.
+- **An unrecognised MLLM model no longer silently skips the wire-shape translation** — preview detection matched only the four known model names, so overriding `model` to a rename this SDK had not shipped yet turned off `apply_preview_shape` with no error: the greeting stayed in `greeting_message`, which these models ignore, and the agent never greeted. A config is now also recognised by its envelope (`params.api_key` set and `url` on the Gemini Developer API host), which the production `GeminiLive` vendor does not emit.
+- **Preview vendors reject an empty API key** — the preview MLLM classes previously accepted `api_key=""` and sent it as a blank credential. They now fail at construction, matching the TypeScript and Go vendors.
+
+### Changed
+
+- **Preview configs bypass request validation** — the generated request models mirror what production serves, so a preview MLLM config fails validation. Configs that `required_preview_features()` recognises are now passed through unvalidated, with `None` entries stripped so the bypass puts the same bytes on the wire as the typed path. Production configs are unaffected.
+
+### Documentation
+
+- Added [Preview Endpoint](docs/guides/preview-endpoint.md), covering the gate header, intake-node failure signatures, the validation bypass, and how to add a future preview family.
+- Documented every field `Agent.to_properties` injects into a vendor config, and why a preview provider must be verified against the resolved request body rather than the vendor class output — a value written under a spelling the route ignores fails silently.
+- Documented the two signals that mark a config as preview, and why matching on the model name alone was a silent failure.
+
 ## [v2.4.0] — 2026-06-30
 
 ### Added

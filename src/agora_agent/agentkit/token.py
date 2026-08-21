@@ -10,6 +10,9 @@ import zlib
 DEFAULT_EXPIRY_SECONDS = 86400
 MAX_EXPIRY_SECONDS = 86400
 
+#: Length Agora requires of both the App ID and the App Certificate.
+AGORA_CREDENTIAL_LENGTH = 32
+
 ROLE_PUBLISHER = 1
 ROLE_SUBSCRIBER = 2
 
@@ -185,6 +188,32 @@ def _pack_service_rtm(user_id: str, privileges: typing.Dict[int, int]) -> bytes:
     )
 
 
+def _require_valid_credentials(app_id: str, app_certificate: str) -> None:
+    """Reject credentials Agora will not accept, before signing anything.
+
+    Unlike the TypeScript and Go builders — which return an empty token and an
+    explicit error respectively — the Python signing path HMACs whatever it is
+    given, so a truncated or whitespace-padded value yields a well-formed token
+    that the gateway rejects with an auth error naming neither field. Checking
+    the lengths here turns that into a local failure that names the culprit.
+
+    Credential values are never included in the message — only their lengths.
+    """
+    wrong = [
+        (name, value)
+        for name, value in (("app_id", app_id), ("app_certificate", app_certificate))
+        if len(value) != AGORA_CREDENTIAL_LENGTH
+    ]
+    if not wrong:
+        return
+    detail = " and ".join(f"{name} is {len(value)} characters" for name, value in wrong)
+    raise ValueError(
+        f"Failed to build an Agora token: app_id and app_certificate must each be exactly "
+        f"{AGORA_CREDENTIAL_LENGTH} characters ({detail}). "
+        "Check the values for stray whitespace or a truncated paste."
+    )
+
+
 def generate_rtc_token(
     app_id: str,
     app_certificate: str,
@@ -215,6 +244,7 @@ def generate_rtc_token(
     str
         The generated RTC token.
     """
+    _require_valid_credentials(app_id, app_certificate)
     try:
         from agora_token_builder import RtcTokenBuilder  # type: ignore[import-not-found]
 
@@ -274,6 +304,7 @@ def generate_convo_ai_token(
     str
         The AccessToken2 string for use in the Authorization header.
     """
+    _require_valid_credentials(app_id, app_certificate)
     try:
         from agora_token_builder import RtcTokenBuilder  # type: ignore[import-not-found]
 
