@@ -488,10 +488,13 @@ Use `turn_detection.language` for Agora interaction language; it defaults to `en
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `api_key` | `str` | Yes | — | Speechmatics API key |
+| `key` | `str` | Yes | `None` | Speechmatics API key |
+| `api_key` | `str` | No | `None` | Deprecated alias for `key`; retained for backward compatibility |
 | `language` | `str` | Yes | — | Language code (e.g., `en`) |
 | `uri` | `str` | No | `None` | Speechmatics streaming WebSocket URL |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+
+`SpeechmaticsSTT` always serializes its credential as `asr.params.key`. Passing `api_key` emits a `DeprecationWarning` and is normalized to `key`; when both are provided, `key` takes precedence.
 
 ### `DeepgramSTT`
 
