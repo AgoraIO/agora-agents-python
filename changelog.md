@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.7.0] — 2026-08-26
+
+### Added
+
+- **Preview endpoint support** — `Agora` and `AsyncAgora` detect preview features from each resolved session body, then pin that session's requests to the preview gateway and `agora-feature` header without mutating the production client.
+- **Gemini preview ASR** — `GeminiSTT` (`gemini-3.5-transcribe-live`), under `agora_agent.agentkit.preview`, a cascading ASR stage served only by the preview gateway.
+- **Gemini ASR language selection** — `language_codes` serializes to `params.language_codes`, replacing the singular `params.language` this vendor previously sent. Omitted from the request when unset, which is how the provider spells auto-detect. `GeminiSTT` has no `language` argument: the top-level `asr.language` comes from turn detection, as it does for every STT vendor.
+- **Gemini ASR custom vocabulary** — `custom_vocabulary` biases recognition toward supplied words and phrases via `params.custom_vocabulary`. Omitted from the request when unset.
+- **Session-scoped routing** — GA sessions remain on the production regional endpoint, while preview session lifecycle calls use the preview endpoint. Top-level `stop_agent()` remains production-only.
+- **Debug redaction** — `redact_secrets` replaces vendor API keys, RTC tokens, and the App ID with `[REDACTED]`. Empty strings stay visible so an unset environment variable remains diagnosable.
+
+### Fixed
+
+- **Gemini ASR parameter compatibility** — `word_timestamp` is now omitted unless explicitly set. Enabling it together with `custom_vocabulary` fails locally instead of sending a combination Gemini does not support.
+- **Debug logging leaked credentials** — the httpx debug hook logged raw request bodies, so vendor API keys and RTC tokens reached the log unredacted. Bodies are now JSON-decoded and redacted; a non-JSON body is described by size rather than echoed.
+- **Malformed credentials are rejected before signing** — the Python signing path HMACs whatever it is given, so an `app_id` or `app_certificate` with a trailing newline or a truncated paste produced a well-formed token that the gateway rejected with an error naming neither field. `generate_rtc_token` and `generate_convo_ai_token` now raise `ValueError` and say which field is the wrong length. Credential values are never included in the message.
+- **Preview vendors reject an empty API key** — `GeminiSTT(api_key="")` previously accepted the empty string and sent it as a blank credential. It now fails at construction, matching the TypeScript and Go vendors.
+
+### Changed
+
+- **Preview configs bypass request validation** — the generated request models mirror what production serves, so `asr.vendor = "gemini"` fails validation. Configs that `required_preview_features()` recognises are now passed through unvalidated, with `None` entries stripped so the bypass puts the same bytes on the wire as the typed path. Production configs are unaffected.
+
+### Documentation
+
+- Added [Preview Endpoint](docs/guides/preview-endpoint.md), covering the gate header, intake-node failure signatures, the validation bypass, and how to add a future preview family.
+- Documented every field `Agent.to_properties` injects into a vendor config, and why a preview provider must be verified against the resolved request body rather than the vendor class output — a value written under a spelling the route ignores fails silently.
+
 ## [v2.6.1] — 2026-08-19
 
 ### Fixed
@@ -25,7 +52,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 - **AssemblyAI STT WebSocket URL** — `AssemblyAISTT.uri` and `AssemblyAiAsrParams.uri` are renamed to `ws_url`, and the field is serialized as `asr.params.ws_url`. This is a breaking rename for callers that set `uri`.
 - **Generated model aliasing** — Wire-key aliases (`VoiceSelectionParams`, `AudioConfig`, `voiceId`, `modelId`, `appId`, `sceneList`) now use native pydantic field aliases with population by field name, instead of annotation-metadata conversion on every request and response.
-
 
 ## [v2.4.0] — 2026-06-30
 
