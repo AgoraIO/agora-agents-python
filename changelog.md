@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.7.2] — 2026-08-26
+
+### Changed
+
+- **Release metadata refresh** — Updated package and compatibility metadata for the `2.7.2` release line.
+
+### Documentation
+
+- **Changelog update** — Added release entry for `v2.7.2`.
+
 ## [v2.7.0] — 2026-08-26
 
 ### Added
