@@ -5,22 +5,17 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .ares_asr_params import AresAsrParams
-from .asr_language import AsrLanguage
 
 
-class AresAsr(UncheckedBaseModel):
+class LlmToolExecution(UncheckedBaseModel):
     """
-    Adaptive Recognition Engine for Speech ASR configuration.
-    """
-
-    language: typing.Optional[AsrLanguage] = None
-    keywords: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
-    """
-    A list of hotwords to improve ASR accuracy.
+    Tool execution configuration. Defaults to `{"mode": "sync"}`. Phase 1a only allows `sync`.
     """
 
-    params: typing.Optional[AresAsrParams] = None
+    mode: typing.Optional[typing.Literal["sync"]] = pydantic.Field(default=None)
+    """
+    Execution mode. Phase 1a only accepts `sync`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

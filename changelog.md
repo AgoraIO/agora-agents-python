@@ -31,6 +31,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Added [Preview Endpoint](docs/guides/preview-endpoint.md), covering the gate header, intake-node failure signatures, the validation bypass, and how to add a future preview family.
 - Documented every field `Agent.to_properties` injects into a vendor config, and why a preview provider must be verified against the resolved request body rather than the vendor class output — a value written under a spelling the route ignores fails silently.
 
+## [v2.6.1] — 2026-08-19
+
+### Fixed
+
+- **Speechmatics credential field** — `SpeechmaticsSTT` now emits the REST-compatible `asr.params.key`. The `key` field is preferred; deprecated `api_key` remains supported, warns, and is normalized to `key`.
+
+## [v2.6.0] — 2026-08-10
+
+### Added
+
+- **Azure OpenAI Realtime MLLM** — `AzureOpenAIRealtime` (`mllm.vendor`: `azure`), including `max_history` for caching conversation history messages.
+- **Qwen Omni Realtime MLLM (CN)** — `QwenOmni` (`mllm.vendor`: `qwen_omni`), exported from `agora_agent.cn`.
+- **MLLM support in AgentKit vendor namespaces** — Global and CN vendor catalogs now expose an `mllm` namespace, MLLM vendors are validated against the client area, and `CNAgent`/`GlobalAgent` expose typed `with_mllm()`.
+- **Typecast TTS** — `TypecastTTS` (`tts.vendor`: `typecast`).
+- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT`, serialized as `asr.params.keywords`, with a typed `FengmingAsrParams` model replacing the untyped Fengming params dict.
+- **Configurable API base URL** — Setting `AGORA_AGENTS_API_BASE_URL` overrides regional domain selection; when set, the domain pool skips DNS-based domain selection and region cycling and always uses the configured base URL.
+
+### Changed
+
+- **AssemblyAI STT WebSocket URL** — `AssemblyAISTT.uri` and `AssemblyAiAsrParams.uri` are renamed to `ws_url`, and the field is serialized as `asr.params.ws_url`. This is a breaking rename for callers that set `uri`.
+- **Generated model aliasing** — Wire-key aliases (`VoiceSelectionParams`, `AudioConfig`, `voiceId`, `modelId`, `appId`, `sceneList`) now use native pydantic field aliases with population by field name, instead of annotation-metadata conversion on every request and response.
+
 ## [v2.4.0] — 2026-06-30
 
 ### Added

@@ -2,4 +2,6 @@
 
 import typing
 
-AgentThinkAgentManagementRequestOnSpeakingAction = typing.Union[typing.Literal["interrupt", "ignore"], typing.Any]
+AgentThinkAgentManagementRequestOnSpeakingAction = typing.Union[
+    typing.Literal["interrupt", "ignore", "append"], typing.Any
+]

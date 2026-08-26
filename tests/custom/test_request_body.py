@@ -65,6 +65,7 @@ from agora_agent import (
 from agora_agent.agentkit import AgentSession
 from agora_agent.agentkit.presets import resolve_session_presets
 from agora_agent.cn import QwenOmni
+from agora_agent.types.speechmatics_asr_params import SpeechmaticsAsrParams
 from test_helpers import test_client
 
 
@@ -836,11 +837,32 @@ def test_byok_ares_stt_no_params() -> None:
 
 
 def test_byok_speechmatics_stt_params() -> None:
-    agent = Agent(test_client()).with_stt(SpeechmaticsSTT(api_key="sm-key", language="en"))
+    with pytest.warns(DeprecationWarning, match="use key instead"):
+        agent = Agent(test_client()).with_stt(SpeechmaticsSTT(api_key="sm-key", language="en"))
     props = build_properties(agent, allow_missing={"llm", "tts"})
     assert props["asr"]["vendor"] == "speechmatics"
-    assert props["asr"]["params"]["api_key"] == "sm-key"
+    assert props["asr"]["params"]["key"] == "sm-key"
+    assert "api_key" not in props["asr"]["params"]
     assert props["asr"]["params"]["language"] == "en"
+
+
+def test_byok_speechmatics_stt_key_takes_precedence() -> None:
+    assert SpeechmaticsSTT(key="new-key", language="en").to_config()["params"]["key"] == "new-key"
+
+    with pytest.warns(DeprecationWarning, match="use key instead"):
+        config = SpeechmaticsSTT(key="new-key", api_key="legacy-key", language="en").to_config()
+    assert config["params"]["key"] == "new-key"
+    assert "api_key" not in config["params"]
+
+
+def test_generated_speechmatics_params_normalizes_deprecated_api_key() -> None:
+    params = SpeechmaticsAsrParams(api_key="legacy-key", language="en")
+    assert dump(params) == {"key": "legacy-key", "language": "en"}
+
+
+def test_generated_speechmatics_params_requires_a_key() -> None:
+    with pytest.raises(ValueError, match="requires key"):
+        SpeechmaticsAsrParams(language="en")
 
 
 def test_byok_sarvam_stt_params() -> None:

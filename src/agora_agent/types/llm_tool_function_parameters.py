@@ -7,24 +7,24 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class AssemblyAiAsrParams(UncheckedBaseModel):
+class LlmToolFunctionParameters(UncheckedBaseModel):
     """
-    AssemblyAI ASR configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    AssemblyAI API key
+    JSON Schema defining the LLM tool-call arguments (`args`). Must be an object schema with `type: object` and `properties`.
     """
 
-    language: str = pydantic.Field()
+    type: typing.Literal["object"] = pydantic.Field(default="object")
     """
-    Language code for speech recognition
+    JSON Schema type. Must be `object`.
     """
 
-    ws_url: typing.Optional[str] = pydantic.Field(default=None)
+    properties: typing.Dict[str, typing.Any] = pydantic.Field()
     """
-    WebSocket URL for AssemblyAI's streaming API
+    Argument property definitions keyed by argument name.
+    """
+
+    required: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    List of required argument names.
     """
 
     if IS_PYDANTIC_V2:
