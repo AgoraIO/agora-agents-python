@@ -42,6 +42,7 @@ class PreviewFeatures:
 
 PreviewFeature = str
 
+
 def _preview_headers(
     features: typing.Sequence[str],
     headers: typing.Optional[typing.Dict[str, str]],
@@ -74,16 +75,16 @@ def create_preview_session_clients(
         "httpx_client": source.httpx_client.httpx_client,
     }
     if isinstance(source, AsyncClientWrapper):
-        wrapper = AsyncClientWrapper(**kwargs)
+        async_wrapper = AsyncClientWrapper(**kwargs)
         return (
-            AsyncAgentsClient(client_wrapper=wrapper),
-            AsyncAgentManagementClient(client_wrapper=wrapper),
+            AsyncAgentsClient(client_wrapper=async_wrapper),
+            AsyncAgentManagementClient(client_wrapper=async_wrapper),
         )
     if isinstance(source, SyncClientWrapper):
-        wrapper = SyncClientWrapper(**kwargs)
+        sync_wrapper = SyncClientWrapper(**kwargs)
         return (
-            AgentsClient(client_wrapper=wrapper),
-            AgentManagementClient(client_wrapper=wrapper),
+            AgentsClient(client_wrapper=sync_wrapper),
+            AgentManagementClient(client_wrapper=sync_wrapper),
         )
     raise TypeError("Unsupported Agora client wrapper")
 
