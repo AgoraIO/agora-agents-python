@@ -135,8 +135,10 @@ class _AgentSessionBase:
             str, typing.List[typing.Callable[..., None]]
         ] = {}
         self._agents = client.agents
-        self._agent_management = client.agent_management
-        self._api_base_url = client.get_current_url()
+        self._agent_management = getattr(client, "agent_management", None)
+        self._api_base_url = (
+            client.get_current_url() if hasattr(client, "get_current_url") else None
+        )
 
     # ------------------------------------------------------------------
     # Public read-only properties
@@ -172,6 +174,14 @@ class _AgentSessionBase:
         """Direct access to the underlying Fern-generated AgentManagement client."""
         return self._agent_management
 
+    def _require_agent_management(self) -> typing.Any:
+        """Return the management client when the configured client supports it."""
+        if self._agent_management is None:
+            raise RuntimeError(
+                "The configured client does not support agent management operations"
+            )
+        return self._agent_management
+
     def _bind_session_clients(self, features: typing.Sequence[str]) -> None:
         """Pin this session to production or preview without mutating its client."""
         if features:
@@ -183,8 +193,12 @@ class _AgentSessionBase:
             self._api_base_url = PREVIEW_API_BASE_URL
             return
         self._agents = self._client.agents
-        self._agent_management = self._client.agent_management
-        self._api_base_url = self._client.get_current_url()
+        self._agent_management = getattr(self._client, "agent_management", None)
+        self._api_base_url = (
+            self._client.get_current_url()
+            if hasattr(self._client, "get_current_url")
+            else None
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -786,7 +800,7 @@ class AgentSession(_AgentSessionBase):
         if metadata is not None:
             kwargs["metadata"] = metadata
 
-        return self._agent_management.agent_think(
+        return self._require_agent_management().agent_think(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
@@ -1153,7 +1167,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if metadata is not None:
             kwargs["metadata"] = metadata
 
-        return await self._agent_management.agent_think(
+        return await self._require_agent_management().agent_think(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
