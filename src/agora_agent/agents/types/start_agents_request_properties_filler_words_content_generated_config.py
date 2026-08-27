@@ -12,20 +12,22 @@ from .start_agents_request_properties_filler_words_content_generated_config_llm_
 
 class StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig(UncheckedBaseModel):
     """
-    Generated filler word configuration. Required when `content.mode` is `generated`.
+    Optional configuration for generated filler words. When omitted, the service uses its default generator settings.
     """
 
-    llm_provider: StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider = pydantic.Field()
+    llm_provider: typing.Optional[StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider] = (
+        pydantic.Field(default=None)
+    )
     """
     OpenAI-compatible LLM provider used to generate filler words. Runs in parallel with the main business LLM and only uses the last user message as input.
     """
 
-    prompt: str = pydantic.Field()
+    prompt: typing.Optional[str] = pydantic.Field(default=None)
     """
     System prompt used to generate a short filler phrase based on the last user message. The generated text should be conversational and must not answer the user's question.
     """
 
-    fallback_strategy: typing.Literal["static"] = pydantic.Field(default="static")
+    fallback_strategy: typing.Optional[typing.Literal["static"]] = pydantic.Field(default=None)
     """
     Fallback strategy when generated filler text is not ready, fails, or returns empty text. Phase 1 only supports `static`.
     """
