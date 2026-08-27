@@ -5,27 +5,17 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .asr_language import AsrLanguage
+from .gemini_asr_params import GeminiAsrParams
 
 
-class SpeechmaticsAsrParams(UncheckedBaseModel):
+class GeminiAsr(UncheckedBaseModel):
     """
-    Speechmatics ASR configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Speechmatics API key
+    Google Gemini ASR configuration.
     """
 
-    language: str = pydantic.Field()
-    """
-    Language code to use for transcription
-    """
-
-    uri: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    WebSocket URL for the Speechmatics streaming API
-    """
+    language: typing.Optional[AsrLanguage] = None
+    params: GeminiAsrParams
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

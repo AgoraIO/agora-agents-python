@@ -12,9 +12,9 @@ class StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider(U
     OpenAI-compatible LLM provider used to generate filler words. Runs in parallel with the main business LLM and only uses the last user message as input.
     """
 
-    base_url: str = pydantic.Field()
+    url: str = pydantic.Field()
     """
-    Base URL of the OpenAI-compatible chat completions endpoint. If the URL does not end with `/chat/completions`, the engine appends it automatically.
+    URL of the OpenAI-compatible chat completions endpoint. If the URL does not end with `/chat/completions`, the engine appends it automatically.
     """
 
     api_key: str = pydantic.Field()

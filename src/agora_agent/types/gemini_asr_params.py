@@ -7,24 +7,34 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class SpeechmaticsAsrParams(UncheckedBaseModel):
+class GeminiAsrParams(UncheckedBaseModel):
     """
-    Speechmatics ASR configuration parameters.
+    Google Gemini ASR configuration parameters.
     """
 
     api_key: str = pydantic.Field()
     """
-    Speechmatics API key
+    Google Gemini API key
+    """
+
+    model: str = pydantic.Field()
+    """
+    Google Gemini model to use for transcription
+    """
+
+    sample_rate: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Audio sample rate in Hz
     """
 
     language: str = pydantic.Field()
     """
-    Language code to use for transcription
+    Language code for speech recognition
     """
 
-    uri: typing.Optional[str] = pydantic.Field(default=None)
+    word_timestamp: bool = pydantic.Field()
     """
-    WebSocket URL for the Speechmatics streaming API
+    Whether to include word-level timestamps in transcription results
     """
 
     if IS_PYDANTIC_V2:
