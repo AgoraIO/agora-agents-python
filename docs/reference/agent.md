@@ -207,6 +207,29 @@ Set RTC configuration.
 
 Set filler words configuration (played while waiting for LLM response).
 
+Generated filler words can use the service defaults, or accept an optional prompt and OpenAI-compatible provider:
+
+```python
+from agora_agent import (
+    FillerWordsConfig,
+    FillerWordsContent,
+    FillerWordsContentGeneratedConfig,
+)
+
+filler_words = FillerWordsConfig(
+    enable=True,
+    content=FillerWordsContent(
+        mode="generated",
+        generated_config=FillerWordsContentGeneratedConfig(
+            prompt="Respond with a brief conversational acknowledgment.",
+        ),
+    ),
+)
+agent = agent.with_filler_words(filler_words)
+```
+
+`generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults.
+
 ## `create_session()`
 
 <!-- snippet: fragment -->
