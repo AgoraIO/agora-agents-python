@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Changed
+
+- **Generated filler words configuration** — Generated filler word settings are now optional. The service can use default generator settings when `generated_config` is omitted, and `llm_provider`, `prompt`, and `fallback_strategy` may be omitted individually.
+
 ## [v2.7.2] — 2026-08-26
 
 ### Changed
