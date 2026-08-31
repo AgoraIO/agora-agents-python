@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- **Inline REST LLM tools** — Global and CN LLM vendors now accept dictionary-based `tools` definitions and serialize them to `llm.tools`. Added public `LlmToolConfig`, `LlmToolExecutionConfig`, `LlmToolFunctionConfig`, `LlmToolFunctionParametersConfig`, and `LlmToolServerConfig` aliases. Tool execution must be enabled explicitly with `Agent.with_tools()`.
+
 ### Changed
 
 - **Generated filler words configuration** — Generated filler word settings are now optional. The service can use default generator settings when `generated_config` is omitted, and `llm_provider`, `prompt`, and `fallback_strategy` may be omitted individually.
