@@ -564,8 +564,8 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `keywords` | `List[str]` | No | `None` | Hotwords that improve ASR accuracy |
-| `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+| `keywords` | `List[str]` | No | `None` | Hotwords serialized as top-level `asr.keywords` |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters serialized under `asr.params` |
 
 ### `SarvamSTT`
 
@@ -717,7 +717,8 @@ All CN TTS vendor classes support `skip_patterns` and `additional_params`.
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `keywords` | `List[str]` | No | `None` | Hotwords that improve ASR accuracy |
+| `keywords` | `List[str]` | No | `None` | Hotwords serialized as top-level `asr.keywords` |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters serialized under `asr.params` |
 
 #### `XfyunSTT`
 

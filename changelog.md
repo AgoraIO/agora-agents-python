@@ -61,7 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Qwen Omni Realtime MLLM (CN)** — `QwenOmni` (`mllm.vendor`: `qwen_omni`), exported from `agora_agent.cn`.
 - **MLLM support in AgentKit vendor namespaces** — Global and CN vendor catalogs now expose an `mllm` namespace, MLLM vendors are validated against the client area, and `CNAgent`/`GlobalAgent` expose typed `with_mllm()`.
 - **Typecast TTS** — `TypecastTTS` (`tts.vendor`: `typecast`).
-- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT`, serialized as `asr.params.keywords`, with a typed `FengmingAsrParams` model replacing the untyped Fengming params dict.
+- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT`, serialized as top-level `asr.keywords`. Vendor-specific `additional_params` remain under `asr.params`.
 - **Configurable API base URL** — Setting `AGORA_AGENTS_API_BASE_URL` overrides regional domain selection; when set, the domain pool skips DNS-based domain selection and region cycling and always uses the configured base URL.
 
 ### Changed

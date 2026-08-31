@@ -259,10 +259,9 @@ class AresSTTOptions(BaseModel):
 class AresSTT(AresSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
-        if self.keywords is not None:
-            params["keywords"] = self.keywords
-
         config: Dict[str, Any] = {"vendor": "ares"}
+        if self.keywords is not None:
+            config["keywords"] = self.keywords
         if params:
             config["params"] = params
         return config

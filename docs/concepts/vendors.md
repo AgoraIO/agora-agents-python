@@ -110,7 +110,8 @@ Used with `agent.with_stt()`.
 
 Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. STT vendor `language` options are serialized under `asr.params` using each provider's own format. If `with_stt()` is omitted, AgentKit defaults to `AresSTT` for global clients and `FengmingSTT` for `Area.CN` clients. Ares does not take a provider language option; AgentKit uses `turn_detection.language` for REST `asr.language`.
 
-`AresSTT` and `FengmingSTT` accept an optional `keywords: List[str]` hotword list.
+`AresSTT` and `FengmingSTT` accept an optional `keywords: List[str]` hotword list, serialized as
+top-level `asr.keywords`. Both vendors also accept `additional_params`, serialized separately under `asr.params`.
 
 | Class | Provider | Required Parameters |
 |---|---|---|

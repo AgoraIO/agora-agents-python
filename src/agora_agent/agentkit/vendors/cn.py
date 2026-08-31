@@ -46,13 +46,16 @@ class FengmingSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
 
 class FengmingSTT(FengmingSTTOptions, _BaseSTTCompat):
     def to_config(self) -> Dict[str, Any]:
         config: Dict[str, Any] = {"vendor": "fengming"}
         if self.keywords is not None:
-            config["params"] = {"keywords": self.keywords}
+            config["keywords"] = self.keywords
+        if self.additional_params:
+            config["params"] = dict(self.additional_params)
         return config
 
 
