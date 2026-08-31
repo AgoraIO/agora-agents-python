@@ -68,6 +68,11 @@ from ..types.mllm import Mllm
 from ..types.mllm_turn_detection import MllmTurnDetection
 from ..types.mllm_turn_detection_mode import MllmTurnDetectionMode as GeneratedMllmTurnDetectionMode
 from ..types.mllm_vendor import MllmVendor as GeneratedMllmVendor
+from ..types.llm_tool import LlmTool
+from ..types.llm_tool_execution import LlmToolExecution
+from ..types.llm_tool_function import LlmToolFunction
+from ..types.llm_tool_function_parameters import LlmToolFunctionParameters
+from ..types.llm_tool_server import LlmToolServer
 from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
     AgentThinkAgentManagementRequestOnListeningAction,
 )
@@ -244,6 +249,11 @@ FillerWordsContentSelectionRule = StartAgentsRequestPropertiesFillerWordsContent
 FillerWordsContentGeneratedConfig = StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig
 FillerWordsContentGeneratedConfigLlmProvider = StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider
 FillerWordsGeneratedLlmProvider = StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider
+LlmToolConfig = LlmTool
+LlmToolExecutionConfig = LlmToolExecution
+LlmToolFunctionConfig = LlmToolFunction
+LlmToolFunctionParametersConfig = LlmToolFunctionParameters
+LlmToolServerConfig = LlmToolServer
 
 # Think type aliases and response
 ThinkOnListeningAction = AgentThinkAgentManagementRequestOnListeningAction

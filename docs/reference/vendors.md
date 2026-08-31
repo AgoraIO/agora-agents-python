@@ -807,6 +807,41 @@ All CN TTS vendor classes support `skip_patterns` and `additional_params`.
 | `params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 | `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
+### Inline REST LLM tools
+
+`LlmConfig.tools` accepts a list of dictionaries for synchronous pass-through REST tools, using the same public shape as `mcp_servers`. This is the inline equivalent of `mcp_servers`, and it requires `advanced_features.enable_tools=True` to execute. Enable it explicitly with `Agent.with_tools()`.
+
+Each tool requires `function.name`, an object-shaped `function.parameters`, `server.method` (`GET` or `POST`), and `server.url`.
+
+```python
+from agora_agent import Agent, OpenAI
+
+llm = OpenAI(
+    api_key='your-openai-key',
+    base_url='https://api.openai.com/v1/chat/completions',
+    model='gpt-4o-mini',
+    tools=[{
+        'type': 'function',
+        'function': {
+            'name': 'lookup_order',
+            'description': 'Look up an order by ID.',
+            'parameters': {
+                'type': 'object',
+                'properties': {'order_id': {'type': 'string'}},
+                'required': ['order_id'],
+            },
+        },
+        'server': {
+            'method': 'GET',
+            'url': 'https://api.example.com/orders/{{args.order_id}}',
+        },
+    }],
+)
+agent = Agent(client=client).with_llm(llm).with_tools()
+```
+
+`server.body` is only valid for `POST`. Template values may use `{{args.name}}` in URLs and bodies, and `{{template_variables.name}}` or `{{tool_call_id}}` in URLs, headers, and bodies. `execution.mode` currently supports only `sync`; `timeout_ms` must be between `1000` and `100000`.
+
 ### `AzureOpenAIRealtime`
 
 Global Azure OpenAI Realtime vendor (`mllm.vendor`: `"azure"`).

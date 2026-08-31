@@ -515,6 +515,7 @@ class AliyunLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="aliyun")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -572,6 +573,8 @@ class AliyunLLM(AliyunLLMOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -599,6 +602,7 @@ class BytedanceLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="bytedance")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -656,6 +660,8 @@ class BytedanceLLM(BytedanceLLMOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -683,6 +689,7 @@ class DeepSeekLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="deepseek")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -740,6 +747,8 @@ class DeepSeekLLM(DeepSeekLLMOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -767,6 +776,7 @@ class TencentLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="tencent")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -824,6 +834,8 @@ class TencentLLM(TencentLLMOptions, BaseLLM):
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
             config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
