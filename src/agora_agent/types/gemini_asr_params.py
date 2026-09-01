@@ -14,27 +14,27 @@ class GeminiAsrParams(UncheckedBaseModel):
 
     api_key: str = pydantic.Field()
     """
-    Google Gemini API key
+    The Google Gemini API key used to authenticate requests.
     """
 
     model: str = pydantic.Field()
     """
-    Google Gemini model to use for transcription
+    The Gemini transcription model identifier.
     """
 
     sample_rate: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Audio sample rate in Hz
+    The audio sample rate in Hz.
     """
 
-    language: str = pydantic.Field()
+    language: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Language code for speech recognition
+    The language code for speech recognition. This takes precedence over the top-level `asr.language` value.
     """
 
-    word_timestamp: bool = pydantic.Field()
+    word_timestamp: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Whether to include word-level timestamps in transcription results
+    Whether to include word-level timestamps in the transcription results.
     """
 
     if IS_PYDANTIC_V2:
