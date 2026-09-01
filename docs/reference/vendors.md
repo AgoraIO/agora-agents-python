@@ -20,7 +20,7 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
 | `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
@@ -540,6 +540,28 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 | `language` | `str` | Yes | — | Language code (e.g., `en-US`) |
 | `model` | `str` | No | `None` | Recognition model |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
+
+### `GeminiSTT`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Google Gemini API key |
+| `model` | `str` | Yes | — | Gemini transcription model, such as `gemini-3.7-transcribe-live` |
+| `language` | `str` | No | `None` | Language code for speech recognition. Takes precedence over top-level `asr.language`. |
+| `word_timestamp` | `bool` | No | `None` | Include word-level timestamps in transcription results |
+| `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Gemini ASR parameters |
+
+```python
+from agora_agent import GeminiSTT
+
+stt = GeminiSTT(
+    api_key="your-google-api-key",
+    model="gemini-3.7-transcribe-live",
+    language="en-US",
+    word_timestamp=True,
+)
+```
 
 ### `AmazonSTT`
 

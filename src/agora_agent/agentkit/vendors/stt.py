@@ -196,6 +196,42 @@ class GoogleSTT(GoogleSTTOptions, BaseSTT):
         return config
 
 
+class GeminiSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="Google Gemini API key")
+    model: str = Field(..., description="Google Gemini transcription model")
+    language: Optional[str] = Field(default=None, description="Language code for speech recognition")
+    word_timestamp: Optional[bool] = Field(
+        default=None,
+        description="Include word-level timestamps in transcription results",
+    )
+    sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+
+class GeminiSTT(GeminiSTTOptions, BaseSTT):
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update(
+            {
+                "api_key": self.api_key,
+                "model": self.model,
+            }
+        )
+        if self.sample_rate is not None:
+            params["sample_rate"] = self.sample_rate
+        if self.language is not None:
+            params["language"] = self.language
+        if self.word_timestamp is not None:
+            params["word_timestamp"] = self.word_timestamp
+
+        return {
+            "vendor": "gemini",
+            "params": params,
+        }
+
+
 class AmazonSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

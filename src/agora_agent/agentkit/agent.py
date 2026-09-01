@@ -202,34 +202,10 @@ class SessionOptions(typing_extensions.TypedDict, total=False):
     warn: typing.Callable[[str], None]
 
 
-
-def _drop_none(value: typing.Any) -> typing.Any:
-    """Recursively remove None-valued mapping entries."""
-    if isinstance(value, dict):
-        return {k: _drop_none(v) for k, v in value.items() if v is not None}
-    if isinstance(value, list):
-        return [_drop_none(item) for item in value]
-    return value
-
-
 def _start_properties_from_mapping(
     properties: typing.Mapping[str, typing.Any],
 ) -> StartAgentsRequestProperties:
-    try:
-        return parse_obj_as(StartAgentsRequestProperties, dict(properties))
-    except Exception:
-        # Preview providers are absent from the generated unions by design — the
-        # schema models what production serves. A config the preview gateway
-        # does understand is passed through unvalidated rather than rejected.
-        # Imported lazily: preview.client imports the pool client, which imports
-        # this module.
-        from .preview.client import required_preview_features
-
-        if required_preview_features(properties):
-            # The typed path serializes with exclude_none; strip None here so the
-            # bypass puts the same bytes on the wire instead of explicit nulls.
-            return typing.cast(StartAgentsRequestProperties, _drop_none(dict(properties)))
-        raise
+    return parse_obj_as(StartAgentsRequestProperties, dict(properties))
 
 
 # LLM sub-type aliases
@@ -1051,10 +1027,6 @@ class Agent:
         if is_mllm_mode:
             if self._mllm is not None:
                 mllm_config = dict(self._mllm)
-                # These are production wire spellings. A route that spells one of them
-                # differently needs a rename entry in `preview/client.py`, or the value
-                # lands in a field the provider ignores and fails silently. See
-                # docs/guides/preview-endpoint.md#the-vendor-class-is-not-the-whole-wire-shape.
                 if self._greeting is not None:
                     mllm_config.setdefault("greeting_message", self._greeting)
                 if self._failure_message is not None:
@@ -1123,10 +1095,6 @@ class Agent:
         if not asr_config:
             area_scope = getattr(self._client, "area_scope", None)
             asr_config["vendor"] = "fengming" if area_scope == "cn" else "ares"
-        # Unconditional: turn detection is the single source of truth for the
-        # interaction language, so a vendor-level ``language`` would be silently
-        # discarded here. Do not add one to a vendor class — see
-        # docs/guides/preview-endpoint.md#the-vendor-class-is-not-the-whole-wire-shape.
         asr_config["language"] = self._field_value(turn_detection_config, "language")
         return asr_config
 

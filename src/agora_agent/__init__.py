@@ -45,6 +45,7 @@ if typing.TYPE_CHECKING:
         ElevenLabsTTS,
         FishAudioTTS,
         Gemini,
+        GeminiSTT,
         GeminiLive,
         GenericAvatar,
         GenericTTS,

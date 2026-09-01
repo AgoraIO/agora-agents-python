@@ -119,6 +119,7 @@ top-level `asr.keywords`. Both vendors also accept `additional_params`, serializ
 | `DeepgramSTT` | Deepgram | `model` for Agora-managed `nova-2`/`nova-3`; `api_key` for BYOK; `language?`, `keyterm?` |
 | `MicrosoftSTT` | Microsoft Azure | `key`, `region`, `language` |
 | `OpenAISTT` | OpenAI | `api_key` |
+| `GeminiSTT` | Google Gemini | `api_key`, `model`; optional `language`, `word_timestamp`, `sample_rate` |
 | `GoogleSTT` | Google Cloud | `project_id`, `location`, `adc_credentials_string`, `language` |
 | `AmazonSTT` | Amazon Transcribe | `access_key`, `secret_key`, `region`, `language` |
 | `AssemblyAISTT` | AssemblyAI | `api_key`, `language` |
@@ -145,8 +146,6 @@ from agora_agent import DeepgramSTT
 
 stt = DeepgramSTT(api_key='your-deepgram-key', language='en-US', model='nova-2')
 ```
-
-> **Preview providers** — `GeminiSTT` (ASR) lives in `agora_agent.agentkit.preview`. Sessions using it route to the preview gateway automatically. See [Preview Endpoint](../guides/preview-endpoint.md).
 
 ## MLLM Vendors
 
