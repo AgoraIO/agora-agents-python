@@ -53,7 +53,6 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 | [Pagination](./guides/pagination.md) | Iterate over paginated list endpoints |
 | [Advanced](./guides/advanced.md) | Raw response, retries, timeouts, custom httpx client |
 | [Low-Level API](./guides/low-level-api.md) | Generated REST APIs |
-| [Preview Endpoint](./guides/preview-endpoint.md) | Session-scoped preview routing and the `agora-feature` gate header |
 | [Client Reference](./reference/client.md) | Full `Agora` / `AsyncAgora` API |
 | [Agent Reference](./reference/agent.md) | Full `Agent` builder API |
 | [Session Reference](./reference/session.md) | Full `AgentSession` / `AsyncAgentSession` API |
