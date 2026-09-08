@@ -49,11 +49,11 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 | [MLLM Flow](./guides/mllm-flow.md) | Use a global or CN realtime multimodal model for end-to-end audio |
 | [Avatars](./guides/avatars.md) | Add a digital avatar with LiveAvatar, Akool, Anam, Generic Avatar, SenseTime, or Spatius |
 | [Regional Routing](./guides/regional-routing.md) | Route requests to the nearest region |
+| [Preview Endpoint](./guides/preview-endpoint.md) | Understand session-scoped routing for preview providers |
 | [Error Handling](./guides/error-handling.md) | Handle API errors with ApiError |
 | [Pagination](./guides/pagination.md) | Iterate over paginated list endpoints |
 | [Advanced](./guides/advanced.md) | Raw response, retries, timeouts, custom httpx client |
 | [Low-Level API](./guides/low-level-api.md) | Generated REST APIs |
-| [Preview Endpoint](./guides/preview-endpoint.md) | Session-scoped preview routing and the `agora-feature` gate header |
 | [Client Reference](./reference/client.md) | Full `Agora` / `AsyncAgora` API |
 | [Agent Reference](./reference/agent.md) | Full `Agent` builder API |
 | [Session Reference](./reference/session.md) | Full `AgentSession` / `AsyncAgentSession` API |

@@ -90,7 +90,9 @@ def create_preview_session_clients(
 
 
 #: ASR vendors served only by the preview endpoint.
-_PREVIEW_ASR_VENDORS = frozenset({"gemini"})
+_PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]] = {
+    "asr": {},
+}
 
 
 def required_preview_features(properties: typing.Mapping[str, typing.Any]) -> typing.List[str]:
@@ -100,11 +102,16 @@ def required_preview_features(properties: typing.Mapping[str, typing.Any]) -> ty
     hand-written configs are covered too.
     """
     features: typing.List[str] = []
-
-    asr = properties.get("asr")
-    if isinstance(asr, dict) and asr.get("vendor") in _PREVIEW_ASR_VENDORS:
-        features.append(PreviewFeatures.GEMINI_LIVE)
-
+    for category, vendors in _PREVIEW_FEATURES_BY_CATEGORY.items():
+        config = properties.get(category)
+        if not isinstance(config, dict):
+            continue
+        vendor = config.get("vendor")
+        if not isinstance(vendor, str):
+            continue
+        feature = vendors.get(vendor)
+        if feature is not None and feature not in features:
+            features.append(feature)
     return features
 
 
