@@ -8,6 +8,7 @@ from .base import BaseLLM, BaseMLLM
 from .llm import (
     _OPENAI_MANAGED_MODELS,
     LlmGreetingConfigs,
+    LlmToolInput,
     _dump_optional_model,
     _ensure_mcp_transport,
 )
@@ -47,6 +48,14 @@ class FengmingSTTOptions(BaseModel):
 
     keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+    @model_validator(mode="after")
+    def _reject_nested_keywords(self) -> "FengmingSTTOptions":
+        if self.additional_params is not None and "keywords" in self.additional_params:
+            raise ValueError(
+                "FengmingSTT additional_params must not contain keywords; use the top-level keywords field"
+            )
+        return self
 
 
 class FengmingSTT(FengmingSTTOptions, _BaseSTTCompat):
@@ -515,7 +524,7 @@ class AliyunLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="aliyun")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -602,7 +611,7 @@ class BytedanceLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="bytedance")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -689,7 +698,7 @@ class DeepSeekLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="deepseek")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -776,7 +785,7 @@ class TencentLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="tencent")
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")

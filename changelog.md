@@ -8,11 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
-- **Inline REST LLM tools** — Global and CN LLM vendors now accept dictionary-based `tools` definitions and serialize them to `llm.tools`. Added public `LlmToolConfig`, `LlmToolExecutionConfig`, `LlmToolFunctionConfig`, `LlmToolFunctionParametersConfig`, and `LlmToolServerConfig` aliases. Tool execution must be enabled explicitly with `Agent.with_tools()`.
+- **Inline REST LLM tools** — Global and CN LLM vendors now accept dictionary-based definitions or the exported typed `LlmToolConfig` models and serialize them to `llm.tools`. Added public `LlmToolConfig`, `LlmToolExecutionConfig`, `LlmToolFunctionConfig`, `LlmToolFunctionParametersConfig`, and `LlmToolServerConfig` aliases. Tool execution must be enabled explicitly with `Agent.with_tools()`.
 
 ### Changed
 
 - **Generated filler words configuration** — Generated filler word settings are now optional. The service can use default generator settings when `generated_config` is omitted, and `llm_provider`, `prompt`, and `fallback_strategy` may be omitted individually.
+- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT` now serialize as top-level `asr.keywords`, matching the current OpenAPI schema. Vendor-specific `additional_params` remain under `asr.params`; nested `additional_params["keywords"]` is rejected to prevent ambiguous requests.
 
 ## [v2.7.2] — 2026-08-26
 
@@ -65,7 +66,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Qwen Omni Realtime MLLM (CN)** — `QwenOmni` (`mllm.vendor`: `qwen_omni`), exported from `agora_agent.cn`.
 - **MLLM support in AgentKit vendor namespaces** — Global and CN vendor catalogs now expose an `mllm` namespace, MLLM vendors are validated against the client area, and `CNAgent`/`GlobalAgent` expose typed `with_mllm()`.
 - **Typecast TTS** — `TypecastTTS` (`tts.vendor`: `typecast`).
-- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT`, serialized as top-level `asr.keywords`. Vendor-specific `additional_params` remain under `asr.params`.
 - **Configurable API base URL** — Setting `AGORA_AGENTS_API_BASE_URL` overrides regional domain selection; when set, the domain pool skips DNS-based domain selection and region cycling and always uses the configured base URL.
 
 ### Changed

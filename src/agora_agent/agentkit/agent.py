@@ -628,7 +628,7 @@ class Agent:
         return new_agent
 
     def with_tools(self, enabled: bool = True) -> "Agent":
-        """Returns a new Agent with MCP tool invocation enabled or disabled."""
+        """Returns a new Agent with MCP and inline tool invocation enabled or disabled."""
         new_agent = self._clone()
         if new_agent._advanced_features is None:
             new_agent._advanced_features = StartAgentsRequestPropertiesAdvancedFeatures(enable_tools=enabled)
