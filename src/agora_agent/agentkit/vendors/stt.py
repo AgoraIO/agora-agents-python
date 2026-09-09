@@ -255,6 +255,12 @@ class AresSTTOptions(BaseModel):
     keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+    @model_validator(mode="after")
+    def _reject_nested_keywords(self) -> "AresSTTOptions":
+        if self.additional_params is not None and "keywords" in self.additional_params:
+            raise ValueError("AresSTT additional_params must not contain keywords; use the top-level keywords field")
+        return self
+
 
 class AresSTT(AresSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:

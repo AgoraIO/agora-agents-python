@@ -1,6 +1,14 @@
 from test_helpers import test_client
 
-from agora_agent import AdvancedFeatures, Agent, OpenAI
+from agora_agent import (
+    AdvancedFeatures,
+    Agent,
+    LlmToolConfig,
+    LlmToolFunctionConfig,
+    LlmToolFunctionParametersConfig,
+    LlmToolServerConfig,
+    OpenAI,
+)
 from agora_agent.agentkit.vendors.cn import AliyunLLM
 
 
@@ -13,6 +21,16 @@ def _tool() -> dict:
         },
         "server": {"method": "GET", "url": "https://example.com/orders"},
     }
+
+
+def _typed_tool() -> LlmToolConfig:
+    return LlmToolConfig(
+        function=LlmToolFunctionConfig(
+            name="lookup_order",
+            parameters=LlmToolFunctionParametersConfig(properties={}),
+        ),
+        server=LlmToolServerConfig(method="GET", url="https://example.com/orders"),
+    )
 
 
 def test_global_llm_tools_use_dict_shape_and_require_explicit_enablement() -> None:
@@ -45,6 +63,26 @@ def test_cn_llm_uses_the_same_tools_shape_as_global_llm() -> None:
     ).to_config()
 
     assert config["tools"] == [tool]
+
+
+def test_global_and_cn_llms_accept_exported_typed_tools() -> None:
+    expected = [_tool()]
+
+    global_config = OpenAI(
+        api_key="openai-key",
+        base_url="https://api.openai.com/v1/chat/completions",
+        model="gpt-4o-mini",
+        tools=[_typed_tool()],
+    ).to_config()
+    cn_config = AliyunLLM(
+        api_key="aliyun-key",
+        base_url="https://example.com/v1/chat/completions",
+        model="qwen-plus",
+        tools=[_typed_tool()],
+    ).to_config()
+
+    assert global_config["tools"] == expected
+    assert cn_config["tools"] == expected
 
 
 def test_with_tools_preserves_other_advanced_features() -> None:
