@@ -119,7 +119,7 @@ top-level `asr.keywords`. Both vendors also accept `additional_params`, serializ
 | `DeepgramSTT` | Deepgram | `model` for Agora-managed `nova-2`/`nova-3`; `api_key` for BYOK; `language?`, `keyterm?` |
 | `MicrosoftSTT` | Microsoft Azure | `key`, `region`, `language` |
 | `OpenAISTT` | OpenAI | `api_key` |
-| `GeminiSTT` | Google Gemini | `api_key`; `model` defaults to `gemini-3.5-transcribe-live` |
+| `GeminiSTT` | Google Gemini | `api_key`; `model` defaults to `gemini-3.5-transcribe-live`; optional `mode` supports SMART or VERBATIM |
 | `GoogleSTT` | Google Cloud | `project_id`, `location`, `adc_credentials_string`, `language` |
 | `AmazonSTT` | Amazon Transcribe | `access_key`, `secret_key`, `region`, `language` |
 | `AssemblyAISTT` | AssemblyAI | `api_key`, `language` |

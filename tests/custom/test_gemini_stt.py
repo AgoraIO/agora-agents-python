@@ -43,7 +43,7 @@ def _gemini_stt(**kwargs) -> GeminiSTT:
 def _complete_agent(client: Agora) -> Agent:
     return (
         Agent(client=client)
-        .with_stt(_gemini_stt())
+        .with_stt(_gemini_stt(mode="VERBATIM", diarization=True))
         .with_llm(Gemini(api_key=API_KEY, model="gemini-2.0-flash"))
         .with_tts(
             GoogleTTS(
@@ -162,16 +162,69 @@ def test_gemini_stt_language_hints_take_priority_over_language_codes() -> None:
 
 
 @pytest.mark.parametrize(
-    "options",
+    ("options", "message"),
     [
-        {"custom_vocabulary": ["Agora"], "word_timestamp": True},
-        {"custom_vocabulary": [], "word_timestamp": True},
-        {"additional_params": {"custom_vocabulary": ["Agora"], "word_timestamp": True}},
+        (
+            {"custom_vocabulary": ["Agora"], "word_timestamp": True},
+            "custom_vocabulary cannot be used with word_timestamp=true",
+        ),
+        (
+            {"mode": "SMART", "word_timestamp": True},
+            "GeminiSTT mode=SMART cannot be used with word_timestamp=true",
+        ),
+        (
+            {"mode": "SMART", "diarization": True},
+            "GeminiSTT mode=SMART cannot be used with diarization=true",
+        ),
     ],
 )
-def test_gemini_stt_rejects_custom_vocabulary_with_word_timestamps(options) -> None:
-    with pytest.raises(ValueError, match="custom_vocabulary cannot be used with word_timestamp=true"):
-        GeminiSTT(api_key=API_KEY, **options).to_config()
+def test_gemini_stt_rejects_invalid_parameter_combinations(options, message) -> None:
+    with pytest.raises(ValidationError, match=message):
+        GeminiSTT(api_key=API_KEY, **options)
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"mode": "SMART", "custom_vocabulary": ["Agora"]},
+        {"mode": "VERBATIM", "word_timestamp": True, "diarization": True},
+        {"mode": None, "word_timestamp": True, "diarization": True},
+        {"mode": "", "word_timestamp": True, "diarization": True},
+        {"custom_vocabulary": [], "word_timestamp": True},
+    ],
+)
+def test_gemini_stt_accepts_valid_parameter_combinations(options) -> None:
+    GeminiSTT(api_key=API_KEY, **options)
+
+
+@pytest.mark.parametrize("mode", ["INVALID", "smart", 0, False])
+def test_gemini_stt_rejects_invalid_mode_at_construction(mode) -> None:
+    with pytest.raises(ValidationError, match="GeminiSTT mode must be SMART or VERBATIM"):
+        GeminiSTT(api_key=API_KEY, mode=mode)
+
+
+def test_gemini_stt_omits_empty_mode_and_nil_diarization() -> None:
+    config = GeminiSTT(api_key=API_KEY, mode="", diarization=None).to_config()
+
+    assert "mode" not in config["params"]
+    assert "diarization" not in config["params"]
+
+
+def test_gemini_stt_does_not_validate_additional_params() -> None:
+    config = GeminiSTT(
+        api_key=API_KEY,
+        additional_params={
+            "custom_vocabulary": ["Agora"],
+            "word_timestamp": True,
+            "mode": "SMART",
+            "diarization": True,
+        },
+    ).to_config()
+
+    assert config["params"]["custom_vocabulary"] == ["Agora"]
+    assert config["params"]["word_timestamp"] is True
+    assert config["params"]["mode"] == "SMART"
+    assert config["params"]["diarization"] is True
 
 
 def test_gemini_stt_explicit_fields_override_additional_params() -> None:
@@ -183,6 +236,8 @@ def test_gemini_stt_explicit_fields_override_additional_params() -> None:
         language_hints=["en-US"],
         custom_vocabulary=["Agora"],
         word_timestamp=False,
+        mode="SMART",
+        diarization=False,
         additional_params={
             "api_key": "wrong-key",
             "model": "wrong-model",
@@ -191,6 +246,8 @@ def test_gemini_stt_explicit_fields_override_additional_params() -> None:
             "language_hints": ["fr-FR"],
             "custom_vocabulary": ["wrong"],
             "word_timestamp": True,
+            "mode": "VERBATIM",
+            "diarization": True,
             "provider_option": "kept",
         },
     ).to_config()
@@ -203,6 +260,8 @@ def test_gemini_stt_explicit_fields_override_additional_params() -> None:
         "language_hints": ["en-US"],
         "custom_vocabulary": ["Agora"],
         "word_timestamp": False,
+        "mode": "SMART",
+        "diarization": False,
         "provider_option": "kept",
     }
 
@@ -290,5 +349,7 @@ def test_gemini_stt_uses_production_endpoint_and_fern_request_model() -> None:
             "language_hints": ["en-US", "es-ES"],
             "custom_vocabulary": ["Agora"],
             "word_timestamp": False,
+            "mode": "VERBATIM",
+            "diarization": True,
         },
     }

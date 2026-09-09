@@ -551,11 +551,13 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 | `language_hints` | `List[str]` | No | `None` | Candidate transcription languages; `None` is omitted and an empty list is sent explicitly |
 | `language_codes` | `List[str]` | No | `None` | Deprecated alias for `language_hints`; ignored when `language_hints` is provided |
 | `custom_vocabulary` | `List[str]` | No | `None` | Words and phrases used to bias recognition |
-| `word_timestamp` | `bool` | No | `None` | Include word-level timestamps in transcription results |
+| `word_timestamp` | `bool` | No | `None` | Include word-level timestamps; incompatible with non-empty `custom_vocabulary` and SMART mode |
+| `mode` | `GeminiAsrParamsMode` | No | `None` | `SMART` or `VERBATIM`; `None` and an empty value are validated as VERBATIM and omitted from the request |
+| `diarization` | `bool` | No | `None` | Include speaker labels; `None` is omitted and treated as false during validation; true is incompatible with SMART mode |
 | `sample_rate` | `int` | No | `16000` | Audio sample rate in Hz |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional Gemini ASR parameters |
 
-`custom_vocabulary` cannot be combined with `word_timestamp=True`.
+Construction fails when non-empty `custom_vocabulary` is combined with `word_timestamp=True`, or when SMART mode is combined with `word_timestamp=True` or `diarization=True`. `additional_params` remains an unchecked passthrough dictionary.
 Existing imports from `agora_agent.agentkit.preview` remain supported and
 resolve to the same production `GeminiSTT` class.
 

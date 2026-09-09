@@ -1,6 +1,7 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
+from ...types.gemini_asr_params_mode import GeminiAsrParamsMode
 from .base import BaseSTT
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -226,7 +227,15 @@ class GeminiSTTOptions(BaseModel):
     )
     word_timestamp: Optional[bool] = Field(
         default=None,
-        description="Include word-level timestamps; cannot be true with custom_vocabulary",
+        description="Include word-level timestamps; cannot be true with custom_vocabulary or SMART mode",
+    )
+    mode: Optional[GeminiAsrParamsMode] = Field(
+        default=None,
+        description="Transcription mode: SMART or VERBATIM; empty values use VERBATIM validation",
+    )
+    diarization: Optional[bool] = Field(
+        default=None,
+        description="Include speaker labels; true cannot be combined with SMART mode",
     )
     sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
@@ -241,6 +250,23 @@ class GeminiSTTOptions(BaseModel):
                 stacklevel=2,
             )
         return values
+
+    @model_validator(mode="after")
+    def _validate_transcription_options(self) -> "GeminiSTTOptions":
+        word_timestamp = self.word_timestamp is True
+        if self.custom_vocabulary and word_timestamp:
+            raise ValueError("custom_vocabulary cannot be used with word_timestamp=true")
+
+        mode = self.mode
+        if mode is None or mode == "":
+            mode = "VERBATIM"
+        if not isinstance(mode, str) or mode not in {"SMART", "VERBATIM"}:
+            raise ValueError("GeminiSTT mode must be SMART or VERBATIM")
+        if mode == "SMART" and word_timestamp:
+            raise ValueError("GeminiSTT mode=SMART cannot be used with word_timestamp=true")
+        if mode == "SMART" and self.diarization is True:
+            raise ValueError("GeminiSTT mode=SMART cannot be used with diarization=true")
+        return self
 
 
 class GeminiSTT(GeminiSTTOptions, BaseSTT):
@@ -266,8 +292,10 @@ class GeminiSTT(GeminiSTTOptions, BaseSTT):
             params["custom_vocabulary"] = list(self.custom_vocabulary)
         if self.word_timestamp is not None:
             params["word_timestamp"] = self.word_timestamp
-        if "custom_vocabulary" in params and params.get("word_timestamp") is True:
-            raise ValueError("custom_vocabulary cannot be used with word_timestamp=true")
+        if self.mode:
+            params["mode"] = self.mode
+        if self.diarization is not None:
+            params["diarization"] = self.diarization
 
         return {
             "vendor": "gemini",
