@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .gemini_asr_params_mode import GeminiAsrParamsMode
 
 
 class GeminiAsrParams(UncheckedBaseModel):
@@ -32,9 +33,29 @@ class GeminiAsrParams(UncheckedBaseModel):
     The language code for speech recognition. This takes precedence over the top-level `asr.language` value.
     """
 
+    language_hints: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Candidate language codes for transcription. When non-empty, these take precedence over language.
+    """
+
+    custom_vocabulary: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Words and phrases used to bias transcription. A non-empty custom vocabulary cannot be combined with word_timestamp.
+    """
+
+    mode: typing.Optional[GeminiAsrParamsMode] = pydantic.Field(default=None)
+    """
+    Transcription output mode. SMART removes disfluencies and applies formatting; VERBATIM preserves literal speech. When omitted, the service defaults to VERBATIM. SMART cannot be combined with word_timestamp or diarization.
+    """
+
     word_timestamp: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Whether to include word-level timestamps in the transcription results.
+    Whether to include word-level timestamps in the transcription results. Cannot be enabled when mode is SMART or custom_vocabulary is non-empty.
+    """
+
+    diarization: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether to include speaker labels in the transcription results. Cannot be enabled when mode is SMART.
     """
 
     if IS_PYDANTIC_V2:
