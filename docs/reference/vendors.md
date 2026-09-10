@@ -20,7 +20,7 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
 | `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
@@ -541,6 +541,36 @@ For `nova-2` and `nova-3`, omit `api_key` to use Agora-managed credentials. For 
 | `model` | `str` | No | `None` | Recognition model |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional parameters |
 
+### `GeminiSTT`
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Google Gemini API key |
+| `model` | `str` | No | `gemini-3.5-transcribe-live` | Gemini transcription model |
+| `language` | `str` | No | `None` | Language code for speech recognition. Takes precedence over top-level `asr.language`. |
+| `language_hints` | `List[str]` | No | `None` | Candidate transcription languages; `None` is omitted and an empty list is sent explicitly |
+| `language_codes` | `List[str]` | No | `None` | Deprecated alias for `language_hints`; ignored when `language_hints` is provided |
+| `custom_vocabulary` | `List[str]` | No | `None` | Words and phrases used to bias recognition |
+| `word_timestamp` | `bool` | No | `None` | Include word-level timestamps; incompatible with non-empty `custom_vocabulary` and SMART mode |
+| `mode` | `GeminiAsrParamsMode` | No | `None` | `SMART` or `VERBATIM`; `None` and an empty value are validated as VERBATIM and omitted from the request |
+| `diarization` | `bool` | No | `None` | Include speaker labels; `None` is omitted and treated as false during validation; true is incompatible with SMART mode |
+| `sample_rate` | `int` | No | `16000` | Audio sample rate in Hz |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Gemini ASR parameters |
+
+Construction fails when non-empty `custom_vocabulary` is combined with `word_timestamp=True`, or when SMART mode is combined with `word_timestamp=True` or `diarization=True`. `additional_params` remains an unchecked passthrough dictionary.
+Existing imports from `agora_agent.agentkit.preview` remain supported and
+resolve to the same production `GeminiSTT` class.
+
+```python
+from agora_agent import GeminiSTT
+
+stt = GeminiSTT(
+    api_key="your-google-api-key",
+    language_hints=["en-US", "es-ES"],
+    custom_vocabulary=["Agora"],
+)
+```
+
 ### `AmazonSTT`
 
 | Parameter | Type | Required | Default | Description |
@@ -799,6 +829,7 @@ All CN TTS vendor classes support `skip_patterns` and `additional_params`.
 | `api_key` | `str` | Yes | — | OpenAI API key |
 | `model` | `str` | No | `None` | Model (e.g., `gpt-4o-realtime-preview`) |
 | `url` | `str` | No | `wss://api.openai.com/v1/realtime` | OpenAI Realtime WebSocket URL |
+
 | `greeting_message` | `str` | No | `None` | Greeting message |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
@@ -841,6 +872,47 @@ agent = Agent(client=client).with_llm(llm).with_tools()
 ```
 
 `server.body` is only valid for `POST`. Template values may use `{{args.name}}` in URLs and bodies, and `{{template_variables.name}}` or `{{tool_call_id}}` in URLs, headers, and bodies. `execution.mode` currently supports only `sync`; `timeout_ms` must be between `1000` and `100000`.
+### OpenAIGPTLive (preview)
+
+GPT Live v3 uses `mllm.vendor: "openai_gpt_live"`, model `gpt-live-1-diamond-alpha`, and `wss://api.openai.com/v1/live/sessions`. Sessions route through the preview gateway automatically. This alpha must not carry production traffic.
+
+The SDK sends `params.alpha_selector: "quicksilver=v3"` by default so the Agora worker selects the required GPT Live v3 OpenAI contract. Set `alpha_selector` to override it. Other tuning defaults remain owned by the provider. Explicit options override entries in `params`. Zero and false values are preserved.
+
+| Option | Type | Wire parameter / behavior |
+|---|---|---|
+| `api_key` | string, required | `mllm.api_key` |
+| `url` | string | `mllm.url`; overrides base/path. Only the legacy `/v1/live` route on OpenAI's host is rewritten to `/v1/live/sessions`. Custom endpoints are preserved. |
+| `model` | `str` | `params.model`. Defaults to gpt-live-1-diamond-alpha. |
+| `voice` | `str` | `params.voice`. Output voice; provider default marin. Custom voice objects require PR #1522; use params after rollout. |
+| `prompt` | `str` | `params.prompt`. Session instructions. |
+| `base_url` | `str` | `params.base_url`. Host when url is omitted; default wss://api.openai.com. |
+| `path` | `str` | `params.path`. WebSocket path; default /v1/live/sessions. |
+| `alpha_selector` | `str` | `params.alpha_selector`; defaults to `quicksilver=v3` for the required GPT Live v3 contract. |
+| `headers` | `str` | `params.headers`. Extra provider request headers as a JSON string; protocol headers win. |
+| `output_idle_end_ms` | `int` | `params.output_idle_end_ms`. Assistant silence boundary in ms; provider default 600. Zero disables inference. |
+| `input_idle_end_ms` | `int` | `params.input_idle_end_ms`. Caller silence boundary in ms; provider default 1500. |
+| `output_silence_peak` | `int` | `params.output_silence_peak`. Speech amplitude threshold on the 16-bit scale; provider default 50. |
+| `output_sample_rate` | `int` | `params.output_sample_rate`. Graph PCM sample rate; provider default 24000. |
+| `output_buffer_ms` | `int` | `params.output_buffer_ms`. Initial audio cushion; provider default 0. Negative disables pacing. |
+| `input_batch_ms` | `int` | `params.input_batch_ms`. Mic append batching in ms. Join default 0; extension class default 100. |
+| `tool_enabled` | `bool` | `params.tool_enabled`. Advertise graph tools; provider default false. Does not control delegate built-ins. |
+| `delegation` | `Literal["client", "responses"]` | `params.delegation`. Tool delegation mode; provider default responses. Fixed for the session. |
+| `responses_model` | `str` | `params.responses_model`. Tool delegate model; provider default gpt-5.6-sol. |
+| `interrupt_on_user_turn` | `bool` | `params.interrupt_on_user_turn`. Interrupt playback on caller speech; provider default false. |
+| `session_params` | `Dict[str, Any]` | `params.session_params`. Unmodelled v3 session fields. Cannot override model, delegation, audio, instructions or input. |
+| `instructions` | string | Compatibility alias for `prompt`; explicit prompt wins. |
+| `greeting` | string | `mllm.greeting_message`; v3 may reword this request. |
+| `messages` | list | `mllm.messages`; prior conversation seeded by Agora. |
+| `mcp_servers` | list | `mllm.mcp_servers`; MCP servers exposed to GPT Live. Requires `Agent.with_tools()`. |
+| `failure_message` | string | `mllm.failure_message` |
+| `input_modalities / output_modalities` | string lists | Agora outer `mllm.input_modalities` / `mllm.output_modalities` |
+| `params` | object | Additional snake_case provider parameters. |
+| `turn_detection` | object | Unsupported in v3; ignored with a warning. |
+| `input_audio_transcription` | object | Legacy Realtime option; rejected for GPT Live v3. |
+
+Backend PR #1522 is not assumed to be deployed, so custom voice objects, `responses_params`, and first-class `context_management` have no typed options. After rollout, opt in through raw `params`; before rollout, use `params.session_params.context_management` for context management. Leaving context management unset preserves the provider default.
+
+For complete examples and main-body settings, see [GPT Live v3](../guides/openai-gpt-live-v3.md).
 
 ### `AzureOpenAIRealtime`
 

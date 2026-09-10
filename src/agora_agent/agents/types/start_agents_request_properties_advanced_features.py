@@ -29,7 +29,7 @@ class StartAgentsRequestPropertiesAdvancedFeatures(UncheckedBaseModel):
 
     enable_tools: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Enable tool invocation. When enabled, the agent can invoke tools provided by the MCP server to implement advanced functionality.
+    Enable invocation for MCP servers and inline REST tools.
     """
 
     if IS_PYDANTIC_V2:

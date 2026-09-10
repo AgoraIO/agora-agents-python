@@ -4,15 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [v2.8.0] — 2026-09-10
 
 ### Added
 
-- **Inline REST LLM tools** — Global and CN LLM vendors now accept dictionary-based `tools` definitions and serialize them to `llm.tools`. Added public `LlmToolConfig`, `LlmToolExecutionConfig`, `LlmToolFunctionConfig`, `LlmToolFunctionParametersConfig`, and `LlmToolServerConfig` aliases. Tool execution must be enabled explicitly with `Agent.with_tools()`.
+- **Inline REST LLM tools** — Global and CN LLM vendors now accept dictionary-based definitions or the exported typed `LlmToolConfig` models and serialize them to `llm.tools`. Added public `LlmToolConfig`, `LlmToolExecutionConfig`, `LlmToolFunctionConfig`, `LlmToolFunctionParametersConfig`, and `LlmToolServerConfig` aliases. Tool execution must be enabled explicitly with `Agent.with_tools()`.
+- **Gemini ASR** — Added `GeminiSTT` to the standard AgentKit STT vendors using the Fern-generated `GeminiAsrParams` schema while retaining the preview API's `language_codes`, `custom_vocabulary`, default model, default sample rate, and validation behavior. The production API's optional `language` parameter is also available.
+- **OpenAI GPT Live v3** — Added the preview `OpenAIGPTLive` MLLM vendor with session, audio, tool-delegation, endpoint, MCP, and passthrough options. It defaults to the `gpt-live-1-diamond-alpha` model and required `quicksilver=v3` contract selector while allowing raw `params` and explicit options to override defaults.
 
 ### Changed
 
 - **Generated filler words configuration** — Generated filler word settings are now optional. The service can use default generator settings when `generated_config` is omitted, and `llm_provider`, `prompt`, and `fallback_strategy` may be omitted individually.
+- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT` now serialize as top-level `asr.keywords`, matching the current OpenAPI schema. Vendor-specific `additional_params` remain under `asr.params`; nested `additional_params["keywords"]` is rejected to prevent ambiguous requests.
+- **Gemini ASR routing** — Gemini ASR now uses the normal regional API endpoint and generated request validation. Existing `GeminiSTT` calls and imports from `agora_agent.agentkit.preview` remain compatible. The provider-agnostic preview client and session routing infrastructure remain available for future preview providers.
+- **Gemini ASR language mapping** — Added `language_hints` for candidate transcription languages. Deprecated `language_codes` remains supported as an alias; `language_hints` takes precedence when both are provided.
+- **Pydantic compatibility floor** — The declared runtime dependency now requires Pydantic `>=2.7.1,<3`. Earlier metadata allowed Pydantic 1.x even though it is outside the current generated SDK's supported and tested runtime; installation now rejects that unsupported combination instead of resolving to a broken environment.
+
+### Fixed
+
+- **GPT Live v3 contract selection** — `OpenAIGPTLive` now serializes `params.alpha_selector: "quicksilver=v3"` by default so preview workers consistently send the required OpenAI alpha header. Callers can still override the selector explicitly.
 
 ## [v2.7.2] — 2026-08-26
 
@@ -65,7 +75,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Qwen Omni Realtime MLLM (CN)** — `QwenOmni` (`mllm.vendor`: `qwen_omni`), exported from `agora_agent.cn`.
 - **MLLM support in AgentKit vendor namespaces** — Global and CN vendor catalogs now expose an `mllm` namespace, MLLM vendors are validated against the client area, and `CNAgent`/`GlobalAgent` expose typed `with_mllm()`.
 - **Typecast TTS** — `TypecastTTS` (`tts.vendor`: `typecast`).
-- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT`, serialized as top-level `asr.keywords`. Vendor-specific `additional_params` remain under `asr.params`.
 - **Configurable API base URL** — Setting `AGORA_AGENTS_API_BASE_URL` overrides regional domain selection; when set, the domain pool skips DNS-based domain selection and region cycling and always uses the configured base URL.
 
 ### Changed

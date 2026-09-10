@@ -1,21 +1,12 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from .base import BaseLLM
+from ...types.llm_tool import LlmTool
+from .base import BaseLLM, ensure_mcp_transport
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 LlmGreetingConfigs = Dict[str, Any]
+LlmToolInput = Union[Dict[str, Any], LlmTool]
 _OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}
-
-
-def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Ensure each MCP server has transport set (API requires it). Default to streamable_http."""
-    result = []
-    for s in servers:
-        item = dict(s)
-        if item.get("transport") is None:
-            item["transport"] = "streamable_http"
-        result.append(item)
-    return result
 
 
 def _dump_optional_model(value: Any) -> Any:
@@ -23,6 +14,10 @@ def _dump_optional_model(value: Any) -> Any:
         return value.model_dump(exclude_none=True)
     if hasattr(value, "dict"):
         return value.dict(exclude_none=True)
+    if isinstance(value, list):
+        return [_dump_optional_model(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _dump_optional_model(item) for key, item in value.items()}
     return value
 
 
@@ -47,7 +42,7 @@ class OpenAIOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -107,7 +102,7 @@ class OpenAI(OpenAIOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -139,7 +134,7 @@ class AzureOpenAIOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -186,7 +181,7 @@ class AzureOpenAI(AzureOpenAIOptions, BaseLLM):
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -216,7 +211,7 @@ class AnthropicOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -257,7 +252,7 @@ class Anthropic(AnthropicOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -288,7 +283,7 @@ class GeminiOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -334,7 +329,7 @@ class Gemini(GeminiOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -364,7 +359,7 @@ class GroqOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -413,7 +408,7 @@ class Groq(GroqOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -443,7 +438,7 @@ class CustomLLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
@@ -492,7 +487,7 @@ class CustomLLM(CustomLLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -526,7 +521,7 @@ class VertexAILLMOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -575,7 +570,7 @@ class VertexAILLM(VertexAILLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -608,7 +603,7 @@ class AmazonBedrockOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
 
@@ -651,7 +646,7 @@ class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -679,7 +674,7 @@ class DifyOptions(BaseModel):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
-    tools: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0)
 
 
@@ -717,7 +712,7 @@ class Dify(DifyOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
