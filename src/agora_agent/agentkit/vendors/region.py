@@ -22,6 +22,7 @@ GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
     "deepgram",
     "microsoft",
     "openai",
+    "gemini",
     "google",
     "amazon",
     "assemblyai",

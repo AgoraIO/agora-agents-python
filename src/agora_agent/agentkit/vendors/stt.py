@@ -1,6 +1,7 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
+from ...types.gemini_asr_params_mode import GeminiAsrParamsMode
 from .base import BaseSTT
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -194,6 +195,112 @@ class GoogleSTT(GoogleSTTOptions, BaseSTT):
             "params": params,
         }
         return config
+
+
+class GeminiSTTModels:
+    """Gemini transcription models."""
+
+    TRANSCRIBE_35_LIVE = "gemini-3.5-transcribe-live"
+
+
+class GeminiSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, description="Google Gemini API key")
+    model: Optional[str] = Field(
+        default=None,
+        description="Google Gemini transcription model",
+    )
+    language: Optional[str] = Field(default=None, description="Language code for speech recognition")
+    language_hints: Optional[List[str]] = Field(
+        default=None,
+        description="Candidate transcription languages",
+    )
+    language_codes: Optional[List[str]] = Field(
+        default=None,
+        description="Deprecated alias for language_hints",
+        deprecated="Use language_hints instead.",
+    )
+    custom_vocabulary: Optional[List[str]] = Field(
+        default=None,
+        description="Words and phrases that bias speech recognition",
+    )
+    word_timestamp: Optional[bool] = Field(
+        default=None,
+        description="Include word-level timestamps; cannot be true with custom_vocabulary or SMART mode",
+    )
+    mode: Optional[GeminiAsrParamsMode] = Field(
+        default=None,
+        description="Transcription mode: SMART or VERBATIM; empty values use VERBATIM validation",
+    )
+    diarization: Optional[bool] = Field(
+        default=None,
+        description="Include speaker labels; true cannot be combined with SMART mode",
+    )
+    sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _warn_deprecated_language_codes(cls, values: Any) -> Any:
+        if isinstance(values, dict) and "language_codes" in values:
+            warnings.warn(
+                "GeminiSTT.language_codes is deprecated; use language_hints instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return values
+
+    @model_validator(mode="after")
+    def _validate_transcription_options(self) -> "GeminiSTTOptions":
+        word_timestamp = self.word_timestamp is True
+        if self.custom_vocabulary and word_timestamp:
+            raise ValueError("custom_vocabulary cannot be used with word_timestamp=true")
+
+        mode = self.mode
+        if mode is None or mode == "":
+            mode = "VERBATIM"
+        if not isinstance(mode, str) or mode not in {"SMART", "VERBATIM"}:
+            raise ValueError("GeminiSTT mode must be SMART or VERBATIM")
+        if mode == "SMART" and word_timestamp:
+            raise ValueError("GeminiSTT mode=SMART cannot be used with word_timestamp=true")
+        if mode == "SMART" and self.diarization is True:
+            raise ValueError("GeminiSTT mode=SMART cannot be used with diarization=true")
+        return self
+
+
+class GeminiSTT(GeminiSTTOptions, BaseSTT):
+    def to_config(self) -> Dict[str, Any]:
+        model = self.model if self.model is not None else GeminiSTTModels.TRANSCRIBE_35_LIVE
+        sample_rate = self.sample_rate if self.sample_rate is not None else 16000
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update(
+            {
+                "api_key": self.api_key,
+                "model": model,
+                "sample_rate": sample_rate,
+            }
+        )
+        if self.language is not None:
+            params["language"] = self.language
+        language_codes = self.__dict__.get("language_codes")
+        if language_codes is not None:
+            params["language_hints"] = list(language_codes)
+        if self.language_hints is not None:
+            params["language_hints"] = list(self.language_hints)
+        if self.custom_vocabulary is not None:
+            params["custom_vocabulary"] = list(self.custom_vocabulary)
+        if self.word_timestamp is not None:
+            params["word_timestamp"] = self.word_timestamp
+        if self.mode:
+            params["mode"] = self.mode
+        if self.diarization is not None:
+            params["diarization"] = self.diarization
+
+        return {
+            "vendor": "gemini",
+            "params": params,
+        }
 
 
 class AmazonSTTOptions(BaseModel):
