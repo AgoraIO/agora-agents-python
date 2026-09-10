@@ -112,6 +112,21 @@ jobs:
 
       - name: Publish primary package to pypi
         run: |
+          PACKAGE_NAME="agora-agents"
+          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${PACKAGE_NAME}/${PACKAGE_VERSION}/json")"
+          case "$STATUS" in
+            200)
+              echo "${PACKAGE_NAME}==${PACKAGE_VERSION} is already published; skipping PyPI publish."
+              exit 0
+              ;;
+            404) ;;
+            *)
+              echo "Unable to determine whether ${PACKAGE_NAME}==${PACKAGE_VERSION} exists on PyPI (HTTP ${STATUS})."
+              exit 1
+              ;;
+          esac
+
           poetry config repositories.remote https://upload.pypi.org/legacy/
           poetry --no-interaction -v publish --build --repository remote --username "__token__" --password "$PYPI_API_TOKEN"
         env:
@@ -122,7 +137,7 @@ jobs:
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           PACKAGE="agora-agents"
           for attempt in $(seq 1 12); do
-            if pip index versions "$PACKAGE" 2>/dev/null | grep -q "$TAG_VERSION"; then
+            if curl -fsS "https://pypi.org/pypi/${PACKAGE}/${TAG_VERSION}/json" >/dev/null; then
               echo "$PACKAGE==$TAG_VERSION is available on PyPI."
               exit 0
             fi
@@ -134,6 +149,21 @@ jobs:
 
       - name: Publish compatibility package to pypi
         run: |
+          PACKAGE_NAME="agora-agent-server-sdk"
+          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${PACKAGE_NAME}/${PACKAGE_VERSION}/json")"
+          case "$STATUS" in
+            200)
+              echo "${PACKAGE_NAME}==${PACKAGE_VERSION} is already published; skipping PyPI publish."
+              exit 0
+              ;;
+            404) ;;
+            *)
+              echo "Unable to determine whether ${PACKAGE_NAME}==${PACKAGE_VERSION} exists on PyPI (HTTP ${STATUS})."
+              exit 1
+              ;;
+          esac
+
           cd compat/agora-agent-server-sdk
           poetry config repositories.remote https://upload.pypi.org/legacy/
           for attempt in $(seq 1 3); do

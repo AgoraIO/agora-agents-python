@@ -31,7 +31,7 @@ packages = [
 ]
 
 [tool.poetry.urls]
-Repository = 'https://github.com/AgoraIO-Conversational-AI/agent-server-sdk-python'
+Repository = 'https://github.com/AgoraIO/agora-agents-python'
 
 [tool.poetry.dependencies]
 python = "^3.8"

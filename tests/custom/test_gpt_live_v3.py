@@ -15,6 +15,21 @@ def test_alpha_selector_defaults_to_v3_and_mcp_transport_is_normalized():
     assert "transport" not in servers[0]
 
 
+def test_alpha_selector_raw_param_override_is_preserved_until_explicit_option_is_set():
+    raw_override = OpenAIGPTLive(
+        api_key="test",
+        params={"alpha_selector": "custom-from-params"},
+    ).to_config()
+    explicit_override = OpenAIGPTLive(
+        api_key="test",
+        params={"alpha_selector": "custom-from-params"},
+        alpha_selector="custom-from-option",
+    ).to_config()
+
+    assert raw_override["params"]["alpha_selector"] == "custom-from-params"
+    assert explicit_override["params"]["alpha_selector"] == "custom-from-option"
+
+
 def test_v3_options_preserve_zero_false_and_explicit_precedence():
     original = {"model": "other", "prompt": "other", "output_idle_end_ms": 900}
     config = OpenAIGPTLive(

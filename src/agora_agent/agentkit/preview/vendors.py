@@ -11,11 +11,10 @@ import warnings
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit, urlunsplit
 
-from pydantic import ConfigDict, Field
-from typing_extensions import Literal
-
 from ..vendors.base import BaseMLLM, ensure_mcp_transport
 from ..vendors.stt import GeminiSTT, GeminiSTTModels
+from pydantic import ConfigDict, Field
+from typing_extensions import Literal
 
 _OpenAIApiKey = Field(..., min_length=1, description="OpenAI API key")
 
@@ -49,7 +48,7 @@ class OpenAIGPTLive(BaseMLLM):
     prompt: Optional[str] = Field(default=None, description="Session instructions.")
     base_url: Optional[str] = Field(default=None, description="Host when url is omitted; default wss://api.openai.com.")
     path: Optional[str] = Field(default=None, description="WebSocket path; default /v1/live/sessions.")
-    alpha_selector: Optional[str] = Field(default="quicksilver=v3", description="OpenAI-Alpha selector. Defaults to the required GPT Live v3 contract.")
+    alpha_selector: Optional[str] = Field(default=None, description="OpenAI-Alpha selector. Defaults to the required GPT Live v3 contract.")
     headers: Optional[str] = Field(default=None, description="Extra provider request headers as a JSON string; protocol headers win.")
     output_idle_end_ms: Optional[int] = Field(default=None, description="Assistant silence boundary in ms; provider default 600. Zero disables inference.")
     input_idle_end_ms: Optional[int] = Field(default=None, description="Caller silence boundary in ms; provider default 1500.")
@@ -64,7 +63,11 @@ class OpenAIGPTLive(BaseMLLM):
     session_params: Optional[Dict[str, Any]] = Field(default=None, description="Unmodelled v3 session fields. Cannot override model, delegation, audio, instructions or input.")
 
     def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {"model": "gpt-live-1-diamond-alpha", **(self.params or {})}
+        params: Dict[str, Any] = {
+            "model": "gpt-live-1-diamond-alpha",
+            "alpha_selector": "quicksilver=v3",
+            **(self.params or {}),
+        }
         if self.instructions is not None:
             params["prompt"] = self.instructions
         for name in (
