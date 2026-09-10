@@ -5,9 +5,9 @@ header. Agent sessions use these helpers to create private generated clients
 for preview traffic while the caller's ``Agora`` / ``AsyncAgora`` client stays
 on its production endpoint.
 
-Everything under ``agentkit/preview/`` is temporary. When these providers ship
-on the production gateway, delete this package and move the vendor classes into
-``vendors/stt.py``.
+Everything under ``agentkit/preview/`` is temporary. When a provider ships on
+the production gateway, remove its preview registration and move its class into
+the corresponding production vendor module.
 """
 
 from __future__ import annotations
@@ -36,8 +36,9 @@ class PreviewFeatures:
     vendors on the preview endpoint.
     """
 
-    #: Gemini 3.5 Transcribe ASR.
+    #: Deprecated compatibility value. Gemini ASR now uses the production endpoint.
     GEMINI_LIVE = "gemini-live"
+    LIVE_MODELS = "live-models"
 
 
 PreviewFeature = str
@@ -92,6 +93,7 @@ def create_preview_session_clients(
 #: ASR vendors served only by the preview endpoint.
 _PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]] = {
     "asr": {},
+    "mllm": {"openai_gpt_live": PreviewFeatures.LIVE_MODELS},
 }
 
 

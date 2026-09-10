@@ -16,7 +16,7 @@ from .client import Agora as BaseAgora
 from .client import AsyncAgora as BaseAsyncAgora
 from .core.api_error import ApiError
 from .core.domain import Area, Pool
-from .agentkit.debug import redact_secrets
+from .agentkit.debug import redact_headers, redact_secrets, redact_url
 from .agentkit.token import generate_convo_ai_token
 
 _AUTH_MODE = typing.Literal["app-credentials", "basic", "token"]
@@ -27,19 +27,7 @@ _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
 
 def _redact_headers(headers: typing.Mapping[str, str]) -> typing.Dict[str, str]:
     """Redact sensitive header values for debug logging."""
-    out: typing.Dict[str, str] = {}
-    for k, v in headers.items():
-        kl = k.lower()
-        if kl == "authorization":
-            if v.startswith("Basic "):
-                out[k] = "Basic ***"
-            elif v.startswith("agora token="):
-                out[k] = "agora token=***"
-            else:
-                out[k] = "***"
-        else:
-            out[k] = v
-    return out
+    return redact_headers(headers)
 
 
 def _debug_request(request: httpx.Request) -> None:
@@ -64,7 +52,7 @@ def _debug_request(request: httpx.Request) -> None:
     _DEBUG_LOGGER.debug(
         "HTTP request: %s %s headers=%s%s",
         request.method,
-        request.url,
+        redact_url(str(request.url)),
         headers,
         body_preview,
     )
@@ -76,7 +64,7 @@ def _debug_response(response: httpx.Response) -> None:
     _DEBUG_LOGGER.debug(
         "HTTP response: %s %s status=%d headers=%s",
         response.request.method,
-        response.request.url,
+        redact_url(str(response.request.url)),
         response.status_code,
         headers,
     )

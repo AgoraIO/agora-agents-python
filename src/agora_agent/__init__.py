@@ -62,6 +62,7 @@ if typing.TYPE_CHECKING:
         MurfTTS,
         OpenAI,
         OpenAIRealtime,
+        OpenAIGPTLive,
         OpenAISTT,
         OpenAITTS,
         RimeTTS,

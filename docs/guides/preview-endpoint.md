@@ -10,9 +10,23 @@ Some providers may be released through a preview gateway before their production
 and `AsyncAgentSession` detect registered preview providers from the resolved start request and route the entire
 session automatically.
 
-There are currently no providers registered for preview routing. Gemini STT has graduated to production and uses
-the normal regional endpoint. Existing imports of `GeminiSTT` and `GeminiSTTModels` from
+OpenAI GPT Live is registered for preview routing with the `live-models` feature. Gemini STT has graduated to
+production and uses the normal regional endpoint. Existing imports of `GeminiSTT` and `GeminiSTTModels` from
 `agora_agent.agentkit.preview` remain supported as compatibility aliases.
+
+```python
+from agora_agent import Agent, OpenAIGPTLive
+
+session = (
+    Agent(client)
+    .with_mllm(OpenAIGPTLive(api_key=openai_api_key, prompt="Be concise"))
+    .create_session(channel="demo", agent_uid="1", remote_uids=["100"])
+)
+agent_id = session.start()
+```
+
+This session uses the preview base URL and sends `agora-feature: live-models`. A session using `GeminiSTT` uses the
+client's normal GA regional endpoint without that header.
 
 ## Session-scoped routing
 
@@ -38,6 +52,7 @@ The registry is keyed first by request category and then by the serialized vendo
 ```python
 _PREVIEW_FEATURES_BY_CATEGORY = {
     "asr": {"new_vendor": "new-vendor-feature"},
+    "mllm": {"openai_gpt_live": "live-models"},
 }
 ```
 

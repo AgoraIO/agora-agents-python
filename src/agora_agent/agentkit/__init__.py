@@ -154,6 +154,7 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
+from .preview import OpenAIGPTLive
 from .vendors import (
     AkoolAvatar,
     AmazonBedrock,
@@ -389,6 +390,7 @@ __all__ = [
     "BaseTTS",
     "BaseSTT",
     "BaseMLLM",
+    "OpenAIGPTLive",
     "BaseAvatar",
     "SampleRate",
     "ElevenLabsSampleRate",

@@ -1049,6 +1049,13 @@ class Agent:
                 if self._failure_message is not None:
                     mllm_config.setdefault("failure_message", self._failure_message)
                 base_kwargs["mllm"] = mllm_config
+                if mllm_config.get("vendor") == "openai_gpt_live" and "turn_detection" in base_kwargs:
+                    warnings.warn(
+                        "GPT Live v3 ignores agent-level turn_detection; endpointing is internal",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                    base_kwargs.pop("turn_detection", None)
             return _start_properties_from_mapping(base_kwargs)
 
         if skip_vendor_validation:
