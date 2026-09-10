@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Gemini ASR routing** — Gemini ASR now uses the normal regional API endpoint and generated request validation. Existing `GeminiSTT` calls and imports from `agora_agent.agentkit.preview` remain compatible. The provider-agnostic preview client and session routing infrastructure remain available for future preview providers.
 - **Gemini ASR language mapping** — Added `language_hints` for candidate transcription languages. Deprecated `language_codes` remains supported as an alias; `language_hints` takes precedence when both are provided.
 
+### Fixed
+
+- **GPT Live v3 contract selection** — `OpenAIGPTLive` now serializes `params.alpha_selector: "quicksilver=v3"` by default so preview workers consistently send the required OpenAI alpha header. Callers can still override the selector explicitly.
+
 ## [v2.7.2] — 2026-08-26
 
 ### Changed

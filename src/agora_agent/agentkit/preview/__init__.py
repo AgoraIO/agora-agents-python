@@ -15,6 +15,7 @@ from .client import (
 from .vendors import (
     GeminiSTT,
     GeminiSTTModels,
+    OpenAIGPTLive,
 )
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "PREVIEW_FEATURE_HEADER",
     "GeminiSTTModels",
     "GeminiSTT",
+    "OpenAIGPTLive",
     "PreviewFeature",
     "PreviewFeatures",
     "create_preview_session_clients",

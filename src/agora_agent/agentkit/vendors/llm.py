@@ -1,23 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 
 from ...types.llm_tool import LlmTool
-from .base import BaseLLM
+from .base import BaseLLM, ensure_mcp_transport
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 LlmGreetingConfigs = Dict[str, Any]
 LlmToolInput = Union[Dict[str, Any], LlmTool]
 _OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}
-
-
-def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Ensure each MCP server has transport set (API requires it). Default to streamable_http."""
-    result = []
-    for s in servers:
-        item = dict(s)
-        if item.get("transport") is None:
-            item["transport"] = "streamable_http"
-        result.append(item)
-    return result
 
 
 def _dump_optional_model(value: Any) -> Any:
@@ -113,7 +102,7 @@ class OpenAI(OpenAIOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -192,7 +181,7 @@ class AzureOpenAI(AzureOpenAIOptions, BaseLLM):
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -263,7 +252,7 @@ class Anthropic(AnthropicOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -340,7 +329,7 @@ class Gemini(GeminiOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -419,7 +408,7 @@ class Groq(GroqOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -498,7 +487,7 @@ class CustomLLM(CustomLLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -581,7 +570,7 @@ class VertexAILLM(VertexAILLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -657,7 +646,7 @@ class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -723,7 +712,7 @@ class Dify(DifyOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:

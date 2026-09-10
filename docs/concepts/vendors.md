@@ -158,6 +158,7 @@ Used with `agent.with_mllm()` for the [MLLM flow](../guides/mllm-flow.md). These
 | Class | Provider | Area | Required Parameters |
 |---|---|---|---|
 | `OpenAIRealtime` | OpenAI Realtime | Global | `api_key`; optional `turn_detection` |
+| `OpenAIGPTLive` (preview) | OpenAI GPT Live | Global | `api_key`; optional `greeting` |
 | `AzureOpenAIRealtime` | Azure OpenAI Realtime | Global | `api_key`, `url`, `turn_detection`; optional `max_history` |
 | `GeminiLive` | Google Gemini Live API | Global | `api_key`, `model`; optional `turn_detection` |
 | `VertexAI` | Vertex AI (Gemini Live) | Global | `model`, `project_id`, `location`, `adc_credentials_string`; optional `turn_detection` |

@@ -4,13 +4,12 @@ from typing import Any, Dict, List, Optional
 
 from ...types.mllm_turn_detection import MllmTurnDetection
 from .avatar import BaseAvatar
-from .base import BaseLLM, BaseMLLM
+from .base import BaseLLM, BaseMLLM, ensure_mcp_transport
 from .llm import (
     _OPENAI_MANAGED_MODELS,
     LlmGreetingConfigs,
     LlmToolInput,
     _dump_optional_model,
-    _ensure_mcp_transport,
 )
 from .stt import BaseSTT as _BaseSTTCompat
 from .tts import BaseTTS as _BaseTTSCompat
@@ -581,7 +580,7 @@ class AliyunLLM(AliyunLLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -668,7 +667,7 @@ class BytedanceLLM(BytedanceLLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -755,7 +754,7 @@ class DeepSeekLLM(DeepSeekLLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
@@ -842,7 +841,7 @@ class TencentLLM(TencentLLMOptions, BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
             config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
