@@ -1540,7 +1540,7 @@ def test_gpt_live_keeps_mcp_on_mllm_and_main_parameters_outside_vendor_params():
     assert props["advanced_features"]["enable_tools"] is True
     assert props["parameters"]["silence_config"] == silence
     assert props["mllm"]["params"]["prompt"] == "Be brief"
-    assert props["mllm"]["params"]["alpha_selector"] == "quicksilver=v3"
+    assert "alpha_selector" not in props["mllm"]["params"]
     assert props["mllm"]["enable"] is True
     assert "turn_detection" not in props
     assert "mcp_servers" not in props["mllm"]["params"]

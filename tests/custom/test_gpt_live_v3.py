@@ -3,13 +3,12 @@ import pytest
 from agora_agent import OpenAIGPTLive
 
 
-def test_alpha_selector_defaults_to_v3_and_mcp_transport_is_normalized():
+def test_alpha_selector_is_omitted_by_default_and_mcp_transport_is_normalized():
     servers = [{"name": "lookup", "endpoint": "https://tools.example/mcp"}]
     config = OpenAIGPTLive(api_key="test", mcp_servers=servers).to_config()
 
     assert config["params"] == {
-        "model": "gpt-live-1-diamond-alpha",
-        "alpha_selector": "quicksilver=v3",
+        "model": "gpt-live-1",
     }
     assert config["mcp_servers"] == [{**servers[0], "transport": "streamable_http"}]
     assert "transport" not in servers[0]
@@ -33,7 +32,7 @@ def test_alpha_selector_raw_param_override_is_preserved_until_explicit_option_is
 def test_v3_options_preserve_zero_false_and_explicit_precedence():
     original = {"model": "other", "prompt": "other", "output_idle_end_ms": 900}
     config = OpenAIGPTLive(
-        api_key="test", model="gpt-live-1-diamond-alpha", voice="cedar",
+        api_key="test", model="caller-supplied-model", voice="cedar",
         instructions="alias", prompt="Be brief", output_idle_end_ms=0,
         input_idle_end_ms=1500, output_silence_peak=0, output_sample_rate=24000,
         output_buffer_ms=-1, input_batch_ms=0, tool_enabled=False,
@@ -44,7 +43,7 @@ def test_v3_options_preserve_zero_false_and_explicit_precedence():
     ).to_config()
     params = config["params"]
     assert params == {
-        "model": "gpt-live-1-diamond-alpha", "voice": "cedar", "prompt": "Be brief",
+        "model": "caller-supplied-model", "voice": "cedar", "prompt": "Be brief",
         "output_idle_end_ms": 0,
         "input_idle_end_ms": 1500, "output_silence_peak": 0, "output_sample_rate": 24000,
         "output_buffer_ms": -1, "input_batch_ms": 0, "tool_enabled": False,
