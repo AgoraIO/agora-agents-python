@@ -43,12 +43,12 @@ class OpenAIGPTLive(BaseMLLM):
     # Legacy options retained to diagnose unsupported v2 configuration.
     input_audio_transcription: Optional[Dict[str, Any]] = None
     turn_detection: Optional[Any] = None
-    model: Optional[str] = Field(default=None, description="Defaults to gpt-live-1-diamond-alpha.")
+    model: Optional[str] = Field(default=None, description="Defaults to gpt-live-1.")
     voice: Optional[str] = Field(default=None, description="Output voice; provider default marin. Custom voice objects require PR #1522; use params after rollout.")
     prompt: Optional[str] = Field(default=None, description="Session instructions.")
     base_url: Optional[str] = Field(default=None, description="Host when url is omitted; default wss://api.openai.com.")
     path: Optional[str] = Field(default=None, description="WebSocket path; default /v1/live/sessions.")
-    alpha_selector: Optional[str] = Field(default=None, description="OpenAI-Alpha selector. Defaults to the required GPT Live v3 contract.")
+    alpha_selector: Optional[str] = Field(default=None, description="Optional OpenAI-Alpha selector for preview contracts; omitted by default.")
     headers: Optional[str] = Field(default=None, description="Extra provider request headers as a JSON string; protocol headers win.")
     output_idle_end_ms: Optional[int] = Field(default=None, description="Assistant silence boundary in ms; provider default 600. Zero disables inference.")
     input_idle_end_ms: Optional[int] = Field(default=None, description="Caller silence boundary in ms; provider default 1500.")
@@ -64,8 +64,7 @@ class OpenAIGPTLive(BaseMLLM):
 
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
-            "model": "gpt-live-1-diamond-alpha",
-            "alpha_selector": "quicksilver=v3",
+            "model": "gpt-live-1",
             **(self.params or {}),
         }
         if self.instructions is not None:
