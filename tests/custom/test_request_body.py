@@ -22,15 +22,16 @@ from types import SimpleNamespace
 import httpx
 import pytest
 from pydantic import ValidationError
+from test_helpers import test_client
 
 from agora_agent import (
     Agent,
     Agora,
-    Area,
     AmazonBedrock,
     AmazonSTT,
     AmazonTTS,
     Anthropic,
+    Area,
     AresSTT,
     AssemblyAISTT,
     AzureOpenAI,
@@ -42,6 +43,11 @@ from agora_agent import (
     DeepgramTTS,
     Dify,
     ElevenLabsTTS,
+    FillerWordsConfig,
+    FillerWordsContent,
+    FillerWordsContentGeneratedConfig,
+    FillerWordsGeneratedLlmProvider,
+    FillerWordsTrigger,
     FishAudioTTS,
     Gemini,
     GeminiLive,
@@ -70,8 +76,6 @@ from agora_agent.agentkit import AgentSession
 from agora_agent.agentkit.presets import resolve_session_presets
 from agora_agent.cn import QwenOmni
 from agora_agent.types.speechmatics_asr_params import SpeechmaticsAsrParams
-from test_helpers import test_client
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -1545,3 +1549,38 @@ def test_gpt_live_keeps_mcp_on_mllm_and_main_parameters_outside_vendor_params():
     assert "turn_detection" not in props
     assert "mcp_servers" not in props["mllm"]["params"]
     assert "silence_config" not in props["mllm"]["params"]
+
+
+def test_generated_filler_words_context_limits_reach_request_properties() -> None:
+    filler_words = FillerWordsConfig(
+        enable=True,
+        trigger=FillerWordsTrigger(mode="fixed_time"),
+        content=FillerWordsContent(
+            mode="generated",
+            generated_config=FillerWordsContentGeneratedConfig(
+                llm_provider=FillerWordsGeneratedLlmProvider(
+                    url="https://example.com/chat/completions",
+                    api_key="key",
+                    model="gpt-4o-mini",
+                ),
+                prompt="Generate a brief acknowledgement.",
+                fallback_strategy="static",
+                context_message_limit=6,
+                history_character_limit=1200,
+            ),
+        ),
+    )
+
+    properties = Agent(test_client()).with_filler_words(filler_words).to_properties(
+        channel="room",
+        agent_uid="1",
+        remote_uids=["2"],
+        token="rtc-token",
+        allow_missing_vendor_categories={"asr", "llm", "tts"},
+    )
+
+    assert properties.filler_words is not None
+    generated = properties.filler_words.content.generated_config
+    assert generated is not None
+    assert generated.context_message_limit == 6
+    assert generated.history_character_limit == 1200

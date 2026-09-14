@@ -449,6 +449,27 @@ AgentKit serializes `credential_mode` at the top level of the Rime TTS configura
 | `sample_rate` | `int` | No | `None` | Audio sample rate |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
+### `SmallestAITTS`
+
+Global-only Smallest AI text-to-speech provider (`tts.vendor: "smallestai"`).
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Smallest AI API key |
+| `url` | `str` | No | `None` | Streaming HTTP endpoint |
+| `model` | `str` | No | `None` | TTS model name |
+| `voice_id` | `str` | No | `None` | Voice identifier |
+| `sample_rate` | `int` | No | `None` | Output audio sample rate in Hz |
+| `speed` | `float` | No | `None` | Speech rate multiplier |
+| `language` | `str` | No | `None` | Synthesis language code |
+| `number_pronunciation_language` | `str` | No | `None` | Language used to pronounce numbers |
+| `math_notation` | `bool` | No | `None` | Verbalize mathematical notation |
+| `pronunciation_dicts` | `List[str]` | No | `None` | Pronunciation dictionaries |
+| `session_id` | `str` | No | `None` | Client-provided session identifier |
+| `request_id` | `str` | No | `None` | Client-provided request identifier |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Smallest AI parameters |
+| `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
+
 ### `GenericTTS`
 
 `GenericTTS` currently supports HTTP and HTTPS endpoints. WebSocket endpoints are rejected until a WebSocket-backed generic TTS implementation is available. AgentKit serializes the current HTTP implementation with the internal vendor value `generic_http`.
@@ -615,6 +636,37 @@ stt = GeminiSTT(
 | `language` | `str` | No | `None` | Language code for speech recognition |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional xAI STT parameters |
 
+### `SmallestAISTT`
+
+Global-only Smallest AI speech-to-text provider (`asr.vendor: "smallestai"`).
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Smallest AI API key |
+| `language` | `str` | No | `None` | Recognition language code |
+| `url` | `str` | No | `None` | Streaming WebSocket endpoint |
+| `sample_rate` | `int` | No | `None` | Input audio sample rate in Hz |
+| `encoding` | `str` | No | `None` | Input audio encoding |
+| `word_timestamps` | `bool` | No | `None` | Include word timestamps |
+| `sentence_timestamps` | `bool` | No | `None` | Include sentence timestamps |
+| `diarize` | `bool` | No | `None` | Enable speaker diarization |
+| `vad_events` | `bool` | No | `None` | Return voice activity events |
+| `endpointing` | `bool` | No | `None` | Enable endpoint detection |
+| `eou_timeout_ms` | `int` | No | `None` | End-of-utterance timeout in milliseconds |
+| `format` | `bool` | No | `None` | Format the transcript |
+| `finalize_on_words` | `bool` | No | `None` | Finalize results based on recognized words |
+| `max_words` | `str` | No | `None` | Maximum words per result |
+| `punctuate` | `bool` | No | `None` | Add punctuation |
+| `capitalize` | `bool` | No | `None` | Capitalize transcript text |
+| `itn_normalize` | `bool` | No | `None` | Enable inverse text normalization |
+| `full_transcript` | `bool` | No | `None` | Return the full transcript |
+| `keywords` | `str` | No | `None` | Comma-separated `keyword:weight` boosts |
+| `redact_pii` | `bool` | No | `None` | Redact personally identifiable information |
+| `redact_pci` | `bool` | No | `None` | Redact payment-card information |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Smallest AI parameters |
+
+Boolean options are exposed as Python `bool` values and serialized to the API's string representation (`"true"` or `"false"`).
+
 ---
 
 ## CN Vendors
@@ -625,10 +677,10 @@ All CN LLM helpers reuse the `OpenAI`-compatible shape and set a different vendo
 
 | Class | Key parameters |
 |---|---|
-| `AliyunLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?` |
-| `BytedanceLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?` |
-| `DeepSeekLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?` |
-| `TencentLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?` |
+| `AliyunLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?`, `tools?`, `mcp_servers?` |
+| `BytedanceLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?`, `tools?`, `mcp_servers?` |
+| `DeepSeekLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?`, `tools?`, `mcp_servers?` |
+| `TencentLLM` | `base_url`, `model`, `api_key?`, `system_messages?`, `greeting_message?`, `failure_message?`, `max_history?`, `params?`, `headers?`, `tools?`, `mcp_servers?` |
 
 ### CN TTS Vendors
 
@@ -872,6 +924,8 @@ agent = Agent(client=client).with_llm(llm).with_tools()
 ```
 
 `server.body` is only valid for `POST`. Template values may use `{{args.name}}` in URLs and bodies, and `{{template_variables.name}}` or `{{tool_call_id}}` in URLs, headers, and bodies. `execution.mode` currently supports only `sync`; `timeout_ms` must be between `1000` and `100000`.
+
+The same `tools` and `mcp_servers` fields are available on all AgentKit MLLM vendors. They serialize at the top level of `mllm`, not inside `mllm.params`. Use `LlmToolConfig` and `McpServerConfig` for typed configuration; dictionaries remain supported for backward compatibility. MCP transport defaults to `streamable_http` when omitted. Tool execution still requires `Agent.with_tools()`.
 ### OpenAIGPTLive (preview)
 
 GPT Live v3 uses `mllm.vendor: "openai_gpt_live"`, model `gpt-live-1`, and `wss://api.openai.com/v1/live/sessions`. Sessions route through the preview gateway automatically. This alpha must not carry production traffic.
@@ -904,6 +958,7 @@ The SDK omits `params.alpha_selector` by default. Set `alpha_selector` only when
 | `greeting` | string | `mllm.greeting_message`; v3 may reword this request. |
 | `messages` | list | `mllm.messages`; prior conversation seeded by Agora. |
 | `mcp_servers` | list | `mllm.mcp_servers`; MCP servers exposed to GPT Live. Requires `Agent.with_tools()`. |
+| `tools` | list | `mllm.tools`; inline REST tools exposed to GPT Live. Requires `Agent.with_tools()`. |
 | `failure_message` | string | `mllm.failure_message` |
 | `input_modalities / output_modalities` | string lists | Agora outer `mllm.input_modalities` / `mllm.output_modalities` |
 | `params` | object | Additional snake_case provider parameters. |
@@ -937,6 +992,8 @@ Global Azure OpenAI Realtime vendor (`mllm.vendor`: `"azure"`).
 ### `QwenOmni`
 
 CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Import it with `from agora_agent.cn import QwenOmni`.
+
+`QwenOmni` accepts both `tools` and `mcp_servers`. Both fields serialize at the top level of `mllm`; typed `LlmToolConfig`/`McpServerConfig` values and dictionaries are supported. Enable execution with `Agent.with_tools()`.
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|

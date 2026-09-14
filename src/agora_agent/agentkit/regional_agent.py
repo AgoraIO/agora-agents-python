@@ -35,6 +35,7 @@ from .vendors.stt import (
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
+    SmallestAISTT,
     SpeechmaticsSTT,
     XaiSTT,
 )
@@ -67,6 +68,7 @@ from .vendors.tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
     XaiTTS,
 )
@@ -89,6 +91,7 @@ GlobalSTT = typing.Union[
     AssemblyAISTT,
     SpeechmaticsSTT,
     SarvamSTT,
+    SmallestAISTT,
     XaiSTT,
 ]
 GlobalTTS = typing.Union[
@@ -104,6 +107,7 @@ GlobalTTS = typing.Union[
     GoogleTTS,
     AmazonTTS,
     SarvamTTS,
+    SmallestAITTS,
     GenericTTS,
     XaiTTS,
     DeepgramTTS,

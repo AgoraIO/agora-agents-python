@@ -47,6 +47,7 @@ from .stt import (
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
+    SmallestAISTT,
     SpeechmaticsSTT,
     XaiSTT,
 )
@@ -67,6 +68,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
     XaiTTS,
 )
@@ -109,6 +111,7 @@ __all__ = [
     "TypecastTTS",
     "MurfTTS",
     "SarvamTTS",
+    "SmallestAITTS",
     "GenericTTS",
     "XaiTTS",
     "MicrosoftCNTTS",
@@ -129,6 +132,7 @@ __all__ = [
     "AssemblyAISTT",
     "AresSTT",
     "SarvamSTT",
+    "SmallestAISTT",
     "XaiSTT",
     "TencentSTT",
     "FengmingSTT",

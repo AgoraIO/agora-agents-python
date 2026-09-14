@@ -24,6 +24,7 @@ from .stt import (
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
+    SmallestAISTT,
     SpeechmaticsSTT,
     XaiSTT,
 )
@@ -44,6 +45,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
     XaiTTS,
 )
@@ -60,6 +62,7 @@ class GlobalSTTVendors:
     assemblyai = AssemblyAISTT
     speechmatics = SpeechmaticsSTT
     sarvam = SarvamSTT
+    smallestai = SmallestAISTT
     xai = XaiSTT
 
 
@@ -116,6 +119,7 @@ class GlobalTTSVendors:
     google = GoogleTTS
     amazon = AmazonTTS
     sarvam = SarvamTTS
+    smallestai = SmallestAITTS
     generic = GenericTTS
     xai = XaiTTS
     deepgram = DeepgramTTS

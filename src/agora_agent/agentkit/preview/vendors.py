@@ -11,7 +11,8 @@ import warnings
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit, urlunsplit
 
-from ..vendors.base import BaseMLLM, ensure_mcp_transport
+from ..vendors.base import BaseMLLM, McpServerInput, ensure_mcp_transport
+from ..vendors.llm import LlmToolInput, _dump_optional_model
 from ..vendors.stt import GeminiSTT, GeminiSTTModels
 from pydantic import ConfigDict, Field
 from typing_extensions import Literal
@@ -35,9 +36,13 @@ class OpenAIGPTLive(BaseMLLM):
     input_modalities: Optional[List[str]] = None
     output_modalities: Optional[List[str]] = None
     messages: Optional[List[Dict[str, Any]]] = None
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(
+    mcp_servers: Optional[List[McpServerInput]] = Field(
         default=None,
         description="MCP servers exposed to GPT Live. Requires Agent.with_tools().",
+    )
+    tools: Optional[List[LlmToolInput]] = Field(
+        default=None,
+        description="Inline REST tools exposed to GPT Live. Requires Agent.with_tools().",
     )
     params: Optional[Dict[str, Any]] = None
     # Legacy options retained to diagnose unsupported v2 configuration.
@@ -136,6 +141,8 @@ class OpenAIGPTLive(BaseMLLM):
             config["greeting_message"] = self.greeting
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         return config
 
 

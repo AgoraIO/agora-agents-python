@@ -1,10 +1,23 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+from ...types.llm_tool import LlmTool
 from ...types.mllm_turn_detection import MllmTurnDetection
-from .base import BaseMLLM
+from .base import BaseMLLM, McpServerInput, dump_config_models, ensure_mcp_transport
 from pydantic import BaseModel, ConfigDict, Field
 
 MllmTurnDetectionConfig = MllmTurnDetection
+MllmToolInput = Union[Dict[str, Any], LlmTool]
+
+
+def _add_tool_configs(
+    config: Dict[str, Any],
+    mcp_servers: Optional[List[McpServerInput]],
+    tools: Optional[List[MllmToolInput]],
+) -> None:
+    if mcp_servers is not None:
+        config["mcp_servers"] = ensure_mcp_transport(mcp_servers)
+    if tools is not None:
+        config["tools"] = dump_config_models(tools)
 
 
 class OpenAIRealtimeOptions(BaseModel):
@@ -26,6 +39,8 @@ class OpenAIRealtimeOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class OpenAIRealtime(OpenAIRealtimeOptions, BaseMLLM):
@@ -67,6 +82,7 @@ class OpenAIRealtime(OpenAIRealtimeOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
 
@@ -93,6 +109,8 @@ class AzureOpenAIRealtimeOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Azure OpenAI parameters")
     turn_detection: MllmTurnDetectionConfig = Field(..., description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class AzureOpenAIRealtime(AzureOpenAIRealtimeOptions, BaseMLLM):
@@ -127,6 +145,7 @@ class AzureOpenAIRealtime(AzureOpenAIRealtimeOptions, BaseMLLM):
         if self.failure_message is not None:
             config["failure_message"] = self.failure_message
         config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
         return config
 
 
@@ -151,6 +170,8 @@ class XaiGrokOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional xAI parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class XaiGrok(XaiGrokOptions, BaseMLLM):
@@ -184,6 +205,7 @@ class XaiGrok(XaiGrokOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
 
@@ -210,6 +232,8 @@ class VertexAIOptions(BaseModel):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class VertexAI(VertexAIOptions, BaseMLLM):
@@ -253,6 +277,7 @@ class VertexAI(VertexAIOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
 
@@ -277,6 +302,8 @@ class GeminiLiveOptions(BaseModel):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class GeminiLive(GeminiLiveOptions, BaseMLLM):
@@ -318,5 +345,6 @@ class GeminiLive(GeminiLiveOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config

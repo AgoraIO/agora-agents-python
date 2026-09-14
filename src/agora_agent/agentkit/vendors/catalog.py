@@ -27,6 +27,7 @@ from .stt import (
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
+    SmallestAISTT,
     SpeechmaticsSTT,
     XaiSTT,
 )
@@ -47,6 +48,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
     XaiTTS,
 )
@@ -81,6 +83,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "assemblyai": AssemblyAISTT,
         "speechmatics": SpeechmaticsSTT,
         "sarvam": SarvamSTT,
+        "smallestai": SmallestAISTT,
         "xai": XaiSTT,
     },
     llm={
@@ -114,6 +117,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "google": GoogleTTS,
         "amazon": AmazonTTS,
         "sarvam": SarvamTTS,
+        "smallestai": SmallestAITTS,
         "generic": GenericTTS,
         "xai": XaiTTS,
         "deepgram": DeepgramTTS,

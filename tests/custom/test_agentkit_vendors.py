@@ -1,19 +1,68 @@
 import pytest
 from pydantic import ValidationError
 
-from agora_agent.agentkit import LlmGreetingConfigs
+from agora_agent import OpenAIGPTLive
 from agora_agent.agentkit.vendors import (
     AnamAvatar,
     GenericAvatar,
     GenericTTS,
     OpenAI,
     OpenAIRealtime,
+    SmallestAISTT,
     SpatiusAvatar,
     XaiGrok,
     XaiSTT,
     XaiTTS,
 )
-from agora_agent import OpenAIGPTLive
+
+
+def test_smallest_ai_stt_serializes_generated_contract() -> None:
+    config = SmallestAISTT(
+        api_key="smallest-key",
+        language="en-US",
+        sample_rate=16000,
+        word_timestamps=True,
+        sentence_timestamps=False,
+        diarize=True,
+        vad_events=False,
+        endpointing=True,
+        eou_timeout_ms=480,
+        format=True,
+        finalize_on_words=False,
+        max_words="100",
+        punctuate=True,
+        capitalize=False,
+        itn_normalize=True,
+        full_transcript=False,
+        redact_pii=False,
+        redact_pci=True,
+        additional_params={"language": "overridden", "punctuate": "false", "custom": "value"},
+    ).to_config()
+
+    assert config == {
+        "vendor": "smallestai",
+        "params": {
+            "api_key": "smallest-key",
+            "language": "en-US",
+            "sample_rate": 16000,
+            "word_timestamps": "true",
+            "sentence_timestamps": "false",
+            "diarize": "true",
+            "vad_events": "false",
+            "endpointing": "true",
+            "eou_timeout_ms": 480,
+            "format": "true",
+            "finalize_on_words": "false",
+            "max_words": "100",
+            "punctuate": "true",
+            "capitalize": "false",
+            "itn_normalize": "true",
+            "full_transcript": "false",
+            "redact_pii": "false",
+            "redact_pci": "true",
+            "custom": "value",
+        },
+    }
 
 
 def test_xai_grok_serializes_v27_shape_without_style():
