@@ -874,20 +874,20 @@ agent = Agent(client=client).with_llm(llm).with_tools()
 `server.body` is only valid for `POST`. Template values may use `{{args.name}}` in URLs and bodies, and `{{template_variables.name}}` or `{{tool_call_id}}` in URLs, headers, and bodies. `execution.mode` currently supports only `sync`; `timeout_ms` must be between `1000` and `100000`.
 ### OpenAIGPTLive (preview)
 
-GPT Live v3 uses `mllm.vendor: "openai_gpt_live"`, model `gpt-live-1-diamond-alpha`, and `wss://api.openai.com/v1/live/sessions`. Sessions route through the preview gateway automatically. This alpha must not carry production traffic.
+GPT Live v3 uses `mllm.vendor: "openai_gpt_live"`, model `gpt-live-1`, and `wss://api.openai.com/v1/live/sessions`. Sessions route through the preview gateway automatically. This alpha must not carry production traffic.
 
-The SDK sends `params.alpha_selector: "quicksilver=v3"` by default so the Agora worker selects the required GPT Live v3 OpenAI contract. Set `alpha_selector` to override it. Other tuning defaults remain owned by the provider. Explicit options override entries in `params`. Zero and false values are preserved.
+The SDK omits `params.alpha_selector` by default. Set `alpha_selector` only when a future preview contract requires an `OpenAI-Alpha` selector. Other tuning defaults remain owned by the provider. Explicit options override entries in `params`. Zero and false values are preserved.
 
 | Option | Type | Wire parameter / behavior |
 |---|---|---|
 | `api_key` | string, required | `mllm.api_key` |
 | `url` | string | `mllm.url`; overrides base/path. Only the legacy `/v1/live` route on OpenAI's host is rewritten to `/v1/live/sessions`. Custom endpoints are preserved. |
-| `model` | `str` | `params.model`. Defaults to gpt-live-1-diamond-alpha. |
+| `model` | `str` | `params.model`. Defaults to gpt-live-1. |
 | `voice` | `str` | `params.voice`. Output voice; provider default marin. Custom voice objects require PR #1522; use params after rollout. |
 | `prompt` | `str` | `params.prompt`. Session instructions. |
 | `base_url` | `str` | `params.base_url`. Host when url is omitted; default wss://api.openai.com. |
 | `path` | `str` | `params.path`. WebSocket path; default /v1/live/sessions. |
-| `alpha_selector` | `str` | `params.alpha_selector`; defaults to `quicksilver=v3` for the required GPT Live v3 contract. |
+| `alpha_selector` | `str` | Optional `params.alpha_selector` for preview contracts; omitted by default. |
 | `headers` | `str` | `params.headers`. Extra provider request headers as a JSON string; protocol headers win. |
 | `output_idle_end_ms` | `int` | `params.output_idle_end_ms`. Assistant silence boundary in ms; provider default 600. Zero disables inference. |
 | `input_idle_end_ms` | `int` | `params.input_idle_end_ms`. Caller silence boundary in ms; provider default 1500. |

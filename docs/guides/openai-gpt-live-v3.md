@@ -1,6 +1,6 @@
 # GPT Live v3 preview
 
-This preview targets `gpt-live-1-diamond-alpha` on `/v1/live/sessions`. Use an alpha-enabled OpenAI key. Do not use this alpha for production traffic.
+This preview targets `gpt-live-1` on `/v1/live/sessions`. Use an alpha-enabled OpenAI key. Do not use this alpha for production traffic.
 
 <!-- snippet: fragment -->
 ```python
@@ -35,7 +35,7 @@ GPT Live places MCP at `properties.mllm.mcp_servers`, the tool gate at `properti
       "url": "wss://api.openai.com/v1/live/sessions",
       "greeting_message": "Hello! I'm GPT Live. How can I help you today?",
       "params": {
-        "model": "gpt-live-1-diamond-alpha",
+        "model": "gpt-live-1",
         "voice": "cedar",
         "prompt": "You are a helpful assistant.",
         "tool_enabled": true
@@ -53,7 +53,7 @@ GPT Live places MCP at `properties.mllm.mcp_servers`, the tool gate at `properti
 
 This fragment omits the normal name, channel, token and UID fields populated by the SDK session. The preview route and `agora-feature: live-models` gate are selected automatically from the vendor.
 
-`alpha_selector` is optional for callers. The SDK sends `quicksilver=v3` by default because the OpenAI v3 handshake requires that contract selector. Set it only to override the SDK default.
+The SDK omits `alpha_selector` by default. Set it only when a future preview contract requires an `OpenAI-Alpha` selector.
 
 ## Silence and backend rollout
 

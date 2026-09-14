@@ -68,8 +68,7 @@ def test_openai_gpt_live_uses_its_preview_vendor_and_url():
         "url": "wss://api.openai.com/v1/live/sessions",
         "greeting_message": "Hello from GPT Live",
         "params": {
-            "model": "gpt-live-1-diamond-alpha",
-            "alpha_selector": "quicksilver=v3",
+            "model": "gpt-live-1",
         },
     }
 
