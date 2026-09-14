@@ -1580,7 +1580,9 @@ def test_generated_filler_words_context_limits_reach_request_properties() -> Non
     )
 
     assert properties.filler_words is not None
-    generated = properties.filler_words.content.generated_config
+    content = properties.filler_words.content
+    assert content is not None
+    generated = content.generated_config
     assert generated is not None
     assert generated.context_message_limit == 6
     assert generated.history_character_limit == 1200
