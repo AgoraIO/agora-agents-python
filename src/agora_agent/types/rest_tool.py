@@ -5,12 +5,12 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .llm_tool_execution import LlmToolExecution
-from .llm_tool_function import LlmToolFunction
-from .llm_tool_server import LlmToolServer
+from .rest_tool_execution import RestToolExecution
+from .rest_tool_function import RestToolFunction
+from .rest_tool_server import RestToolServer
 
 
-class LlmTool(UncheckedBaseModel):
+class RestTool(UncheckedBaseModel):
     """
     Inline REST tool definition. `type: function` combined with `server` declares a REST tool.
     Phase 1a executes the HTTP request synchronously and returns the raw result to the model context.
@@ -21,9 +21,22 @@ class LlmTool(UncheckedBaseModel):
     Tool type. Must be `function`.
     """
 
-    function: LlmToolFunction
-    execution: typing.Optional[LlmToolExecution] = None
-    server: LlmToolServer
+    function: RestToolFunction = pydantic.Field()
+    """
+    Tool interface exposed to the model. `parameters` is the JSON Schema for LLM arguments, not the HTTP request shape.
+    """
+
+    execution: typing.Optional[RestToolExecution] = pydantic.Field(default=None)
+    """
+    Tool execution configuration. Defaults to `{"mode": "sync"}`. Phase 1a only allows `sync`.
+    """
+
+    server: RestToolServer = pydantic.Field()
+    """
+    Actual HTTP request configuration for this REST tool.
+    Does not use top-level `parameters`, `path_params`, standalone `query`,
+    `response`, `json_path`, or `max_chars`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -8,7 +8,8 @@ from ..core.unchecked_base_model import UncheckedBaseModel
 from .llm_greeting_configs import LlmGreetingConfigs
 from .llm_params import LlmParams
 from .llm_style import LlmStyle
-from .llm_tool import LlmTool
+from .mcp_server import McpServer
+from .rest_tool import RestTool
 
 
 class Llm(UncheckedBaseModel):
@@ -107,12 +108,12 @@ class Llm(UncheckedBaseModel):
     Template parameter configuration.
     """
 
-    mcp_servers: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    mcp_servers: typing.Optional[typing.List[McpServer]] = pydantic.Field(default=None)
     """
     MCP server configuration.
     """
 
-    tools: typing.Optional[typing.List[LlmTool]] = pydantic.Field(default=None)
+    tools: typing.Optional[typing.List[RestTool]] = pydantic.Field(default=None)
     """
     Inline REST (pass-through sync) tool definitions for standard text LLM function calling.
     Required fields per tool: `type`, `function.name`, `function.parameters`

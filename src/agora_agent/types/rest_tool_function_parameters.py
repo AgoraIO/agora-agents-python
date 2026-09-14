@@ -7,7 +7,7 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class LlmToolFunctionParameters(UncheckedBaseModel):
+class RestToolFunctionParameters(UncheckedBaseModel):
     """
     JSON Schema defining the LLM tool-call arguments (`args`). Must be an object schema with `type: object` and `properties`.
     """

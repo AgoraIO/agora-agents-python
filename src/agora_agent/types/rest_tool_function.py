@@ -5,10 +5,10 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .llm_tool_function_parameters import LlmToolFunctionParameters
+from .rest_tool_function_parameters import RestToolFunctionParameters
 
 
-class LlmToolFunction(UncheckedBaseModel):
+class RestToolFunction(UncheckedBaseModel):
     """
     Tool interface exposed to the model. `parameters` defines LLM arguments, not the HTTP request shape.
     """
@@ -23,7 +23,7 @@ class LlmToolFunction(UncheckedBaseModel):
     Function description visible to the model.
     """
 
-    parameters: LlmToolFunctionParameters = pydantic.Field()
+    parameters: RestToolFunctionParameters = pydantic.Field()
     """
     JSON Schema defining the LLM tool-call arguments (`args`). Must be an object schema with `type: object` and `properties`.
     """

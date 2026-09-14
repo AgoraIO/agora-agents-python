@@ -5,16 +5,18 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .smallest_ai_tts_params import SmallestAiTtsParams
 
 
-class LlmToolExecution(UncheckedBaseModel):
+class SmallestAiTts(UncheckedBaseModel):
     """
-    Tool execution configuration. Defaults to `{"mode": "sync"}`. Phase 1a only allows `sync`.
+    Smallest AI Text-to-Speech configuration.
     """
 
-    mode: typing.Optional[typing.Literal["sync"]] = pydantic.Field(default=None)
+    params: SmallestAiTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = pydantic.Field(default=None)
     """
-    Execution mode. Phase 1a only accepts `sync`.
+    Controls whether the TTS module skips bracketed content when reading LLM response text.
     """
 
     if IS_PYDANTIC_V2:

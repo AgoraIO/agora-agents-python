@@ -2,4 +2,4 @@
 
 import typing
 
-LlmToolServerMethod = typing.Union[typing.Literal["GET", "POST"], typing.Any]
+RestToolServerMethod = typing.Union[typing.Literal["GET", "POST"], typing.Any]

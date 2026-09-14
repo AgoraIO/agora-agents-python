@@ -9,7 +9,7 @@ from ...core.unchecked_base_model import UncheckedBaseModel
 
 class StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider(UncheckedBaseModel):
     """
-    OpenAI-compatible LLM provider used to generate filler words. Runs in parallel with the main business LLM and only uses the last user message as input.
+    OpenAI-compatible LLM provider used to generate filler words. Runs in parallel with the main business LLM.
     """
 
     url: str = pydantic.Field()

@@ -5,17 +5,17 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
-from .llm_tool_server_method import LlmToolServerMethod
+from .rest_tool_server_method import RestToolServerMethod
 
 
-class LlmToolServer(UncheckedBaseModel):
+class RestToolServer(UncheckedBaseModel):
     """
     Actual HTTP request configuration for this REST tool.
     Does not use top-level `parameters`, `path_params`, standalone `query`,
     `response`, `json_path`, or `max_chars`.
     """
 
-    method: LlmToolServerMethod = pydantic.Field()
+    method: RestToolServerMethod = pydantic.Field()
     """
     HTTP method. Must be `GET` or `POST`.
     """

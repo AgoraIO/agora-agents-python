@@ -7,24 +7,14 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class SpeechmaticsAsrParams(UncheckedBaseModel):
+class RestToolExecution(UncheckedBaseModel):
     """
-    Speechmatics ASR configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Speechmatics API key
+    Tool execution configuration. Defaults to `{"mode": "sync"}`. Phase 1a only allows `sync`.
     """
 
-    language: str = pydantic.Field()
+    mode: typing.Optional[typing.Literal["sync"]] = pydantic.Field(default=None)
     """
-    Language code to use for transcription
-    """
-
-    uri: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    WebSocket URL for the Speechmatics streaming API
+    Execution mode. Phase 1a only accepts `sync`.
     """
 
     if IS_PYDANTIC_V2:
