@@ -5,27 +5,20 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .smallest_ai_asr_params import SmallestAiAsrParams
 
 
-class SpeechmaticsAsrParams(UncheckedBaseModel):
+class SmallestAiAsr(UncheckedBaseModel):
     """
-    Speechmatics ASR configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Speechmatics API key
+    Smallest AI ASR configuration.
     """
 
-    language: str = pydantic.Field()
+    language: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Language code to use for transcription
+    Language code for speech recognition.
     """
 
-    uri: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    WebSocket URL for the Speechmatics streaming API
-    """
+    params: SmallestAiAsrParams
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
