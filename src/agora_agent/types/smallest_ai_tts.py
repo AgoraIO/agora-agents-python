@@ -5,26 +5,18 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .smallest_ai_tts_params import SmallestAiTtsParams
 
 
-class SpeechmaticsAsrParams(UncheckedBaseModel):
+class SmallestAiTts(UncheckedBaseModel):
     """
-    Speechmatics ASR configuration parameters.
-    """
-
-    api_key: str = pydantic.Field()
-    """
-    Speechmatics API key
+    Smallest AI Text-to-Speech configuration.
     """
 
-    language: str = pydantic.Field()
+    params: SmallestAiTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = pydantic.Field(default=None)
     """
-    Language code to use for transcription
-    """
-
-    uri: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    WebSocket URL for the Speechmatics streaming API
+    Controls whether the TTS module skips bracketed content when reading LLM response text.
     """
 
     if IS_PYDANTIC_V2:
