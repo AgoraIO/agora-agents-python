@@ -62,7 +62,7 @@ class SmallestAiAsrParams(UncheckedBaseModel):
     Whether to enable endpoint detection.
     """
 
-    eou_timeout_ms: typing.Optional[str] = pydantic.Field(default=None)
+    eou_timeout_ms: typing.Optional[int] = pydantic.Field(default=None)
     """
     End-of-utterance timeout in milliseconds.
     """

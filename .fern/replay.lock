@@ -66,20 +66,20 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-  - commit_sha: 0be5bdf0907946c87dabeea2553fc1e6e5f06016
-    tree_hash: 0e2071dc0306fdee36ccc7fc5302bbc05ea9c643
-    timestamp: 2026-09-14T10:25:53.342Z
+  - commit_sha: 4a4b233d1b5625935298cd616667aabe4830c79d
+    tree_hash: ffe2f53e14f3ff105b6d75d5a957821aac6150f6
+    timestamp: 2026-09-14T13:10:51.974Z
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-current_generation: 0be5bdf0907946c87dabeea2553fc1e6e5f06016
+current_generation: 4a4b233d1b5625935298cd616667aabe4830c79d
 patches:
   - id: patch-13d8e068
     content_hash: sha256:97d879ab169016b9abaf1866427a8ebc45af608f69e063a07e5126c9613c329b
     original_commit: 13d8e0683ffa08bcfc9a381eb9604adf5abdbe0b
     original_message: "chore: ignore local venv and planning docs"
     original_author: plutoless <qianze.zhang@hotmail.com>
-    base_generation: 0be5bdf0907946c87dabeea2553fc1e6e5f06016
+    base_generation: 4a4b233d1b5625935298cd616667aabe4830c79d
     files:
       - .gitignore
     patch_content: |
@@ -108,7 +108,7 @@ patches:
     original_commit: a065088b4c45e2ca7e1bb91b1a899b8444800121
     original_message: "fix(vendors): send Speechmatics STT key instead of api_key"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: 0be5bdf0907946c87dabeea2553fc1e6e5f06016
+    base_generation: 4a4b233d1b5625935298cd616667aabe4830c79d
     files:
       - src/agora_agent/types/speechmatics_asr_params.py
     patch_content: |
@@ -251,7 +251,7 @@ patches:
     original_commit: 33a436b3bdb6f2a6fe4d8987b6536c2f0ac2862e
     original_message: "fix: address v2.8.0 release review findings"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: 0be5bdf0907946c87dabeea2553fc1e6e5f06016
+    base_generation: 4a4b233d1b5625935298cd616667aabe4830c79d
     files:
       - src/agora_agent/agents/types/start_agents_request_properties_advanced_features.py
     patch_content: |
