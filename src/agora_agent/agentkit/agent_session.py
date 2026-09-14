@@ -1,7 +1,6 @@
 import typing
 import warnings
 
-from ..core.api_error import ApiError
 from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
     AgentThinkAgentManagementRequestOnListeningAction as AgentThinkRequestOnListeningAction,
 )
@@ -15,8 +14,7 @@ from ..agent_management.types.agent_think_agent_management_response import (
     AgentThinkAgentManagementResponse as AgentThinkResponse,
 )
 from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
-from .debug import redact_secrets
-from .preview.client import apply_preview_shape, assert_preview_support
+from ..core.api_error import ApiError
 from .agent import (
     Agent,
     GetTurnsOptions,
@@ -36,6 +34,7 @@ from .avatar_types import (
     validate_avatar_config,
     validate_tts_sample_rate,
 )
+from .debug import redact_secrets
 from .presets import (
     get_preset_category,
     infer_asr_preset,
@@ -44,7 +43,8 @@ from .presets import (
     normalize_preset_input,
     resolve_session_presets,
 )
-from .token import generate_convo_ai_token, _parse_numeric_uid
+from .preview.client import apply_preview_shape, create_preview_session_clients, required_preview_features
+from .token import _parse_numeric_uid, generate_convo_ai_token
 
 
 class _AgentSessionRequiredOptions(typing.TypedDict, total=True):
@@ -134,6 +134,11 @@ class _AgentSessionBase:
         self._event_handlers: typing.Dict[
             str, typing.List[typing.Callable[..., None]]
         ] = {}
+        self._agents = client.agents
+        self._agent_management = getattr(client, "agent_management", None)
+        self._api_base_url = (
+            client.get_current_url() if hasattr(client, "get_current_url") else None
+        )
 
     # ------------------------------------------------------------------
     # Public read-only properties
@@ -162,12 +167,34 @@ class _AgentSessionBase:
         Use this to access any new endpoints that Fern generates without
         waiting for agentkit method updates.
         """
-        return self._client.agents
+        return self._agents
 
     @property
     def raw_agent_management(self) -> typing.Any:
         """Direct access to the underlying Fern-generated AgentManagement client."""
-        return self._client.agent_management
+        return self._agent_management
+
+    def _require_agent_management(self) -> typing.Any:
+        """Return the management client when the configured client supports it."""
+        if self._agent_management is None:
+            raise RuntimeError(
+                "The configured client does not support agent management operations"
+            )
+        return self._agent_management
+
+    def _bind_session_clients(self, features: typing.Sequence[str]) -> None:
+        """Pin this session to production or preview without mutating its client."""
+        if features:
+            self._agents, self._agent_management = create_preview_session_clients(self._client, features)
+            from .preview.client import PREVIEW_API_BASE_URL
+
+            self._api_base_url = PREVIEW_API_BASE_URL
+            return
+        self._agents = self._client.agents
+        self._agent_management = getattr(self._client, "agent_management", None)
+        self._api_base_url = (
+            self._client.get_current_url() if hasattr(self._client, "get_current_url") else None
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -605,15 +632,13 @@ class AgentSession(_AgentSessionBase):
                 properties,
             )
 
-            assert_preview_support(self._client, resolved_properties)
-            # Retarget MLLM fields the shared builder wrote with production
-            # spellings, so a preview config follows the preview route's structure.
             apply_preview_shape(resolved_properties)
+            self._bind_session_clients(required_preview_features(resolved_properties))
 
             if self._debug:
                 print("[Agora Debug] Starting agent session...")
                 if hasattr(self._client, "get_current_url"):
-                    print("[Agora Debug] API Endpoint:", self._client.get_current_url())
+                    print("[Agora Debug] API Endpoint:", self._api_base_url)
                 print(
                     "[Agora Debug] Request:",
                     redact_secrets(
@@ -633,7 +658,7 @@ class AgentSession(_AgentSessionBase):
                 pipeline_id=pipeline_id,
             )
 
-            response = self._client.agents.start(
+            response = self._agents.start(
                 self._app_id,
                 name=self._name,
                 properties=request_properties,
@@ -668,7 +693,7 @@ class AgentSession(_AgentSessionBase):
         self._status = "stopping"
 
         try:
-            self._client.agents.stop(
+            self._agents.stop(
                 self._app_id, self._agent_id, request_options=self._request_options()
             )
             self._status = "stopped"
@@ -718,7 +743,7 @@ class AgentSession(_AgentSessionBase):
         if interruptable is not None:
             kwargs["interruptable"] = interruptable
 
-        self._client.agents.speak(
+        self._agents.speak(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
@@ -732,7 +757,7 @@ class AgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        self._client.agents.interrupt(
+        self._agents.interrupt(
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
@@ -772,7 +797,7 @@ class AgentSession(_AgentSessionBase):
         if metadata is not None:
             kwargs["metadata"] = metadata
 
-        return self._client.agent_management.agent_think(
+        return self._require_agent_management().agent_think(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
@@ -792,7 +817,7 @@ class AgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        self._client.agents.update(
+        self._agents.update(
             self._app_id,
             self._agent_id,
             properties=properties,
@@ -804,7 +829,7 @@ class AgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        return self._client.agents.get_history(
+        return self._agents.get_history(
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
@@ -813,7 +838,7 @@ class AgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        return self._client.agents.get(
+        return self._agents.get(
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
@@ -836,7 +861,7 @@ class AgentSession(_AgentSessionBase):
         if page_size is not None:
             kwargs["page_size"] = page_size
 
-        return self._client.agents.get_turns(
+        return self._agents.get_turns(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
@@ -975,15 +1000,13 @@ class AsyncAgentSession(_AgentSessionBase):
                 properties,
             )
 
-            assert_preview_support(self._client, resolved_properties)
-            # Retarget MLLM fields the shared builder wrote with production
-            # spellings, so a preview config follows the preview route's structure.
             apply_preview_shape(resolved_properties)
+            self._bind_session_clients(required_preview_features(resolved_properties))
 
             if self._debug:
                 print("[Agora Debug] Starting agent session...")
                 if hasattr(self._client, "get_current_url"):
-                    print("[Agora Debug] API Endpoint:", self._client.get_current_url())
+                    print("[Agora Debug] API Endpoint:", self._api_base_url)
                 print(
                     "[Agora Debug] Request:",
                     redact_secrets(
@@ -1003,7 +1026,7 @@ class AsyncAgentSession(_AgentSessionBase):
                 pipeline_id=pipeline_id,
             )
 
-            response = await self._client.agents.start(
+            response = await self._agents.start(
                 self._app_id,
                 name=self._name,
                 properties=request_properties,
@@ -1038,7 +1061,7 @@ class AsyncAgentSession(_AgentSessionBase):
         self._status = "stopping"
 
         try:
-            await self._client.agents.stop(
+            await self._agents.stop(
                 self._app_id, self._agent_id, request_options=self._request_options()
             )
             self._status = "stopped"
@@ -1088,7 +1111,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if interruptable is not None:
             kwargs["interruptable"] = interruptable
 
-        await self._client.agents.speak(
+        await self._agents.speak(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
@@ -1102,7 +1125,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        await self._client.agents.interrupt(
+        await self._agents.interrupt(
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
@@ -1142,7 +1165,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if metadata is not None:
             kwargs["metadata"] = metadata
 
-        return await self._client.agent_management.agent_think(
+        return await self._require_agent_management().agent_think(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),
@@ -1162,7 +1185,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        await self._client.agents.update(
+        await self._agents.update(
             self._app_id,
             self._agent_id,
             properties=properties,
@@ -1174,7 +1197,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        return await self._client.agents.get_history(
+        return await self._agents.get_history(
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
@@ -1183,7 +1206,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
-        return await self._client.agents.get(
+        return await self._agents.get(
             self._app_id, self._agent_id, request_options=self._request_options()
         )
 
@@ -1206,7 +1229,7 @@ class AsyncAgentSession(_AgentSessionBase):
         if page_size is not None:
             kwargs["page_size"] = page_size
 
-        return await self._client.agents.get_turns(
+        return await self._agents.get_turns(
             self._app_id,
             self._agent_id,
             request_options=self._request_options(),

@@ -16,13 +16,16 @@ Covers:
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
+import httpx
 import pytest
 from pydantic import ValidationError
 
 from agora_agent import (
     Agent,
+    Agora,
     Area,
     AmazonBedrock,
     AmazonSTT,
@@ -51,6 +54,7 @@ from agora_agent import (
     MiniMaxTTS,
     MurfTTS,
     OpenAI,
+    OpenAIGPTLive,
     OpenAIRealtime,
     OpenAISTT,
     OpenAITTS,
@@ -65,6 +69,7 @@ from agora_agent import (
 from agora_agent.agentkit import AgentSession
 from agora_agent.agentkit.presets import resolve_session_presets
 from agora_agent.cn import QwenOmni
+from agora_agent.types.speechmatics_asr_params import SpeechmaticsAsrParams
 from test_helpers import test_client
 
 
@@ -836,11 +841,32 @@ def test_byok_ares_stt_no_params() -> None:
 
 
 def test_byok_speechmatics_stt_params() -> None:
-    agent = Agent(test_client()).with_stt(SpeechmaticsSTT(api_key="sm-key", language="en"))
+    with pytest.warns(DeprecationWarning, match="use key instead"):
+        agent = Agent(test_client()).with_stt(SpeechmaticsSTT(api_key="sm-key", language="en"))
     props = build_properties(agent, allow_missing={"llm", "tts"})
     assert props["asr"]["vendor"] == "speechmatics"
-    assert props["asr"]["params"]["api_key"] == "sm-key"
+    assert props["asr"]["params"]["key"] == "sm-key"
+    assert "api_key" not in props["asr"]["params"]
     assert props["asr"]["params"]["language"] == "en"
+
+
+def test_byok_speechmatics_stt_key_takes_precedence() -> None:
+    assert SpeechmaticsSTT(key="new-key", language="en").to_config()["params"]["key"] == "new-key"
+
+    with pytest.warns(DeprecationWarning, match="use key instead"):
+        config = SpeechmaticsSTT(key="new-key", api_key="legacy-key", language="en").to_config()
+    assert config["params"]["key"] == "new-key"
+    assert "api_key" not in config["params"]
+
+
+def test_generated_speechmatics_params_normalizes_deprecated_api_key() -> None:
+    params = SpeechmaticsAsrParams(api_key="legacy-key", language="en")
+    assert dump(params) == {"key": "legacy-key", "language": "en"}
+
+
+def test_generated_speechmatics_params_requires_a_key() -> None:
+    with pytest.raises(ValueError, match="requires key"):
+        SpeechmaticsAsrParams(language="en")
 
 
 def test_byok_sarvam_stt_params() -> None:
@@ -1482,3 +1508,40 @@ def test_explicit_minimax_preset_strips_internal_hint() -> None:
         "minimax_speech_2_8_turbo", {"tts": tts_config}
     )
     assert "_minimax_preset_model" not in properties["tts"]
+
+
+def test_gpt_live_keeps_mcp_on_mllm_and_main_parameters_outside_vendor_params():
+    requests = []
+
+    def record(request):
+        requests.append(request)
+        return httpx.Response(200, json={"agent_id": "agent-1"})
+
+    client = Agora(
+        area=Area.US,
+        app_id=APP_ID,
+        app_certificate=APP_CERTIFICATE,
+        httpx_client=httpx.Client(transport=httpx.MockTransport(record)),
+    )
+    servers = [{"name": "lookup", "endpoint": "https://tools.example/mcp", "transport": "streamable_http"}]
+    silence = {"timeout_ms": 15000, "action": "think", "content": "Offer assistance"}
+    agent = (Agent(client)
+        .with_mllm(OpenAIGPTLive(api_key="test", prompt="Be brief", tool_enabled=True, mcp_servers=servers))
+        .with_turn_detection({"language": "en-US"})
+        .with_tools()
+        .with_parameters({"silence_config": silence}))
+    with pytest.warns(UserWarning, match="ignores agent-level turn_detection"):
+        agent.create_session(channel="test", agent_uid="1", remote_uids=["2"], token="token").start()
+    request = requests[0]
+    assert request.headers["agora-feature"] == "live-models"
+    props = json.loads(request.content)["properties"]
+    assert props["mllm"]["mcp_servers"] == servers
+    assert props["llm"] is None
+    assert props["advanced_features"]["enable_tools"] is True
+    assert props["parameters"]["silence_config"] == silence
+    assert props["mllm"]["params"]["prompt"] == "Be brief"
+    assert props["mllm"]["params"]["alpha_selector"] == "quicksilver=v3"
+    assert props["mllm"]["enable"] is True
+    assert "turn_detection" not in props
+    assert "mcp_servers" not in props["mllm"]["params"]
+    assert "silence_config" not in props["mllm"]["params"]

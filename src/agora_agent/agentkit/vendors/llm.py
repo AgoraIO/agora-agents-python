@@ -1,22 +1,12 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import ConfigDict, Field, model_validator
-
-from .base import BaseLLM
+from ...types.llm_tool import LlmTool
+from .base import BaseLLM, ensure_mcp_transport
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 LlmGreetingConfigs = Dict[str, Any]
+LlmToolInput = Union[Dict[str, Any], LlmTool]
 _OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}
-
-
-def _ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Ensure each MCP server has transport set (API requires it). Default to streamable_http."""
-    result = []
-    for s in servers:
-        item = dict(s)
-        if item.get("transport") is None:
-            item["transport"] = "streamable_http"
-        result.append(item)
-    return result
 
 
 def _dump_optional_model(value: Any) -> Any:
@@ -24,10 +14,14 @@ def _dump_optional_model(value: Any) -> Any:
         return value.model_dump(exclude_none=True)
     if hasattr(value, "dict"):
         return value.dict(exclude_none=True)
+    if isinstance(value, list):
+        return [_dump_optional_model(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _dump_optional_model(item) for key, item in value.items()}
     return value
 
 
-class OpenAI(BaseLLM):
+class OpenAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -48,10 +42,11 @@ class OpenAI(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "OpenAI":
+    def _validate_byok_params(self) -> "OpenAIOptions":
         if not self.model:
             raise ValueError("OpenAI requires model")
         if self.api_key is not None and self.base_url is None:
@@ -64,6 +59,8 @@ class OpenAI(BaseLLM):
             raise ValueError("OpenAI Agora-managed mode does not allow vendor")
         return self
 
+
+class OpenAI(OpenAIOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # model is the default; explicit params entries extend/override it.
         # This matches the TS SDK behaviour: { model, ...params }.
@@ -105,14 +102,16 @@ class OpenAI(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
         return config
 
 
-class AzureOpenAI(BaseLLM):
+class AzureOpenAIOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Azure OpenAI API key")
@@ -135,8 +134,11 @@ class AzureOpenAI(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class AzureOpenAI(AzureOpenAIOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         url = (
             f"{self.endpoint}/openai/deployments/"
@@ -179,14 +181,16 @@ class AzureOpenAI(BaseLLM):
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
         return config
 
 
-class Anthropic(BaseLLM):
+class AnthropicOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Anthropic API key")
@@ -207,8 +211,11 @@ class Anthropic(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class Anthropic(AnthropicOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # Named fields take precedence over anything in the generic params dict.
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
@@ -245,14 +252,16 @@ class Anthropic(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
         return config
 
 
-class Gemini(BaseLLM):
+class GeminiOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Google AI API key")
@@ -274,8 +283,11 @@ class Gemini(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class Gemini(GeminiOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # Named fields take precedence over anything in the generic params dict.
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
@@ -317,14 +329,16 @@ class Gemini(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
         return config
 
 
-class Groq(BaseLLM):
+class GroqOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Groq API key")
@@ -345,14 +359,17 @@ class Groq(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "Groq":
+    def _validate_byok_params(self) -> "GroqOptions":
         if not self.model:
             raise ValueError("Groq requires model")
         return self
 
+
+class Groq(GroqOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -391,14 +408,16 @@ class Groq(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
         return config
 
 
-class CustomLLM(BaseLLM):
+class CustomLLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Custom LLM API key")
@@ -419,14 +438,17 @@ class CustomLLM(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "CustomLLM":
+    def _validate_byok_params(self) -> "CustomLLMOptions":
         if not self.model:
             raise ValueError("CustomLLM requires model")
         return self
 
+
+class CustomLLM(CustomLLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
 
@@ -465,7 +487,9 @@ class CustomLLM(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -473,7 +497,7 @@ class CustomLLM(BaseLLM):
         return config
 
 
-class VertexAILLM(BaseLLM):
+class VertexAILLMOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Vertex AI access token or API key")
@@ -497,8 +521,11 @@ class VertexAILLM(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class VertexAILLM(VertexAILLMOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         # Named fields take precedence over anything in the generic params dict.
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
@@ -543,7 +570,9 @@ class VertexAILLM(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
 
@@ -551,7 +580,7 @@ class VertexAILLM(BaseLLM):
         return config
 
 
-class AmazonBedrock(BaseLLM):
+class AmazonBedrockOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     access_key: str = Field(..., description="AWS access key ID")
@@ -574,8 +603,11 @@ class AmazonBedrock(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+
+class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.params or {})
         if self.max_tokens is not None:
@@ -614,13 +646,15 @@ class AmazonBedrock(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
         return config
 
 
-class Dify(BaseLLM):
+class DifyOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Dify API key")
@@ -640,8 +674,11 @@ class Dify(BaseLLM):
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
     mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0)
 
+
+class Dify(DifyOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"model": self.model, **(self.params or {})}
         if self.user is not None:
@@ -675,7 +712,9 @@ class Dify(BaseLLM):
         if self.vendor is not None:
             config["vendor"] = self.vendor
         if self.mcp_servers is not None:
-            config["mcp_servers"] = _ensure_mcp_transport(self.mcp_servers)
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         if self.max_history is not None:
             config["max_history"] = self.max_history
         return config

@@ -3,5 +3,5 @@
 import typing
 
 AgentThinkAgentManagementRequestOnListeningAction = typing.Union[
-    typing.Literal["inject", "interrupt", "ignore"], typing.Any
+    typing.Literal["inject", "interrupt", "ignore", "append"], typing.Any
 ]

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from typing_extensions import Literal
@@ -14,6 +14,17 @@ MicrosoftSampleRate = Literal[8000, 16000, 24000, 48000]
 OpenAISampleRate = Literal[24000]
 CartesiaSampleRate = Literal[8000, 16000, 22050, 24000, 44100, 48000]
 GoogleTTSSampleRate = Literal[8000, 16000, 22050, 24000, 44100, 48000]
+
+
+def ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Copy MCP server configs and supply the transport required by the API."""
+    result = []
+    for server in servers:
+        item = dict(server)
+        if item.get("transport") is None:
+            item["transport"] = "streamable_http"
+        result.append(item)
+    return result
 
 
 class BaseLLM(BaseModel, ABC):

@@ -7,15 +7,16 @@ gateway. See ``client.py`` for the routing and gate header.
 from .client import (
     PREVIEW_API_BASE_URL,
     PREVIEW_FEATURE_HEADER,
-    AgoraPreview,
-    AsyncAgoraPreview,
     PreviewFeature,
     PreviewFeatures,
     apply_preview_shape,
-    assert_preview_support,
+    create_preview_session_clients,
     required_preview_features,
 )
 from .vendors import (
+    GeminiSTT,
+    GeminiSTTModels,
+    OpenAIGPTLive,
     GEMINI_PREVIEW_MLLM_DEFAULTS,
     GEMINI_PREVIEW_MLLM_URL,
     GEMINI_THINKING_LEVELS,
@@ -26,20 +27,21 @@ from .vendors import (
 )
 
 __all__ = [
+    "PREVIEW_API_BASE_URL",
+    "PREVIEW_FEATURE_HEADER",
+    "GeminiSTTModels",
+    "GeminiSTT",
+    "OpenAIGPTLive",
     "GEMINI_PREVIEW_MLLM_DEFAULTS",
     "GEMINI_PREVIEW_MLLM_URL",
     "GEMINI_THINKING_LEVELS",
-    "PREVIEW_API_BASE_URL",
-    "PREVIEW_FEATURE_HEADER",
-    "AgoraPreview",
-    "AsyncAgoraPreview",
     "GeminiCleverChatter",
     "GeminiPreviewMllmModels",
     "GeminiThinkingLevel",
     "GeminiWalkieTalkie",
+    "apply_preview_shape",
     "PreviewFeature",
     "PreviewFeatures",
-    "apply_preview_shape",
-    "assert_preview_support",
+    "create_preview_session_clients",
     "required_preview_features",
 ]

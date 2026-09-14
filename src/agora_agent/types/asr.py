@@ -14,6 +14,7 @@ from .asr_language import AsrLanguage
 from .assembly_ai_asr_params import AssemblyAiAsrParams
 from .deepgram_asr_params import DeepgramAsrParams
 from .fengming_asr_params import FengmingAsrParams
+from .gemini_asr_params import GeminiAsrParams
 from .google_asr_params import GoogleAsrParams
 from .microsoft_asr_params import MicrosoftAsrParams
 from .open_ai_asr_params import OpenAiAsrParams
@@ -29,6 +30,7 @@ from .xfyun_dialect_asr_params import XfyunDialectAsrParams
 class Asr_Ares(UncheckedBaseModel):
     vendor: typing.Literal["ares"] = "ares"
     language: typing.Optional[AsrLanguage] = None
+    keywords: typing.Optional[typing.List[str]] = None
     params: typing.Optional[AresAsrParams] = None
 
     if IS_PYDANTIC_V2:
@@ -44,6 +46,7 @@ class Asr_Ares(UncheckedBaseModel):
 class Asr_Fengming(UncheckedBaseModel):
     vendor: typing.Literal["fengming"] = "fengming"
     language: typing.Optional[AsrLanguage] = None
+    keywords: typing.Optional[typing.List[str]] = None
     params: typing.Optional[FengmingAsrParams] = None
 
     if IS_PYDANTIC_V2:
@@ -120,6 +123,21 @@ class Asr_Google(UncheckedBaseModel):
     vendor: typing.Literal["google"] = "google"
     language: typing.Optional[AsrLanguage] = None
     params: GoogleAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_Gemini(UncheckedBaseModel):
+    vendor: typing.Literal["gemini"] = "gemini"
+    language: typing.Optional[AsrLanguage] = None
+    params: GeminiAsrParams
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
@@ -260,6 +278,7 @@ Asr = typing_extensions.Annotated[
         Asr_Deepgram,
         Asr_Openai,
         Asr_Google,
+        Asr_Gemini,
         Asr_Amazon,
         Asr_Assemblyai,
         Asr_Speechmatics,

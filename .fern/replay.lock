@@ -36,14 +36,44 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-current_generation: 2564d6c4d002d3e6b338b2ac6f6f662d011d532c
+  - commit_sha: d45d59e496f49e87c4b94f49f4b80449e3d84dac
+    tree_hash: 9e8950bbc3e42b66a23b75a5bc51bfa2f818421f
+    timestamp: 2026-08-10T06:39:58.156Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+  - commit_sha: c210d15d50ce28b5edf1a02b33fe0f2855b69b8f
+    tree_hash: 8c6c3d9abe19637590b92d95cddeb93f06ec030b
+    timestamp: 2026-08-19T13:29:49.213Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+  - commit_sha: 61e50e75b995a0affce86c308b74caba165c92bb
+    tree_hash: cb1980d9b4172bd08f3d855a3656b30b75e08dc0
+    timestamp: 2026-08-27T08:21:54.676Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+  - commit_sha: 48b0250bddbc7acc02cd9da9fa06c1fefe1dd0f7
+    tree_hash: c910ba9b2fa7adc0e4798088edcfbfabbb367571
+    timestamp: 2026-09-01T03:17:57.884Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+  - commit_sha: 3885ea61224cbf0671c305350b8d1cddef509443
+    tree_hash: 2b9a17c0608360e1eb6044e97e414ae3d936d857
+    timestamp: 2026-09-09T15:14:03.378Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+current_generation: 3885ea61224cbf0671c305350b8d1cddef509443
 patches:
   - id: patch-13d8e068
     content_hash: sha256:97d879ab169016b9abaf1866427a8ebc45af608f69e063a07e5126c9613c329b
     original_commit: 13d8e0683ffa08bcfc9a381eb9604adf5abdbe0b
     original_message: "chore: ignore local venv and planning docs"
     original_author: plutoless <qianze.zhang@hotmail.com>
-    base_generation: 2564d6c4d002d3e6b338b2ac6f6f662d011d532c
+    base_generation: 3885ea61224cbf0671c305350b8d1cddef509443
     files:
       - .gitignore
     patch_content: |
@@ -66,4 +96,147 @@ patches:
         poetry.toml
         .venv/
         docs/superpowers/
+    user_owned: true
+  - id: patch-a065088b
+    content_hash: sha256:807ef1fee22622be032c74fdd0633677f821f35c202486d24cc397868b427e90
+    original_commit: a065088b4c45e2ca7e1bb91b1a899b8444800121
+    original_message: "fix(vendors): send Speechmatics STT key instead of api_key"
+    original_author: digitallysavvy <hermes.frangoudis@gmail.com>
+    base_generation: 3885ea61224cbf0671c305350b8d1cddef509443
+    files:
+      - src/agora_agent/types/speechmatics_asr_params.py
+    patch_content: |
+      diff --git a/src/agora_agent/types/speechmatics_asr_params.py b/src/agora_agent/types/speechmatics_asr_params.py
+      index 4709d22..c1b7232 100644
+      --- a/src/agora_agent/types/speechmatics_asr_params.py
+      +++ b/src/agora_agent/types/speechmatics_asr_params.py
+      @@ -12,11 +12,19 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
+           Speechmatics ASR configuration parameters.
+           """
+       
+      -    api_key: str = pydantic.Field()
+      +    key: typing.Optional[str] = pydantic.Field(default=None)
+           """
+           Speechmatics API key
+           """
+       
+      +    api_key: typing.Optional[str] = pydantic.Field(
+      +        default=None,
+      +        deprecated="Use key instead.",
+      +    )
+      +    """
+      +    Deprecated alias for key. The SDK normalizes it to key during validation.
+      +    """
+      +
+           language: str = pydantic.Field()
+           """
+           Language code to use for transcription
+      @@ -27,6 +35,33 @@ class SpeechmaticsAsrParams(UncheckedBaseModel):
+           WebSocket URL for the Speechmatics streaming API
+           """
+       
+      +    if IS_PYDANTIC_V2:
+      +
+      +        @pydantic.model_validator(mode="before")
+      +        @classmethod
+      +        def _normalize_api_key(cls, values: typing.Any) -> typing.Any:
+      +            if not isinstance(values, typing.Mapping):
+      +                return values
+      +            normalized = dict(values)
+      +            legacy_key = normalized.pop("api_key", None)
+      +            if legacy_key is not None:
+      +                normalized.setdefault("key", legacy_key)
+      +            if normalized.get("key") is None:
+      +                raise ValueError("SpeechmaticsAsrParams requires key")
+      +            return normalized
+      +
+      +    else:
+      +
+      +        @pydantic.root_validator(pre=True)
+      +        def _normalize_api_key(cls, values: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+      +            normalized = dict(values)
+      +            legacy_key = normalized.pop("api_key", None)
+      +            if legacy_key is not None:
+      +                normalized.setdefault("key", legacy_key)
+      +            if normalized.get("key") is None:
+      +                raise ValueError("SpeechmaticsAsrParams requires key")
+      +            return normalized
+      +
+           if IS_PYDANTIC_V2:
+               model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+           else:
+    theirs_snapshot:
+      src/agora_agent/types/speechmatics_asr_params.py: |
+        # This file was auto-generated by Fern from our API Definition.
+
+        import typing
+
+        import pydantic
+        from ..core.pydantic_utilities import IS_PYDANTIC_V2
+        from ..core.unchecked_base_model import UncheckedBaseModel
+
+
+        class SpeechmaticsAsrParams(UncheckedBaseModel):
+            """
+            Speechmatics ASR configuration parameters.
+            """
+
+            key: typing.Optional[str] = pydantic.Field(default=None)
+            """
+            Speechmatics API key
+            """
+
+            api_key: typing.Optional[str] = pydantic.Field(
+                default=None,
+                deprecated="Use key instead.",
+            )
+            """
+            Deprecated alias for key. The SDK normalizes it to key during validation.
+            """
+
+            language: str = pydantic.Field()
+            """
+            Language code to use for transcription
+            """
+
+            uri: typing.Optional[str] = pydantic.Field(default=None)
+            """
+            WebSocket URL for the Speechmatics streaming API
+            """
+
+            if IS_PYDANTIC_V2:
+
+                @pydantic.model_validator(mode="before")
+                @classmethod
+                def _normalize_api_key(cls, values: typing.Any) -> typing.Any:
+                    if not isinstance(values, typing.Mapping):
+                        return values
+                    normalized = dict(values)
+                    legacy_key = normalized.pop("api_key", None)
+                    if legacy_key is not None:
+                        normalized.setdefault("key", legacy_key)
+                    if normalized.get("key") is None:
+                        raise ValueError("SpeechmaticsAsrParams requires key")
+                    return normalized
+
+            else:
+
+                @pydantic.root_validator(pre=True)
+                def _normalize_api_key(cls, values: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+                    normalized = dict(values)
+                    legacy_key = normalized.pop("api_key", None)
+                    if legacy_key is not None:
+                        normalized.setdefault("key", legacy_key)
+                    if normalized.get("key") is None:
+                        raise ValueError("SpeechmaticsAsrParams requires key")
+                    return normalized
+
+            if IS_PYDANTIC_V2:
+                model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+            else:
+
+                class Config:
+                    frozen = True
+                    smart_union = True
+                    extra = pydantic.Extra.allow
     user_owned: true

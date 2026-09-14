@@ -4,35 +4,83 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [v2.8.0] — 2026-09-10
 
 ### Added
 
-- **Preview endpoint support** — `AgoraPreview` and `AsyncAgoraPreview` route every request to the preview gateway and pin the `agora-feature` gate header, which is merged after caller-supplied `headers` so it cannot be dropped or blanked.
-- **Gemini preview MLLMs** — `GeminiWalkieTalkie` (`walkie-talkie`) and `GeminiCleverChatter` (`clever-chatter`), under `agora_agent.agentkit.preview`. `thinking_level` is exclusive to clever-chatter, so passing it to the walkie-talkie is a validation error rather than a silently ignored argument.
-- **Preview MLLM rename constants** — `GeminiPreviewMllmModels.LIVE_35` (`gemini-3.5-live`) and `.LIVE_35_THINKING` (`gemini-3.5-live-thinking`) are the post-rename IDs for walkie-talkie and clever-chatter. Both spellings are accepted by `required_preview_features`, so the guard works throughout Google's rollout. The vendor classes still send the codenames — see `GEMINI_PREVIEW_MLLM_DEFAULTS`.
-- **Preview MLLM language** — `language_codes` serializes to `params.language_codes`, omitted when unset. The preview MLLMs never send the singular `params.language`: that field belongs to xAI Grok in the Agora schema, and the production Gemini Live provider sends no language field at all.
-- **Preview MLLM greeting** — the argument is `greeting` (not `greeting_message`) and serializes to `greeting`, the spelling the new Gemini preview models read. An agent-level `greeting` also works — the builder writes it as `mllm.greeting_message` and `apply_preview_shape` retargets it.
-- **Preview wire-shape translation** — `apply_preview_shape` runs at session start and retargets MLLM fields the shared builder wrote with production spellings, so an agent-level `greeting` reaches the preview models as `greeting` rather than the `greeting_message` they ignore. A hand-written `greeting_message` migrates too, so an existing config keeps working after only swapping the model. `failure_message` is left alone as an Agora engine field, and production MLLMs are untouched.
-- **Preview support guard** — `assert_preview_support` raises before any request when preview providers are paired with a plain `Agora` client.
+- **Inline REST LLM tools** — Global and CN LLM vendors now accept dictionary-based definitions or the exported typed `LlmToolConfig` models and serialize them to `llm.tools`. Added public `LlmToolConfig`, `LlmToolExecutionConfig`, `LlmToolFunctionConfig`, `LlmToolFunctionParametersConfig`, and `LlmToolServerConfig` aliases. Tool execution must be enabled explicitly with `Agent.with_tools()`.
+- **Gemini ASR** — Added `GeminiSTT` to the standard AgentKit STT vendors using the Fern-generated `GeminiAsrParams` schema while retaining the preview API's `language_codes`, `custom_vocabulary`, default model, default sample rate, and validation behavior. The production API's optional `language` parameter is also available.
+- **OpenAI GPT Live v3** — Added the preview `OpenAIGPTLive` MLLM vendor with session, audio, tool-delegation, endpoint, MCP, and passthrough options. It defaults to the `gpt-live-1-diamond-alpha` model and required `quicksilver=v3` contract selector while allowing raw `params` and explicit options to override defaults.
+
+### Changed
+
+- **Generated filler words configuration** — Generated filler word settings are now optional. The service can use default generator settings when `generated_config` is omitted, and `llm_provider`, `prompt`, and `fallback_strategy` may be omitted individually.
+- **ASR hotwords** — `keywords` on `AresSTT` and `FengmingSTT` now serialize as top-level `asr.keywords`, matching the current OpenAPI schema. Vendor-specific `additional_params` remain under `asr.params`; nested `additional_params["keywords"]` is rejected to prevent ambiguous requests.
+- **Gemini ASR routing** — Gemini ASR now uses the normal regional API endpoint and generated request validation. Existing `GeminiSTT` calls and imports from `agora_agent.agentkit.preview` remain compatible. The provider-agnostic preview client and session routing infrastructure remain available for future preview providers.
+- **Gemini ASR language mapping** — Added `language_hints` for candidate transcription languages. Deprecated `language_codes` remains supported as an alias; `language_hints` takes precedence when both are provided.
+- **Pydantic compatibility floor** — The declared runtime dependency now requires Pydantic `>=2.7.1,<3`. Earlier metadata allowed Pydantic 1.x even though it is outside the current generated SDK's supported and tested runtime; installation now rejects that unsupported combination instead of resolving to a broken environment.
+
+### Fixed
+
+- **GPT Live v3 contract selection** — `OpenAIGPTLive` now serializes `params.alpha_selector: "quicksilver=v3"` by default so preview workers consistently send the required OpenAI alpha header. Callers can still override the selector explicitly.
+
+## [v2.7.2] — 2026-08-26
+
+### Changed
+
+- **Release metadata refresh** — Updated package and compatibility metadata for the `2.7.2` release line.
+
+### Documentation
+
+- **Changelog update** — Added release entry for `v2.7.2`.
+
+## [v2.7.0] — 2026-08-26
+
+### Added
+
+- **Preview endpoint support** — `Agora` and `AsyncAgora` detect preview features from each resolved session body, then pin that session's requests to the preview gateway and `agora-feature` header without mutating the production client.
+- **Gemini preview ASR** — `GeminiSTT` (`gemini-3.5-transcribe-live`), under `agora_agent.agentkit.preview`, a cascading ASR stage served only by the preview gateway.
+- **Gemini ASR language selection** — `language_codes` serializes to `params.language_codes`, replacing the singular `params.language` this vendor previously sent. Omitted from the request when unset, which is how the provider spells auto-detect. `GeminiSTT` has no `language` argument: the top-level `asr.language` comes from turn detection, as it does for every STT vendor.
+- **Gemini ASR custom vocabulary** — `custom_vocabulary` biases recognition toward supplied words and phrases via `params.custom_vocabulary`. Omitted from the request when unset.
+- **Session-scoped routing** — GA sessions remain on the production regional endpoint, while preview session lifecycle calls use the preview endpoint. Top-level `stop_agent()` remains production-only.
 - **Debug redaction** — `redact_secrets` replaces vendor API keys, RTC tokens, and the App ID with `[REDACTED]`. Empty strings stay visible so an unset environment variable remains diagnosable.
 
 ### Fixed
 
+- **Gemini ASR parameter compatibility** — `word_timestamp` is now omitted unless explicitly set. Enabling it together with `custom_vocabulary` fails locally instead of sending a combination Gemini does not support.
 - **Debug logging leaked credentials** — the httpx debug hook logged raw request bodies, so vendor API keys and RTC tokens reached the log unredacted. Bodies are now JSON-decoded and redacted; a non-JSON body is described by size rather than echoed.
 - **Malformed credentials are rejected before signing** — the Python signing path HMACs whatever it is given, so an `app_id` or `app_certificate` with a trailing newline or a truncated paste produced a well-formed token that the gateway rejected with an error naming neither field. `generate_rtc_token` and `generate_convo_ai_token` now raise `ValueError` and say which field is the wrong length. Credential values are never included in the message.
-- **An unrecognised MLLM model no longer silently skips the wire-shape translation** — preview detection matched only the four known model names, so overriding `model` to a rename this SDK had not shipped yet turned off `apply_preview_shape` with no error: the greeting stayed in `greeting_message`, which these models ignore, and the agent never greeted. A config is now also recognised by its envelope (`params.api_key` set and `url` on the Gemini Developer API host), which the production `GeminiLive` vendor does not emit.
-- **Preview vendors reject an empty API key** — the preview MLLM classes previously accepted `api_key=""` and sent it as a blank credential. They now fail at construction, matching the TypeScript and Go vendors.
+- **Preview vendors reject an empty API key** — `GeminiSTT(api_key="")` previously accepted the empty string and sent it as a blank credential. It now fails at construction, matching the TypeScript and Go vendors.
 
 ### Changed
 
-- **Preview configs bypass request validation** — the generated request models mirror what production serves, so a preview MLLM config fails validation. Configs that `required_preview_features()` recognises are now passed through unvalidated, with `None` entries stripped so the bypass puts the same bytes on the wire as the typed path. Production configs are unaffected.
+- **Preview configs bypass request validation** — the generated request models mirror what production serves, so `asr.vendor = "gemini"` fails validation. Configs that `required_preview_features()` recognises are now passed through unvalidated, with `None` entries stripped so the bypass puts the same bytes on the wire as the typed path. Production configs are unaffected.
 
 ### Documentation
 
 - Added [Preview Endpoint](docs/guides/preview-endpoint.md), covering the gate header, intake-node failure signatures, the validation bypass, and how to add a future preview family.
 - Documented every field `Agent.to_properties` injects into a vendor config, and why a preview provider must be verified against the resolved request body rather than the vendor class output — a value written under a spelling the route ignores fails silently.
-- Documented the two signals that mark a config as preview, and why matching on the model name alone was a silent failure.
+
+## [v2.6.1] — 2026-08-19
+
+### Fixed
+
+- **Speechmatics credential field** — `SpeechmaticsSTT` now emits the REST-compatible `asr.params.key`. The `key` field is preferred; deprecated `api_key` remains supported, warns, and is normalized to `key`.
+
+## [v2.6.0] — 2026-08-10
+
+### Added
+
+- **Azure OpenAI Realtime MLLM** — `AzureOpenAIRealtime` (`mllm.vendor`: `azure`), including `max_history` for caching conversation history messages.
+- **Qwen Omni Realtime MLLM (CN)** — `QwenOmni` (`mllm.vendor`: `qwen_omni`), exported from `agora_agent.cn`.
+- **MLLM support in AgentKit vendor namespaces** — Global and CN vendor catalogs now expose an `mllm` namespace, MLLM vendors are validated against the client area, and `CNAgent`/`GlobalAgent` expose typed `with_mllm()`.
+- **Typecast TTS** — `TypecastTTS` (`tts.vendor`: `typecast`).
+- **Configurable API base URL** — Setting `AGORA_AGENTS_API_BASE_URL` overrides regional domain selection; when set, the domain pool skips DNS-based domain selection and region cycling and always uses the configured base URL.
+
+### Changed
+
+- **AssemblyAI STT WebSocket URL** — `AssemblyAISTT.uri` and `AssemblyAiAsrParams.uri` are renamed to `ws_url`, and the field is serialized as `asr.params.ws_url`. This is a breaking rename for callers that set `uri`.
+- **Generated model aliasing** — Wire-key aliases (`VoiceSelectionParams`, `AudioConfig`, `voiceId`, `modelId`, `appId`, `sceneList`) now use native pydantic field aliases with population by field name, instead of annotation-metadata conversion on every request and response.
 
 ## [v2.4.0] — 2026-06-30
 

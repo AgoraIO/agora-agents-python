@@ -12,7 +12,7 @@ from .start_agents_request_properties_filler_words_content_static_config_selecti
 
 class StartAgentsRequestPropertiesFillerWordsContentStaticConfig(UncheckedBaseModel):
     """
-    Static filler word configuration. Used when `mode` is `static`.
+    Static filler word configuration. Required when `mode` is `static`.
     """
 
     phrases: typing.List[str] = pydantic.Field()

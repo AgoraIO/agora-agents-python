@@ -15,6 +15,11 @@ class AresAsr(UncheckedBaseModel):
     """
 
     language: typing.Optional[AsrLanguage] = None
+    keywords: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    A list of hotwords to improve ASR accuracy.
+    """
+
     params: typing.Optional[AresAsrParams] = None
 
     if IS_PYDANTIC_V2:

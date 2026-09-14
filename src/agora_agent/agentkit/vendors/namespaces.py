@@ -19,6 +19,7 @@ from .stt import (
     AresSTT,
     AssemblyAISTT,
     DeepgramSTT,
+    GeminiSTT,
     GoogleSTT,
     MicrosoftSTT,
     OpenAISTT,
@@ -53,6 +54,7 @@ class GlobalSTTVendors:
     deepgram = DeepgramSTT
     microsoft = MicrosoftSTT
     openai = OpenAISTT
+    gemini = GeminiSTT
     google = GoogleSTT
     amazon = AmazonSTT
     assemblyai = AssemblyAISTT

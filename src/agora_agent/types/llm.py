@@ -8,6 +8,7 @@ from ..core.unchecked_base_model import UncheckedBaseModel
 from .llm_greeting_configs import LlmGreetingConfigs
 from .llm_params import LlmParams
 from .llm_style import LlmStyle
+from .llm_tool import LlmTool
 
 
 class Llm(UncheckedBaseModel):
@@ -109,6 +110,19 @@ class Llm(UncheckedBaseModel):
     mcp_servers: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
     MCP server configuration.
+    """
+
+    tools: typing.Optional[typing.List[LlmTool]] = pydantic.Field(default=None)
+    """
+    Inline REST (pass-through sync) tool definitions for standard text LLM function calling.
+    Required fields per tool: `type`, `function.name`, `function.parameters`
+    (`type: object` with `properties`), `server.method` (`GET` or `POST`), and `server.url`.
+    The combination of `type: function` and `server` identifies a REST tool.
+    Phase 1a supports GET and POST only; `execution.mode` defaults to and only accepts `sync`.
+    Template rules:
+    - Values must be a constant, or exactly one single-level placeholder.
+    - `{{args.<name>}}`: `server.url` and `server.body` only; not allowed in headers.
+    - `{{template_variables.<name>}}` and `{{tool_call_id}}`: `server.url`, `server.headers`, and `server.body`.
     """
 
     headers: typing.Optional[typing.Dict[str, str]] = pydantic.Field(default=None)

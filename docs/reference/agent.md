@@ -173,7 +173,7 @@ When `enable_rtm=True`, AgentKit defaults `parameters.data_channel` to `"rtm"` u
 
 ### `with_tools(enabled: bool = True) -> Agent`
 
-Enable or disable MCP tool invocation by setting `advanced_features.enable_tools`.
+Enable or disable MCP and inline REST tool invocation by setting `advanced_features.enable_tools`.
 
 ### `with_parameters(parameters: SessionParams) -> Agent`
 
@@ -206,6 +206,29 @@ Set RTC configuration.
 ### `with_filler_words(filler_words: FillerWordsConfig) -> Agent`
 
 Set filler words configuration (played while waiting for LLM response).
+
+Generated filler words can use the service defaults, or accept an optional prompt and OpenAI-compatible provider:
+
+```python
+from agora_agent import (
+    FillerWordsConfig,
+    FillerWordsContent,
+    FillerWordsContentGeneratedConfig,
+)
+
+filler_words = FillerWordsConfig(
+    enable=True,
+    content=FillerWordsContent(
+        mode="generated",
+        generated_config=FillerWordsContentGeneratedConfig(
+            prompt="Respond with a brief conversational acknowledgment.",
+        ),
+    ),
+)
+agent = agent.with_filler_words(filler_words)
+```
+
+`generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults.
 
 ## `create_session()`
 

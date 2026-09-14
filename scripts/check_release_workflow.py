@@ -42,6 +42,10 @@ if compat_dependency != expected_dependency:
 release_workflow = Path(".github/workflows/release.yml").read_text()
 required_workflow_markers = [
     ("contents: write", "release workflow must have contents: write so it can create GitHub releases"),
+    (
+        "ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}",
+        "manual releases must check out the selected tag",
+    ),
     ("gh release create", "release workflow must create a GitHub release when one does not exist"),
     ("gh release edit", "release workflow must update an existing GitHub release"),
     ("release_notes.md", "release workflow must generate and use a release notes file"),
@@ -49,6 +53,26 @@ required_workflow_markers = [
 
 for marker, message in required_workflow_markers:
     if marker not in release_workflow:
+        fail(message)
+
+publish_workflow = Path(".github/workflows/ci.yml").read_text()
+required_publish_markers = [
+    (
+        "https://pypi.org/pypi/${PACKAGE_NAME}/${PACKAGE_VERSION}/json",
+        "publish workflow must check the exact package version on PyPI before publishing",
+    ),
+    (
+        'PACKAGE_NAME="agora-agents"',
+        "publish workflow must make the primary package publish idempotent",
+    ),
+    (
+        'PACKAGE_NAME="agora-agent-server-sdk"',
+        "publish workflow must make the compatibility package publish idempotent",
+    ),
+]
+
+for marker, message in required_publish_markers:
+    if marker not in publish_workflow:
         fail(message)
 
 print("Release metadata and workflow checks passed.")

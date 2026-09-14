@@ -1,14 +1,13 @@
 from typing import Any, Dict, List, Literal, Optional
 from urllib.parse import urlsplit
 
-from pydantic import ConfigDict, Field, field_validator, model_validator
-
-from .base import BaseTTS, CartesiaSampleRate, ElevenLabsSampleRate, GoogleTTSSampleRate, MicrosoftSampleRate
 from ..constants import CredentialMode
 from ..presets import MiniMaxPresetModels, OpenAITtsPresetModels
+from .base import BaseTTS, CartesiaSampleRate, ElevenLabsSampleRate, GoogleTTSSampleRate, MicrosoftSampleRate
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class ElevenLabsTTS(BaseTTS):
+class ElevenLabsTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="ElevenLabs API key")
@@ -23,6 +22,8 @@ class ElevenLabsTTS(BaseTTS):
     style: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     use_speaker_boost: Optional[bool] = Field(default=None)
 
+
+class ElevenLabsTTS(ElevenLabsTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
             "key": self.key,
@@ -50,7 +51,7 @@ class ElevenLabsTTS(BaseTTS):
         return result
 
 
-class MicrosoftTTS(BaseTTS):
+class MicrosoftTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Azure subscription key")
@@ -62,6 +63,8 @@ class MicrosoftTTS(BaseTTS):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Microsoft TTS params")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class MicrosoftTTS(MicrosoftTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -83,7 +86,7 @@ class MicrosoftTTS(BaseTTS):
         return result
 
 
-class OpenAITTS(BaseTTS):
+class OpenAITTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="OpenAI API key")
@@ -95,7 +98,7 @@ class OpenAITTS(BaseTTS):
     skip_patterns: Optional[List[int]] = Field(default=None)
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "OpenAITTS":
+    def _validate_byok_params(self) -> "OpenAITTSOptions":
         if self.api_key is not None:
             missing = [
                 name
@@ -114,6 +117,8 @@ class OpenAITTS(BaseTTS):
                 raise ValueError("OpenAITTS base_url is only valid when api_key is set")
         return self
 
+
+class OpenAITTS(OpenAITTSOptions, BaseTTS):
     @property
     def sample_rate(self) -> Optional[int]:
         return 24000
@@ -140,7 +145,7 @@ class OpenAITTS(BaseTTS):
         return result
 
 
-class CartesiaTTS(BaseTTS):
+class CartesiaTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Cartesia API key")
@@ -151,6 +156,8 @@ class CartesiaTTS(BaseTTS):
     sample_rate: Optional[CartesiaSampleRate] = Field(default=None, description="Sample rate in Hz")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class CartesiaTTS(CartesiaTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
             "api_key": self.api_key,
@@ -171,7 +178,7 @@ class CartesiaTTS(BaseTTS):
         return result
 
 
-class GoogleTTS(BaseTTS):
+class GoogleTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Google Cloud service account credentials JSON string")
@@ -180,6 +187,8 @@ class GoogleTTS(BaseTTS):
     sample_rate_hertz: Optional[GoogleTTSSampleRate] = Field(default=None, description="Sample rate in Hz")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class GoogleTTS(GoogleTTSOptions, BaseTTS):
     @property
     def sample_rate(self) -> Optional[int]:
         return self.sample_rate_hertz
@@ -201,7 +210,7 @@ class GoogleTTS(BaseTTS):
         return result
 
 
-class AmazonTTS(BaseTTS):
+class AmazonTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     access_key: str = Field(..., description="AWS access key")
@@ -211,6 +220,8 @@ class AmazonTTS(BaseTTS):
     engine: str = Field(..., description="Amazon Polly engine type")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class AmazonTTS(AmazonTTSOptions, BaseTTS):
     @property
     def sample_rate(self) -> Optional[int]:
         return None
@@ -230,7 +241,7 @@ class AmazonTTS(BaseTTS):
         return result
 
 
-class DeepgramTTS(BaseTTS):
+class DeepgramTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Deepgram API key")
@@ -240,6 +251,8 @@ class DeepgramTTS(BaseTTS):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Deepgram TTS parameters")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class DeepgramTTS(DeepgramTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -257,7 +270,7 @@ class DeepgramTTS(BaseTTS):
         return result
 
 
-class GradiumTTS(BaseTTS):
+class GradiumTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Gradium API key")
@@ -268,6 +281,8 @@ class GradiumTTS(BaseTTS):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Gradium TTS parameters")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class GradiumTTS(GradiumTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key
@@ -286,7 +301,7 @@ class GradiumTTS(BaseTTS):
         return result
 
 
-class HumeAITTS(BaseTTS):
+class HumeAITTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Hume AI API key")
@@ -298,6 +313,8 @@ class HumeAITTS(BaseTTS):
     trailing_silence: Optional[float] = Field(default=None, description="Trailing silence in seconds")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class HumeAITTS(HumeAITTSOptions, BaseTTS):
     @property
     def sample_rate(self) -> Optional[int]:
         return None
@@ -324,7 +341,7 @@ class HumeAITTS(BaseTTS):
         return result
 
 
-class RimeTTS(BaseTTS):
+class RimeTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: Optional[str] = Field(default=None, description="Rime API key")
@@ -335,7 +352,7 @@ class RimeTTS(BaseTTS):
     skip_patterns: Optional[List[int]] = Field(default=None)
 
     @model_validator(mode="after")
-    def _validate_credential_mode(self) -> "RimeTTS":
+    def _validate_credential_mode(self) -> "RimeTTSOptions":
         required: Dict[str, Optional[str]]
         if self.credential_mode == CredentialMode.MANAGED:
             required = {"base_url": self.base_url, "model_id": self.model_id}
@@ -349,6 +366,8 @@ class RimeTTS(BaseTTS):
             raise ValueError(f"RimeTTS requires {', '.join(missing)} for {mode}")
         return self
 
+
+class RimeTTS(RimeTTSOptions, BaseTTS):
     @property
     def sample_rate(self) -> Optional[int]:
         return None
@@ -370,7 +389,7 @@ class RimeTTS(BaseTTS):
         return result
 
 
-class FishAudioTTS(BaseTTS):
+class FishAudioTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Fish Audio API key")
@@ -378,6 +397,8 @@ class FishAudioTTS(BaseTTS):
     backend: str = Field(..., description="Backend")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class FishAudioTTS(FishAudioTTSOptions, BaseTTS):
     @property
     def sample_rate(self) -> Optional[int]:
         return None
@@ -395,7 +416,7 @@ class FishAudioTTS(BaseTTS):
         return result
 
 
-class MiniMaxTTS(BaseTTS):
+class MiniMaxTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: Optional[str] = Field(default=None, description="MiniMax API key")
@@ -417,7 +438,7 @@ class MiniMaxTTS(BaseTTS):
     skip_patterns: Optional[List[int]] = Field(default=None)
 
     @model_validator(mode="after")
-    def _validate_byok_params(self) -> "MiniMaxTTS":
+    def _validate_byok_params(self) -> "MiniMaxTTSOptions":
         if self.voice_id is not None and self.timber_weights is not None:
             raise ValueError("MiniMaxTTS requires exactly one of voice_id or timber_weights")
         if self.key is not None:
@@ -440,6 +461,8 @@ class MiniMaxTTS(BaseTTS):
                 raise ValueError("MiniMaxTTS requires key unless using a supported Agora-managed model")
         return self
 
+
+class MiniMaxTTS(MiniMaxTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.key is not None:
@@ -484,7 +507,7 @@ class MiniMaxTTS(BaseTTS):
         return result
 
 
-class MistralTTS(BaseTTS):
+class MistralTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Mistral API key")
@@ -493,6 +516,8 @@ class MistralTTS(BaseTTS):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Mistral TTS parameters")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class MistralTTS(MistralTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key
@@ -507,7 +532,7 @@ class MistralTTS(BaseTTS):
         return result
 
 
-class TypecastTTS(BaseTTS):
+class TypecastTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Typecast API key")
@@ -516,6 +541,8 @@ class TypecastTTS(BaseTTS):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Typecast TTS parameters")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class TypecastTTS(TypecastTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update(
@@ -532,7 +559,7 @@ class TypecastTTS(BaseTTS):
         return result
 
 
-class SarvamTTS(BaseTTS):
+class SarvamTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Sarvam API subscription key")
@@ -544,6 +571,8 @@ class SarvamTTS(BaseTTS):
     sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class SarvamTTS(SarvamTTSOptions, BaseTTS):
     @property
     def resolved_sample_rate(self) -> Optional[int]:
         return None
@@ -569,7 +598,7 @@ class SarvamTTS(BaseTTS):
         return result
 
 
-class MurfTTS(BaseTTS):
+class MurfTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Murf API key")
@@ -582,6 +611,8 @@ class MurfTTS(BaseTTS):
     sample_rate: Optional[int] = Field(default=None, description="Audio sample rate")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class MurfTTS(MurfTTSOptions, BaseTTS):
     @property
     def resolved_sample_rate(self) -> Optional[int]:
         return None
@@ -610,7 +641,7 @@ class MurfTTS(BaseTTS):
         return result
 
 
-class GenericTTS(BaseTTS):
+class GenericTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     url: str = Field(..., description="HTTP(S) endpoint of the generic TTS service")
@@ -633,6 +664,8 @@ class GenericTTS(BaseTTS):
             raise ValueError("GenericTTS url must be a valid HTTP(S) endpoint")
         return value
 
+
+class GenericTTS(GenericTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         if self.api_key is not None:
@@ -662,7 +695,7 @@ class GenericTTS(BaseTTS):
         return result
 
 
-class XaiTTS(BaseTTS):
+class XaiTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="xAI API key")
@@ -672,6 +705,8 @@ class XaiTTS(BaseTTS):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional xAI TTS params")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+
+class XaiTTS(XaiTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key

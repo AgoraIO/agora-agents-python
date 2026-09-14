@@ -1,25 +1,50 @@
+import warnings
 from typing import Any, Dict, List, Optional
 
-from pydantic import ConfigDict, Field, model_validator
-
+from ...types.gemini_asr_params_mode import GeminiAsrParamsMode
 from .base import BaseSTT
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
 
 
-class SpeechmaticsSTT(BaseSTT):
+class SpeechmaticsSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    api_key: str = Field(..., description="Speechmatics API key")
+    key: Optional[str] = Field(default=None, description="Speechmatics API key")
+    api_key: Optional[str] = Field(
+        default=None,
+        description="Deprecated alias for key; normalized to the REST API key field",
+        deprecated="Use key instead.",
+    )
     language: str = Field(..., description="Language code (e.g., en, es, fr)")
     model: Optional[str] = Field(default=None, description="Model name")
     uri: Optional[str] = Field(default=None, description="Speechmatics streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _warn_deprecated_api_key(cls, values: Any) -> Any:
+        if isinstance(values, dict) and "api_key" in values:
+            warnings.warn(
+                "SpeechmaticsSTT.api_key is deprecated; use key instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return values
+
+    @model_validator(mode="after")
+    def _validate_key(self) -> "SpeechmaticsSTTOptions":
+        if self.key is None and self.__dict__.get("api_key") is None:
+            raise ValueError("SpeechmaticsSTT requires key")
+        return self
+
+class SpeechmaticsSTT(SpeechmaticsSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
+        params.pop("api_key", None)
         params.update({
-            "api_key": self.api_key,
+            "key": self.key if self.key is not None else self.__dict__.get("api_key"),
             "language": self.language,
         })
         if self.model is not None:
@@ -34,7 +59,7 @@ class SpeechmaticsSTT(BaseSTT):
         return config
 
 
-class DeepgramSTT(BaseSTT):
+class DeepgramSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: Optional[str] = Field(default=None, description="Deepgram API key")
@@ -46,11 +71,13 @@ class DeepgramSTT(BaseSTT):
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
     @model_validator(mode="after")
-    def _validate_managed_model(self) -> "DeepgramSTT":
+    def _validate_managed_model(self) -> "DeepgramSTTOptions":
         if self.api_key is None and (self.model is None or self.model.strip().lower() not in _DEEPGRAM_MANAGED_MODELS):
             raise ValueError("DeepgramSTT requires api_key unless using a supported Agora-managed model")
         return self
 
+
+class DeepgramSTT(DeepgramSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
 
@@ -73,7 +100,7 @@ class DeepgramSTT(BaseSTT):
         return config
 
 
-class MicrosoftSTT(BaseSTT):
+class MicrosoftSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(..., description="Azure subscription key")
@@ -81,6 +108,8 @@ class MicrosoftSTT(BaseSTT):
     language: str = Field(..., description="Language code (e.g., en-US)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class MicrosoftSTT(MicrosoftSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -97,7 +126,7 @@ class MicrosoftSTT(BaseSTT):
         return config
 
 
-class OpenAISTT(BaseSTT):
+class OpenAISTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="OpenAI API key")
@@ -107,6 +136,8 @@ class OpenAISTT(BaseSTT):
     input_audio_transcription: Optional[Dict[str, Any]] = Field(default=None, description="OpenAI transcription settings")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class OpenAISTT(OpenAISTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key
@@ -134,7 +165,7 @@ class OpenAISTT(BaseSTT):
         return config
 
 
-class GoogleSTT(BaseSTT):
+class GoogleSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     project_id: str = Field(..., description="Google Cloud project ID")
@@ -144,6 +175,8 @@ class GoogleSTT(BaseSTT):
     model: Optional[str] = Field(default=None, description="Recognition model")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class GoogleSTT(GoogleSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -164,7 +197,113 @@ class GoogleSTT(BaseSTT):
         return config
 
 
-class AmazonSTT(BaseSTT):
+class GeminiSTTModels:
+    """Gemini transcription models."""
+
+    TRANSCRIBE_35_LIVE = "gemini-3.5-transcribe-live"
+
+
+class GeminiSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, description="Google Gemini API key")
+    model: Optional[str] = Field(
+        default=None,
+        description="Google Gemini transcription model",
+    )
+    language: Optional[str] = Field(default=None, description="Language code for speech recognition")
+    language_hints: Optional[List[str]] = Field(
+        default=None,
+        description="Candidate transcription languages",
+    )
+    language_codes: Optional[List[str]] = Field(
+        default=None,
+        description="Deprecated alias for language_hints",
+        deprecated="Use language_hints instead.",
+    )
+    custom_vocabulary: Optional[List[str]] = Field(
+        default=None,
+        description="Words and phrases that bias speech recognition",
+    )
+    word_timestamp: Optional[bool] = Field(
+        default=None,
+        description="Include word-level timestamps; cannot be true with custom_vocabulary or SMART mode",
+    )
+    mode: Optional[GeminiAsrParamsMode] = Field(
+        default=None,
+        description="Transcription mode: SMART or VERBATIM; empty values use VERBATIM validation",
+    )
+    diarization: Optional[bool] = Field(
+        default=None,
+        description="Include speaker labels; true cannot be combined with SMART mode",
+    )
+    sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _warn_deprecated_language_codes(cls, values: Any) -> Any:
+        if isinstance(values, dict) and "language_codes" in values:
+            warnings.warn(
+                "GeminiSTT.language_codes is deprecated; use language_hints instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return values
+
+    @model_validator(mode="after")
+    def _validate_transcription_options(self) -> "GeminiSTTOptions":
+        word_timestamp = self.word_timestamp is True
+        if self.custom_vocabulary and word_timestamp:
+            raise ValueError("custom_vocabulary cannot be used with word_timestamp=true")
+
+        mode = self.mode
+        if mode is None or mode == "":
+            mode = "VERBATIM"
+        if not isinstance(mode, str) or mode not in {"SMART", "VERBATIM"}:
+            raise ValueError("GeminiSTT mode must be SMART or VERBATIM")
+        if mode == "SMART" and word_timestamp:
+            raise ValueError("GeminiSTT mode=SMART cannot be used with word_timestamp=true")
+        if mode == "SMART" and self.diarization is True:
+            raise ValueError("GeminiSTT mode=SMART cannot be used with diarization=true")
+        return self
+
+
+class GeminiSTT(GeminiSTTOptions, BaseSTT):
+    def to_config(self) -> Dict[str, Any]:
+        model = self.model if self.model is not None else GeminiSTTModels.TRANSCRIBE_35_LIVE
+        sample_rate = self.sample_rate if self.sample_rate is not None else 16000
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update(
+            {
+                "api_key": self.api_key,
+                "model": model,
+                "sample_rate": sample_rate,
+            }
+        )
+        if self.language is not None:
+            params["language"] = self.language
+        language_codes = self.__dict__.get("language_codes")
+        if language_codes is not None:
+            params["language_hints"] = list(language_codes)
+        if self.language_hints is not None:
+            params["language_hints"] = list(self.language_hints)
+        if self.custom_vocabulary is not None:
+            params["custom_vocabulary"] = list(self.custom_vocabulary)
+        if self.word_timestamp is not None:
+            params["word_timestamp"] = self.word_timestamp
+        if self.mode:
+            params["mode"] = self.mode
+        if self.diarization is not None:
+            params["diarization"] = self.diarization
+
+        return {
+            "vendor": "gemini",
+            "params": params,
+        }
+
+
+class AmazonSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     access_key: str = Field(..., description="AWS Access Key ID")
@@ -173,6 +312,8 @@ class AmazonSTT(BaseSTT):
     language: str = Field(..., description="Language code")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class AmazonSTT(AmazonSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -190,21 +331,23 @@ class AmazonSTT(BaseSTT):
         return config
 
 
-class AssemblyAISTT(BaseSTT):
+class AssemblyAISTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="AssemblyAI API key")
     language: str = Field(..., description="Language code")
-    uri: Optional[str] = Field(default=None, description="AssemblyAI streaming WebSocket URL")
+    ws_url: Optional[str] = Field(default=None, description="AssemblyAI streaming WebSocket URL")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class AssemblyAISTT(AssemblyAISTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key
         if self.language is not None:
             params["language"] = self.language
-        if self.uri is not None:
-            params["uri"] = self.uri
+        if self.ws_url is not None:
+            params["ws_url"] = self.ws_url
 
         config: Dict[str, Any] = {
             "vendor": "assemblyai",
@@ -213,24 +356,31 @@ class AssemblyAISTT(BaseSTT):
         return config
 
 
-class AresSTT(BaseSTT):
+class AresSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     keywords: Optional[List[str]] = Field(default=None, description="Hotwords that improve ASR accuracy")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+    @model_validator(mode="after")
+    def _reject_nested_keywords(self) -> "AresSTTOptions":
+        if self.additional_params is not None and "keywords" in self.additional_params:
+            raise ValueError("AresSTT additional_params must not contain keywords; use the top-level keywords field")
+        return self
+
+
+class AresSTT(AresSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
-        if self.keywords is not None:
-            params["keywords"] = self.keywords
-
         config: Dict[str, Any] = {"vendor": "ares"}
+        if self.keywords is not None:
+            config["keywords"] = self.keywords
         if params:
             config["params"] = params
         return config
 
 
-class SarvamSTT(BaseSTT):
+class SarvamSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Sarvam API key")
@@ -238,6 +388,8 @@ class SarvamSTT(BaseSTT):
     model: Optional[str] = Field(default=None, description="Model name")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class SarvamSTT(SarvamSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params.update({
@@ -254,7 +406,7 @@ class SarvamSTT(BaseSTT):
         return config
 
 
-class XaiSTT(BaseSTT):
+class XaiSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="xAI API key")
@@ -263,6 +415,8 @@ class XaiSTT(BaseSTT):
     language: Optional[str] = Field(default=None, description="Language code for speech recognition")
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
 
+
+class XaiSTT(XaiSTTOptions, BaseSTT):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = dict(self.additional_params or {})
         params["api_key"] = self.api_key

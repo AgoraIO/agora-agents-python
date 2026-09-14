@@ -1,23 +1,24 @@
-"""Preview endpoint clients.
+"""Preview endpoint routing helpers.
 
-Preview providers are not served by the production Conversational AI gateway.
-They live behind a single partner host and are gated by an ``agora-feature``
-header. :class:`AgoraPreview` and :class:`AsyncAgoraPreview` are drop-in
-replacements for ``Agora`` / ``AsyncAgora`` that point every request at that
-host and send the header, so the rest of agentkit (``Agent``, ``AgentSession``,
-vendor classes) works unchanged.
+Preview providers are served by a partner host gated by an ``agora-feature``
+header. Agent sessions use these helpers to create private generated clients
+for preview traffic while the caller's ``Agora`` / ``AsyncAgora`` client stays
+on its production endpoint.
 
-Everything under ``agentkit/preview/`` is temporary. When these providers ship
-on the production gateway, delete this package and move the vendor classes into
-``vendors/mllm.py``.
+Everything under ``agentkit/preview/`` is temporary. When a provider ships on
+the production gateway, remove its preview registration and move its class into
+the corresponding production vendor module.
 """
 
 from __future__ import annotations
 
 import typing
 
-from ...pool_client import Agora, AsyncAgora
 from .vendors import GEMINI_PREVIEW_MLLM_URL
+
+from ...agent_management.client import AgentManagementClient, AsyncAgentManagementClient
+from ...agents.client import AgentsClient, AsyncAgentsClient
+from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 
 #: Base URL that serves the preview providers.
 PREVIEW_API_BASE_URL = "https://partner.ai.agora.io/preview/api/conversational-ai-agent"
@@ -37,13 +38,12 @@ class PreviewFeatures:
     vendors on the preview endpoint.
     """
 
-    #: The Gemini walkie-talkie / clever-chatter MLLMs.
+    #: Deprecated compatibility value. Gemini ASR now uses the production endpoint.
     GEMINI_LIVE = "gemini-live"
+    LIVE_MODELS = "live-models"
 
 
 PreviewFeature = str
-
-_DEFAULT_PREVIEW_FEATURES: typing.Tuple[str, ...] = (PreviewFeatures.GEMINI_LIVE,)
 
 
 def _preview_headers(
@@ -62,124 +62,43 @@ def _preview_headers(
     return merged
 
 
-class AgoraPreview(Agora):
-    """Client for the Agora Conversational AI preview endpoint.
-
-    Use it exactly like ``Agora`` — same auth modes, same ``Agent`` and
-    ``AgentSession`` API. It differs only in where requests go and in the
-    ``agora-feature`` header it attaches.
-
-    Parameters
-    ----------
-    features : Sequence[str], optional
-        Preview families to request via the ``agora-feature`` header.
-        Defaults to ``("gemini-live",)``.
-    base_url : str, optional
-        Override the preview base URL. For internal testing against a staging host.
-
-    Examples
-    --------
-    >>> from agora_agent import Area
-    >>> from agora_agent.agentkit import Agent
-    >>> from agora_agent.agentkit.preview import AgoraPreview, GeminiCleverChatter
-    >>> client = AgoraPreview(area=Area.US, app_id="...", app_certificate="...")
-    >>> session = (
-    ...     Agent(client=client)
-    ...     .with_mllm(GeminiCleverChatter(api_key="...", thinking_level="medium"))
-    ...     .create_session(channel="demo", agent_uid="1", remote_uids=["100"])
-    ... )
-    """
-
-    def __init__(
-        self,
-        *,
-        area: typing.Any,
-        app_id: str,
-        app_certificate: str,
-        features: typing.Optional[typing.Sequence[str]] = None,
-        base_url: typing.Optional[str] = None,
-        headers: typing.Optional[typing.Dict[str, str]] = None,
-        **kwargs: typing.Any,
-    ):
-        self.preview_features: typing.Tuple[str, ...] = tuple(
-            features if features is not None else _DEFAULT_PREVIEW_FEATURES
+def create_preview_session_clients(
+    client: typing.Any,
+    features: typing.Sequence[str],
+) -> typing.Tuple[typing.Any, typing.Any]:
+    """Create generated clients pinned to the preview host and feature gate."""
+    source = client._client_wrapper
+    kwargs = {
+        "authorization": source._authorization,
+        "username": source._username,
+        "password": source._password,
+        "headers": _preview_headers(features, source.get_custom_headers()),
+        "base_url": PREVIEW_API_BASE_URL,
+        "timeout": source.get_timeout(),
+        "httpx_client": source.httpx_client.httpx_client,
+    }
+    if isinstance(source, AsyncClientWrapper):
+        async_wrapper = AsyncClientWrapper(**kwargs)
+        return (
+            AsyncAgentsClient(client_wrapper=async_wrapper),
+            AsyncAgentManagementClient(client_wrapper=async_wrapper),
         )
-        self._preview_base_url = base_url or PREVIEW_API_BASE_URL
-
-        super().__init__(
-            area=area,
-            app_id=app_id,
-            app_certificate=app_certificate,
-            headers=_preview_headers(self.preview_features, headers),
-            **kwargs,
+    if isinstance(source, SyncClientWrapper):
+        sync_wrapper = SyncClientWrapper(**kwargs)
+        return (
+            AgentsClient(client_wrapper=sync_wrapper),
+            AgentManagementClient(client_wrapper=sync_wrapper),
         )
-        # The base class resolves the URL from the regional pool; repoint it.
-        self._update_base_url()
-
-    def _update_base_url(self) -> None:
-        self._client_wrapper._base_url = self._preview_base_url
-
-    def get_current_url(self) -> str:
-        return self._preview_base_url
-
-    def next_region(self) -> None:
-        """No-op: the preview endpoint has no regional replicas to fail over to."""
-
-    def select_best_domain(self) -> None:
-        """No-op: the preview endpoint has a single fixed host."""
+    raise TypeError("Unsupported Agora client wrapper")
 
 
-class AsyncAgoraPreview(AsyncAgora):
-    """Async client for the Agora Conversational AI preview endpoint.
-
-    See :class:`AgoraPreview`.
-    """
-
-    def __init__(
-        self,
-        *,
-        area: typing.Any,
-        app_id: str,
-        app_certificate: str,
-        features: typing.Optional[typing.Sequence[str]] = None,
-        base_url: typing.Optional[str] = None,
-        headers: typing.Optional[typing.Dict[str, str]] = None,
-        **kwargs: typing.Any,
-    ):
-        self.preview_features: typing.Tuple[str, ...] = tuple(
-            features if features is not None else _DEFAULT_PREVIEW_FEATURES
-        )
-        self._preview_base_url = base_url or PREVIEW_API_BASE_URL
-
-        super().__init__(
-            area=area,
-            app_id=app_id,
-            app_certificate=app_certificate,
-            headers=_preview_headers(self.preview_features, headers),
-            **kwargs,
-        )
-        self._update_base_url()
-
-    def _update_base_url(self) -> None:
-        self._client_wrapper._base_url = self._preview_base_url
-
-    def get_current_url(self) -> str:
-        return self._preview_base_url
-
-    def next_region(self) -> None:
-        """No-op: the preview endpoint has no regional replicas to fail over to."""
-
-    async def select_best_domain(self) -> None:
-        """No-op: the preview endpoint has a single fixed host."""
+#: ASR vendors served only by the preview endpoint.
+_PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]] = {
+    "asr": {},
+    "mllm": {"openai_gpt_live": PreviewFeatures.LIVE_MODELS},
+}
 
 
-#: Preview MLLM models. ``mllm.vendor`` is ``"gemini"`` for both the production
-#: Gemini Live provider and the preview ones, so the model name is one of two
-#: things that mark a config as preview-only; see :func:`_has_preview_mllm_envelope`
-#: for the other.
-#:
-#: Both the codenames and their post-rename IDs are listed, so recognition keeps
-#: working through Google's rollout whichever name a caller sends.
 _PREVIEW_MLLM_MODELS = frozenset(
     {
         "walkie-talkie",
@@ -269,44 +188,27 @@ def required_preview_features(properties: typing.Mapping[str, typing.Any]) -> ty
     hand-written configs are covered too.
     """
     features: typing.List[str] = []
-
-    if _is_preview_mllm(properties.get("mllm")):
+    for category, vendors in _PREVIEW_FEATURES_BY_CATEGORY.items():
+        config = properties.get(category)
+        if not isinstance(config, dict):
+            continue
+        vendor = config.get("vendor")
+        if not isinstance(vendor, str):
+            continue
+        feature = vendors.get(vendor)
+        if feature is not None and feature not in features:
+            features.append(feature)
+    if _is_preview_mllm(properties.get("mllm")) and PreviewFeatures.GEMINI_LIVE not in features:
         features.append(PreviewFeatures.GEMINI_LIVE)
-
     return features
-
-
-def assert_preview_support(client: typing.Any, properties: typing.Mapping[str, typing.Any]) -> None:
-    """Fail fast when preview providers are paired with a non-preview client.
-
-    Raises before the request goes out, instead of surfacing an opaque gateway
-    error — or worse, silently succeeding against the production environment.
-    """
-    required = required_preview_features(properties)
-    if not required:
-        return
-
-    enabled = getattr(client, "preview_features", ())
-    missing = [feature for feature in required if feature not in enabled]
-    if not missing:
-        return
-
-    joined = ", ".join(missing)
-    raise ValueError(
-        f"This agent uses preview providers that require the preview endpoint ({joined}). "
-        "Create the session with AgoraPreview instead of Agora, and make sure its "
-        f"`features` include: {joined}."
-    )
 
 
 __all__ = [
     "PREVIEW_API_BASE_URL",
     "PREVIEW_FEATURE_HEADER",
-    "AgoraPreview",
-    "AsyncAgoraPreview",
     "PreviewFeature",
     "PreviewFeatures",
     "apply_preview_shape",
-    "assert_preview_support",
+    "create_preview_session_clients",
     "required_preview_features",
 ]

@@ -26,7 +26,7 @@ Pass `client=client` to every `Agent(...)` builder. `create_session()` and `crea
 |---|---|---|
 | `sal` | `with_sal(config)` | Selective Attention Locking — speaker recognition and noise suppression |
 | `advanced_features` | `with_advanced_features(features)` | Enable MLLM, RTM, SAL, tools |
-| `tools` | `with_tools(enabled=True)` | Enable MCP tool invocation |
+| `tools` | `with_tools(enabled=True)` | Enable MCP and inline LLM tool invocation |
 | `parameters` | `with_parameters(params)` | Silence config, farewell config, data channel |
 | `failure_message` | LLM/MLLM vendor option | Message spoken when LLM fails |
 | `max_history` | LLM vendor option | Max conversation turns in LLM context |

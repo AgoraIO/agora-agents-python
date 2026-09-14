@@ -1,16 +1,15 @@
 import warnings
 from typing import Any, Dict, Optional
 
-from pydantic import ConfigDict, Field, field_validator
-
 from .base import BaseAvatar
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 LIVEAVATAR_SAMPLE_RATE = 24000
 HEYGEN_SAMPLE_RATE = LIVEAVATAR_SAMPLE_RATE
 AKOOL_SAMPLE_RATE = 16000
 
 
-class LiveAvatarAvatar(BaseAvatar):
+class LiveAvatarAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="LiveAvatar API key")
@@ -31,6 +30,8 @@ class LiveAvatarAvatar(BaseAvatar):
             raise ValueError(f"Invalid quality '{v}'. Must be one of: {', '.join(valid)}")
         return v
 
+
+class LiveAvatarAvatar(LiveAvatarAvatarOptions, BaseAvatar):
     @property
     def required_sample_rate(self) -> int:
         return LIVEAVATAR_SAMPLE_RATE
@@ -57,7 +58,7 @@ class LiveAvatarAvatar(BaseAvatar):
         return {"enable": enable, "vendor": "liveavatar", "params": params}
 
 
-class HeyGenAvatar(BaseAvatar):
+class HeyGenAvatarOptions(BaseModel):
     """Deprecated: HeyGen has been renamed to LiveAvatar. Use LiveAvatarAvatar instead."""
 
     model_config = ConfigDict(extra="forbid")
@@ -89,6 +90,10 @@ class HeyGenAvatar(BaseAvatar):
             stacklevel=3,
         )
 
+
+class HeyGenAvatar(HeyGenAvatarOptions, BaseAvatar):
+    """Deprecated: HeyGen has been renamed to LiveAvatar. Use LiveAvatarAvatar instead."""
+
     @property
     def required_sample_rate(self) -> int:
         return HEYGEN_SAMPLE_RATE
@@ -115,7 +120,7 @@ class HeyGenAvatar(BaseAvatar):
         return {"enable": enable, "vendor": "heygen", "params": params}
 
 
-class AkoolAvatar(BaseAvatar):
+class AkoolAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Akool API key")
@@ -123,6 +128,8 @@ class AkoolAvatar(BaseAvatar):
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
 
+
+class AkoolAvatar(AkoolAvatarOptions, BaseAvatar):
     @property
     def required_sample_rate(self) -> int:
         return AKOOL_SAMPLE_RATE
@@ -141,7 +148,7 @@ class AkoolAvatar(BaseAvatar):
         return {"enable": enable, "vendor": "akool", "params": params}
 
 
-class GenericAvatar(BaseAvatar):
+class GenericAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Generic avatar provider API key")
@@ -154,6 +161,8 @@ class GenericAvatar(BaseAvatar):
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
 
+
+class GenericAvatar(GenericAvatarOptions, BaseAvatar):
     @property
     def required_sample_rate(self) -> int:
         return 0
@@ -179,7 +188,7 @@ class GenericAvatar(BaseAvatar):
         return {"enable": enable, "vendor": "generic", "params": params}
 
 
-class AnamAvatar(BaseAvatar):
+class AnamAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Anam API key")
@@ -187,6 +196,8 @@ class AnamAvatar(BaseAvatar):
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
 
+
+class AnamAvatar(AnamAvatarOptions, BaseAvatar):
     @property
     def required_sample_rate(self) -> int:
         return 0

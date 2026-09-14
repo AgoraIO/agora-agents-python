@@ -13,6 +13,7 @@ from agora_agent.agentkit.vendors import (
     XaiSTT,
     XaiTTS,
 )
+from agora_agent import OpenAIGPTLive
 
 
 def test_xai_grok_serializes_v27_shape_without_style():
@@ -56,6 +57,26 @@ def test_openai_realtime_preserves_custom_url():
 def test_openai_realtime_rejects_none_url():
     with pytest.raises(ValidationError):
         OpenAIRealtime(api_key="openai-key", url=None)
+
+
+def test_openai_gpt_live_uses_its_preview_vendor_and_url():
+    config = OpenAIGPTLive(api_key="openai-key", greeting="Hello from GPT Live").to_config()
+
+    assert config == {
+        "vendor": "openai_gpt_live",
+        "api_key": "openai-key",
+        "url": "wss://api.openai.com/v1/live/sessions",
+        "greeting_message": "Hello from GPT Live",
+        "params": {
+            "model": "gpt-live-1-diamond-alpha",
+            "alpha_selector": "quicksilver=v3",
+        },
+    }
+
+
+def test_openai_realtime_rejects_the_removed_live_mode_switch():
+    with pytest.raises(ValidationError):
+        OpenAIRealtime(api_key="openai-key", mode="live")
 
 
 def test_xai_grok_emits_params_even_when_empty():

@@ -2,26 +2,4 @@
 
 import typing
 
-import pydantic
-from ..core.pydantic_utilities import IS_PYDANTIC_V2
-from ..core.unchecked_base_model import UncheckedBaseModel
-
-
-class AresAsrParams(UncheckedBaseModel):
-    """
-    ARES ASR configuration parameters.
-    """
-
-    keywords: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
-    """
-    A list of hotwords to improve ASR accuracy.
-    """
-
-    if IS_PYDANTIC_V2:
-        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
-    else:
-
-        class Config:
-            frozen = True
-            smart_union = True
-            extra = pydantic.Extra.allow
+AresAsrParams = typing.Dict[str, typing.Any]
