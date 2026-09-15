@@ -48,6 +48,8 @@ if typing.TYPE_CHECKING:
         GeminiSTT,
         GeminiSTTModels,
         GeminiLive,
+        GeminiLiveModels,
+        GEMINI_MLLM_DEFAULT_MODEL,
         GenericAvatar,
         GenericTTS,
         GoogleSTT,
