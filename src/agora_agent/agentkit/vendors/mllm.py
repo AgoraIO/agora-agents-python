@@ -267,7 +267,7 @@ class GeminiLiveOptions(BaseModel):
         default=None, description="Reasoning budget for the 3.8 extended-thinking model"
     )
     language_codes: Optional[List[str]] = Field(default=None, description="Languages for Gemini 3.8")
-    url: Optional[str] = Field(default=None, description="WebSocket URL")
+    url: Optional[str] = Field(default=None, description="Endpoint override; Gemini 3.8 defaults to the Developer API host")
     instructions: Optional[str] = Field(default=None, description="System instructions")
     voice: Optional[str] = Field(default=None, description="Voice name")
     affective_dialog: Optional[bool] = Field(default=None, description="Enable affective dialog")

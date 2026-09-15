@@ -964,7 +964,7 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 | `model` | `str` | No | `models/gemini-3.8-live` | Gemini Live model name |
 | `thinking_level` | `str` | No | `None` | `low`, `medium`, or `high`; sent only for 3.8 Extended Thinking |
 | `language_codes` | `List[str]` | No | `None` | 3.8 language codes in `mllm.params.language_codes` |
-| `url` | `str` | No | `None` | Custom WebSocket URL |
+| `url` | `str` | No | `None` | Custom endpoint; 3.8 defaults to the Gemini Developer API host |
 | `instructions` | `str` | No | `None` | System instructions |
 | `voice` | `str` | No | `None` | Voice name |
 | `greeting_message` | `str` | No | `None` | Greeting message; sent as `mllm.greeting` for 3.8 models |
