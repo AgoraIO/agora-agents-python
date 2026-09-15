@@ -50,6 +50,20 @@ def test_generated_core_aliases_are_public():
     assert AvatarVendor is not None
 
 
+def test_default_session_names_do_not_collide_within_one_second(monkeypatch):
+    import agora_agent.agentkit.agent as agent_module
+
+    monkeypatch.setattr(agent_module.time, "time", lambda: 1_700_000_000.0)
+    timestamps = iter((1_700_000_000_000_000_001, 1_700_000_000_000_000_002))
+    monkeypatch.setattr(agent_module.time, "time_ns", lambda: next(timestamps))
+    agent = Agent(test_client())
+    options = {"channel": "room", "agent_uid": "1", "remote_uids": ["100"]}
+    first = agent.create_session(**options)
+    second = agent.create_async_session(**options)
+
+    assert first._name != second._name
+
+
 def test_model_copy_helper_supports_pydantic_v1_copy_api():
     copied = Agent._copy_model_update(_CopyOnlyModel(enable_rtm=True), {"data_channel": "rtm"})  # noqa: SLF001
 

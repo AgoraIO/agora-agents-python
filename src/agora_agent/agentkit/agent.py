@@ -890,7 +890,7 @@ class Agent:
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
 
-        session_name = name or f"agent-{int(time.time())}"
+        session_name = name or f"agent-{time.time_ns()}"
         return AgentSession(
             client=resolved_client,
             agent=self,
@@ -937,7 +937,7 @@ class Agent:
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
 
-        session_name = name or f"agent-{int(time.time())}"
+        session_name = name or f"agent-{time.time_ns()}"
         return AsyncAgentSession(
             client=resolved_client,
             agent=self,

@@ -139,4 +139,39 @@ def test_preview_client_factory_supports_sync_and_async_clients() -> None:
     for generated_client in (sync_agents, sync_management, async_agents, async_management):
         wrapper = generated_client._raw_client._client_wrapper
         assert wrapper.get_base_url() == PREVIEW_API_BASE_URL
-        assert wrapper.get_custom_headers()[PREVIEW_FEATURE_HEADER] == TEST_FEATURE
+        custom_headers = wrapper.get_custom_headers()
+        assert custom_headers is not None
+        assert custom_headers[PREVIEW_FEATURE_HEADER] == TEST_FEATURE
+
+
+def test_sync_preview_gate_survives_case_variant_per_call_headers() -> None:
+    recorder = _Recorder()
+    client = Agora(
+        area=Area.US, app_id=APP_ID, app_certificate=APP_CERTIFICATE,
+        headers={"Agora-Feature": "caller-value"},
+        httpx_client=httpx.Client(transport=recorder),
+    )
+    agents, _ = create_preview_session_clients(client, [TEST_FEATURE])
+    agents.stop(APP_ID, "agent-1", request_options={"additional_headers": {"AGORA-FEATURE": "wrong", "Authorization": "agora token=fake-token"}})
+    assert recorder.requests[0].headers.get_list(PREVIEW_FEATURE_HEADER) == [TEST_FEATURE]
+    assert recorder.requests[0].headers["Authorization"] == "agora token=fake-token"
+    custom_headers = client._client_wrapper.get_custom_headers()
+    assert custom_headers is not None
+    assert custom_headers["Agora-Feature"] == "caller-value"
+
+
+@pytest.mark.asyncio
+async def test_async_preview_gate_survives_case_variant_per_call_headers() -> None:
+    recorder = _Recorder()
+    client = AsyncAgora(
+        area=Area.US, app_id=APP_ID, app_certificate=APP_CERTIFICATE,
+        headers={"Agora-Feature": "caller-value"},
+        httpx_client=httpx.AsyncClient(transport=recorder),
+    )
+    agents, _ = create_preview_session_clients(client, [TEST_FEATURE])
+    await agents.stop(APP_ID, "agent-1", request_options={"additional_headers": {"AGORA-FEATURE": "wrong", "Authorization": "agora token=fake-token"}})
+    assert recorder.requests[0].headers.get_list(PREVIEW_FEATURE_HEADER) == [TEST_FEATURE]
+    assert recorder.requests[0].headers["Authorization"] == "agora token=fake-token"
+    custom_headers = client._client_wrapper.get_custom_headers()
+    assert custom_headers is not None
+    assert custom_headers["Agora-Feature"] == "caller-value"

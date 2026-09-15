@@ -1,9 +1,10 @@
 [project]
 name = "agora-agents"
+dynamic = ["version"]
 
 [tool.poetry]
 name = "agora-agents"
-version = "v2.8.1"
+version = "v2.9.0"
 description = ""
 readme = "README.md"
 authors = []
