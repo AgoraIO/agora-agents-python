@@ -12,7 +12,7 @@ from agora_agent.agentkit.preview import (
 
 
 def test_gemini_and_gpt_live_use_their_own_feature_gates():
-    for vendor in (GeminiMLLM(api_key="test-key", model=GeminiMLLMModels.WALKIE_TALKIE), GeminiMLLM(api_key="test-key", model=GeminiMLLMModels.CLEVER_CHATTER)):
+    for vendor in (GeminiMLLM(api_key="test-key", model=GeminiMLLMModels.LIVE_38), GeminiMLLM(api_key="test-key", model=GeminiMLLMModels.LIVE_38_EXTENDED_THINKING)):
         properties = {"mllm": vendor.to_config()}
         assert required_preview_features(properties) == [PreviewFeatures.GEMINI_LIVE]
     assert required_preview_features({"mllm": OpenAIGPTLive(api_key="test-key").to_config()}) == [
@@ -21,18 +21,16 @@ def test_gemini_and_gpt_live_use_their_own_feature_gates():
 
 
 def test_gemini_greeting_uses_preview_wire_field():
-    properties = {"mllm": GeminiMLLM(api_key="test-key", model=GeminiMLLMModels.WALKIE_TALKIE).to_config()}
+    properties = {"mllm": GeminiMLLM(api_key="test-key", model=GeminiMLLMModels.LIVE_38).to_config()}
     properties["mllm"]["greeting_message"] = "Hello"
     apply_preview_shape(properties)
     assert properties["mllm"]["greeting"] == "Hello"
     assert "greeting_message" not in properties["mllm"]
 
 
-def test_one_gemini_preview_class_supports_codenames_and_38_ids():
-    assert GeminiMLLM(api_key="test-key", model="  ").to_config()["params"]["model"] == GeminiMLLMModels.WALKIE_TALKIE
+def test_one_gemini_preview_class_supports_public_38_ids():
+    assert GeminiMLLM(api_key="test-key", model="  ").to_config()["params"]["model"] == GeminiMLLMModels.LIVE_38
     models = (
-        (GeminiMLLMModels.WALKIE_TALKIE, "medium"),
-        (GeminiMLLMModels.CLEVER_CHATTER, "medium"),
         (GeminiMLLMModels.LIVE_38, "medium"),
         (GeminiMLLMModels.LIVE_38_EXTENDED_THINKING, "medium"),
     )
@@ -42,11 +40,11 @@ def test_one_gemini_preview_class_supports_codenames_and_38_ids():
         assert config["api_key"] == "test-key"
         assert "api_key" not in config["params"]
         assert config["params"]["model"] == model
-        expected_thinking = thinking if model in (GeminiMLLMModels.CLEVER_CHATTER, GeminiMLLMModels.LIVE_38_EXTENDED_THINKING) else None
+        expected_thinking = thinking if model == GeminiMLLMModels.LIVE_38_EXTENDED_THINKING else None
         assert config["params"].get("thinking_level") == expected_thinking
         assert required_preview_features({"mllm": config}) == [PreviewFeatures.GEMINI_LIVE]
         # Explicit IDs must route even in a hand-written config without the
-        # SDK vendor's duplicate-key preview envelope.
+        # SDK vendor's preview envelope.
         assert required_preview_features({"mllm": {"vendor": "gemini", "params": {"model": model}}}) == [
             PreviewFeatures.GEMINI_LIVE
         ]

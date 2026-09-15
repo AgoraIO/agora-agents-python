@@ -162,23 +162,17 @@ _ApiKey = Field(..., min_length=1, description="Google API key")
 class GeminiMLLMModels:
     """Preview MLLM model names.
 
-    The codenames remain defaults until the new Google IDs launch. The
-    ``models/`` prefix is part of each 3.8 model ID.
+    The ``models/`` prefix is part of each model ID.
     """
 
-    #: Codename for the low-latency model. Currently the default.
-    WALKIE_TALKIE = "walkie-talkie"
-    #: Codename for the reasoning model.
-    CLEVER_CHATTER = "clever-chatter"
     LIVE_38 = "models/gemini-3.8-live"
     LIVE_38_EXTENDED_THINKING = "models/gemini-3.8-live-extended-thinking"
 
 
 #: The model name the Gemini MLLM sends by default.
 #:
-#: Keep the working codenames until Google activates the 3.8 IDs. Callers can
-#: select either new ID using ``model=`` without waiting for an SDK release.
-GEMINI_MLLM_DEFAULT_MODEL = GeminiMLLMModels.WALKIE_TALKIE
+#: Low-latency Gemini voice is the default.
+GEMINI_MLLM_DEFAULT_MODEL = GeminiMLLMModels.LIVE_38
 
 
 GEMINI_THINKING_LEVELS = ("low", "medium", "high")
@@ -190,7 +184,7 @@ GEMINI_PREVIEW_MLLM_URL = "https://generativelanguage.googleapis.com"
 
 
 class GeminiMLLM(BaseMLLM):
-    """Gemini preview MLLM for current codenames and the 3.8 launch IDs.
+    """Gemini preview MLLM for the two public 3.8 model IDs.
 
     The API key is sent as ``mllm.api_key``. The preview ``url`` defaults to
     the Gemini Developer API host rather than a WebSocket endpoint.
@@ -201,7 +195,7 @@ class GeminiMLLM(BaseMLLM):
     api_key: str = _ApiKey
     model: Optional[str] = Field(default=None, description="Override the preview model name")
     thinking_level: Optional[GeminiThinkingLevel] = Field(
-        default=None, description="Reasoning budget for clever-chatter and extended thinking"
+        default=None, description="Reasoning budget for extended thinking"
     )
     voice: Optional[str] = Field(default=None, description="Voice name (e.g., Puck)")
     language_codes: Optional[List[str]] = Field(
@@ -253,7 +247,7 @@ class GeminiMLLM(BaseMLLM):
         params.pop("api_key", None)
         params["model"] = model
         params["voice"] = voice
-        if model in (GeminiMLLMModels.CLEVER_CHATTER, GeminiMLLMModels.LIVE_38_EXTENDED_THINKING):
+        if model == GeminiMLLMModels.LIVE_38_EXTENDED_THINKING:
             if self.thinking_level is not None:
                 params["thinking_level"] = self.thinking_level
         else:

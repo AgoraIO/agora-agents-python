@@ -10,7 +10,7 @@ Some providers may be released through a preview gateway before their production
 and `AsyncAgentSession` detect registered preview providers from the resolved start request and route the entire
 session automatically.
 
-OpenAI GPT Live uses the `live-models` feature. Gemini walkie-talkie and clever-chatter MLLMs use `gemini-live`.
+OpenAI GPT Live uses the `live-models` feature. Gemini 3.8 MLLMs use `gemini-live`.
 Gemini STT has graduated to
 production and uses the normal regional endpoint. Existing imports of `GeminiSTT` and `GeminiSTTModels` from
 `agora_agent.agentkit.preview` remain supported as compatibility aliases.
@@ -30,11 +30,10 @@ This session uses the preview base URL and sends `agora-feature: live-models`. A
 client's normal GA regional endpoint without that header.
 
 Use the single `GeminiMLLM(api_key=..., model=...)` class with `with_mllm`.
-The current model IDs are `walkie-talkie` and `clever-chatter`; the launch IDs
-are `models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`.
+The model IDs are `models/gemini-3.8-live` and
+`models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default.
 Set `thinking_level="medium"` for extended thinking. `GeminiMLLM` sends it
-only for `clever-chatter` or the extended-thinking ID. The working walkie
-codename remains the default until Google activates the launch IDs. The Gemini
+only for the extended-thinking ID. The Gemini
 credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
 Gemini sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.
 

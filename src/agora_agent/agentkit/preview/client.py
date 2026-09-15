@@ -141,8 +141,6 @@ _PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]
 
 _PREVIEW_MLLM_MODELS = frozenset(
     {
-        "walkie-talkie",
-        "clever-chatter",
         "models/gemini-3.8-live",
         "models/gemini-3.8-live-extended-thinking",
     }
