@@ -926,9 +926,9 @@ agent = Agent(client=client).with_llm(llm).with_tools()
 `server.body` is only valid for `POST`. Template values may use `{{args.name}}` in URLs and bodies, and `{{template_variables.name}}` or `{{tool_call_id}}` in URLs, headers, and bodies. `execution.mode` currently supports only `sync`; `timeout_ms` must be between `1000` and `100000`.
 
 The same `tools` and `mcp_servers` fields are available on all AgentKit MLLM vendors. They serialize at the top level of `mllm`, not inside `mllm.params`. Use `LlmToolConfig` and `McpServerConfig` for typed configuration; dictionaries remain supported for backward compatibility. MCP transport defaults to `streamable_http` when omitted. Tool execution still requires `Agent.with_tools()`.
-### OpenAIGPTLive (preview)
+### OpenAIGPTLive
 
-GPT Live v3 uses `mllm.vendor: "openai_gpt_live"`, model `gpt-live-1`, and `wss://api.openai.com/v1/live/sessions`. Sessions route through the preview gateway automatically. This alpha must not carry production traffic.
+GPT Live v3 uses `mllm.vendor: "openai_gpt_live"`, model `gpt-live-1`, and `wss://api.openai.com/v1/live/sessions`. Sessions use the production gateway. The historical import from `agora_agent.agentkit.preview` remains a compatibility alias.
 
 The SDK omits `params.alpha_selector` by default. Set `alpha_selector` only when a future preview contract requires an `OpenAI-Alpha` selector. Other tuning defaults remain owned by the provider. Explicit options override entries in `params`. Zero and false values are preserved.
 

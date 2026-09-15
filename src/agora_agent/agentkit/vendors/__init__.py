@@ -13,7 +13,7 @@ from .base import (
 )
 from .avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
 from .llm import AmazonBedrock, Anthropic, AzureOpenAI, CustomLLM, Dify, Gemini, Groq, OpenAI, VertexAILLM
-from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
+from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIGPTLive, OpenAIRealtime, VertexAI, XaiGrok
 from .cn import (
     AliyunLLM,
     BytedanceDuplexTTS,

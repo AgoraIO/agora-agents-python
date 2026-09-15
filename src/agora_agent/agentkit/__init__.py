@@ -155,7 +155,6 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
-from .preview import OpenAIGPTLive
 from .vendors import (
     AkoolAvatar,
     AmazonBedrock,
@@ -203,6 +202,7 @@ from .vendors import (
     MurfTTS,
     OpenAI,
     OpenAIRealtime,
+    OpenAIGPTLive,
     OpenAISampleRate,
     OpenAISTT,
     OpenAITTS,

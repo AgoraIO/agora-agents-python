@@ -8,6 +8,7 @@ from agora_agent.agentkit.vendors import (
     GenericTTS,
     OpenAI,
     OpenAIRealtime,
+    OpenAIGPTLive as ProductionOpenAIGPTLive,
     SmallestAISTT,
     SpatiusAvatar,
     XaiGrok,
@@ -108,7 +109,7 @@ def test_openai_realtime_rejects_none_url():
         OpenAIRealtime(api_key="openai-key", url=None)
 
 
-def test_openai_gpt_live_uses_its_preview_vendor_and_url():
+def test_openai_gpt_live_uses_production_vendor_and_url():
     config = OpenAIGPTLive(api_key="openai-key", greeting="Hello from GPT Live").to_config()
 
     assert config == {
@@ -120,6 +121,12 @@ def test_openai_gpt_live_uses_its_preview_vendor_and_url():
             "model": "gpt-live-1",
         },
     }
+
+
+def test_openai_gpt_live_preview_import_is_production_alias():
+    from agora_agent.agentkit.preview import OpenAIGPTLive as PreviewOpenAIGPTLive
+
+    assert PreviewOpenAIGPTLive is ProductionOpenAIGPTLive
 
 
 def test_openai_realtime_rejects_the_removed_live_mode_switch():

@@ -1537,7 +1537,8 @@ def test_gpt_live_keeps_mcp_on_mllm_and_main_parameters_outside_vendor_params():
     with pytest.warns(UserWarning, match="ignores agent-level turn_detection"):
         agent.create_session(channel="test", agent_uid="1", remote_uids=["2"], token="token").start()
     request = requests[0]
-    assert request.headers["agora-feature"] == "live-models"
+    assert "agora-feature" not in request.headers
+    assert str(request.url).startswith("https://api-us-west-1.agora.io/")
     props = json.loads(request.content)["properties"]
     assert props["mllm"]["mcp_servers"] == servers
     assert props["llm"] is None
