@@ -956,14 +956,18 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 
 ### `GeminiLive`
 
+`GeminiLive` supports existing Gemini Live models and both public Gemini 3.8 voice models. The 3.8 IDs select the preview gateway with `agora-feature: gemini-live`; older model IDs keep the production route. See [Preview Endpoint](../guides/preview-endpoint.md).
+
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Google Gemini API key |
-| `model` | `str` | Yes | — | Gemini Live model name |
-| `url` | `str` | No | `None` | Custom WebSocket URL |
+| `model` | `str` | No | `models/gemini-3.8-live` | Gemini Live model name |
+| `thinking_level` | `str` | No | `None` | `low`, `medium`, or `high`; sent only for 3.8 Extended Thinking |
+| `language_codes` | `List[str]` | No | `None` | 3.8 language codes in `mllm.params.language_codes` |
+| `url` | `str` | No | `None` | Custom endpoint; 3.8 defaults to the Gemini Developer API host |
 | `instructions` | `str` | No | `None` | System instructions |
 | `voice` | `str` | No | `None` | Voice name |
-| `greeting_message` | `str` | No | `None` | Greeting message |
+| `greeting_message` | `str` | No | `None` | Greeting message; sent as `mllm.greeting` for 3.8 models |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |

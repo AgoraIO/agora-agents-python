@@ -10,7 +10,8 @@ Some providers may be released through a preview gateway before their production
 and `AsyncAgentSession` detect registered preview providers from the resolved start request and route the entire
 session automatically.
 
-OpenAI GPT Live is registered for preview routing with the `live-models` feature. Gemini STT has graduated to
+OpenAI GPT Live uses the `live-models` feature. Gemini 3.8 MLLMs use `gemini-live`.
+Gemini STT has graduated to
 production and uses the normal regional endpoint. Existing imports of `GeminiSTT` and `GeminiSTTModels` from
 `agora_agent.agentkit.preview` remain supported as compatibility aliases.
 
@@ -28,6 +29,14 @@ agent_id = session.start()
 This session uses the preview base URL and sends `agora-feature: live-models`. A session using `GeminiSTT` uses the
 client's normal GA regional endpoint without that header.
 
+Use the single `GeminiLive(api_key=..., model=...)` class with `with_mllm`.
+The model IDs are `models/gemini-3.8-live` and
+`models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default.
+Set `thinking_level="medium"` for extended thinking. `GeminiLive` sends it
+only for the extended-thinking ID. The Gemini
+credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
+Gemini sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.
+
 ## Session-scoped routing
 
 Preview routing does not mutate the bound `Agora` or `AsyncAgora` client. A session that needs a preview feature
@@ -37,7 +46,7 @@ receives private generated clients configured with:
 - `agora-feature` as the feature gate header.
 - All custom headers, authentication settings, timeouts, and the supplied `httpx` client from the original client.
 
-The gate header is applied after caller-provided headers, so it cannot be accidentally blanked or replaced. It is
+The gate header is applied after caller-provided and per-call headers, so it cannot be accidentally blanked or replaced. It is
 kept on every request made through that session. Production sessions created from the same client continue using
 the regional production endpoint.
 
