@@ -207,21 +207,6 @@ session = agent.create_session(
 session.start()
 ```
 
-For Gemini 3.8 Live Extended Thinking, use the same single `GeminiLive` class as the regular Live model:
-
-```python
-from agora_agent import GeminiLive
-
-gemini_agent = Agent(client=client).with_mllm(GeminiLive(
-    api_key=os.environ["GOOGLE_API_KEY"],
-    model="models/gemini-3.8-live-extended-thinking",
-    thinking_level="medium",
-    greeting_message="Hello! Ready to chat.",
-))
-```
-
-Use `models/gemini-3.8-live` without `thinking_level` for the lower-latency model. Gemini sessions use the preview gateway and `agora-feature: gemini-live`; the Google key is sent as `mllm.api_key`. See the [Preview Endpoint guide](./docs/guides/preview-endpoint.md).
-
 See the [MLLM Flow guide](./docs/guides/mllm-flow.md) for full examples with Gemini Live and Vertex AI.
 
 ## Documentation
