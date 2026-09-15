@@ -954,6 +954,20 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 | `params` | `Dict[str, Any]` | No | `None` | Additional Qwen Omni parameters |
 | `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
+### `GeminiMLLM` (preview)
+
+`GeminiMLLM(api_key=..., model=...)` configures either public Gemini 3.8 voice model. A session using this provider routes to the preview gateway with `agora-feature: gemini-live`. See [Preview Endpoint](../guides/preview-endpoint.md).
+
+| Parameter | Default / wire behavior |
+|---|---|
+| `api_key` | Required; sent once as `mllm.api_key`. |
+| `model` | Defaults to `models/gemini-3.8-live`; also accepts `models/gemini-3.8-live-extended-thinking`. |
+| `thinking_level` | `low`, `medium`, or `high`; sent as `mllm.params.thinking_level` only for Extended Thinking. |
+| `voice` | Defaults to `Puck`. |
+| `instructions` | System prompt in `mllm.params.instructions`. |
+| `greeting` | Initial utterance in `mllm.greeting`. |
+| `language_codes` | Optional language array in `mllm.params.language_codes`. |
+
 ### `GeminiLive`
 
 | Parameter | Type | Required | Default | Description |
