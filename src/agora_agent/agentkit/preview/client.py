@@ -93,7 +93,7 @@ def create_preview_session_clients(
 #: ASR vendors served only by the preview endpoint.
 _PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]] = {
     "asr": {},
-    "mllm": {"openai_gpt_live": PreviewFeatures.LIVE_MODELS},
+    "mllm": {},
 }
 
 

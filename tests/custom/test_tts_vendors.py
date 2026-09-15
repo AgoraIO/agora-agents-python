@@ -25,8 +25,37 @@ from agora_agent import (
     OpenAITTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
 )
+
+
+def test_smallest_ai_tts_serializes_generated_contract() -> None:
+    tts = SmallestAITTS(
+        api_key="smallest-key",
+        model="lightning-v3.1",
+        voice_id="emily",
+        sample_rate=24000,
+        speed=1.1,
+        math_notation=True,
+        pronunciation_dicts=["medical"],
+        skip_patterns=[1, 2],
+    )
+
+    assert tts.resolved_sample_rate == 24000
+    assert tts.to_config() == {
+        "vendor": "smallestai",
+        "params": {
+            "api_key": "smallest-key",
+            "model": "lightning-v3.1",
+            "voice_id": "emily",
+            "sample_rate": 24000,
+            "speed": 1.1,
+            "math_notation": True,
+            "pronunciation_dicts": ["medical"],
+        },
+        "skip_patterns": [1, 2],
+    }
 
 
 def test_tts_vendor_params_match_generated_core_shapes() -> None:

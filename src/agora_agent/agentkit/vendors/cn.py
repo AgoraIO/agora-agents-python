@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from ...types.mllm_turn_detection import MllmTurnDetection
 from .avatar import BaseAvatar
-from .base import BaseLLM, BaseMLLM, ensure_mcp_transport
+from .base import BaseLLM, BaseMLLM, McpServerInput, ensure_mcp_transport
 from .llm import (
     _OPENAI_MANAGED_MODELS,
     LlmGreetingConfigs,
@@ -522,7 +522,7 @@ class AliyunLLMOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="aliyun")
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -609,7 +609,7 @@ class BytedanceLLMOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="bytedance")
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -696,7 +696,7 @@ class DeepSeekLLMOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="deepseek")
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -783,7 +783,7 @@ class TencentLLMOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default="tencent")
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -870,6 +870,8 @@ class QwenOmniOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Qwen Omni parameters")
     turn_detection: Optional[MllmTurnDetection] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[LlmToolInput]] = Field(default=None)
 
 
 class QwenOmni(QwenOmniOptions, BaseMLLM):
@@ -905,6 +907,10 @@ class QwenOmni(QwenOmniOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        if self.mcp_servers is not None:
+            config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
+        if self.tools is not None:
+            config["tools"] = _dump_optional_model(self.tools)
         return config
 
 

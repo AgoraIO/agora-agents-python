@@ -6,6 +6,21 @@ from .base import BaseSTT
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _DEEPGRAM_MANAGED_MODELS = {"nova-2", "nova-3"}
+_SMALLEST_AI_BOOLEAN_PARAMS = (
+    "word_timestamps",
+    "sentence_timestamps",
+    "diarize",
+    "vad_events",
+    "endpointing",
+    "format",
+    "finalize_on_words",
+    "punctuate",
+    "capitalize",
+    "itn_normalize",
+    "full_transcript",
+    "redact_pii",
+    "redact_pci",
+)
 
 
 class SpeechmaticsSTTOptions(BaseModel):
@@ -432,3 +447,55 @@ class XaiSTT(XaiSTTOptions, BaseSTT):
             "params": params,
         }
         return config
+
+
+class SmallestAISTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, description="Smallest AI API key")
+    language: Optional[str] = Field(default=None, description="Language code for speech recognition")
+    url: Optional[str] = Field(default=None, description="Streaming WebSocket endpoint")
+    sample_rate: Optional[int] = Field(default=None, gt=0, description="Input audio sample rate in Hz")
+    encoding: Optional[str] = Field(default=None, description="Input audio encoding")
+    word_timestamps: Optional[bool] = Field(default=None)
+    sentence_timestamps: Optional[bool] = Field(default=None)
+    diarize: Optional[bool] = Field(default=None)
+    vad_events: Optional[bool] = Field(default=None)
+    endpointing: Optional[bool] = Field(default=None)
+    eou_timeout_ms: Optional[int] = Field(default=None, ge=0)
+    format: Optional[bool] = Field(default=None)
+    finalize_on_words: Optional[bool] = Field(default=None)
+    max_words: Optional[str] = Field(default=None)
+    punctuate: Optional[bool] = Field(default=None)
+    capitalize: Optional[bool] = Field(default=None)
+    itn_normalize: Optional[bool] = Field(default=None)
+    full_transcript: Optional[bool] = Field(default=None)
+    keywords: Optional[str] = Field(default=None)
+    redact_pii: Optional[bool] = Field(default=None)
+    redact_pci: Optional[bool] = Field(default=None)
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+
+class SmallestAISTT(SmallestAISTTOptions, BaseSTT):
+    """Smallest AI streaming speech-to-text provider."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params["api_key"] = self.api_key
+        for name in (
+            "language",
+            "url",
+            "sample_rate",
+            "encoding",
+            "eou_timeout_ms",
+            "max_words",
+            "keywords",
+        ):
+            value = getattr(self, name)
+            if value is not None:
+                params[name] = value
+        for name in _SMALLEST_AI_BOOLEAN_PARAMS:
+            value = getattr(self, name)
+            if value is not None:
+                params[name] = "true" if value else "false"
+        return {"vendor": "smallestai", "params": params}

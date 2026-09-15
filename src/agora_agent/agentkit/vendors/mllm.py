@@ -1,10 +1,117 @@
-from typing import Any, Dict, List, Optional
+import json
+import warnings
+from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urlsplit, urlunsplit
 
+from ...types.llm_tool import LlmTool
 from ...types.mllm_turn_detection import MllmTurnDetection
-from .base import BaseMLLM
+from .base import BaseMLLM, McpServerInput, dump_config_models, ensure_mcp_transport
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Literal
 
 MllmTurnDetectionConfig = MllmTurnDetection
+MllmToolInput = Union[Dict[str, Any], LlmTool]
+
+
+class OpenAIGPTLive(BaseMLLM):
+    """OpenAI GPT Live v3 MLLM configuration."""
+
+    model_config = ConfigDict(extra="forbid")
+    api_key: str = Field(..., min_length=1, description="OpenAI API key")
+    url: Optional[str] = None
+    instructions: Optional[str] = None
+    greeting: Optional[str] = None
+    failure_message: Optional[str] = None
+    input_modalities: Optional[List[str]] = None
+    output_modalities: Optional[List[str]] = None
+    messages: Optional[List[Dict[str, Any]]] = None
+    mcp_servers: Optional[List[McpServerInput]] = None
+    tools: Optional[List[MllmToolInput]] = None
+    params: Optional[Dict[str, Any]] = None
+    input_audio_transcription: Optional[Dict[str, Any]] = None
+    turn_detection: Optional[Any] = None
+    model: Optional[str] = Field(default=None, description="Defaults to gpt-live-1.")
+    voice: Optional[str] = None
+    prompt: Optional[str] = None
+    base_url: Optional[str] = None
+    path: Optional[str] = None
+    alpha_selector: Optional[str] = None
+    headers: Optional[str] = None
+    output_idle_end_ms: Optional[int] = None
+    input_idle_end_ms: Optional[int] = None
+    output_silence_peak: Optional[int] = None
+    output_sample_rate: Optional[int] = None
+    output_buffer_ms: Optional[int] = None
+    input_batch_ms: Optional[int] = None
+    tool_enabled: Optional[bool] = None
+    delegation: Optional[Literal["client", "responses"]] = None
+    responses_model: Optional[str] = None
+    interrupt_on_user_turn: Optional[bool] = None
+    session_params: Optional[Dict[str, Any]] = None
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = {"model": "gpt-live-1", **(self.params or {})}
+        if self.instructions is not None:
+            params["prompt"] = self.instructions
+        for name in (
+            "model", "voice", "prompt", "base_url", "path", "alpha_selector", "headers",
+            "output_idle_end_ms", "input_idle_end_ms", "output_silence_peak", "output_sample_rate",
+            "output_buffer_ms", "input_batch_ms", "tool_enabled", "delegation", "responses_model",
+            "interrupt_on_user_turn", "session_params",
+        ):
+            value = getattr(self, name)
+            if value is not None:
+                params[name] = value
+        if self.input_audio_transcription is not None or "input_audio_transcription" in params:
+            raise ValueError("GPT Live v3 does not support input_audio_transcription")
+        if self.turn_detection is not None or "turn_detection" in params:
+            warnings.warn("GPT Live v3 ignores turn_detection; endpointing is internal", UserWarning, stacklevel=2)
+            params.pop("turn_detection", None)
+        if "delegation" in params and params["delegation"] not in ("client", "responses"):
+            raise ValueError("GPT Live delegation must be client or responses")
+        if "headers" in params:
+            try:
+                headers = json.loads(params["headers"])
+            except (TypeError, ValueError) as exc:
+                raise ValueError("GPT Live headers must be a JSON object string") from exc
+            if not isinstance(headers, dict):
+                raise ValueError("GPT Live headers must be a JSON object string")
+        session = params.get("session_params", {})
+        if not isinstance(session, dict):
+            raise ValueError("GPT Live session_params must be an object")
+        for name in ("model", "delegation", "audio", "instructions", "input"):
+            if name in session:
+                raise ValueError(f"GPT Live session_params cannot override {name}")
+        url = self.url or (str(params.get("base_url", "wss://api.openai.com")).rstrip("/") + "/" + str(params.get("path", "/v1/live/sessions")).lstrip("/"))
+        try:
+            parsed = urlsplit(url)
+            hostname = parsed.hostname
+        except ValueError as exc:
+            raise ValueError("GPT Live url must be a full ws:// or wss:// endpoint") from exc
+        if parsed.scheme not in ("ws", "wss") or not hostname:
+            raise ValueError("GPT Live url must be a full ws:// or wss:// endpoint")
+        if parsed.hostname == "api.openai.com" and parsed.path == "/v1/live":
+            url = urlunsplit(parsed._replace(path="/v1/live/sessions"))
+        config: Dict[str, Any] = {"vendor": "openai_gpt_live", "api_key": self.api_key, "url": url, "params": params}
+        for name in ("failure_message", "input_modalities", "output_modalities", "messages"):
+            value = getattr(self, name)
+            if value is not None:
+                config[name] = value
+        if self.greeting is not None:
+            config["greeting_message"] = self.greeting
+        _add_tool_configs(config, self.mcp_servers, self.tools)
+        return config
+
+
+def _add_tool_configs(
+    config: Dict[str, Any],
+    mcp_servers: Optional[List[McpServerInput]],
+    tools: Optional[List[MllmToolInput]],
+) -> None:
+    if mcp_servers is not None:
+        config["mcp_servers"] = ensure_mcp_transport(mcp_servers)
+    if tools is not None:
+        config["tools"] = dump_config_models(tools)
 
 
 class OpenAIRealtimeOptions(BaseModel):
@@ -26,6 +133,8 @@ class OpenAIRealtimeOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class OpenAIRealtime(OpenAIRealtimeOptions, BaseMLLM):
@@ -67,6 +176,7 @@ class OpenAIRealtime(OpenAIRealtimeOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
 
@@ -93,6 +203,8 @@ class AzureOpenAIRealtimeOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Azure OpenAI parameters")
     turn_detection: MllmTurnDetectionConfig = Field(..., description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class AzureOpenAIRealtime(AzureOpenAIRealtimeOptions, BaseMLLM):
@@ -127,6 +239,7 @@ class AzureOpenAIRealtime(AzureOpenAIRealtimeOptions, BaseMLLM):
         if self.failure_message is not None:
             config["failure_message"] = self.failure_message
         config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
         return config
 
 
@@ -151,6 +264,8 @@ class XaiGrokOptions(BaseModel):
     params: Optional[Dict[str, Any]] = Field(default=None, description="Additional xAI parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class XaiGrok(XaiGrokOptions, BaseMLLM):
@@ -184,6 +299,7 @@ class XaiGrok(XaiGrokOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
 
@@ -210,6 +326,8 @@ class VertexAIOptions(BaseModel):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class VertexAI(VertexAIOptions, BaseMLLM):
@@ -253,6 +371,7 @@ class VertexAI(VertexAIOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
 
@@ -277,6 +396,8 @@ class GeminiLiveOptions(BaseModel):
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional parameters")
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None, description="MLLM turn detection configuration")
     failure_message: Optional[str] = Field(default=None, description="Message played on failure")
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
+    tools: Optional[List[MllmToolInput]] = Field(default=None)
 
 
 class GeminiLive(GeminiLiveOptions, BaseMLLM):
@@ -318,5 +439,6 @@ class GeminiLive(GeminiLiveOptions, BaseMLLM):
             config["failure_message"] = self.failure_message
         if self.turn_detection is not None:
             config["turn_detection"] = self.turn_detection
+        _add_tool_configs(config, self.mcp_servers, self.tools)
 
         return config
