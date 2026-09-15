@@ -29,10 +29,13 @@ agent_id = session.start()
 This session uses the preview base URL and sends `agora-feature: live-models`. A session using `GeminiSTT` uses the
 client's normal GA regional endpoint without that header.
 
-Use `GeminiWalkieTalkie(api_key=...)` or `GeminiCleverChatter(api_key=..., thinking_level="medium")` with
-`with_mllm` for Google's preview MLLMs. Their sessions use the same preview host and send
-`agora-feature: gemini-live`. An agent-level greeting is translated to Gemini's `greeting` wire field;
-GPT Live retains `greeting_message`.
+Use the single `GeminiMLLM(api_key=..., model=...)` class with `with_mllm`.
+The current model IDs are `walkie-talkie` and `clever-chatter`; the launch IDs
+are `models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`.
+Set `thinking_level="medium"` for extended thinking. `GeminiMLLM` sends it
+only for `clever-chatter` or the extended-thinking ID. The working walkie
+codename remains the default until Google activates the launch IDs. Gemini
+sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.
 
 ## Session-scoped routing
 
@@ -43,7 +46,7 @@ receives private generated clients configured with:
 - `agora-feature` as the feature gate header.
 - All custom headers, authentication settings, timeouts, and the supplied `httpx` client from the original client.
 
-The gate header is applied after caller-provided headers, so it cannot be accidentally blanked or replaced. It is
+The gate header is applied after caller-provided and per-call headers, so it cannot be accidentally blanked or replaced. It is
 kept on every request made through that session. Production sessions created from the same client continue using
 the regional production endpoint.
 

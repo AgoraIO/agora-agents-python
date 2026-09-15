@@ -14,7 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 from ..vendors.base import BaseMLLM, ensure_mcp_transport
 from ..vendors.mllm import MllmTurnDetectionConfig
 from ..vendors.stt import GeminiSTT, GeminiSTTModels
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, field_validator
 from typing_extensions import Literal
 
 _OpenAIApiKey = Field(..., min_length=1, description="OpenAI API key")
@@ -142,13 +142,12 @@ class OpenAIGPTLive(BaseMLLM):
 
 __all__ = [
     "OpenAIGPTLive",
-    "GEMINI_PREVIEW_MLLM_DEFAULTS",
+    "GEMINI_MLLM_DEFAULT_MODEL",
     "GEMINI_PREVIEW_MLLM_URL",
     "GEMINI_THINKING_LEVELS",
-    "GeminiCleverChatter",
-    "GeminiPreviewMllmModels",
+    "GeminiMLLM",
+    "GeminiMLLMModels",
     "GeminiThinkingLevel",
-    "GeminiWalkieTalkie",
     "GeminiSTTModels",
     "GeminiSTT",
 ]
@@ -160,37 +159,26 @@ __all__ = [
 _ApiKey = Field(..., min_length=1, description="Google API key")
 
 
-class GeminiPreviewMllmModels:
+class GeminiMLLMModels:
     """Preview MLLM model names.
 
-    Google is renaming these from codenames to conventional model IDs
-    (``walkie-talkie`` -> ``gemini-3.5-live``, ``clever-chatter`` ->
-    ``gemini-3.5-live-thinking``). Both spellings are listed because both are
-    accepted during the rollout; see :data:`GEMINI_PREVIEW_MLLM_DEFAULTS` for
-    which one the vendor classes send.
+    The codenames remain defaults until the new Google IDs launch. The
+    ``models/`` prefix is part of each 3.8 model ID.
     """
 
     #: Codename for the low-latency model. Currently the default.
     WALKIE_TALKIE = "walkie-talkie"
-    #: Codename for the reasoning model. Currently the default.
+    #: Codename for the reasoning model.
     CLEVER_CHATTER = "clever-chatter"
-    #: Post-rename name for :class:`GeminiWalkieTalkie`.
-    LIVE_35 = "gemini-3.5-live"
-    #: Post-rename name for :class:`GeminiCleverChatter`.
-    LIVE_35_THINKING = "gemini-3.5-live-thinking"
+    LIVE_38 = "models/gemini-3.8-live"
+    LIVE_38_EXTENDED_THINKING = "models/gemini-3.8-live-extended-thinking"
 
 
-#: The model name each preview MLLM class sends by default.
+#: The model name the Gemini MLLM sends by default.
 #:
-#: Still the codenames: as of 2026-08-19 the renamed IDs are propagating through
-#: Google's fleet and are not live everywhere, while the codenames work. When
-#: Google confirms the rename has landed, point these two entries at ``LIVE_35``
-#: / ``LIVE_35_THINKING`` — that is the whole cutover. Callers who need the new
-#: names sooner can pass ``model=`` per instance.
-GEMINI_PREVIEW_MLLM_DEFAULTS = {
-    "walkie_talkie": GeminiPreviewMllmModels.WALKIE_TALKIE,
-    "clever_chatter": GeminiPreviewMllmModels.CLEVER_CHATTER,
-}
+#: Keep the working codenames until Google activates the 3.8 IDs. Callers can
+#: select either new ID using ``model=`` without waiting for an SDK release.
+GEMINI_MLLM_DEFAULT_MODEL = GeminiMLLMModels.WALKIE_TALKIE
 
 
 GEMINI_THINKING_LEVELS = ("low", "medium", "high")
@@ -201,8 +189,8 @@ GeminiThinkingLevel = Literal["low", "medium", "high"]
 GEMINI_PREVIEW_MLLM_URL = "https://generativelanguage.googleapis.com"
 
 
-class _GeminiPreviewMLLM(BaseMLLM):
-    """Shared envelope for the preview Gemini MLLMs.
+class GeminiMLLM(BaseMLLM):
+    """Gemini preview MLLM for current codenames and the 3.8 launch IDs.
 
     Differs from the production ``GeminiLive`` in two ways the preview
     gateway requires: ``params.api_key`` is repeated inside ``params``, and
@@ -214,6 +202,9 @@ class _GeminiPreviewMLLM(BaseMLLM):
 
     api_key: str = _ApiKey
     model: Optional[str] = Field(default=None, description="Override the preview model name")
+    thinking_level: Optional[GeminiThinkingLevel] = Field(
+        default=None, description="Reasoning budget for clever-chatter and extended thinking"
+    )
     voice: Optional[str] = Field(default=None, description="Voice name (e.g., Puck)")
     language_codes: Optional[List[str]] = Field(
         default=None,
@@ -245,15 +236,18 @@ class _GeminiPreviewMLLM(BaseMLLM):
     additional_params: Optional[Dict[str, Any]] = Field(default=None)
     turn_detection: Optional[MllmTurnDetectionConfig] = Field(default=None)
 
-    #: Set by each concrete subclass.
-    _default_model: str = ""
+    _default_model: str = GEMINI_MLLM_DEFAULT_MODEL
 
-    def _model_params(self) -> Dict[str, Any]:
-        """Model-specific params merged after ``voice``."""
-        return {}
+    @field_validator("api_key")
+    @classmethod
+    def _validate_api_key(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("GeminiMLLM requires api_key")
+        return value
 
     def to_config(self) -> Dict[str, Any]:
-        model = self.model if self.model is not None else self._default_model
+        model = (self.model or "").strip() or self._default_model
         voice = self.voice if self.voice is not None else "Puck"
         url = self.url if self.url is not None else GEMINI_PREVIEW_MLLM_URL
 
@@ -261,7 +255,11 @@ class _GeminiPreviewMLLM(BaseMLLM):
         params["api_key"] = self.api_key
         params["model"] = model
         params["voice"] = voice
-        params.update(self._model_params())
+        if model in (GeminiMLLMModels.CLEVER_CHATTER, GeminiMLLMModels.LIVE_38_EXTENDED_THINKING):
+            if self.thinking_level is not None:
+                params["thinking_level"] = self.thinking_level
+        else:
+            params.pop("thinking_level", None)
         # Plural array, and omitted when unset. The singular ``params.language``
         # belongs to xAI Grok in the Agora schema, and the production Gemini Live
         # provider sends no language field at all.
@@ -303,26 +301,3 @@ class _GeminiPreviewMLLM(BaseMLLM):
             config["turn_detection"] = self.turn_detection
 
         return config
-
-
-class GeminiWalkieTalkie(_GeminiPreviewMLLM):
-    """Gemini walkie-talkie MLLM (preview)."""
-
-    _default_model: str = GEMINI_PREVIEW_MLLM_DEFAULTS["walkie_talkie"]
-
-
-class GeminiCleverChatter(_GeminiPreviewMLLM):
-    """Gemini clever-chatter MLLM (preview).
-
-    ``thinking_level`` is exclusive to this model — it is a separate class
-    rather than a flag on the walkie-talkie so the distinction is structural.
-    """
-
-    thinking_level: Optional[GeminiThinkingLevel] = Field(
-        default=None, description="Reasoning budget: low, medium, or high"
-    )
-
-    _default_model: str = GEMINI_PREVIEW_MLLM_DEFAULTS["clever_chatter"]
-
-    def _model_params(self) -> Dict[str, Any]:
-        return {} if self.thinking_level is None else {"thinking_level": self.thinking_level}

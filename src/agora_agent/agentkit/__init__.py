@@ -154,7 +154,7 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
-from .preview import OpenAIGPTLive, GeminiCleverChatter, GeminiWalkieTalkie, GeminiPreviewMllmModels, GEMINI_PREVIEW_MLLM_DEFAULTS
+from .preview import OpenAIGPTLive, GeminiMLLM, GeminiMLLMModels, GEMINI_MLLM_DEFAULT_MODEL
 from .vendors import (
     AkoolAvatar,
     AmazonBedrock,
@@ -391,10 +391,9 @@ __all__ = [
     "BaseSTT",
     "BaseMLLM",
     "OpenAIGPTLive",
-    "GeminiWalkieTalkie",
-    "GeminiCleverChatter",
-    "GeminiPreviewMllmModels",
-    "GEMINI_PREVIEW_MLLM_DEFAULTS",
+    "GeminiMLLM",
+    "GeminiMLLMModels",
+    "GEMINI_MLLM_DEFAULT_MODEL",
     "BaseAvatar",
     "SampleRate",
     "ElevenLabsSampleRate",
