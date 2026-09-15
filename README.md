@@ -207,16 +207,16 @@ session = agent.create_session(
 session.start()
 ```
 
-For Gemini 3.8 Live Extended Thinking, use the same single `GeminiMLLM` class as the regular Live model:
+For Gemini 3.8 Live Extended Thinking, use the same single `GeminiLive` class as the regular Live model:
 
 ```python
-from agora_agent import GeminiMLLM
+from agora_agent import GeminiLive
 
-gemini_agent = Agent(client=client).with_mllm(GeminiMLLM(
+gemini_agent = Agent(client=client).with_mllm(GeminiLive(
     api_key=os.environ["GOOGLE_API_KEY"],
     model="models/gemini-3.8-live-extended-thinking",
     thinking_level="medium",
-    greeting="Hello! Ready to chat.",
+    greeting_message="Hello! Ready to chat.",
 ))
 ```
 

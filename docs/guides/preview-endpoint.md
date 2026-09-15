@@ -29,10 +29,10 @@ agent_id = session.start()
 This session uses the preview base URL and sends `agora-feature: live-models`. A session using `GeminiSTT` uses the
 client's normal GA regional endpoint without that header.
 
-Use the single `GeminiMLLM(api_key=..., model=...)` class with `with_mllm`.
+Use the single `GeminiLive(api_key=..., model=...)` class with `with_mllm`.
 The model IDs are `models/gemini-3.8-live` and
 `models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default.
-Set `thinking_level="medium"` for extended thinking. `GeminiMLLM` sends it
+Set `thinking_level="medium"` for extended thinking. `GeminiLive` sends it
 only for the extended-thinking ID. The Gemini
 credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
 Gemini sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.

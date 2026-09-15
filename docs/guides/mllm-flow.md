@@ -95,7 +95,7 @@ asyncio.run(main())
 
 ## Gemini Live
 
-Gemini 3.8 Live and Gemini 3.8 Live Extended Thinking use the separate `GeminiMLLM` preview class, not `GeminiLive`. See the [Preview Endpoint guide](./preview-endpoint.md) for the public model IDs, thinking level, and feature header.
+Use `GeminiLive` for the existing Gemini Live models and both Gemini 3.8 models. The 3.8 IDs select the preview route automatically; Extended Thinking also accepts `thinking_level`. See the [Preview Endpoint guide](./preview-endpoint.md).
 
 Gemini Live uses a Google AI API key:
 

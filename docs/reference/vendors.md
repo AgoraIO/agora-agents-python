@@ -954,30 +954,20 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 | `params` | `Dict[str, Any]` | No | `None` | Additional Qwen Omni parameters |
 | `turn_detection` | `MllmTurnDetectionConfig` | No | `None` | MLLM turn detection configuration; overrides top-level `turn_detection` |
 
-### `GeminiMLLM` (preview)
-
-`GeminiMLLM(api_key=..., model=...)` configures either public Gemini 3.8 voice model. A session using this provider routes to the preview gateway with `agora-feature: gemini-live`. See [Preview Endpoint](../guides/preview-endpoint.md).
-
-| Parameter | Default / wire behavior |
-|---|---|
-| `api_key` | Required; sent once as `mllm.api_key`. |
-| `model` | Defaults to `models/gemini-3.8-live`; also accepts `models/gemini-3.8-live-extended-thinking`. |
-| `thinking_level` | `low`, `medium`, or `high`; sent as `mllm.params.thinking_level` only for Extended Thinking. |
-| `voice` | Defaults to `Puck`. |
-| `instructions` | System prompt in `mllm.params.instructions`. |
-| `greeting` | Initial utterance in `mllm.greeting`. |
-| `language_codes` | Optional language array in `mllm.params.language_codes`. |
-
 ### `GeminiLive`
+
+`GeminiLive` supports existing Gemini Live models and both public Gemini 3.8 voice models. The 3.8 IDs select the preview gateway with `agora-feature: gemini-live`; older model IDs keep the production route. See [Preview Endpoint](../guides/preview-endpoint.md).
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Google Gemini API key |
-| `model` | `str` | Yes | — | Gemini Live model name |
+| `model` | `str` | No | `models/gemini-3.8-live` | Gemini Live model name |
+| `thinking_level` | `str` | No | `None` | `low`, `medium`, or `high`; sent only for 3.8 Extended Thinking |
+| `language_codes` | `List[str]` | No | `None` | 3.8 language codes in `mllm.params.language_codes` |
 | `url` | `str` | No | `None` | Custom WebSocket URL |
 | `instructions` | `str` | No | `None` | System instructions |
 | `voice` | `str` | No | `None` | Voice name |
-| `greeting_message` | `str` | No | `None` | Greeting message |
+| `greeting_message` | `str` | No | `None` | Greeting message; sent as `mllm.greeting` for 3.8 models |
 | `failure_message` | `str` | No | `None` | Message played when the model call fails |
 | `input_modalities` | `List[str]` | No | `None` | Input modalities |
 | `output_modalities` | `List[str]` | No | `None` | Output modalities |

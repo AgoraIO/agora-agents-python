@@ -151,8 +151,8 @@ def _has_preview_mllm_envelope(mllm: typing.Mapping[str, typing.Any]) -> bool:
     """Whether a config carries the envelope the preview MLLM classes emit.
 
     That envelope is a top-level ``mllm.api_key`` plus a ``url`` on the Gemini
-    Developer API host. The production ``GeminiLive`` vendor uses a different
-    URL (an empty string or WebSocket endpoint).
+    Developer API host. ``GeminiLive`` configs for older model IDs use a
+    different URL (an empty string or WebSocket endpoint).
 
     This is the second recognition path, and it exists because keying only off
     :data:`_PREVIEW_MLLM_MODELS` makes an unrecognised model name fail silently:
