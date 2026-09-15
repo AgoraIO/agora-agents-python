@@ -34,8 +34,9 @@ The current model IDs are `walkie-talkie` and `clever-chatter`; the launch IDs
 are `models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`.
 Set `thinking_level="medium"` for extended thinking. `GeminiMLLM` sends it
 only for `clever-chatter` or the extended-thinking ID. The working walkie
-codename remains the default until Google activates the launch IDs. Gemini
-sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.
+codename remains the default until Google activates the launch IDs. The Gemini
+credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
+Gemini sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.
 
 ## Session-scoped routing
 

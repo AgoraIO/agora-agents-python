@@ -38,7 +38,9 @@ def test_one_gemini_preview_class_supports_codenames_and_38_ids():
     )
     for model, thinking in models:
         config = GeminiMLLM(api_key="test-key", model=model, thinking_level=thinking,
-                            additional_params={"thinking_level": "high"}).to_config()
+                            additional_params={"thinking_level": "high", "api_key": "ignored-key"}).to_config()
+        assert config["api_key"] == "test-key"
+        assert "api_key" not in config["params"]
         assert config["params"]["model"] == model
         expected_thinking = thinking if model in (GeminiMLLMModels.CLEVER_CHATTER, GeminiMLLMModels.LIVE_38_EXTENDED_THINKING) else None
         assert config["params"].get("thinking_level") == expected_thinking
@@ -53,3 +55,11 @@ def test_one_gemini_preview_class_supports_codenames_and_38_ids():
 def test_gemini_mllm_rejects_blank_api_key():
     with pytest.raises(ValidationError, match="GeminiMLLM requires api_key"):
         GeminiMLLM(api_key="  ")
+
+
+def test_unknown_gemini_model_keeps_preview_greeting_without_nested_api_key():
+    properties = {"mllm": GeminiMLLM(api_key="test-key", model="future-live-model").to_config()}
+    properties["mllm"]["greeting_message"] = "Hello"
+    apply_preview_shape(properties)
+    assert properties["mllm"]["greeting"] == "Hello"
+    assert "greeting_message" not in properties["mllm"]

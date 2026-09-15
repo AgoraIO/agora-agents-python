@@ -192,10 +192,8 @@ GEMINI_PREVIEW_MLLM_URL = "https://generativelanguage.googleapis.com"
 class GeminiMLLM(BaseMLLM):
     """Gemini preview MLLM for current codenames and the 3.8 launch IDs.
 
-    Differs from the production ``GeminiLive`` in two ways the preview
-    gateway requires: ``params.api_key`` is repeated inside ``params``, and
-    ``url`` defaults to the Gemini Developer API host rather than a WebSocket
-    endpoint.
+    The API key is sent as ``mllm.api_key``. The preview ``url`` defaults to
+    the Gemini Developer API host rather than a WebSocket endpoint.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -252,7 +250,7 @@ class GeminiMLLM(BaseMLLM):
         url = self.url if self.url is not None else GEMINI_PREVIEW_MLLM_URL
 
         params: Dict[str, Any] = dict(self.additional_params or {})
-        params["api_key"] = self.api_key
+        params.pop("api_key", None)
         params["model"] = model
         params["voice"] = voice
         if model in (GeminiMLLMModels.CLEVER_CHATTER, GeminiMLLMModels.LIVE_38_EXTENDED_THINKING):

@@ -152,10 +152,9 @@ _PREVIEW_MLLM_MODELS = frozenset(
 def _has_preview_mllm_envelope(mllm: typing.Mapping[str, typing.Any]) -> bool:
     """Whether a config carries the envelope the preview MLLM classes emit.
 
-    That envelope is the API key repeated inside ``params`` plus a ``url`` on the
-    Gemini Developer API host. The production ``GeminiLive`` vendor emits
-    neither — it leaves ``params.api_key`` unset and defaults ``url`` to ``""``
-    or a WebSocket endpoint.
+    That envelope is a top-level ``mllm.api_key`` plus a ``url`` on the Gemini
+    Developer API host. The production ``GeminiLive`` vendor uses a different
+    URL (an empty string or WebSocket endpoint).
 
     This is the second recognition path, and it exists because keying only off
     :data:`_PREVIEW_MLLM_MODELS` makes an unrecognised model name fail silently:
@@ -165,8 +164,7 @@ def _has_preview_mllm_envelope(mllm: typing.Mapping[str, typing.Any]) -> bool:
     following this SDK's own advice to override ``model`` when Google renames
     one ahead of a release, so the failure has to not be silent.
     """
-    params = mllm.get("params")
-    api_key = params.get("api_key") if isinstance(params, dict) else None
+    api_key = mllm.get("api_key")
     url = mllm.get("url")
     return isinstance(api_key, str) and isinstance(url, str) and url.startswith(GEMINI_PREVIEW_MLLM_URL)
 
