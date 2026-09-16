@@ -43,7 +43,7 @@ from .presets import (
     normalize_preset_input,
     resolve_session_presets,
 )
-from .preview.client import create_preview_session_clients, required_preview_features
+from .preview.client import apply_preview_shape, create_preview_session_clients, required_preview_features
 from .token import _parse_numeric_uid, generate_convo_ai_token
 
 
@@ -185,9 +185,7 @@ class _AgentSessionBase:
     def _bind_session_clients(self, features: typing.Sequence[str]) -> None:
         """Pin this session to production or preview without mutating its client."""
         if features:
-            self._agents, self._agent_management = create_preview_session_clients(
-                self._client, features
-            )
+            self._agents, self._agent_management = create_preview_session_clients(self._client, features)
             from .preview.client import PREVIEW_API_BASE_URL
 
             self._api_base_url = PREVIEW_API_BASE_URL
@@ -195,9 +193,7 @@ class _AgentSessionBase:
         self._agents = self._client.agents
         self._agent_management = getattr(self._client, "agent_management", None)
         self._api_base_url = (
-            self._client.get_current_url()
-            if hasattr(self._client, "get_current_url")
-            else None
+            self._client.get_current_url() if hasattr(self._client, "get_current_url") else None
         )
 
     # ------------------------------------------------------------------
@@ -636,6 +632,7 @@ class AgentSession(_AgentSessionBase):
                 properties,
             )
 
+            apply_preview_shape(resolved_properties)
             self._bind_session_clients(required_preview_features(resolved_properties))
 
             if self._debug:
@@ -1003,6 +1000,7 @@ class AsyncAgentSession(_AgentSessionBase):
                 properties,
             )
 
+            apply_preview_shape(resolved_properties)
             self._bind_session_clients(required_preview_features(resolved_properties))
 
             if self._debug:

@@ -154,6 +154,7 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
+from .preview import OpenAIGPTLive, GeminiLiveModels, GEMINI_MLLM_DEFAULT_MODEL
 from .vendors import (
     AkoolAvatar,
     AmazonBedrock,
@@ -180,6 +181,8 @@ from .vendors import (
     Dify,
     FishAudioTTS,
     Gemini,
+    GeminiSTT,
+    GeminiSTTModels,
     GeminiLive,
     GenericAvatar,
     GoogleSTT,
@@ -387,6 +390,9 @@ __all__ = [
     "BaseTTS",
     "BaseSTT",
     "BaseMLLM",
+    "OpenAIGPTLive",
+    "GeminiLiveModels",
+    "GEMINI_MLLM_DEFAULT_MODEL",
     "BaseAvatar",
     "SampleRate",
     "ElevenLabsSampleRate",
@@ -436,6 +442,8 @@ __all__ = [
     "MicrosoftSTT",
     "MicrosoftCNSTT",
     "OpenAISTT",
+    "GeminiSTT",
+    "GeminiSTTModels",
     "GoogleSTT",
     "AmazonSTT",
     "AssemblyAISTT",

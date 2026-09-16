@@ -1,7 +1,7 @@
 # Agora Conversational AI Python SDK
 
-[![fern shield](https://img.shields.io/badge/%F0%9F%8C%BF-Built%20with%20Fern-brightgreen)](https://buildwithfern.com?utm_source=github&utm_medium=github&utm_campaign=readme&utm_source=https%3A%2F%2Fgithub.com%2FAgoraIO-Conversational-AI%2Fagent-server-sdk-python)
-[![pypi](https://img.shields.io/pypi/v/agora-agents)](https://pypi.python.org/pypi/agora-agents)
+[![fern shield](https://img.shields.io/badge/%F0%9F%8C%BF-Built%20with%20Fern-brightgreen)](https://buildwithfern.com?utm_source=github&utm_medium=github&utm_campaign=readme&utm_source=https%3A%2F%2Fgithub.com%2FAgoraIO%2Fagora-agents-python)
+[![pypi](https://img.shields.io/pypi/v/agora-agents)](https://pypi.org/project/agora-agents/)
 
 The Agora Conversational AI SDK provides convenient access to the Agora Conversational AI APIs, 
 enabling you to build voice-powered AI agents with support for both cascading flows (ASR -> LLM -> TTS) 
@@ -181,6 +181,7 @@ Use `with_mllm()` for OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok. No S
 
 ```python
 from agora_agent import Agent, Agora, Area, OpenAIRealtime
+import os
 import time
 
 client = Agora(
@@ -214,7 +215,7 @@ API reference documentation is available [here](https://docs.agora.io/en/convers
 
 ## Reference
 
-A full reference for this library is available [here](https://github.com/AgoraIO-Conversational-AI/agent-server-sdk-python/blob/HEAD/./reference.md).
+A full reference for this library is available [here](https://github.com/AgoraIO/agora-agents-python/blob/HEAD/reference.md).
 
 ## Exception Handling
 

@@ -3,5 +3,3 @@
 __pycache__/
 dist/
 poetry.toml
-.venv/
-docs/superpowers/

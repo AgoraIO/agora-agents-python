@@ -173,7 +173,7 @@ When `enable_rtm=True`, AgentKit defaults `parameters.data_channel` to `"rtm"` u
 
 ### `with_tools(enabled: bool = True) -> Agent`
 
-Enable or disable MCP tool invocation by setting `advanced_features.enable_tools`.
+Enable or disable MCP and inline REST tool invocation by setting `advanced_features.enable_tools`.
 
 ### `with_parameters(parameters: SessionParams) -> Agent`
 

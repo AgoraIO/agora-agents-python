@@ -42,6 +42,10 @@ _SENSITIVE_BODY_KEYS = frozenset(
         "agora_token",
         "agoratoken",
         "authorization",
+        "headers",
+        "x-api-key",
+        "cookie",
+        "set-cookie",
         "appid",
         "app_id",
         "agora_appid",
@@ -58,15 +62,37 @@ def _is_sensitive_key(key: str) -> bool:
     return key.lower() in _SENSITIVE_BODY_KEYS
 
 
+def _is_sensitive_header_key(key: str) -> bool:
+    key = key.lower()
+    return _is_sensitive_key(key) or any(
+        marker in key
+        for marker in ("authorization", "api-key", "api_key", "token", "secret", "credential", "cookie")
+    )
+
+
+def redact_headers(headers: typing.Mapping[str, str]) -> typing.Dict[str, str]:
+    """Copy headers while removing credentials from values."""
+    result: typing.Dict[str, str] = {}
+    for key, value in headers.items():
+        if not value or not _is_sensitive_header_key(key):
+            result[key] = value
+        elif key.lower() == "authorization":
+            scheme = value.split(maxsplit=1)[0].split("=", 1)[0]
+            result[key] = f"{scheme} {REDACTED}" if scheme and scheme != value else REDACTED
+        else:
+            result[key] = REDACTED
+    return result
+
+
 def _redact_query_keys(value: str) -> str:
-    """Strip Gemini-style ``key=`` query values from URL strings."""
+    """Strip credential query values from URL strings."""
     parts = urlsplit(value)
     if not parts.scheme or not parts.query:
         return value
     pairs = []
     changed = False
     for key, item in parse_qsl(parts.query, keep_blank_values=True):
-        if key.lower() == "key" and item:
+        if _is_sensitive_key(key) and item:
             pairs.append((key, REDACTED))
             changed = True
         else:
@@ -74,6 +100,22 @@ def _redact_query_keys(value: str) -> str:
     if not changed:
         return value
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(pairs), parts.fragment))
+
+
+def redact_url(value: str) -> str:
+    """Redact credentials in query parameters and project IDs in API paths."""
+    parts = urlsplit(_redact_query_keys(value))
+    segments = parts.path.split("/")
+    for index, segment in enumerate(segments):
+        if segment != "projects":
+            continue
+        project_index = index + 1
+        if project_index < len(segments) and segments[project_index] == "apps":
+            project_index += 1
+        if project_index < len(segments) and segments[project_index]:
+            segments[project_index] = REDACTED
+        break
+    return urlunsplit((parts.scheme, parts.netloc, "/".join(segments), parts.query, parts.fragment))
 
 
 def redact_secrets(value: typing.Any) -> typing.Any:
@@ -101,4 +143,4 @@ def redact_secrets(value: typing.Any) -> typing.Any:
     return value
 
 
-__all__ = ["REDACTED", "redact_secrets"]
+__all__ = ["REDACTED", "redact_headers", "redact_secrets", "redact_url"]
