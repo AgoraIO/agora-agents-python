@@ -18,7 +18,6 @@ import httpx
 from ...agent_management.client import AgentManagementClient, AsyncAgentManagementClient
 from ...agents.client import AgentsClient, AsyncAgentsClient
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
-from .vendors import GEMINI_PREVIEW_MLLM_URL
 
 #: Base URL that serves the preview providers.
 PREVIEW_API_BASE_URL = "https://partner.ai.agora.io/preview/api/conversational-ai-agent"
@@ -38,7 +37,7 @@ class PreviewFeatures:
     vendors on the preview endpoint.
     """
 
-    #: Gemini preview MLLM gate. Gemini ASR uses the production endpoint.
+    #: Deprecated compatibility value. Gemini Live now uses the production endpoint.
     GEMINI_LIVE = "gemini-live"
     LIVE_MODELS = "live-models"
 
@@ -139,82 +138,8 @@ _PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]
 }
 
 
-_PREVIEW_MLLM_MODELS = frozenset(
-    {
-        "models/gemini-3.8-live",
-        "models/gemini-3.8-live-extended-thinking",
-    }
-)
-
-
-def _has_preview_mllm_envelope(mllm: typing.Mapping[str, typing.Any]) -> bool:
-    """Whether a config carries the envelope the preview MLLM classes emit.
-
-    That envelope is a top-level ``mllm.api_key`` plus a ``url`` on the Gemini
-    Developer API host. ``GeminiLive`` configs for older model IDs use a
-    different URL (an empty string or WebSocket endpoint).
-
-    This is the second recognition path, and it exists because keying only off
-    :data:`_PREVIEW_MLLM_MODELS` makes an unrecognised model name fail silently:
-    :func:`apply_preview_shape` would stop retargeting ``greeting_message``, the
-    greeting would land in a field these models ignore, and the agent would
-    simply never greet. A model name we have not listed yet is reachable by
-    following this SDK's own advice to override ``model`` when Google renames
-    one ahead of a release, so the failure has to not be silent.
-    """
-    api_key = mllm.get("api_key")
-    url = mllm.get("url")
-    return isinstance(api_key, str) and isinstance(url, str) and url.startswith(GEMINI_PREVIEW_MLLM_URL)
-
-
-def _is_preview_mllm(mllm: typing.Any) -> bool:
-    """Whether an MLLM config targets a preview model.
-
-    Recognised by model name, or by the wire envelope only the preview vendor
-    classes produce.
-    """
-    if not isinstance(mllm, dict) or mllm.get("vendor") != "gemini":
-        return False
-    params = mllm.get("params")
-    model = params.get("model") if isinstance(params, dict) else None
-    if isinstance(model, str) and model in _PREVIEW_MLLM_MODELS:
-        return True
-    return _has_preview_mllm_envelope(mllm)
-
-
-#: MLLM wire keys the preview route spells differently from the Agora schema,
-#: as production spelling -> preview spelling.
-#:
-#: ``failure_message`` is deliberately absent: it is an Agora engine feature
-#: rather than a Gemini one, so it keeps its schema spelling.
-_PREVIEW_MLLM_FIELD_RENAMES = {"greeting_message": "greeting"}
-
-
 def apply_preview_shape(properties: typing.MutableMapping[str, typing.Any]) -> None:
-    """Retarget MLLM fields the shared builder wrote with production spellings.
-
-    ``Agent`` fills ``mllm.greeting_message`` from an agent-level ``greeting``
-    whenever the vendor has not set that key — correct for every GA vendor, but
-    the preview Gemini models read ``greeting``, so the value would land in a
-    field they ignore and the agent would silently never greet.
-
-    Rather than teach the shared builder about preview providers, the
-    translation lives here and disappears with this package at GA. The vendor's
-    own value wins; the production-spelled one is the fallback, which also
-    migrates a hand-written ``greeting_message`` onto the preview key so an
-    existing config keeps working after only swapping the model.
-
-    Mutates ``properties["mllm"]`` in place. Safe because the builder hands this
-    a fresh copy of the MLLM config rather than the Agent's stored one.
-    """
-    mllm = properties.get("mllm")
-    if not isinstance(mllm, dict) or not _is_preview_mllm(mllm):
-        return
-    for production, preview in _PREVIEW_MLLM_FIELD_RENAMES.items():
-        if production not in mllm:
-            continue
-        value = mllm.pop(production)
-        mllm.setdefault(preview, value)
+    """Deprecated no-op retained for preview helper import compatibility."""
 
 
 def required_preview_features(properties: typing.Mapping[str, typing.Any]) -> typing.List[str]:
@@ -234,8 +159,6 @@ def required_preview_features(properties: typing.Mapping[str, typing.Any]) -> ty
         feature = vendors.get(vendor)
         if feature is not None and feature not in features:
             features.append(feature)
-    if _is_preview_mllm(properties.get("mllm")) and PreviewFeatures.GEMINI_LIVE not in features:
-        features.append(PreviewFeatures.GEMINI_LIVE)
     return features
 
 

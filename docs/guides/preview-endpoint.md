@@ -10,9 +10,8 @@ Some providers may be released through a preview gateway before their production
 and `AsyncAgentSession` detect registered preview providers from the resolved start request and route the entire
 session automatically.
 
-OpenAI GPT Live has graduated to the production gateway. Gemini STT has also graduated to production and uses the
-normal regional endpoint. Existing imports from `agora_agent.agentkit.preview` remain supported as compatibility
-aliases.
+OpenAI GPT Live, Gemini STT, and Gemini Live have graduated to the production gateway and use the normal regional
+endpoint. Existing imports from `agora_agent.agentkit.preview` remain supported as compatibility aliases.
 
 ```python
 from agora_agent import Agent, OpenAIGPTLive
@@ -25,16 +24,13 @@ session = (
 agent_id = session.start()
 ```
 
-Preview providers use the preview base URL and `agora-feature` gate. A session using `GeminiSTT` or GPT Live uses the
-client's normal GA regional endpoint without that header.
+Preview providers use the preview base URL and `agora-feature` gate. Sessions using `GeminiSTT`, `GeminiLive`, or GPT
+Live use the client's normal production regional endpoint without that header.
 
-Use the single `GeminiLive(api_key=..., model=...)` class with `with_mllm`.
-The model IDs are `models/gemini-3.8-live` and
-`models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default.
-Set `thinking_level="medium"` for extended thinking. `GeminiLive` sends it
-only for the extended-thinking ID. The Gemini
+Use the single production `GeminiLive(api_key=..., model=...)` class with `with_mllm`. The model IDs are
+`models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default. Set
+`thinking_level="medium"` for extended thinking. `GeminiLive` sends it only for the extended-thinking ID. The Gemini
 credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
-Gemini sessions send `agora-feature: gemini-live`; GPT Live uses the production gateway without a preview header.
 
 ## Session-scoped routing
 

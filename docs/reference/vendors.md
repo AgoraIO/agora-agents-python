@@ -1013,7 +1013,7 @@ CN Alibaba Cloud Qwen Omni Realtime vendor (`mllm.vendor`: `"qwen_omni"`). Impor
 
 ### `GeminiLive`
 
-`GeminiLive` supports existing Gemini Live models and both public Gemini 3.8 voice models. The 3.8 IDs select the preview gateway with `agora-feature: gemini-live`; older model IDs keep the production route. See [Preview Endpoint](../guides/preview-endpoint.md).
+`GeminiLive` supports existing Gemini Live models and both public Gemini 3.8 voice models on the production gateway. Preview-era imports remain available as compatibility aliases.
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|

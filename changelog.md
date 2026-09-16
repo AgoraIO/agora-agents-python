@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.10.0] — 2026-09-16
+
+### Changed
+
+- **Gemini Live production routing and compatibility** — Gemini 3.8 sessions now use the normal production gateway without a preview feature header. Existing imports from `agora_agent.agentkit.preview` remain compatible and resolve to the production `GeminiLive` implementation and model constants.
+
 ## [v2.9.0] — 2026-09-15
 
 ### Added

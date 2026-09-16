@@ -13,6 +13,19 @@ MllmTurnDetectionConfig = MllmTurnDetection
 MllmToolInput = Union[Dict[str, Any], LlmTool]
 
 
+class GeminiLiveModels:
+    """Supported Gemini Live model names."""
+
+    LIVE_38 = "models/gemini-3.8-live"
+    LIVE_38_EXTENDED_THINKING = "models/gemini-3.8-live-extended-thinking"
+
+
+GEMINI_MLLM_DEFAULT_MODEL = GeminiLiveModels.LIVE_38
+GEMINI_THINKING_LEVELS = ("low", "medium", "high")
+GeminiThinkingLevel = Literal["low", "medium", "high"]
+GEMINI_MLLM_URL = "https://generativelanguage.googleapis.com"
+
+
 class OpenAIGPTLive(BaseMLLM):
     """OpenAI GPT Live v3 MLLM configuration."""
 
@@ -381,7 +394,7 @@ class GeminiLiveOptions(BaseModel):
 
     api_key: str = Field(..., description="Google API key")
     model: str = Field(default="models/gemini-3.8-live", description="Gemini Live model name")
-    thinking_level: Optional[Literal["low", "medium", "high"]] = Field(
+    thinking_level: Optional[GeminiThinkingLevel] = Field(
         default=None, description="Reasoning budget for the 3.8 extended-thinking model"
     )
     language_codes: Optional[List[str]] = Field(default=None, description="Languages for Gemini 3.8")
@@ -414,19 +427,25 @@ class GeminiLiveOptions(BaseModel):
 
 class GeminiLive(GeminiLiveOptions, BaseMLLM):
     def to_config(self) -> Dict[str, Any]:
-        from ..preview.vendors import GeminiLiveModels, build_gemini_preview_config
-
-        selected_model = self.model.strip() or GeminiLiveModels.LIVE_38
-        if selected_model in (GeminiLiveModels.LIVE_38, GeminiLiveModels.LIVE_38_EXTENDED_THINKING):
-            return build_gemini_preview_config(self)
-
-        inner_params: Dict[str, Any] = {}
-        if self.additional_params is not None:
-            inner_params.update(self.additional_params)
+        selected_model = self.model.strip() or GEMINI_MLLM_DEFAULT_MODEL
+        inner_params: Dict[str, Any] = dict(self.additional_params or {})
         inner_params["model"] = selected_model
+        if selected_model in (GeminiLiveModels.LIVE_38, GeminiLiveModels.LIVE_38_EXTENDED_THINKING):
+            inner_params.pop("api_key", None)
+            inner_params["voice"] = self.voice if self.voice is not None else "Puck"
+            if self.language_codes is not None:
+                inner_params["language_codes"] = list(self.language_codes)
+            if selected_model == GeminiLiveModels.LIVE_38_EXTENDED_THINKING:
+                if self.thinking_level is not None:
+                    inner_params["thinking_level"] = self.thinking_level
+            else:
+                inner_params.pop("thinking_level", None)
         if self.instructions is not None:
             inner_params["instructions"] = self.instructions
-        if self.voice is not None:
+        if self.voice is not None and selected_model not in (
+            GeminiLiveModels.LIVE_38,
+            GeminiLiveModels.LIVE_38_EXTENDED_THINKING,
+        ):
             inner_params["voice"] = self.voice
         if self.affective_dialog is not None:
             inner_params["affective_dialog"] = self.affective_dialog
@@ -442,7 +461,11 @@ class GeminiLive(GeminiLiveOptions, BaseMLLM):
         config: Dict[str, Any] = {
             "vendor": "gemini",
             "api_key": self.api_key,
-            "url": self.url if self.url is not None else "",
+            "url": self.url if self.url is not None else (
+                GEMINI_MLLM_URL
+                if selected_model in (GeminiLiveModels.LIVE_38, GeminiLiveModels.LIVE_38_EXTENDED_THINKING)
+                else ""
+            ),
             "params": inner_params,
         }
         if self.greeting_message is not None:
