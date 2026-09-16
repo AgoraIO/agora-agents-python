@@ -9,12 +9,18 @@ from .client import (
     PREVIEW_FEATURE_HEADER,
     PreviewFeature,
     PreviewFeatures,
+    apply_preview_shape,
     create_preview_session_clients,
     required_preview_features,
 )
 from .vendors import (
+    GEMINI_MLLM_DEFAULT_MODEL,
+    GEMINI_PREVIEW_MLLM_URL,
+    GEMINI_THINKING_LEVELS,
+    GeminiLiveModels,
     GeminiSTT,
     GeminiSTTModels,
+    GeminiThinkingLevel,
     OpenAIGPTLive,
 )
 
@@ -24,6 +30,12 @@ __all__ = [
     "GeminiSTTModels",
     "GeminiSTT",
     "OpenAIGPTLive",
+    "GEMINI_MLLM_DEFAULT_MODEL",
+    "GEMINI_PREVIEW_MLLM_URL",
+    "GEMINI_THINKING_LEVELS",
+    "GeminiLiveModels",
+    "GeminiThinkingLevel",
+    "apply_preview_shape",
     "PreviewFeature",
     "PreviewFeatures",
     "create_preview_session_clients",

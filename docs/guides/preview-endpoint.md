@@ -28,6 +28,14 @@ agent_id = session.start()
 Preview providers use the preview base URL and `agora-feature` gate. A session using `GeminiSTT` or GPT Live uses the
 client's normal GA regional endpoint without that header.
 
+Use the single `GeminiLive(api_key=..., model=...)` class with `with_mllm`.
+The model IDs are `models/gemini-3.8-live` and
+`models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default.
+Set `thinking_level="medium"` for extended thinking. `GeminiLive` sends it
+only for the extended-thinking ID. The Gemini
+credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
+Gemini sessions send `agora-feature: gemini-live`; GPT Live uses the production gateway without a preview header.
+
 ## Session-scoped routing
 
 Preview routing does not mutate the bound `Agora` or `AsyncAgora` client. A session that needs a preview feature
@@ -37,7 +45,7 @@ receives private generated clients configured with:
 - `agora-feature` as the feature gate header.
 - All custom headers, authentication settings, timeouts, and the supplied `httpx` client from the original client.
 
-The gate header is applied after caller-provided headers, so it cannot be accidentally blanked or replaced. It is
+The gate header is applied after caller-provided and per-call headers, so it cannot be accidentally blanked or replaced. It is
 kept on every request made through that session. Production sessions created from the same client continue using
 the regional production endpoint.
 

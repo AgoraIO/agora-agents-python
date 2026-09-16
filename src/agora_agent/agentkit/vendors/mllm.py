@@ -6,7 +6,7 @@ from urllib.parse import urlsplit, urlunsplit
 from ...types.llm_tool import LlmTool
 from ...types.mllm_turn_detection import MllmTurnDetection
 from .base import BaseMLLM, McpServerInput, dump_config_models, ensure_mcp_transport
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import Literal
 
 MllmTurnDetectionConfig = MllmTurnDetection
@@ -380,8 +380,12 @@ class GeminiLiveOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     api_key: str = Field(..., description="Google API key")
-    model: str = Field(..., description="Gemini Live model name")
-    url: Optional[str] = Field(default=None, description="WebSocket URL")
+    model: str = Field(default="models/gemini-3.8-live", description="Gemini Live model name")
+    thinking_level: Optional[Literal["low", "medium", "high"]] = Field(
+        default=None, description="Reasoning budget for the 3.8 extended-thinking model"
+    )
+    language_codes: Optional[List[str]] = Field(default=None, description="Languages for Gemini 3.8")
+    url: Optional[str] = Field(default=None, description="Endpoint override; Gemini 3.8 defaults to the Developer API host")
     instructions: Optional[str] = Field(default=None, description="System instructions")
     voice: Optional[str] = Field(default=None, description="Voice name")
     affective_dialog: Optional[bool] = Field(default=None, description="Enable affective dialog")
@@ -399,13 +403,27 @@ class GeminiLiveOptions(BaseModel):
     mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[MllmToolInput]] = Field(default=None)
 
+    @field_validator("api_key")
+    @classmethod
+    def _validate_api_key(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("GeminiLive requires api_key")
+        return value
+
 
 class GeminiLive(GeminiLiveOptions, BaseMLLM):
     def to_config(self) -> Dict[str, Any]:
+        from ..preview.vendors import GeminiLiveModels, build_gemini_preview_config
+
+        selected_model = self.model.strip() or GeminiLiveModels.LIVE_38
+        if selected_model in (GeminiLiveModels.LIVE_38, GeminiLiveModels.LIVE_38_EXTENDED_THINKING):
+            return build_gemini_preview_config(self)
+
         inner_params: Dict[str, Any] = {}
         if self.additional_params is not None:
             inner_params.update(self.additional_params)
-        inner_params["model"] = self.model
+        inner_params["model"] = selected_model
         if self.instructions is not None:
             inner_params["instructions"] = self.instructions
         if self.voice is not None:

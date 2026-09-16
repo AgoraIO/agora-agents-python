@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.9.0] — 2026-09-15
+
+### Added
+
+- **Gemini 3.8 Live MLLM** — `GeminiLive` now supports `models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`. The standard Live model is the default; Extended Thinking accepts `low`, `medium`, or `high` through `thinking_level`.
+
+### Changed
+
+- **Gemini Live routing and credentials** — Gemini 3.8 sessions use the preview gateway with `agora-feature: gemini-live`, send the Google credential as top-level `mllm.api_key`, and keep older Gemini Live model IDs on the production route.
+- **Gemini Live documentation** — The vendor reference and MLLM guide document the existing `GeminiLive` API for both 3.8 models and the Extended Thinking level.
+
 ## [v2.8.1] — 2026-09-11
 
 ### Changed

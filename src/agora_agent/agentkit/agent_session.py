@@ -43,7 +43,7 @@ from .presets import (
     normalize_preset_input,
     resolve_session_presets,
 )
-from .preview.client import create_preview_session_clients, required_preview_features
+from .preview.client import apply_preview_shape, create_preview_session_clients, required_preview_features
 from .token import _parse_numeric_uid, generate_convo_ai_token
 
 
@@ -632,6 +632,7 @@ class AgentSession(_AgentSessionBase):
                 properties,
             )
 
+            apply_preview_shape(resolved_properties)
             self._bind_session_clients(required_preview_features(resolved_properties))
 
             if self._debug:
@@ -999,6 +1000,7 @@ class AsyncAgentSession(_AgentSessionBase):
                 properties,
             )
 
+            apply_preview_shape(resolved_properties)
             self._bind_session_clients(required_preview_features(resolved_properties))
 
             if self._debug:

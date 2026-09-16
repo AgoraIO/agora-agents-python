@@ -181,6 +181,7 @@ Use `with_mllm()` for OpenAI Realtime, Gemini Live, Vertex AI, or xAI Grok. No S
 
 ```python
 from agora_agent import Agent, Agora, Area, OpenAIRealtime
+import os
 import time
 
 client = Agora(
