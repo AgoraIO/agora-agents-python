@@ -228,7 +228,7 @@ filler_words = FillerWordsConfig(
 agent = agent.with_filler_words(filler_words)
 ```
 
-`generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults.
+`generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults. Set `context_message_limit` to cap the number of recent messages and `history_character_limit` to cap the number of conversation-history characters passed to the filler-word model.
 
 ## `create_session()`
 

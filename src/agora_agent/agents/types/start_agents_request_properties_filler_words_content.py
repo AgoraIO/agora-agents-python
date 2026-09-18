@@ -25,7 +25,7 @@ class StartAgentsRequestPropertiesFillerWordsContent(UncheckedBaseModel):
     """
     Filler word content mode:
     - `static`: Static filler words. Uses a predefined list of filler words.
-    - `generated`: LLM-generated filler words based on the last user message.
+    - `generated`: LLM-generated filler words based on recent conversation context.
     """
 
     static_config: typing.Optional[StartAgentsRequestPropertiesFillerWordsContentStaticConfig] = pydantic.Field(

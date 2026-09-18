@@ -16,7 +16,7 @@ from .llm import (
     OpenAI,
     VertexAILLM,
 )
-from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
+from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIGPTLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
     AmazonSTT,
     AresSTT,
@@ -27,6 +27,7 @@ from .stt import (
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
+    SmallestAISTT,
     SpeechmaticsSTT,
     XaiSTT,
 )
@@ -47,6 +48,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
     XaiTTS,
 )
@@ -81,6 +83,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "assemblyai": AssemblyAISTT,
         "speechmatics": SpeechmaticsSTT,
         "sarvam": SarvamSTT,
+        "smallestai": SmallestAISTT,
         "xai": XaiSTT,
     },
     llm={
@@ -96,6 +99,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
     },
     mllm={
         "openai": OpenAIRealtime,
+        "openai_gpt_live": OpenAIGPTLive,
         "azure": AzureOpenAIRealtime,
         "gemini": GeminiLive,
         "vertexai": VertexAI,
@@ -114,6 +118,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "google": GoogleTTS,
         "amazon": AmazonTTS,
         "sarvam": SarvamTTS,
+        "smallestai": SmallestAITTS,
         "generic": GenericTTS,
         "xai": XaiTTS,
         "deepgram": DeepgramTTS,

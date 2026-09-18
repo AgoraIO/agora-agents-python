@@ -73,6 +73,7 @@ from ..types.llm_tool_execution import LlmToolExecution
 from ..types.llm_tool_function import LlmToolFunction
 from ..types.llm_tool_function_parameters import LlmToolFunctionParameters
 from ..types.llm_tool_server import LlmToolServer
+from ..types.mcp_server import McpServer
 from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
     AgentThinkAgentManagementRequestOnListeningAction,
 )
@@ -228,7 +229,9 @@ def _start_properties_from_mapping(
 # LLM sub-type aliases
 LlmGreetingConfigs = typing.Dict[str, typing.Any]
 LlmGreetingConfigsMode = typing.Any
-McpServersItem = typing.Dict[str, typing.Any]
+McpServerConfig = McpServer
+# Backward-compatible name retained for callers that used the old dict alias.
+McpServersItem = typing.Union[typing.Dict[str, typing.Any], McpServer]
 
 # Additional top-level config aliases
 GeofenceConfig = StartAgentsRequestPropertiesGeofence

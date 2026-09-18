@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.10.0] — 2026-09-18
+
+### Added
+
+- **Smallest AI speech providers** — Added the global `SmallestAISTT` and `SmallestAITTS` AgentKit vendors with typed options, provider-specific parameter serialization, and vendor catalog registration.
+- **MLLM tools and MCP servers** — Added inline REST `tools` and `mcp_servers` support to AgentKit MLLM vendors, including CN `QwenOmni`. Typed `McpServerConfig` values and dictionaries are supported; omitted MCP transports default to `streamable_http`, and tool execution still requires `Agent.with_tools()`.
+- **Filler-word context limits** — Generated filler-word configuration now accepts `context_message_limit` and `history_character_limit` to bound the conversation context used for generated filler text.
+
+### Changed
+
+- **OpenAI GPT Live production routing** — Moved `OpenAIGPTLive` into the production MLLM vendor catalog and removed its preview-only registration. Existing imports from `agora_agent.agentkit.preview` remain compatible and now use the production implementation.
+- **Gemini Live production routing and compatibility** — Gemini 3.8 sessions now use the normal production gateway without a preview feature header. Existing imports from `agora_agent.agentkit.preview` remain compatible and resolve to the production `GeminiLive` implementation and model constants.
+
 ## [v2.9.0] — 2026-09-15
 
 ### Added
@@ -19,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
+- **OpenAI GPT Live production routing** — moved `OpenAIGPTLive` to the production MLLM vendors and removed its preview registration. Existing imports from `agora_agent.agentkit.preview` remain compatible and now route to Production automatically.
 - **OpenAI GPT Live defaults** — `OpenAIGPTLive` now defaults to the shortened `gpt-live-1` model name and omits the alpha selector. Explicit `model` and `alpha_selector` options remain available for future preview contracts.
 
 ## [v2.8.0] — 2026-09-10

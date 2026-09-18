@@ -19,17 +19,27 @@ class StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig(UncheckedBas
         pydantic.Field(default=None)
     )
     """
-    OpenAI-compatible LLM provider used to generate filler words. Runs in parallel with the main business LLM and only uses the last user message as input.
+    OpenAI-compatible LLM provider used to generate filler words. Runs in parallel with the main business LLM.
     """
 
     prompt: typing.Optional[str] = pydantic.Field(default=None)
     """
-    System prompt used to generate a short filler phrase based on the last user message. The generated text should be conversational and must not answer the user's question.
+    System prompt used to generate a short filler phrase based on recent conversation context. The generated text should be conversational and must not answer the user's question.
     """
 
     fallback_strategy: typing.Optional[typing.Literal["static"]] = pydantic.Field(default=None)
     """
     Fallback strategy when generated filler text is not ready, fails, or returns empty text. Phase 1 only supports `static`.
+    """
+
+    context_message_limit: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Maximum number of recent conversation messages used to generate a filler word.
+    """
+
+    history_character_limit: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Maximum number of characters from conversation history used to generate a filler word.
     """
 
     if IS_PYDANTIC_V2:
