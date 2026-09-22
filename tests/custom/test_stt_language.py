@@ -110,13 +110,13 @@ def test_stt_vendor_params_match_documented_shapes() -> None:
         DeepgramSTT(model="enhanced")
 
     assert DeepgramSTT(api_key="dg-key", language="en").to_config()["params"] == {
-        "key": "dg-key",
+        "api_key": "dg-key",
         "language": "en",
     }
 
-    # api_key → wire key "key"; keyterm passes through unchanged
+    # api_key uses the generated Deepgram ASR field name; keyterm passes through unchanged
     assert DeepgramSTT(api_key="dg-key", model="nova-3", language="en", keyterm="term").to_config()["params"] == {
-        "key": "dg-key",
+        "api_key": "dg-key",
         "model": "nova-3",
         "language": "en",
         "keyterm": "term",
