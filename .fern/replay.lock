@@ -72,14 +72,20 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-current_generation: f7e9b5d993665a16b43eb1d7d442b118fbeffa4b
+  - commit_sha: c947c8e18fb5d4ba1e156caf3703f84d630c033c
+    tree_hash: fef739c337b8fcbcfe43233813e255c51551bad6
+    timestamp: 2026-09-22T07:54:15.761Z
+    cli_version: unknown
+    generator_versions:
+      fernapi/fern-python-sdk: 4.37.0
+current_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
 patches:
   - id: patch-13d8e068
     content_hash: sha256:97d879ab169016b9abaf1866427a8ebc45af608f69e063a07e5126c9613c329b
     original_commit: 13d8e0683ffa08bcfc9a381eb9604adf5abdbe0b
     original_message: "chore: ignore local venv and planning docs"
     original_author: plutoless <qianze.zhang@hotmail.com>
-    base_generation: f7e9b5d993665a16b43eb1d7d442b118fbeffa4b
+    base_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
     files:
       - .gitignore
     patch_content: |
@@ -108,7 +114,7 @@ patches:
     original_commit: a065088b4c45e2ca7e1bb91b1a899b8444800121
     original_message: "fix(vendors): send Speechmatics STT key instead of api_key"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: f7e9b5d993665a16b43eb1d7d442b118fbeffa4b
+    base_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
     files:
       - src/agora_agent/types/speechmatics_asr_params.py
     patch_content: |
@@ -251,7 +257,7 @@ patches:
     original_commit: 33a436b3bdb6f2a6fe4d8987b6536c2f0ac2862e
     original_message: "fix: address v2.8.0 release review findings"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: f7e9b5d993665a16b43eb1d7d442b118fbeffa4b
+    base_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
     files:
       - src/agora_agent/agents/types/start_agents_request_properties_advanced_features.py
     patch_content: |
@@ -312,3 +318,4 @@ patches:
                     frozen = True
                     smart_union = True
                     extra = pydantic.Extra.allow
+    user_owned: true
