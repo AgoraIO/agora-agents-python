@@ -47,6 +47,7 @@ from ..agents.types.start_agents_request_properties_parameters_silence_config_ac
 from ..agents.types.start_agents_request_properties_parameters_farewell_config import StartAgentsRequestPropertiesParametersFarewellConfig
 from ..agents.types.start_agents_request_properties_parameters_data_channel import StartAgentsRequestPropertiesParametersDataChannel
 from ..agents.types.start_agents_request_properties_parameters_audio_scenario import StartAgentsRequestPropertiesParametersAudioScenario
+from ..agents.types.start_agents_request_properties_parameters_speak import StartAgentsRequestPropertiesParametersSpeak
 from ..agents.types.start_agents_request_properties_interruption import StartAgentsRequestPropertiesInterruption
 from ..agents.types.start_agents_request_properties_interruption_mode import StartAgentsRequestPropertiesInterruptionMode
 from ..agents.types.start_agents_request_properties_geofence import StartAgentsRequestPropertiesGeofence
@@ -140,6 +141,8 @@ SilenceAction = StartAgentsRequestPropertiesParametersSilenceConfigAction
 FarewellConfig = StartAgentsRequestPropertiesParametersFarewellConfig
 ParametersDataChannel = StartAgentsRequestPropertiesParametersDataChannel
 ParametersAudioScenario = StartAgentsRequestPropertiesParametersAudioScenario
+SpeakConfig = StartAgentsRequestPropertiesParametersSpeak
+ParametersSpeak = SpeakConfig
 InterruptionConfig = StartAgentsRequestPropertiesInterruption
 InterruptionMode = StartAgentsRequestPropertiesInterruptionMode
 MllmTurnDetectionConfig = MllmTurnDetection
@@ -160,6 +163,7 @@ Labels = typing.Dict[str, str]
 
 
 class SessionParamsInput(typing_extensions.TypedDict, total=False):
+    speak: StartAgentsRequestPropertiesParametersSpeak
     silence_config: StartAgentsRequestPropertiesParametersSilenceConfig
     farewell_config: StartAgentsRequestPropertiesParametersFarewellConfig
     data_channel: StartAgentsRequestPropertiesParametersDataChannel

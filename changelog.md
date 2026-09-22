@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- **RTZR global STT** — Added the global-only `RtzrSTT` AgentKit vendor with typed credentials, recognition options, vendor catalog registration, and generated request serialization.
+- **Speak parameters** — Exposed the generated `SpeakConfig`/`ParametersSpeak` types through `SessionParams` so `parameters.speak.batch` can be configured with `Agent.with_parameters()`.
+
+### Changed
+
+- **Sarvam TTS v2.14 parameters** — Added `speech_sample_rate`, `enable_preprocessing`, `model`, and flattened `additional_params` support. The legacy `sample_rate` input remains supported as a deprecated alias.
+- **Generated SDK alignment** — Updated AgentKit exports, global vendor routing, request validation, avatar sample-rate handling, documentation, and feature-focused regression tests for the latest `engine-v2.14` generated API.
+
 ## [v2.10.0] — 2026-09-18
 
 ### Added

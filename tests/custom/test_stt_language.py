@@ -11,6 +11,7 @@ from agora_agent import (
     MicrosoftSTT,
     OpenAI,
     OpenAISTT,
+    RtzrSTT,
     SarvamSTT,
     SpeechmaticsSTT,
     TurnDetectionConfig,
@@ -185,6 +186,55 @@ def test_stt_vendor_params_match_documented_shapes() -> None:
     assert SarvamSTT(api_key="sarvam-key", language="en-IN").to_config()["params"] == {
         "api_key": "sarvam-key",
         "language": "en-IN",
+    }
+
+
+def test_rtzr_stt_serializes_generated_params() -> None:
+    assert RtzrSTT(
+        client_id="client-id",
+        client_secret="client-secret",
+        api_base="https://rtzr.example.com",
+        model_name="general",
+        language="ko",
+        sample_rate=16000,
+        encoding="pcm_s16le",
+        use_itn=True,
+        use_disfluency_filter=False,
+        use_profanity_filter=True,
+        use_punctuation=True,
+        keywords=["Agora"],
+    ).to_config() == {
+        "vendor": "rtzr",
+        "params": {
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "api_base": "https://rtzr.example.com",
+            "model_name": "general",
+            "language": "ko",
+            "sample_rate": 16000,
+            "encoding": "pcm_s16le",
+            "use_itn": True,
+            "use_disfluency_filter": False,
+            "use_profanity_filter": True,
+            "use_punctuation": True,
+            "keywords": ["Agora"],
+        },
+    }
+
+
+def test_rtzr_stt_reaches_generated_request_properties() -> None:
+    props = properties(
+        base_agent().with_stt(RtzrSTT(client_id="client-id", client_secret="client-secret", language="ko"))
+    )
+
+    assert props["asr"] == {
+        "vendor": "rtzr",
+        "language": "en-US",
+        "params": {
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "language": "ko",
+        },
     }
 
 
