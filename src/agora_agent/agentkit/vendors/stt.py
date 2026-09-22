@@ -97,7 +97,7 @@ class DeepgramSTT(DeepgramSTTOptions, BaseSTT):
         params: Dict[str, Any] = dict(self.additional_params or {})
 
         if self.api_key is not None:
-            params["key"] = self.api_key
+            params["api_key"] = self.api_key
         if self.model is not None:
             params["model"] = self.model
         if self.language is not None:
