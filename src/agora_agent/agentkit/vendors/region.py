@@ -28,6 +28,7 @@ GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
     "assemblyai",
     "speechmatics",
     "sarvam",
+    "rtzr",
     "smallestai",
     "xai",
 )

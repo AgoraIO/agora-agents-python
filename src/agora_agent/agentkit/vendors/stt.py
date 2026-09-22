@@ -115,6 +115,50 @@ class DeepgramSTT(DeepgramSTTOptions, BaseSTT):
         return config
 
 
+class RtzrSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: str = Field(..., min_length=1, description="RTZR client ID")
+    client_secret: str = Field(..., min_length=1, description="RTZR client secret")
+    api_base: Optional[str] = Field(default=None, description="RTZR API base URL")
+    model_name: Optional[str] = Field(default=None, description="RTZR recognition model name")
+    language: Optional[str] = Field(default=None, description="RTZR recognition language code")
+    sample_rate: Optional[int] = Field(default=None, gt=0, description="Input audio sample rate in Hz")
+    encoding: Optional[str] = Field(default=None, description="Input audio encoding")
+    use_itn: Optional[bool] = Field(default=None, description="Enable inverse text normalization")
+    use_disfluency_filter: Optional[bool] = Field(default=None, description="Filter disfluencies such as stuttering")
+    use_profanity_filter: Optional[bool] = Field(default=None, description="Filter profanity")
+    use_punctuation: Optional[bool] = Field(default=None, description="Add punctuation to recognized text")
+    keywords: Optional[List[str]] = Field(default=None, description="Keywords that improve recognition accuracy")
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+
+
+class RtzrSTT(RtzrSTTOptions, BaseSTT):
+    """RTZR streaming speech-to-text provider."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update({"client_id": self.client_id, "client_secret": self.client_secret})
+
+        for name in (
+            "api_base",
+            "model_name",
+            "language",
+            "sample_rate",
+            "encoding",
+            "use_itn",
+            "use_disfluency_filter",
+            "use_profanity_filter",
+            "use_punctuation",
+            "keywords",
+        ):
+            value = getattr(self, name)
+            if value is not None:
+                params[name] = value
+
+        return {"vendor": "rtzr", "params": params}
+
+
 class MicrosoftSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

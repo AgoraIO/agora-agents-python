@@ -1163,7 +1163,7 @@ def test_byok_sarvam_tts_params() -> None:
             key="sarvam-key",
             speaker="anushka",
             target_language_code="en-IN",
-            sample_rate=24000,
+            speech_sample_rate=24000,
         )
     )
     props = build_properties(agent, allow_missing={"asr", "llm"})
