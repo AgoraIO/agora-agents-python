@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.11.0] — 2026-09-23
+
+### Added
+
+- **Gemini TTS preview** — Added the Agent Kit Gemini TTS provider with the `gemini-3.8-flash-tts` model, default `Puck` voice, and optional natural-language `style`. Credentials serialize inside `tts.params`.
+- **Session-scoped TTS routing** — Gemini TTS selects the preview endpoint with `agora-feature: gemini-live` for the full session lifecycle, including raw TTS configs, without changing the shared client's production route. Gemini ASR, Gemini Live, and OpenAI GPT Live retain their production routing.
+
 ## [v2.10.0] — 2026-09-18
 
 ### Added

@@ -65,6 +65,8 @@ if typing.TYPE_CHECKING:
         MurfTTS,
         OpenAI,
         OpenAIRealtime,
+        GeminiTTS,
+        GeminiTTSModels,
         OpenAIGPTLive,
         OpenAISTT,
         OpenAITTS,
