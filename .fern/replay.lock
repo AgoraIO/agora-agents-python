@@ -79,6 +79,8 @@ generations:
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
 current_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
+forgotten_hashes:
+  - sha256:19124603cb0683406e750ffda0725786727208c0f7ddb481c256a0990b2c5585
 patches:
   - id: patch-13d8e068
     content_hash: sha256:97d879ab169016b9abaf1866427a8ebc45af608f69e063a07e5126c9613c329b
