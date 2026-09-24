@@ -37,7 +37,7 @@ class PreviewFeatures:
     vendors on the preview endpoint.
     """
 
-    #: Deprecated compatibility value. Gemini Live now uses the production endpoint.
+    #: Gemini TTS preview gate. Gemini ASR and Live use production.
     GEMINI_LIVE = "gemini-live"
     LIVE_MODELS = "live-models"
 
@@ -134,6 +134,7 @@ def create_preview_session_clients(
 #: ASR vendors served only by the preview endpoint.
 _PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]] = {
     "asr": {},
+    "tts": {"gemini": PreviewFeatures.GEMINI_LIVE},
     "mllm": {},
 }
 

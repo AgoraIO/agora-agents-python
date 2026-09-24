@@ -4,10 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [v2.10.0] — 2026-09-16
+## [v2.11.0] — 2026-09-23
+
+### Added
+
+- **Gemini TTS preview** — Added the Agent Kit Gemini TTS provider with the `gemini-3.8-flash-tts` model, default `Puck` voice, and optional natural-language `style`. Credentials serialize inside `tts.params`.
+- **Session-scoped TTS routing** — Gemini TTS selects the preview endpoint with `agora-feature: gemini-live` for the full session lifecycle, including raw TTS configs, without changing the shared client's production route. Gemini ASR, Gemini Live, and OpenAI GPT Live retain their production routing.
+
+## [v2.10.0] — 2026-09-18
+
+### Added
+
+- **Smallest AI speech providers** — Added the global `SmallestAISTT` and `SmallestAITTS` AgentKit vendors with typed options, provider-specific parameter serialization, and vendor catalog registration.
+- **MLLM tools and MCP servers** — Added inline REST `tools` and `mcp_servers` support to AgentKit MLLM vendors, including CN `QwenOmni`. Typed `McpServerConfig` values and dictionaries are supported; omitted MCP transports default to `streamable_http`, and tool execution still requires `Agent.with_tools()`.
+- **Filler-word context limits** — Generated filler-word configuration now accepts `context_message_limit` and `history_character_limit` to bound the conversation context used for generated filler text.
 
 ### Changed
 
+- **OpenAI GPT Live production routing** — Moved `OpenAIGPTLive` into the production MLLM vendor catalog and removed its preview-only registration. Existing imports from `agora_agent.agentkit.preview` remain compatible and now use the production implementation.
 - **Gemini Live production routing and compatibility** — Gemini 3.8 sessions now use the normal production gateway without a preview feature header. Existing imports from `agora_agent.agentkit.preview` remain compatible and resolve to the production `GeminiLive` implementation and model constants.
 
 ## [v2.9.0] — 2026-09-15
