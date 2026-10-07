@@ -52,6 +52,8 @@ if typing.TYPE_CHECKING:
         GeminiLiveModels,
         GEMINI_MLLM_DEFAULT_MODEL,
         GenericAvatar,
+        Tavus,
+        Protoface,
         GenericTTS,
         GoogleSTT,
         GoogleTTS,
