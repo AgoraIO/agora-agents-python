@@ -68,3 +68,33 @@ providers. `None` values are removed before the preview request is sent.
 Add routing tests for both synchronous and asynchronous sessions when registering a provider. Tests should verify
 the preview base URL, exact feature header, all lifecycle requests, caller-header precedence, and that the original
 client remains configured for production.
+
+## Gemini 3.8 Flash TTS preview
+
+`GeminiTTS` emits `tts.vendor = "gemini"` with `api_key`, `model`, `voice`,
+and optional `style` inside `tts.params`. It defaults to `gemini-3.8-flash-tts`
+and `Puck`. Model names are sent unchanged; there is no automatic fallback
+or model rewriting.
+Model strings remain open for preview rollout changes. Blank keys are rejected.
+
+AgentSession detects the TTS vendor from the resolved request body, including
+handwritten configs, and uses the existing preview host with
+`agora-feature: gemini-live` throughout the session lifecycle. Use the retained
+session for stop/say/interrupt; the shared client remains on its normal route.
+Gemini ASR alone still uses the production route. No sample-rate or avatar
+compatibility is assumed by this preview provider.
+
+```python
+from agora_agent.agentkit.preview import GeminiTTS, GeminiTTSModels
+
+agent.with_tts(GeminiTTS(
+    api_key=google_api_key,
+    model=GeminiTTSModels.FLASH_38,
+    voice="Puck",
+    style="warm and reassuring",
+))
+```
+
+Greeting audio for `gemini-3.8-flash-tts` was verified in the Next.js, Python,
+and Go demos on 2026-09-22. A successful start response alone does not
+establish that synthesis works; verify audio delivery when testing.

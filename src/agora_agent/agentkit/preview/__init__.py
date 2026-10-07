@@ -13,6 +13,7 @@ from .client import (
     create_preview_session_clients,
     required_preview_features,
 )
+from .gemini_tts import GeminiTTS, GeminiTTSModels
 from .vendors import (
     GEMINI_MLLM_DEFAULT_MODEL,
     GEMINI_PREVIEW_MLLM_URL,
@@ -26,6 +27,8 @@ from .vendors import (
 )
 
 __all__ = [
+    "GeminiTTS",
+    "GeminiTTSModels",
     "PREVIEW_API_BASE_URL",
     "PREVIEW_FEATURE_HEADER",
     "GeminiSTTModels",

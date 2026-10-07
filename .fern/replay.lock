@@ -72,20 +72,22 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-  - commit_sha: c947c8e18fb5d4ba1e156caf3703f84d630c033c
-    tree_hash: fef739c337b8fcbcfe43233813e255c51551bad6
-    timestamp: 2026-09-22T07:54:15.761Z
+  - commit_sha: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
+    tree_hash: 0315c486fe5d65313c32c2127af67aaa39f8acf7
+    timestamp: 2026-09-24T03:09:07.591Z
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-current_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
+current_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
+forgotten_hashes:
+  - sha256:19124603cb0683406e750ffda0725786727208c0f7ddb481c256a0990b2c5585
 patches:
   - id: patch-13d8e068
     content_hash: sha256:97d879ab169016b9abaf1866427a8ebc45af608f69e063a07e5126c9613c329b
     original_commit: 13d8e0683ffa08bcfc9a381eb9604adf5abdbe0b
     original_message: "chore: ignore local venv and planning docs"
     original_author: plutoless <qianze.zhang@hotmail.com>
-    base_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
+    base_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
     files:
       - .gitignore
     patch_content: |
@@ -114,7 +116,7 @@ patches:
     original_commit: a065088b4c45e2ca7e1bb91b1a899b8444800121
     original_message: "fix(vendors): send Speechmatics STT key instead of api_key"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
+    base_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
     files:
       - src/agora_agent/types/speechmatics_asr_params.py
     patch_content: |
@@ -257,7 +259,7 @@ patches:
     original_commit: 33a436b3bdb6f2a6fe4d8987b6536c2f0ac2862e
     original_message: "fix: address v2.8.0 release review findings"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: c947c8e18fb5d4ba1e156caf3703f84d630c033c
+    base_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
     files:
       - src/agora_agent/agents/types/start_agents_request_properties_advanced_features.py
     patch_content: |

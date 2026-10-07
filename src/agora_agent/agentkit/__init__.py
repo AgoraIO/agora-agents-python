@@ -157,6 +157,7 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
+from .preview import GeminiTTS, GeminiTTSModels
 from .vendors import (
     GEMINI_MLLM_DEFAULT_MODEL,
     AkoolAvatar,
@@ -248,6 +249,8 @@ from .vendors.cn import (
 )
 
 __all__ = [
+    "GeminiTTS",
+    "GeminiTTSModels",
     "Agent",
     "AgentConfig",
     "AgentConfigUpdate",
