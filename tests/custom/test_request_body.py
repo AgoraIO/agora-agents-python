@@ -323,7 +323,7 @@ def test_byok_pipeline_full_properties_shape() -> None:
     # ASR
     asr = props["asr"]
     assert asr["vendor"] == "deepgram"
-    assert asr["params"]["key"] == "dg-key"
+    assert asr["params"]["api_key"] == "dg-key"
     assert asr["params"]["model"] == "nova-2"
     assert asr["params"]["language"] == "en"
 
@@ -630,7 +630,7 @@ def test_6b_tts_preset_with_byok_llm_and_asr() -> None:
 
     properties = dump(call["properties"])
     # BYOK ASR: key and model both retained (nothing stripped for BYOK path)
-    assert properties["asr"]["params"]["key"] == "dg-key"
+    assert properties["asr"]["params"]["api_key"] == "dg-key"
     assert properties["asr"]["params"]["model"] == "nova-2"
     # BYOK LLM key retained
     assert properties["llm"]["api_key"] == "openai-key"
@@ -779,7 +779,7 @@ def test_byok_deepgram_stt_params() -> None:
     )
     props = build_properties(agent, allow_missing={"llm", "tts"})
     assert props["asr"]["vendor"] == "deepgram"
-    assert props["asr"]["params"]["key"] == "dg-key"
+    assert props["asr"]["params"]["api_key"] == "dg-key"
     assert props["asr"]["params"]["model"] == "nova-2"
     assert props["asr"]["params"]["language"] == "en"
 
