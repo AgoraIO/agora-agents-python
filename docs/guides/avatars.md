@@ -101,9 +101,9 @@ agent = agent.with_avatar(GenericAvatar(
 ))
 ```
 
-## Tavus and Protoface Avatars
+## Tavus, Protoface, and LemonSlice Avatars
 
-`Tavus` and `Protoface` are branded aliases of `GenericAvatar`, available
+`Tavus`, `Protoface`, and `LemonSlice` are branded aliases of `GenericAvatar`, available
 from `agora_agent`, `agora_agent.agentkit`, and `agora_agent.agentkit.vendors`.
 They use the same constructor, validation, and configuration and serialize with
 `vendor="generic"`. Supply your provider's API base URL; the aliases do not set
@@ -111,7 +111,7 @@ provider defaults. Session start fills omitted `agora_appid`, `agora_channel`, a
 `agora_token` just as it does for `GenericAvatar`.
 
 ```python
-from agora_agent import Tavus, Protoface
+from agora_agent import Tavus, Protoface, LemonSlice
 
 avatar = Tavus(
     api_key="your-tavus-key",
@@ -124,6 +124,13 @@ agent = agent.with_avatar(avatar)
 protoface = Protoface(
     api_key="your-protoface-key",
     api_base_url="https://protoface-provider.example.com",
+    avatar_id="your-avatar-id",
+    agora_uid="2",
+)
+
+lemon_slice = LemonSlice(
+    api_key="your-lemonslice-key",
+    api_base_url="https://lemonslice-provider.example.com",
     avatar_id="your-avatar-id",
     agora_uid="2",
 )

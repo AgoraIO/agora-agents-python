@@ -191,6 +191,7 @@ class GenericAvatar(GenericAvatarOptions, BaseAvatar):
 # Branded names share the generic constructor and wire configuration.
 Tavus = GenericAvatar
 Protoface = GenericAvatar
+LemonSlice = GenericAvatar
 
 
 class AnamAvatarOptions(BaseModel):

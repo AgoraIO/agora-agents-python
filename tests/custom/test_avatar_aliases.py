@@ -8,10 +8,10 @@ import agora_agent
 import agora_agent.agentkit as agentkit
 from agora_agent.agentkit import vendors
 from agora_agent.agentkit.avatar_types import is_avatar_token_managed, validate_avatar_config
-from agora_agent.agentkit.vendors.avatar import GenericAvatar, Protoface, Tavus
+from agora_agent.agentkit.vendors.avatar import GenericAvatar, LemonSlice, Protoface, Tavus
 
 
-@pytest.mark.parametrize("name", ["Tavus", "Protoface"])
+@pytest.mark.parametrize("name", ["Tavus", "Protoface", "LemonSlice"])
 def test_branded_avatar_exports_are_true_aliases(name: str) -> None:
     for module in (agora_agent, agentkit, vendors):
         assert getattr(module, name) is GenericAvatar
@@ -20,7 +20,7 @@ def test_branded_avatar_exports_are_true_aliases(name: str) -> None:
     assert inspect.signature(getattr(vendors, name)) == inspect.signature(GenericAvatar)
 
 
-@pytest.mark.parametrize("avatar_type", [Tavus, Protoface])
+@pytest.mark.parametrize("avatar_type", [Tavus, Protoface, LemonSlice])
 @pytest.mark.parametrize("enable", [None, False])
 def test_branded_avatar_serializes_generic_configuration(avatar_type, enable) -> None:
     avatar = avatar_type(
@@ -54,7 +54,7 @@ def test_branded_avatar_serializes_generic_configuration(avatar_type, enable) ->
     validate_avatar_config(config, require_session_fields=True)
 
 
-@pytest.mark.parametrize("avatar_type", [Tavus, Protoface])
+@pytest.mark.parametrize("avatar_type", [Tavus, Protoface, LemonSlice])
 def test_branded_avatar_preserves_required_and_optional_fields(avatar_type) -> None:
     required = dict(api_key="key", api_base_url="https://avatar.example.com", avatar_id="avatar-1", agora_uid="2")
     assert avatar_type(**required).to_config() == {"enable": True, "vendor": "generic", "params": required}

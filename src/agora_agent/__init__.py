@@ -54,6 +54,7 @@ if typing.TYPE_CHECKING:
         GenericAvatar,
         Tavus,
         Protoface,
+        LemonSlice,
         GenericTTS,
         GoogleSTT,
         GoogleTTS,
