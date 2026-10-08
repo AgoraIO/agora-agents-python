@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.12.0] — 2026-10-07
+
+### Added
+
+- **Tavus, Protoface, and LemonSlice avatars** — Added `Tavus`, `Protoface`, and `LemonSlice` as AgentKit aliases of `GenericAvatar`, exported from the package root, AgentKit, and vendor entrypoints. All retain the generic constructor, validation, session enrichment, and `vendor="generic"` wire configuration.
+
 ## [v2.11.0] — 2026-09-23
 
 ### Added

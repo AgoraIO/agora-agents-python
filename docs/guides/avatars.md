@@ -101,6 +101,44 @@ agent = agent.with_avatar(GenericAvatar(
 ))
 ```
 
+## Tavus, Protoface, and LemonSlice Avatars
+
+`Tavus`, `Protoface`, and `LemonSlice` are branded aliases of `GenericAvatar`, available
+from `agora_agent`, `agora_agent.agentkit`, and `agora_agent.agentkit.vendors`.
+They use the same constructor, validation, and configuration and serialize with
+`vendor="generic"`. Supply your provider's API base URL; the aliases do not set
+provider defaults. Session start fills omitted `agora_appid`, `agora_channel`, and
+`agora_token` just as it does for `GenericAvatar`.
+
+```python
+from agora_agent import Tavus, Protoface, LemonSlice
+
+avatar = Tavus(
+    api_key="your-tavus-key",
+    api_base_url="https://tavusapi.com/v2/conversations/agora",
+    avatar_id="your-avatar-id",
+    agora_uid="2",
+)
+agent = agent.with_avatar(avatar)
+
+protoface = Protoface(
+    api_key="your-protoface-key",
+    api_base_url="https://protoface-provider.example.com",
+    avatar_id="your-avatar-id",
+    agora_uid="2",
+)
+
+lemon_slice = LemonSlice(
+    api_key="your-lemonslice-key",
+    api_base_url="https://lemonslice-provider.example.com",
+    avatar_id="your-avatar-id",
+    agora_uid="2",
+)
+```
+
+Optional fields also include `enable` and `additional_params`. Explicit constructor
+fields take precedence over matching keys in `additional_params`.
+
 ## SenseTime Avatar (CN)
 
 `SenseTimeAvatar` is available for `Area.CN` sessions. Provide `agora_uid` and `app_key` when constructing the avatar. `sceneList` is optional. `agora_token` is optional and is generated at session start when omitted, like LiveAvatar and Generic avatars.
