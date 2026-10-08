@@ -78,13 +78,7 @@ generations:
     cli_version: unknown
     generator_versions:
       fernapi/fern-python-sdk: 4.37.0
-  - commit_sha: 0c531bed3cc22e01e7c6acb84e4b4999fb463f55
-    tree_hash: b1d1d8d2566e1f2de730825c475fdbb0687e2b8e
-    timestamp: 2026-10-08T06:56:19.168Z
-    cli_version: unknown
-    generator_versions:
-      fernapi/fern-python-sdk: 4.37.0
-current_generation: 0c531bed3cc22e01e7c6acb84e4b4999fb463f55
+current_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
 forgotten_hashes:
   - sha256:19124603cb0683406e750ffda0725786727208c0f7ddb481c256a0990b2c5585
 patches:
@@ -93,7 +87,7 @@ patches:
     original_commit: 13d8e0683ffa08bcfc9a381eb9604adf5abdbe0b
     original_message: "chore: ignore local venv and planning docs"
     original_author: plutoless <qianze.zhang@hotmail.com>
-    base_generation: 0c531bed3cc22e01e7c6acb84e4b4999fb463f55
+    base_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
     files:
       - .gitignore
     patch_content: |
@@ -122,7 +116,7 @@ patches:
     original_commit: a065088b4c45e2ca7e1bb91b1a899b8444800121
     original_message: "fix(vendors): send Speechmatics STT key instead of api_key"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: 0c531bed3cc22e01e7c6acb84e4b4999fb463f55
+    base_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
     files:
       - src/agora_agent/types/speechmatics_asr_params.py
     patch_content: |
@@ -265,7 +259,7 @@ patches:
     original_commit: 33a436b3bdb6f2a6fe4d8987b6536c2f0ac2862e
     original_message: "fix: address v2.8.0 release review findings"
     original_author: digitallysavvy <hermes.frangoudis@gmail.com>
-    base_generation: 0c531bed3cc22e01e7c6acb84e4b4999fb463f55
+    base_generation: 88a3914f38e882be10f7a0a6cba18e6f5ec98259
     files:
       - src/agora_agent/agents/types/start_agents_request_properties_advanced_features.py
     patch_content: |
