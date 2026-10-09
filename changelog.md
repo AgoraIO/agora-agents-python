@@ -14,7 +14,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Changed
 
 - **Sarvam TTS v2.14 parameters** — Added `speech_sample_rate`, `enable_preprocessing`, `model`, and flattened `additional_params` support. The legacy `sample_rate` input remains supported as a deprecated alias.
-- **Generated SDK alignment** — Updated AgentKit exports, global vendor routing, request validation, avatar sample-rate handling, documentation, and feature-focused regression tests for the latest `engine-v2.14` generated API.
+ - **Generated SDK alignment** — Updated AgentKit exports, global vendor routing, request validation, avatar sample-rate handling, documentation, and feature-focused regression tests for the latest `engine-v2.14` generated API.
+
+## [v2.12.0] — 2026-10-07
+
+### Added
+
+- **Tavus, Protoface, and LemonSlice avatars** — Added `Tavus`, `Protoface`, and `LemonSlice` as AgentKit aliases of `GenericAvatar`, exported from the package root, AgentKit, and vendor entrypoints. All retain the generic constructor, validation, session enrichment, and `vendor="generic"` wire configuration.
 
 ## [v2.11.0] — 2026-09-23
 
