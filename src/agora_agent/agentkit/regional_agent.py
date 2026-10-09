@@ -58,6 +58,7 @@ from .vendors.tts import (
     DeepgramTTS,
     ElevenLabsTTS,
     FishAudioTTS,
+    GeminiTTS,
     GoogleTTS,
     GradiumTTS,
     HumeAITTS,
@@ -97,6 +98,7 @@ GlobalSTT = typing.Union[
     XaiSTT,
 ]
 GlobalTTS = typing.Union[
+    GeminiTTS,
     MicrosoftTTS,
     ElevenLabsTTS,
     MiniMaxTTS,
