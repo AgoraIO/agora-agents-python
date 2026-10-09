@@ -17,6 +17,9 @@ Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline
 | Akool | `AkoolAvatar` | 16000 Hz |
 | Anam | `AnamAvatar` | None |
 | Generic | `GenericAvatar` | None |
+| Tavus | `Tavus` | None |
+| Protoface | `Protoface` | None |
+| LemonSlice | `LemonSlice` | None |
 | SenseTime (CN) | `SenseTimeAvatar` | None |
 | Spatius (CN) | `SpatiusAvatar` | Optional avatar-declared sample rate |
 
