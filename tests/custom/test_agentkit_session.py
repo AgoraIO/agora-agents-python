@@ -1,18 +1,20 @@
 from types import SimpleNamespace
 
 import pytest
+from test_helpers import test_client
 
 from agora_agent.agentkit import Agent, AgentSession
 from agora_agent.agentkit.vendors import (
     ElevenLabsTTS,
     GenericAvatar,
+    LemonSlice,
     LiveAvatarAvatar,
     OpenAI,
     OpenAIRealtime,
+    Protoface,
+    Tavus,
 )
 from agora_agent.agents.types.get_turns_agents_response import GetTurnsAgentsResponse
-from test_helpers import test_client
-
 
 APP_ID = "0" * 32
 APP_CERTIFICATE = "1" * 32
@@ -67,9 +69,11 @@ def _session(agent, warn=None):
     )
 
 
-def test_generic_avatar_enrichment_adds_session_context_and_token():
+@pytest.mark.parametrize("avatar_type", [GenericAvatar, Tavus, Protoface, LemonSlice])
+def test_generic_avatar_enrichment_adds_session_context_and_token(avatar_type):
     agent = Agent(test_client()).with_avatar(
-        GenericAvatar(
+        avatar_type(
+            **({"agent_id": "agent"} if avatar_type is LemonSlice else {}),
             api_key="avatar-key",
             api_base_url="https://avatar.example.com",
             avatar_id="avatar-1",

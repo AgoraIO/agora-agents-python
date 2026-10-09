@@ -189,6 +189,9 @@ Used with `agent.with_avatar()` in the cascading ASR + LLM + TTS pipeline. Some 
 | `AkoolAvatar` | Akool | `api_key` | 16000 Hz |
 | `AnamAvatar` | Anam | `api_key`, `avatar_id` | None |
 | `GenericAvatar` | Generic Avatar | `api_key`, `api_base_url`, `avatar_id`, `agora_uid` | None |
+| `Tavus` | Tavus | `api_key`, `avatar_id`, `agora_uid` | None |
+| `Protoface` | Protoface | `api_key`, `avatar_id`, `agora_uid` | None |
+| `LemonSlice` | LemonSlice | `api_key`, `agora_uid`, exactly one image or agent selector | None |
 | `SenseTimeAvatar` | SenseTime (CN) | `agora_uid`, `app_key` | None |
 | `SpatiusAvatar` | Spatius (CN) | `spatius_api_key`, `spatius_app_id`, `spatius_avatar_id`, `agora_uid` | Optional avatar-declared sample rate |
 
@@ -198,6 +201,8 @@ from agora_agent import HeyGenAvatar
 
 avatar = HeyGenAvatar(api_key='your-heygen-key', quality='medium', agora_uid='2')
 ```
+
+Tavus, Protoface, and LemonSlice use the generic wire configuration with provider URL defaults. LemonSlice also defaults the avatar ID to `lemonslice` and requires exactly one image or agent selector; its optional aspect ratio accepts `2x3`, `9x16`, or `1x1`. See the [Avatar Integration guide](../guides/avatars.md) for defaults, typed fields, and additional-parameter compatibility.
 
 ## Base Classes
 

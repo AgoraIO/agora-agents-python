@@ -17,6 +17,9 @@ Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline
 | Akool | `AkoolAvatar` | 16000 Hz |
 | Anam | `AnamAvatar` | None |
 | Generic | `GenericAvatar` | None |
+| Tavus | `Tavus` | None |
+| Protoface | `Protoface` | None |
+| LemonSlice | `LemonSlice` | None |
 | SenseTime (CN) | `SenseTimeAvatar` | None |
 | Spatius (CN) | `SpatiusAvatar` | Optional avatar-declared sample rate |
 
@@ -103,41 +106,36 @@ agent = agent.with_avatar(GenericAvatar(
 
 ## Tavus, Protoface, and LemonSlice Avatars
 
-`Tavus`, `Protoface`, and `LemonSlice` are branded aliases of `GenericAvatar`, available
-from `agora_agent`, `agora_agent.agentkit`, and `agora_agent.agentkit.vendors`.
-They use the same constructor, validation, and configuration and serialize with
-`vendor="generic"`. Supply your provider's API base URL; the aliases do not set
-provider defaults. Session start fills omitted `agora_appid`, `agora_channel`, and
-`agora_token` just as it does for `GenericAvatar`.
+`Tavus`, `Protoface`, and `LemonSlice` are provider wrappers around `GenericAvatar`,
+exported from `agora_agent`, `agora_agent.agentkit`, and `agora_agent.agentkit.vendors`.
+All serialize with `vendor="generic"` and retain generic session enrichment and token
+handling. Explicit `api_base_url` overrides are supported; `GenericAvatar` still requires it.
+
+| Provider | Default `api_base_url` | `avatar_id` |
+|---|---|---|
+| `Tavus` | `https://tavusapi.com/v2/conversations/agora` | Required |
+| `Protoface` | `https://api.protoface.com/v1/agora` | Required |
+| `LemonSlice` | `https://lemonslice.com/api/liveai/agora` | Defaults to `lemonslice` |
 
 ```python
 from agora_agent import Tavus, Protoface, LemonSlice
 
-avatar = Tavus(
-    api_key="your-tavus-key",
-    api_base_url="https://tavusapi.com/v2/conversations/agora",
-    avatar_id="your-avatar-id",
-    agora_uid="2",
-)
-agent = agent.with_avatar(avatar)
-
-protoface = Protoface(
-    api_key="your-protoface-key",
-    api_base_url="https://protoface-provider.example.com",
-    avatar_id="your-avatar-id",
-    agora_uid="2",
-)
-
-lemon_slice = LemonSlice(
-    api_key="your-lemonslice-key",
-    api_base_url="https://lemonslice-provider.example.com",
-    avatar_id="your-avatar-id",
-    agora_uid="2",
-)
+avatar = Tavus(api_key="key", avatar_id="your-avatar-id", agora_uid="2")
+protoface = Protoface(api_key="key", avatar_id="your-avatar-id", agora_uid="2")
+lemon_slice = LemonSlice(api_key="key", agora_uid="2", agent_id="your-agent-id")
+agent = agent.with_avatar(lemon_slice)
 ```
 
-Optional fields also include `enable` and `additional_params`. Explicit constructor
-fields take precedence over matching keys in `additional_params`.
+LemonSlice requires exactly one nonempty string selector: `agent_id`, `agent_image_url`,
+or `agent_image_base64`. These optional typed fields serialize directly as snake_case
+keys in `avatar.params`. Selectors may also be supplied through `additional_params`;
+provided typed values override matching additional params before validation. Malformed
+alternative selectors (including whitespace and nonstrings) and multiple selectors are rejected.
+`aspect_ratio` accepts only `2x3`, `9x16`, or `1x1`; omitted values stay off the wire
+and use the provider default `2x3`. Options and caller maps are not mutated.
+LemonSlice recommends the fixed `avatar_id="lemonslice"`; explicit overrides remain
+supported for backwards compatibility. Branded providers are no longer exact aliases,
+and LemonSlice selector validation is now mandatory.
 
 ## SenseTime Avatar (CN)
 
