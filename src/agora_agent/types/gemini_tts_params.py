@@ -27,7 +27,7 @@ class GeminiTtsParams(UncheckedBaseModel):
     Gemini voice name.
     """
 
-    style: str = pydantic.Field()
+    style: typing.Optional[str] = pydantic.Field(default=None)
     """
     Style instruction for the generated speech.
     """
