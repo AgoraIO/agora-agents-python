@@ -198,11 +198,22 @@ def test_tts_vendor_params_match_generated_core_shapes() -> None:
         "language_boost": "auto",
     }
 
-    assert SarvamTTS(key="sarvam-key", speaker="anushka", target_language_code="en-IN", sample_rate=24000).to_config()["params"] == {
+    assert SarvamTTS(
+        key="sarvam-key",
+        speaker="anushka",
+        target_language_code="en-IN",
+        speech_sample_rate=24000,
+        enable_preprocessing=True,
+        model="bulbul:v3",
+        additional_params={"custom_option": "value", "model": "overridden"},
+    ).to_config()["params"] == {
         "api_subscription_key": "sarvam-key",
         "speaker": "anushka",
         "target_language_code": "en-IN",
-        "sample_rate": 24000,
+        "speech_sample_rate": 24000,
+        "enable_preprocessing": True,
+        "model": "bulbul:v3",
+        "custom_option": "value",
     }
 
     assert MurfTTS(

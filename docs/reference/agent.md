@@ -178,6 +178,7 @@ Enable or disable MCP and inline REST tool invocation by setting `advanced_featu
 ### `with_parameters(parameters: SessionParams) -> Agent`
 
 Set session parameters (silence config, farewell config, data channel, audio scenario, etc.).
+Use `SpeakConfig(batch=False)` in the `speak` field to control sentence segmentation for speak requests.
 
 ### `with_audio_scenario(audio_scenario: ParametersAudioScenario) -> Agent`
 

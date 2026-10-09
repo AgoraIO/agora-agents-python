@@ -23,6 +23,7 @@ from .stt import (
     GoogleSTT,
     MicrosoftSTT,
     OpenAISTT,
+    RtzrSTT,
     SarvamSTT,
     SmallestAISTT,
     SpeechmaticsSTT,
@@ -62,6 +63,7 @@ class GlobalSTTVendors:
     assemblyai = AssemblyAISTT
     speechmatics = SpeechmaticsSTT
     sarvam = SarvamSTT
+    rtzr = RtzrSTT
     smallestai = SmallestAISTT
     xai = XaiSTT
 

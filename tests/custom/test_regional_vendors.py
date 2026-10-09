@@ -13,6 +13,7 @@ from agora_agent import (
     MiniMaxTTS,
     MistralTTS,
     OpenAI,
+    RtzrSTT,
     SmallestAISTT,
     SmallestAITTS,
     SpatiusAvatar,
@@ -227,6 +228,14 @@ def test_xai_grok_remains_mllm_vendor() -> None:
 
     assert agent.__class__.__name__ == "GlobalAgent"
     assert agent.mllm is not None and agent.mllm["vendor"] == "xai"
+
+
+def test_rtzr_is_registered_as_a_global_stt_vendor() -> None:
+    assert "rtzr" in GLOBAL_ASR_VENDORS
+    assert "rtzr" not in CN_ASR_VENDORS
+    assert GLOBAL_VENDOR_NAMESPACE.asr["rtzr"] is RtzrSTT
+    assert GlobalSTTVendors.rtzr is RtzrSTT
+    assert RtzrSTT in get_args(GlobalSTT)
 
 
 def test_smallest_ai_is_registered_as_global_only() -> None:

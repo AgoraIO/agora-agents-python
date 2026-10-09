@@ -125,6 +125,7 @@ top-level `asr.keywords`. Both vendors also accept `additional_params`, serializ
 | `AssemblyAISTT` | AssemblyAI | `api_key`, `language` |
 | `AresSTT` | Ares | — (all optional) |
 | `SarvamSTT` | Sarvam | `api_key`, `language` |
+| `RtzrSTT` | RTZR | `client_id`, `client_secret` |
 | `XaiSTT` | xAI | `api_key` |
 
 ### CN STT Vendors

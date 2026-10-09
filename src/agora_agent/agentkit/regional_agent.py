@@ -34,6 +34,7 @@ from .vendors.stt import (
     GoogleSTT,
     MicrosoftSTT,
     OpenAISTT,
+    RtzrSTT,
     SarvamSTT,
     SmallestAISTT,
     SpeechmaticsSTT,
@@ -91,6 +92,7 @@ GlobalSTT = typing.Union[
     AssemblyAISTT,
     SpeechmaticsSTT,
     SarvamSTT,
+    RtzrSTT,
     SmallestAISTT,
     XaiSTT,
 ]
