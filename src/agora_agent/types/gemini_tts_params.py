@@ -7,24 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class SpeechmaticsAsrParams(UncheckedBaseModel):
+class GeminiTtsParams(UncheckedBaseModel):
     """
-    Speechmatics ASR configuration parameters.
+    Gemini TTS configuration parameters.
     """
 
     api_key: str = pydantic.Field()
     """
-    Speechmatics API key
+    Gemini API key.
     """
 
-    language: str = pydantic.Field()
+    model: str = pydantic.Field()
     """
-    Language code to use for transcription
+    Gemini TTS model name.
     """
 
-    uri: typing.Optional[str] = pydantic.Field(default=None)
+    voice: str = pydantic.Field()
     """
-    WebSocket URL for the Speechmatics streaming API
+    Gemini voice name.
+    """
+
+    style: str = pydantic.Field()
+    """
+    Style instruction for the generated speech.
     """
 
     if IS_PYDANTIC_V2:
