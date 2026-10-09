@@ -16,6 +16,7 @@ from .cosyvoice_tts_params import CosyvoiceTtsParams
 from .deepgram_tts_params import DeepgramTtsParams
 from .eleven_labs_tts_params import ElevenLabsTtsParams
 from .fish_audio_tts_params import FishAudioTtsParams
+from .gemini_tts_params import GeminiTtsParams
 from .generic_http_tts_params import GenericHttpTtsParams
 from .google_tts_params import GoogleTtsParams
 from .gradium_tts_params import GradiumTtsParams
@@ -204,6 +205,21 @@ class Tts_Fishaudio(UncheckedBaseModel):
 class Tts_Google(UncheckedBaseModel):
     vendor: typing.Literal["google"] = "google"
     params: GoogleTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Tts_Gemini(UncheckedBaseModel):
+    vendor: typing.Literal["gemini"] = "gemini"
+    params: GeminiTtsParams
     skip_patterns: typing.Optional[typing.List[int]] = None
 
     if IS_PYDANTIC_V2:
@@ -412,6 +428,7 @@ Tts = typing_extensions.Annotated[
         Tts_Rime,
         Tts_Fishaudio,
         Tts_Google,
+        Tts_Gemini,
         Tts_Amazon,
         Tts_Sarvam,
         Tts_GenericHttp,
