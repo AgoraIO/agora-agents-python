@@ -157,7 +157,6 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
-from .preview import GeminiTTS, GeminiTTSModels
 from .vendors import (
     GEMINI_MLLM_DEFAULT_MODEL,
     AkoolAvatar,
@@ -187,6 +186,8 @@ from .vendors import (
     Gemini,
     GeminiSTT,
     GeminiSTTModels,
+    GeminiTTS,
+    GeminiTTSModels,
     GeminiLive,
     GeminiLiveModels,
     GenericAvatar,

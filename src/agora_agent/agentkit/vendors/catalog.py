@@ -38,6 +38,7 @@ from .tts import (
     DeepgramTTS,
     ElevenLabsTTS,
     FishAudioTTS,
+    GeminiTTS,
     GoogleTTS,
     GradiumTTS,
     HumeAITTS,
@@ -108,6 +109,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "xai": XaiGrok,
     },
     tts={
+        "gemini": GeminiTTS,
         "microsoft": MicrosoftTTS,
         "elevenlabs": ElevenLabsTTS,
         "minimax": MiniMaxTTS,

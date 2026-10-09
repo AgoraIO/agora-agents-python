@@ -8,6 +8,45 @@ from .base import BaseTTS, CartesiaSampleRate, ElevenLabsSampleRate, GoogleTTSSa
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+class GeminiTTSModels:
+    """Gemini 3.8 Flash TTS model."""
+
+    FLASH_38 = "gemini-3.8-flash-tts"
+
+
+class GeminiTTS(BaseTTS):
+    """Production Gemini TTS; preview-era options and wire fields remain compatible."""
+
+    model_config = ConfigDict(extra="forbid")
+    api_key: str = Field(..., repr=False)
+    model: str = GeminiTTSModels.FLASH_38
+    voice: str = "Puck"
+    style: Optional[str] = None
+    additional_params: Optional[Dict[str, Any]] = None
+    skip_patterns: Optional[List[int]] = None
+
+    @field_validator("api_key", "model", "voice")
+    @classmethod
+    def require_nonblank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("GeminiTTS requires a nonblank value")
+        return value
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update({
+            "api_key": self.api_key,
+            "model": self.model,
+            "voice": self.voice,
+        })
+        if self.style is not None:
+            params["style"] = self.style
+        result: Dict[str, Any] = {"vendor": "gemini", "params": params}
+        if self.skip_patterns is not None:
+            result["skip_patterns"] = self.skip_patterns
+        return result
+
+
 class ElevenLabsTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

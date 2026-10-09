@@ -44,6 +44,7 @@ CN_TTS_VENDORS: typing.Tuple[str, ...] = (
     "generic",
 )
 GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
+    "gemini",
     "microsoft",
     "elevenlabs",
     "minimax",

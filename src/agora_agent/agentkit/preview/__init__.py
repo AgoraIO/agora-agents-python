@@ -1,8 +1,4 @@
-"""Preview endpoint support.
-
-Temporary package: delete it when these providers ship on the production
-gateway. See ``client.py`` for the routing and gate header.
-"""
+"""Preview routing helpers and legacy aliases for production vendors."""
 
 from .client import (
     PREVIEW_API_BASE_URL,
@@ -13,7 +9,7 @@ from .client import (
     create_preview_session_clients,
     required_preview_features,
 )
-from .gemini_tts import GeminiTTS, GeminiTTSModels
+from ..vendors.tts import GeminiTTS, GeminiTTSModels
 from .vendors import (
     GEMINI_MLLM_DEFAULT_MODEL,
     GEMINI_PREVIEW_MLLM_URL,

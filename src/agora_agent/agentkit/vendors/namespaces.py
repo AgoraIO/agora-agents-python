@@ -35,6 +35,7 @@ from .tts import (
     DeepgramTTS,
     ElevenLabsTTS,
     FishAudioTTS,
+    GeminiTTS,
     GoogleTTS,
     GradiumTTS,
     HumeAITTS,
@@ -110,6 +111,7 @@ class CNMLLMVendors:
 
 
 class GlobalTTSVendors:
+    gemini = GeminiTTS
     microsoft = MicrosoftTTS
     elevenlabs = ElevenLabsTTS
     minimax = MiniMaxTTS
