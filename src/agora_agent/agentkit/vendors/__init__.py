@@ -11,7 +11,7 @@ from .base import (
     OpenAISampleRate,
     SampleRate,
 )
-from .avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
+from .avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar, LemonSlice, Protoface, Tavus
 from .llm import AmazonBedrock, Anthropic, AzureOpenAI, CustomLLM, Dify, Gemini, Groq, OpenAI, VertexAILLM
 from .mllm import (
     GEMINI_MLLM_DEFAULT_MODEL,
@@ -172,6 +172,9 @@ __all__ = [
     "AkoolAvatar",
     "AnamAvatar",
     "GenericAvatar",
+    "Tavus",
+    "Protoface",
+    "LemonSlice",
     "SpatiusAvatar",
     "SenseTimeAvatar",
 ]

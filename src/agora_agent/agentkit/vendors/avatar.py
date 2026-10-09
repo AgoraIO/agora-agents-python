@@ -188,6 +188,12 @@ class GenericAvatar(GenericAvatarOptions, BaseAvatar):
         return {"enable": enable, "vendor": "generic", "params": params}
 
 
+# Branded names share the generic constructor and wire configuration.
+Tavus = GenericAvatar
+Protoface = GenericAvatar
+LemonSlice = GenericAvatar
+
+
 class AnamAvatarOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

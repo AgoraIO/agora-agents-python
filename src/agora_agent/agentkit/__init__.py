@@ -155,6 +155,7 @@ from .presets import (
     OpenAITtsPresetModels,
     normalize_preset_input,
 )
+from .preview import GeminiTTS, GeminiTTSModels
 from .vendors import (
     GEMINI_MLLM_DEFAULT_MODEL,
     AkoolAvatar,
@@ -187,6 +188,9 @@ from .vendors import (
     GeminiLive,
     GeminiLiveModels,
     GenericAvatar,
+    Tavus,
+    Protoface,
+    LemonSlice,
     GoogleSTT,
     GoogleTTS,
     GradiumTTS,
@@ -245,6 +249,8 @@ from .vendors.cn import (
 )
 
 __all__ = [
+    "GeminiTTS",
+    "GeminiTTSModels",
     "Agent",
     "AgentConfig",
     "AgentConfigUpdate",
@@ -474,6 +480,9 @@ __all__ = [
     "AkoolAvatar",
     "AnamAvatar",
     "GenericAvatar",
+    "Tavus",
+    "Protoface",
+    "LemonSlice",
     "SpatiusAvatar",
     "SenseTimeAvatar",
     "is_heygen_avatar",
