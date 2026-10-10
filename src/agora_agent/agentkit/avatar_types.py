@@ -102,6 +102,10 @@ def validate_avatar_config(
             raise ValueError("Anam avatar requires api_key")
         if not params.get("avatar_id"):
             raise ValueError("Anam avatar requires avatar_id")
+        has_video_width = params.get("video_width") is not None
+        has_video_height = params.get("video_height") is not None
+        if has_video_width != has_video_height:
+            raise ValueError("Anam avatar requires video_width and video_height together")
     elif is_generic_avatar(config):
         params = config.get("params", {})
         if not params.get("api_key"):

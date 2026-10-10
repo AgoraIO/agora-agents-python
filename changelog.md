@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- **RTZR global STT** — Added the global-only `RtzrSTT` AgentKit vendor with typed credentials, recognition options, vendor catalog registration, and generated request serialization.
+- **Speak parameters** — Exposed the generated `SpeakConfig`/`ParametersSpeak` types through `SessionParams` so `parameters.speak.batch` can be configured with `Agent.with_parameters()`.
+
+### Changed
+
+- **Sarvam TTS v2.14 parameters** — Added `speech_sample_rate`, `enable_preprocessing`, `model`, and flattened `additional_params` support. The legacy `sample_rate` input remains supported as a deprecated alias.
+ - **Generated SDK alignment** — Updated AgentKit exports, global vendor routing, request validation, avatar sample-rate handling, documentation, and feature-focused regression tests for the latest `engine-v2.14` generated API.
+
+- **Gemini TTS production routing** — Synchronous and asynchronous `GeminiTTS` sessions, including raw configurations, now use the configured regional production endpoint without the `gemini-live` preview gate. The implementation is registered in the global TTS catalog, while package-root and historical preview imports remain aliases with the same v2.11.0 options, defaults, validation, optional `style`, and `tts.params` wire fields. Compatibility with the generated request schema no longer depends on preview routing.
+- **Gemini TTS generated schema support** — The production vendor now uses the generated Gemini TTS shape and accepts `additional_params` and `skip_patterns` while keeping preview-era calls compatible.
+
 ## [v2.12.0] — 2026-10-07
 
 ### Added

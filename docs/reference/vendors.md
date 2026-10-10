@@ -20,7 +20,7 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GeminiTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
 | `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
@@ -272,6 +272,25 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 | `sample_rate` | `int` | No | `None` | Sample rate: 8000–48000 Hz |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
+### `GeminiTTS`
+
+Uses the configured regional production endpoint for synchronous and asynchronous
+sessions. Package-root and historical preview imports alias the production class.
+Credentials and options serialize inside `tts.params`, with `tts.vendor = "gemini"`.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Google Gemini API key |
+| `model` | `str` | No | `GeminiTTSModels.FLASH_38` | Model identifier, sent verbatim |
+| `voice` | `str` | No | `Puck` | Voice name |
+| `style` | `Optional[str]` | No | `None` | Natural-language speaking instruction |
+| `additional_params` | `Optional[Dict[str, Any]]` | No | `None` | Provider-specific parameters merged into `tts.params`; named options take precedence |
+| `skip_patterns` | `Optional[List[int]]` | No | `None` | Patterns to skip in TTS output |
+
+Blank credentials, model, or voice are rejected. Existing v2.11.0 calls and raw
+configs remain compatible without a preview feature header. No sample rate
+option is exposed.
+
 ### `GoogleTTS`
 
 | Parameter | Type | Required | Default | Description |
@@ -446,7 +465,11 @@ AgentKit serializes `credential_mode` at the top level of the Rime TTS configura
 | `pitch` | `float` | No | `None` | Pitch adjustment |
 | `pace` | `float` | No | `None` | Speed of speech |
 | `loudness` | `float` | No | `None` | Volume level |
-| `sample_rate` | `int` | No | `None` | Audio sample rate |
+| `speech_sample_rate` | `int` | No | `None` | Output speech sample rate in Hz |
+| `enable_preprocessing` | `bool` | No | `None` | Normalize English words and numeric entities before synthesis |
+| `model` | `str` | No | `None` | Sarvam TTS model; defaults to `bulbul:v3` |
+| `sample_rate` | `int` | No | `None` | Deprecated alias for `speech_sample_rate` |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Sarvam TTS parameters, flattened into `params` |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### `SmallestAITTS`
@@ -635,6 +658,26 @@ stt = GeminiSTT(
 | `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
 | `language` | `str` | No | `None` | Language code for speech recognition |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional xAI STT parameters |
+
+### `RtzrSTT`
+
+Global-only RTZR speech-to-text provider (`asr.vendor: "rtzr"`).
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `client_id` | `str` | Yes | — | RTZR client ID |
+| `client_secret` | `str` | Yes | — | RTZR client secret |
+| `api_base` | `str` | No | `None` | RTZR API base URL |
+| `model_name` | `str` | No | `None` | RTZR recognition model name |
+| `language` | `str` | No | `None` | RTZR recognition language code |
+| `sample_rate` | `int` | No | `None` | Input audio sample rate in Hz |
+| `encoding` | `str` | No | `None` | Input audio encoding |
+| `use_itn` | `bool` | No | `None` | Enable inverse text normalization |
+| `use_disfluency_filter` | `bool` | No | `None` | Filter disfluencies |
+| `use_profanity_filter` | `bool` | No | `None` | Filter profanity |
+| `use_punctuation` | `bool` | No | `None` | Add punctuation to recognized text |
+| `keywords` | `List[str]` | No | `None` | Keywords that improve recognition accuracy |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional RTZR parameters |
 
 ### `SmallestAISTT`
 
@@ -1111,6 +1154,9 @@ Same options as `HeyGenAvatar`, but serializes `vendor: "liveavatar"`. `agora_to
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Anam API key |
 | `avatar_id` | `str` | Yes | — | Anam avatar ID |
+| `avatar_model` | `str` | No | `None` | Anam model, such as `cara_mk4` for Cara 4 portrait mode |
+| `video_width` | `int` | No | `None` | Output width in pixels; set together with `video_height` |
+| `video_height` | `int` | No | `None` | Output height in pixels; set together with `video_width` |
 | `enable` | `bool` | No | `True` | Enable or disable the avatar |
 
 ### `GenericAvatar`

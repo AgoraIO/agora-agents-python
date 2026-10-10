@@ -23,6 +23,7 @@ from .stt import (
     GoogleSTT,
     MicrosoftSTT,
     OpenAISTT,
+    RtzrSTT,
     SarvamSTT,
     SmallestAISTT,
     SpeechmaticsSTT,
@@ -34,6 +35,7 @@ from .tts import (
     DeepgramTTS,
     ElevenLabsTTS,
     FishAudioTTS,
+    GeminiTTS,
     GoogleTTS,
     GradiumTTS,
     HumeAITTS,
@@ -62,6 +64,7 @@ class GlobalSTTVendors:
     assemblyai = AssemblyAISTT
     speechmatics = SpeechmaticsSTT
     sarvam = SarvamSTT
+    rtzr = RtzrSTT
     smallestai = SmallestAISTT
     xai = XaiSTT
 
@@ -108,6 +111,7 @@ class CNMLLMVendors:
 
 
 class GlobalTTSVendors:
+    gemini = GeminiTTS
     microsoft = MicrosoftTTS
     elevenlabs = ElevenLabsTTS
     minimax = MiniMaxTTS

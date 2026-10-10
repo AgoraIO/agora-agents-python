@@ -7,34 +7,29 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
 
 
-class DeepgramAsrParams(UncheckedBaseModel):
+class GeminiTtsParams(UncheckedBaseModel):
     """
-    Deepgram ASR configuration parameters.
-    """
-
-    url: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    WebSocket URL for Deepgram's streaming API
+    Gemini TTS configuration parameters.
     """
 
     api_key: str = pydantic.Field()
     """
-    Deepgram API key
+    Gemini API key.
     """
 
-    model: typing.Optional[str] = pydantic.Field(default=None)
+    model: str = pydantic.Field()
     """
-    Speech recognition model
-    """
-
-    language: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Language code for speech recognition
+    Gemini TTS model name.
     """
 
-    keyterm: typing.Optional[str] = pydantic.Field(default=None)
+    voice: str = pydantic.Field()
     """
-    Boost specialized terms and brands for Deepgram.
+    Gemini voice name.
+    """
+
+    style: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Style instruction for the generated speech.
     """
 
     if IS_PYDANTIC_V2:
