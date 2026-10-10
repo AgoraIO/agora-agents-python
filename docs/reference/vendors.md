@@ -1154,6 +1154,9 @@ Same options as `HeyGenAvatar`, but serializes `vendor: "liveavatar"`. `agora_to
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Anam API key |
 | `avatar_id` | `str` | Yes | — | Anam avatar ID |
+| `avatar_model` | `str` | No | `None` | Anam model, such as `cara_mk4` for Cara 4 portrait mode |
+| `video_width` | `int` | No | `None` | Output width in pixels; set together with `video_height` |
+| `video_height` | `int` | No | `None` | Output height in pixels; set together with `video_width` |
 | `enable` | `bool` | No | `True` | Enable or disable the avatar |
 
 ### `GenericAvatar`
