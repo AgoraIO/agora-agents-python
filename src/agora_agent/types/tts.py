@@ -28,6 +28,7 @@ from .open_ai_tts_params import OpenAiTtsParams
 from .rime_tts_credential_mode import RimeTtsCredentialMode
 from .rime_tts_params import RimeTtsParams
 from .sarvam_tts_params import SarvamTtsParams
+from .smallest_ai_tts_params import SmallestAiTtsParams
 from .stepfun_tts_params import StepfunTtsParams
 from .tencent_tts_params import TencentTtsParams
 from .typecast_tts_params import TypecastTtsParams
@@ -382,6 +383,21 @@ class Tts_Typecast(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Tts_Smallestai(UncheckedBaseModel):
+    vendor: typing.Literal["smallestai"] = "smallestai"
+    params: SmallestAiTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Tts = typing_extensions.Annotated[
     typing.Union[
         Tts_Tencent,
@@ -407,6 +423,7 @@ Tts = typing_extensions.Annotated[
         Tts_Gradium,
         Tts_Mistral,
         Tts_Typecast,
+        Tts_Smallestai,
     ],
     UnionMetadata(discriminant="vendor"),
 ]

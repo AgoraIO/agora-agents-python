@@ -5,6 +5,8 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .llm_tool import LlmTool
+from .mcp_server import McpServer
 from .mllm_params import MllmParams
 from .mllm_turn_detection import MllmTurnDetection
 from .mllm_vendor import MllmVendor
@@ -74,6 +76,24 @@ class Mllm(UncheckedBaseModel):
     failure_message: typing.Optional[str] = pydantic.Field(default=None)
     """
     Agent failure message.
+    """
+
+    tools: typing.Optional[typing.List[LlmTool]] = pydantic.Field(default=None)
+    """
+    Inline REST (pass-through sync) tool definitions for standard text LLM function calling.
+    Required fields per tool: `type`, `function.name`, `function.parameters`
+    (`type: object` with `properties`), `server.method` (`GET` or `POST`), and `server.url`.
+    The combination of `type: function` and `server` identifies a REST tool.
+    Phase 1a supports GET and POST only; `execution.mode` defaults to and only accepts `sync`.
+    Template rules:
+    - Values must be a constant, or exactly one single-level placeholder.
+    - `{{args.<name>}}`: `server.url` and `server.body` only; not allowed in headers.
+    - `{{template_variables.<name>}}` and `{{tool_call_id}}`: `server.url`, `server.headers`, and `server.body`.
+    """
+
+    mcp_servers: typing.Optional[typing.List[McpServer]] = pydantic.Field(default=None)
+    """
+    MCP server configuration.
     """
 
     vendor: typing.Optional[MllmVendor] = pydantic.Field(default=None)

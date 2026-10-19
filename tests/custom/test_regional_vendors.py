@@ -1,8 +1,10 @@
+from typing import get_args
+
 import pytest
 
 from agora_agent import (
-    AgentClient,
     Agent,
+    AgentClient,
     Area,
     DeepgramSTT,
     GenericTTS,
@@ -11,14 +13,17 @@ from agora_agent import (
     MiniMaxTTS,
     MistralTTS,
     OpenAI,
+    SmallestAISTT,
+    SmallestAITTS,
     SpatiusAvatar,
     TencentSTT,
+    XaiGrok,
     XaiSTT,
     XaiTTS,
-    XaiGrok,
 )
-from agora_agent.agentkit.vendors.catalog import GLOBAL_VENDOR_NAMESPACE
-from agora_agent.agentkit.vendors.namespaces import GlobalTTSVendors
+from agora_agent.agentkit.regional_agent import GlobalSTT, GlobalTTS
+from agora_agent.agentkit.vendors.catalog import CN_VENDOR_NAMESPACE, GLOBAL_VENDOR_NAMESPACE
+from agora_agent.agentkit.vendors.namespaces import CNSTTVendors, CNTTSVendors, GlobalSTTVendors, GlobalTTSVendors
 from agora_agent.agentkit.vendors.region import (
     CN_ASR_VENDORS,
     CN_AVATAR_VENDORS,
@@ -222,3 +227,50 @@ def test_xai_grok_remains_mllm_vendor() -> None:
 
     assert agent.__class__.__name__ == "GlobalAgent"
     assert agent.mllm is not None and agent.mllm["vendor"] == "xai"
+
+
+def test_smallest_ai_is_registered_as_global_only() -> None:
+    assert "smallestai" in GLOBAL_ASR_VENDORS
+    assert "smallestai" in GLOBAL_TTS_VENDORS
+    assert GLOBAL_VENDOR_NAMESPACE.asr["smallestai"] is SmallestAISTT
+    assert GLOBAL_VENDOR_NAMESPACE.tts["smallestai"] is SmallestAITTS
+    assert GlobalSTTVendors.smallestai is SmallestAISTT
+    assert GlobalTTSVendors.smallestai is SmallestAITTS
+    assert SmallestAISTT in get_args(GlobalSTT)
+    assert SmallestAITTS in get_args(GlobalTTS)
+
+    assert "smallestai" not in CN_ASR_VENDORS
+    assert "smallestai" not in CN_TTS_VENDORS
+    assert "smallestai" not in CN_VENDOR_NAMESPACE.asr
+    assert "smallestai" not in CN_VENDOR_NAMESPACE.tts
+    assert not hasattr(CNSTTVendors, "smallestai")
+    assert not hasattr(CNTTSVendors, "smallestai")
+
+
+def test_smallest_ai_configs_reach_global_request_properties() -> None:
+    properties = (
+        Agent(_client(Area.US))
+        .with_stt(
+            SmallestAISTT(
+                api_key="stt-key",
+                language="en-US",
+                word_timestamps=True,
+                sentence_timestamps=False,
+                eou_timeout_ms=480,
+            )
+        )
+        .with_tts(SmallestAITTS(api_key="tts-key", voice_id="emily"))
+        .to_properties(
+            channel="room",
+            agent_uid="1",
+            remote_uids=["2"],
+            token="rtc-token",
+            allow_missing_vendor_categories={"llm"},
+        )
+    )
+
+    assert properties.asr is not None and properties.asr.vendor == "smallestai"
+    assert properties.asr.params.word_timestamps == "true"
+    assert properties.asr.params.sentence_timestamps == "false"
+    assert properties.asr.params.eou_timeout_ms == 480
+    assert properties.tts is not None and properties.tts.vendor == "smallestai"

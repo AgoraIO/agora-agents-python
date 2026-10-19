@@ -720,3 +720,50 @@ class XaiTTS(XaiTTSOptions, BaseTTS):
         if self.skip_patterns is not None:
             result["skip_patterns"] = self.skip_patterns
         return result
+
+
+class SmallestAITTSOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, description="Smallest AI API key")
+    url: Optional[str] = Field(default=None, description="Streaming HTTP endpoint")
+    model: Optional[str] = Field(default=None, description="TTS model name")
+    voice_id: Optional[str] = Field(default=None, description="Voice identifier")
+    sample_rate: Optional[int] = Field(default=None, gt=0, description="Output audio sample rate in Hz")
+    speed: Optional[float] = Field(default=None, gt=0, description="Speech rate multiplier")
+    language: Optional[str] = Field(default=None, description="Language code for speech synthesis")
+    number_pronunciation_language: Optional[str] = Field(default=None)
+    math_notation: Optional[bool] = Field(default=None)
+    pronunciation_dicts: Optional[List[str]] = Field(default=None)
+    session_id: Optional[str] = Field(default=None)
+    request_id: Optional[str] = Field(default=None)
+    additional_params: Optional[Dict[str, Any]] = Field(default=None)
+    skip_patterns: Optional[List[int]] = Field(default=None)
+
+
+class SmallestAITTS(SmallestAITTSOptions, BaseTTS):
+    """Smallest AI streaming text-to-speech provider."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params["api_key"] = self.api_key
+        for name in (
+            "url",
+            "model",
+            "voice_id",
+            "sample_rate",
+            "speed",
+            "language",
+            "number_pronunciation_language",
+            "math_notation",
+            "pronunciation_dicts",
+            "session_id",
+            "request_id",
+        ):
+            value = getattr(self, name)
+            if value is not None:
+                params[name] = value
+        result: Dict[str, Any] = {"vendor": "smallestai", "params": params}
+        if self.skip_patterns is not None:
+            result["skip_patterns"] = self.skip_patterns
+        return result

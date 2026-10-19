@@ -19,6 +19,7 @@ from .google_asr_params import GoogleAsrParams
 from .microsoft_asr_params import MicrosoftAsrParams
 from .open_ai_asr_params import OpenAiAsrParams
 from .sarvam_asr_params import SarvamAsrParams
+from .smallest_ai_asr_params import SmallestAiAsrParams
 from .speechmatics_asr_params import SpeechmaticsAsrParams
 from .tencent_asr_params import TencentAsrParams
 from .x_ai_asr_params import XAiAsrParams
@@ -269,6 +270,21 @@ class Asr_XfyunDialect(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Asr_Smallestai(UncheckedBaseModel):
+    vendor: typing.Literal["smallestai"] = "smallestai"
+    language: typing.Optional[str] = None
+    params: SmallestAiAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Asr = typing_extensions.Annotated[
     typing.Union[
         Asr_Ares,
@@ -287,6 +303,7 @@ Asr = typing_extensions.Annotated[
         Asr_Xfyun,
         Asr_XfyunBigmodel,
         Asr_XfyunDialect,
+        Asr_Smallestai,
     ],
     UnionMetadata(discriminant="vendor"),
 ]

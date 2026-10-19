@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 from ...types.llm_tool import LlmTool
-from .base import BaseLLM, ensure_mcp_transport
+from .base import BaseLLM, McpServerInput, dump_config_models, ensure_mcp_transport
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 LlmGreetingConfigs = Dict[str, Any]
@@ -9,16 +9,7 @@ LlmToolInput = Union[Dict[str, Any], LlmTool]
 _OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}
 
 
-def _dump_optional_model(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump(exclude_none=True)
-    if hasattr(value, "dict"):
-        return value.dict(exclude_none=True)
-    if isinstance(value, list):
-        return [_dump_optional_model(item) for item in value]
-    if isinstance(value, dict):
-        return {key: _dump_optional_model(item) for key, item in value.items()}
-    return value
+_dump_optional_model = dump_config_models
 
 
 class OpenAIOptions(BaseModel):
@@ -41,7 +32,7 @@ class OpenAIOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -133,7 +124,7 @@ class AzureOpenAIOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -210,7 +201,7 @@ class AnthropicOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -282,7 +273,7 @@ class GeminiOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -358,7 +349,7 @@ class GroqOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -437,7 +428,7 @@ class CustomLLMOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -520,7 +511,7 @@ class VertexAILLMOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -602,7 +593,7 @@ class AmazonBedrockOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
@@ -673,7 +664,7 @@ class DifyOptions(BaseModel):
     greeting_configs: Optional[LlmGreetingConfigs] = Field(default=None)
     template_variables: Optional[Dict[str, str]] = Field(default=None)
     vendor: Optional[str] = Field(default=None)
-    mcp_servers: Optional[List[Dict[str, Any]]] = Field(default=None)
+    mcp_servers: Optional[List[McpServerInput]] = Field(default=None)
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0)
 

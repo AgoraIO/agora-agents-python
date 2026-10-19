@@ -21,9 +21,22 @@ class LlmTool(UncheckedBaseModel):
     Tool type. Must be `function`.
     """
 
-    function: LlmToolFunction
-    execution: typing.Optional[LlmToolExecution] = None
-    server: LlmToolServer
+    function: LlmToolFunction = pydantic.Field()
+    """
+    Tool interface exposed to the model. `parameters` is the JSON Schema for LLM arguments, not the HTTP request shape.
+    """
+
+    execution: typing.Optional[LlmToolExecution] = pydantic.Field(default=None)
+    """
+    Tool execution configuration. Defaults to `{"mode": "sync"}`. Phase 1a only allows `sync`.
+    """
+
+    server: LlmToolServer = pydantic.Field()
+    """
+    Actual HTTP request configuration for this REST tool.
+    Does not use top-level `parameters`, `path_params`, standalone `query`,
+    `response`, `json_path`, or `max_chars`.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

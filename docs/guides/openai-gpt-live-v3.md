@@ -1,6 +1,6 @@
-# GPT Live v3 preview
+# GPT Live v3
 
-This preview targets `gpt-live-1` on `/v1/live/sessions`. Use an alpha-enabled OpenAI key. Do not use this alpha for production traffic.
+GPT Live targets `gpt-live-1` on `/v1/live/sessions` through the production gateway. Existing imports from `agora_agent.agentkit.preview` remain supported as compatibility aliases.
 
 <!-- snippet: fragment -->
 ```python
@@ -51,15 +51,15 @@ GPT Live places MCP at `properties.mllm.mcp_servers`, the tool gate at `properti
 }
 ```
 
-This fragment omits the normal name, channel, token and UID fields populated by the SDK session. The preview route and `agora-feature: live-models` gate are selected automatically from the vendor.
+This fragment omits the normal name, channel, token and UID fields populated by the SDK session. The production route is selected automatically from the vendor.
 
 The SDK omits `alpha_selector` by default. Set it only when a future preview contract requires an `OpenAI-Alpha` selector.
 
 ## Silence and backend rollout
 
-Keep silence settings in the existing agent parameters builder, never in vendor params. The public API spelling is `silence_config`, with `{timeout_ms, action, content}`. The supplied extension contract describes internal `parameters.main.silence` and supports `action: "think"`; the public documentation currently says `silence_config` does not apply to MLLM. Serialization is covered by tests, but the public documentation does not establish that the preview allocator maps it to GPT Live's internal MAIN setting. Confirm that backend mapping before relying on silence nudges. The SDK does not invent a new public `main` field.
+Keep silence settings in the existing agent parameters builder, never in vendor params. The public API spelling is `silence_config`, with `{timeout_ms, action, content}`. The supplied extension contract describes internal `parameters.main.silence` and supports `action: "think"`; the public documentation currently says `silence_config` does not apply to MLLM. Serialization is covered by tests, but the public documentation does not establish that the allocator maps it to GPT Live's internal MAIN setting. Confirm that backend mapping before relying on silence nudges. The SDK does not invent a new public `main` field.
 
-## Preview-only options
+## Compatibility options
 
 The supplied backend contract marks custom voice objects, `responses_params`, and first-class context management as pending PR #1522. The SDK does not expose typed options for those fields. Use raw params only once your target backend supports that PR. Until then, context management is reachable via `session_params.context_management`.
 

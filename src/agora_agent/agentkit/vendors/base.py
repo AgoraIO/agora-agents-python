@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+from ...types.mcp_server import McpServer
 from pydantic import BaseModel
 from typing_extensions import Literal
 
@@ -14,13 +15,27 @@ MicrosoftSampleRate = Literal[8000, 16000, 24000, 48000]
 OpenAISampleRate = Literal[24000]
 CartesiaSampleRate = Literal[8000, 16000, 22050, 24000, 44100, 48000]
 GoogleTTSSampleRate = Literal[8000, 16000, 22050, 24000, 44100, 48000]
+McpServerInput = Union[Dict[str, Any], McpServer]
 
 
-def ensure_mcp_transport(servers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def dump_config_models(value: Any) -> Any:
+    """Recursively serialize generated Pydantic config models."""
+    if hasattr(value, "model_dump"):
+        return value.model_dump(exclude_none=True)
+    if hasattr(value, "dict"):
+        return value.dict(exclude_none=True)
+    if isinstance(value, list):
+        return [dump_config_models(item) for item in value]
+    if isinstance(value, dict):
+        return {key: dump_config_models(item) for key, item in value.items()}
+    return value
+
+
+def ensure_mcp_transport(servers: List[McpServerInput]) -> List[Dict[str, Any]]:
     """Copy MCP server configs and supply the transport required by the API."""
     result = []
     for server in servers:
-        item = dict(server)
+        item = dump_config_models(server)
         if item.get("transport") is None:
             item["transport"] = "streamable_http"
         result.append(item)

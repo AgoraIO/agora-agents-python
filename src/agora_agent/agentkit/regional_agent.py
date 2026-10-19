@@ -35,6 +35,7 @@ from .vendors.stt import (
     MicrosoftSTT,
     OpenAISTT,
     SarvamSTT,
+    SmallestAISTT,
     SpeechmaticsSTT,
     XaiSTT,
 )
@@ -49,7 +50,7 @@ from .vendors.llm import (
     OpenAI,
     VertexAILLM,
 )
-from .vendors.mllm import AzureOpenAIRealtime, GeminiLive, OpenAIRealtime, VertexAI, XaiGrok
+from .vendors.mllm import AzureOpenAIRealtime, GeminiLive, OpenAIGPTLive, OpenAIRealtime, VertexAI, XaiGrok
 from .vendors.tts import (
     AmazonTTS,
     CartesiaTTS,
@@ -67,6 +68,7 @@ from .vendors.tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SmallestAITTS,
     TypecastTTS,
     XaiTTS,
 )
@@ -89,6 +91,7 @@ GlobalSTT = typing.Union[
     AssemblyAISTT,
     SpeechmaticsSTT,
     SarvamSTT,
+    SmallestAISTT,
     XaiSTT,
 ]
 GlobalTTS = typing.Union[
@@ -104,6 +107,7 @@ GlobalTTS = typing.Union[
     GoogleTTS,
     AmazonTTS,
     SarvamTTS,
+    SmallestAITTS,
     GenericTTS,
     XaiTTS,
     DeepgramTTS,
@@ -122,7 +126,7 @@ GlobalLLM = typing.Union[
     Dify,
     CustomLLM,
 ]
-GlobalMLLM = typing.Union[OpenAIRealtime, AzureOpenAIRealtime, GeminiLive, VertexAI, XaiGrok]
+GlobalMLLM = typing.Union[OpenAIRealtime, OpenAIGPTLive, AzureOpenAIRealtime, GeminiLive, VertexAI, XaiGrok]
 GlobalAvatar = typing.Union[AkoolAvatar, LiveAvatarAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar]
 
 

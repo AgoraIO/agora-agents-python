@@ -67,6 +67,10 @@ def test_gemini_is_not_registered_for_preview_routing() -> None:
     assert required_preview_features({"asr": {"vendor": "gemini"}}) == []
 
 
+def test_gpt_live_is_not_registered_for_preview_routing() -> None:
+    assert required_preview_features({"mllm": {"vendor": "openai_gpt_live"}}) == []
+
+
 def test_registered_provider_routes_session_to_preview(registered_preview_asr) -> None:
     recorder = _Recorder()
     client = Agora(

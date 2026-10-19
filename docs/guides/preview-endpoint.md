@@ -10,10 +10,8 @@ Some providers may be released through a preview gateway before their production
 and `AsyncAgentSession` detect registered preview providers from the resolved start request and route the entire
 session automatically.
 
-OpenAI GPT Live uses the `live-models` feature. Gemini 3.8 MLLMs use `gemini-live`.
-Gemini STT has graduated to
-production and uses the normal regional endpoint. Existing imports of `GeminiSTT` and `GeminiSTTModels` from
-`agora_agent.agentkit.preview` remain supported as compatibility aliases.
+OpenAI GPT Live, Gemini STT, and Gemini Live have graduated to the production gateway and use the normal regional
+endpoint. Existing imports from `agora_agent.agentkit.preview` remain supported as compatibility aliases.
 
 ```python
 from agora_agent import Agent, OpenAIGPTLive
@@ -26,16 +24,13 @@ session = (
 agent_id = session.start()
 ```
 
-This session uses the preview base URL and sends `agora-feature: live-models`. A session using `GeminiSTT` uses the
-client's normal GA regional endpoint without that header.
+Preview providers use the preview base URL and `agora-feature` gate. Sessions using `GeminiSTT`, `GeminiLive`, or GPT
+Live use the client's normal production regional endpoint without that header.
 
-Use the single `GeminiLive(api_key=..., model=...)` class with `with_mllm`.
-The model IDs are `models/gemini-3.8-live` and
-`models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default.
-Set `thinking_level="medium"` for extended thinking. `GeminiLive` sends it
-only for the extended-thinking ID. The Gemini
+Use the single production `GeminiLive(api_key=..., model=...)` class with `with_mllm`. The model IDs are
+`models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`; the low-latency ID is the default. Set
+`thinking_level="medium"` for extended thinking. `GeminiLive` sends it only for the extended-thinking ID. The Gemini
 credential is sent once as `mllm.api_key`, never as `mllm.params.api_key`.
-Gemini sessions send `agora-feature: gemini-live`, while GPT Live retains `live-models`.
 
 ## Session-scoped routing
 
@@ -61,7 +56,7 @@ The registry is keyed first by request category and then by the serialized vendo
 ```python
 _PREVIEW_FEATURES_BY_CATEGORY = {
     "asr": {"new_vendor": "new-vendor-feature"},
-    "mllm": {"openai_gpt_live": "live-models"},
+    "mllm": {},
 }
 ```
 
@@ -73,3 +68,33 @@ providers. `None` values are removed before the preview request is sent.
 Add routing tests for both synchronous and asynchronous sessions when registering a provider. Tests should verify
 the preview base URL, exact feature header, all lifecycle requests, caller-header precedence, and that the original
 client remains configured for production.
+
+## Gemini 3.8 Flash TTS preview
+
+`GeminiTTS` emits `tts.vendor = "gemini"` with `api_key`, `model`, `voice`,
+and optional `style` inside `tts.params`. It defaults to `gemini-3.8-flash-tts`
+and `Puck`. Model names are sent unchanged; there is no automatic fallback
+or model rewriting.
+Model strings remain open for preview rollout changes. Blank keys are rejected.
+
+AgentSession detects the TTS vendor from the resolved request body, including
+handwritten configs, and uses the existing preview host with
+`agora-feature: gemini-live` throughout the session lifecycle. Use the retained
+session for stop/say/interrupt; the shared client remains on its normal route.
+Gemini ASR alone still uses the production route. No sample-rate or avatar
+compatibility is assumed by this preview provider.
+
+```python
+from agora_agent.agentkit.preview import GeminiTTS, GeminiTTSModels
+
+agent.with_tts(GeminiTTS(
+    api_key=google_api_key,
+    model=GeminiTTSModels.FLASH_38,
+    voice="Puck",
+    style="warm and reassuring",
+))
+```
+
+Greeting audio for `gemini-3.8-flash-tts` was verified in the Next.js, Python,
+and Go demos on 2026-09-22. A successful start response alone does not
+establish that synthesis works; verify audio delivery when testing.

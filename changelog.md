@@ -4,10 +4,48 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.12.0] — 2026-10-07
+
+### Added
+
+- **Tavus, Protoface, and LemonSlice avatars** — Added `Tavus`, `Protoface`, and `LemonSlice` as AgentKit aliases of `GenericAvatar`, exported from the package root, AgentKit, and vendor entrypoints. All retain the generic constructor, validation, session enrichment, and `vendor="generic"` wire configuration.
+
+## [v2.11.0] — 2026-09-23
+
+### Added
+
+- **Gemini TTS preview** — Added the Agent Kit Gemini TTS provider with the `gemini-3.8-flash-tts` model, default `Puck` voice, and optional natural-language `style`. Credentials serialize inside `tts.params`.
+- **Session-scoped TTS routing** — Gemini TTS selects the preview endpoint with `agora-feature: gemini-live` for the full session lifecycle, including raw TTS configs, without changing the shared client's production route. Gemini ASR, Gemini Live, and OpenAI GPT Live retain their production routing.
+
+## [v2.10.0] — 2026-09-18
+
+### Added
+
+- **Smallest AI speech providers** — Added the global `SmallestAISTT` and `SmallestAITTS` AgentKit vendors with typed options, provider-specific parameter serialization, and vendor catalog registration.
+- **MLLM tools and MCP servers** — Added inline REST `tools` and `mcp_servers` support to AgentKit MLLM vendors, including CN `QwenOmni`. Typed `McpServerConfig` values and dictionaries are supported; omitted MCP transports default to `streamable_http`, and tool execution still requires `Agent.with_tools()`.
+- **Filler-word context limits** — Generated filler-word configuration now accepts `context_message_limit` and `history_character_limit` to bound the conversation context used for generated filler text.
+
+### Changed
+
+- **OpenAI GPT Live production routing** — Moved `OpenAIGPTLive` into the production MLLM vendor catalog and removed its preview-only registration. Existing imports from `agora_agent.agentkit.preview` remain compatible and now use the production implementation.
+- **Gemini Live production routing and compatibility** — Gemini 3.8 sessions now use the normal production gateway without a preview feature header. Existing imports from `agora_agent.agentkit.preview` remain compatible and resolve to the production `GeminiLive` implementation and model constants.
+
+## [v2.9.0] — 2026-09-15
+
+### Added
+
+- **Gemini 3.8 Live MLLM** — `GeminiLive` now supports `models/gemini-3.8-live` and `models/gemini-3.8-live-extended-thinking`. The standard Live model is the default; Extended Thinking accepts `low`, `medium`, or `high` through `thinking_level`.
+
+### Changed
+
+- **Gemini Live routing and credentials** — Gemini 3.8 sessions use the preview gateway with `agora-feature: gemini-live`, send the Google credential as top-level `mllm.api_key`, and keep older Gemini Live model IDs on the production route.
+- **Gemini Live documentation** — The vendor reference and MLLM guide document the existing `GeminiLive` API for both 3.8 models and the Extended Thinking level.
+
 ## [v2.8.1] — 2026-09-11
 
 ### Changed
 
+- **OpenAI GPT Live production routing** — moved `OpenAIGPTLive` to the production MLLM vendors and removed its preview registration. Existing imports from `agora_agent.agentkit.preview` remain compatible and now route to Production automatically.
 - **OpenAI GPT Live defaults** — `OpenAIGPTLive` now defaults to the shortened `gpt-live-1` model name and omits the alpha selector. Explicit `model` and `alpha_selector` options remain available for future preview contracts.
 
 ## [v2.8.0] — 2026-09-10
