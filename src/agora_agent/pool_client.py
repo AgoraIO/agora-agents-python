@@ -13,6 +13,7 @@ import typing_extensions
 from .agentkit.regional_agent import RegionalAgent
 from .agentkit.vendors.region import AreaScope, area_to_scope
 from .v3 import V3Options, V3Client, AsyncV3Client
+from .v3.client import SecretsClient, NumbersClient, AsyncSecretsClient, AsyncNumbersClient
 from .client import Agora as BaseAgora
 from .client import AsyncAgora as BaseAsyncAgora
 from .core.api_error import ApiError
@@ -391,6 +392,16 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         return self._v3_client
 
     @property
+    def secrets(self) -> SecretsClient:
+        """Project secret provisioning with the shared client transport."""
+        return self.v3.secrets
+
+    @property
+    def numbers(self) -> NumbersClient:
+        """Project number provisioning with the shared client transport."""
+        return self.v3.numbers
+
+    @property
     def pool(self) -> Pool:
         """
         Get the underlying domain pool for advanced usage.
@@ -739,6 +750,16 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         if not hasattr(self, "_v3_client"):
             self._v3_client = AsyncV3Client(self, self._v3_options)
         return self._v3_client
+
+    @property
+    def secrets(self) -> AsyncSecretsClient:
+        """Async project secret provisioning with the shared transport."""
+        return self.v3.secrets
+
+    @property
+    def numbers(self) -> AsyncNumbersClient:
+        """Async project number provisioning with the shared transport."""
+        return self.v3.numbers
 
     @property
     def pool(self) -> Pool:

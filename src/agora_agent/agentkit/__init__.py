@@ -496,6 +496,6 @@ __all__ = [
     "validate_tts_sample_rate",
 ]
 
-from .v3 import (DeployedAgent, AsyncDeployedAgent, SecretRef, secret_ref, UnsupportedFieldError, NumberNotFoundError, SecretRefNotSupportedError)
+from .v3 import (SavedAgent, AsyncSavedAgent, DeployedAgent, AsyncDeployedAgent, SecretRef, secret_ref, UnsupportedFieldError, NumberNotFoundError, SecretRefNotSupportedError)
 
-__all__ = sorted(set(__all__) | {"DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"})
+__all__ = sorted(set(__all__) | {"SavedAgent", "AsyncSavedAgent", "DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"})

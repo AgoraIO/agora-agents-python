@@ -251,7 +251,7 @@ def test_secret_ref_v2_guard_at_all_boundaries():
     for call in (lambda: agent.to_properties(channel="c", agent_uid="1", remote_uids=["*"]),
                  lambda: agent.create_session(channel="c", agent_uid="1", remote_uids=["*"]),
                  lambda: agent.create_async_session(channel="c", agent_uid="1", remote_uids=["*"])):
-        with pytest.raises(SecretRefNotSupportedError, match="requires deploy"):
+        with pytest.raises(SecretRefNotSupportedError, match="requires save"):
             call()
     with pytest.raises(ValueError):
         secret_ref("prod.bad", "key")
@@ -564,3 +564,95 @@ async def test_conflict_latest_preserves_context_without_write_conditions(async_
     assert result == {"agent_id": "a"}
     assert len(calls) == 2
     assert extra["iF-mAtCh"] == '"old"'
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_one_builder_creates_session_or_saved_handle_with_unversioned_provisioning(async_):
+    import copy
+
+    from agora_agent import AsyncSavedAgent, SavedAgent
+    from agora_agent.agentkit import AsyncSavedAgent as AgentKitAsyncSavedAgent
+    from agora_agent.agentkit import SavedAgent as AgentKitSavedAgent
+    assert SavedAgent is DeployedAgent is AgentKitSavedAgent
+    assert AsyncSavedAgent is AsyncDeployedAgent is AgentKitAsyncSavedAgent
+    calls = []
+    stored = {}
+    def handler(request):
+        calls.append(request)
+        path = request.url.path
+        if path.endswith("/join"):
+            payload = json.loads(request.content)
+            assert payload["properties"]["llm"]["api_key"] == "inline-key"
+            return httpx.Response(200, json={"agent_id": "running-session"})
+        if path.endswith("/secrets"):
+            return httpx.Response(201, json={"name": "support", "keys": ["openai"], "create_ts": 1, "update_ts": 1})
+        if path.endswith("/numbers"):
+            return httpx.Response(201, json={"number_id": "n", "number": "+12025550123", "create_ts": 1})
+        if "/numbers/n" in path:
+            return httpx.Response(200, json={"number_id": "n", "number": "+12025550123", "create_ts": 1}, headers={"ETag": '"n"'})
+        if request.method in ("POST", "PATCH"):
+            payload = json.loads(request.content)
+            stored.update(payload)
+            stored.update(agent_id="a", create_ts=1, update_ts=2)
+            return httpx.Response(200, json=stored, headers={"ETag": '"saved"'})
+        return httpx.Response(200, json=stored, headers={"ETag": '"current"'})
+    client = make_client(handler, async_)
+    assert client.secrets is client.v3.secrets
+    assert client.numbers is client.v3.numbers
+    agent = (Agent(client=client)
+             .with_stt(DeepgramSTT(api_key="asr-key", model="nova-3"))
+             .with_llm(OpenAI(api_key="inline-key", base_url="https://api.openai.com/v1/chat/completions", model="gpt-4o-mini"))
+             .with_tts(OpenAITTS(api_key="tts-key", base_url="https://api.openai.com/v1/audio/speech", model="tts-1", voice="alloy")))
+    snapshot = copy.deepcopy(agent.config)
+    if async_:
+        session = agent.create_async_session(channel="room", agent_uid="1", remote_uids=["*"], token="rtc")
+        assert await session.start() == "running-session"
+        await client.secrets.create(name="support", secrets={"openai": "key"})
+        number = await client.numbers.create(number="+12025550123", sip_trunk={"hostname": "sip.example"})
+        saved = await agent.save_async(name="Support")
+        await saved.assign_number(number)
+        updated = await saved.update(agent.with_greeting("Updated"))
+        assert isinstance(saved, AsyncSavedAgent)
+        loaded = await AsyncSavedAgent.get(client, saved.id)
+    else:
+        session = agent.create_session(channel="room", agent_uid="1", remote_uids=["*"], token="rtc")
+        assert session.start() == "running-session"
+        client.secrets.create(name="support", secrets={"openai": "key"})
+        number = client.numbers.create(number="+12025550123", sip_trunk={"hostname": "sip.example"})
+        saved = agent.save(name="Support")
+        saved.assign_number(number)
+        updated = saved.update(agent.with_greeting("Updated"))
+        assert isinstance(saved, SavedAgent)
+        loaded = SavedAgent.get(client, saved.id)
+    assert updated.id == loaded.id == saved.id == "a"
+    assert updated.name == saved.name == "Support"
+    assert agent.config == snapshot
+    assert not hasattr(saved, "create_session")
+    assert not hasattr(saved, "create_async_session")
+    assert sum(r.method == "POST" and r.url.path.endswith("/agents") for r in calls) == 1
+    patch = next(r for r in calls if r.method == "PATCH" and r.url.path.endswith("/agents/a"))
+    assert patch.headers["If-Match"] == '"current"'
+    assert json.loads(patch.content)["agent_name"] == "Support"
+    if async_:
+        renamed = await saved.update(agent, name="Renamed")
+    else:
+        renamed = saved.update(agent, name="Renamed")
+    assert renamed.name == "Renamed"
+    assert saved.name == "Support"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_saved_update_rejects_another_client_before_network(async_):
+    from agora_agent import AsyncSavedAgent, SavedAgent
+    from agora_agent.v3 import RawResponse
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    other = make_client(lambda _: pytest.fail("must not send"), async_)
+    cls = AsyncSavedAgent if async_ else SavedAgent
+    saved = cls(client, RawResponse({"agent_id": "a", "agent_name": "Support"}, httpx.Headers(), 200, None))
+    with pytest.raises(ValueError, match="same client"):
+        if async_:
+            await saved.update(Agent(client=other))
+        else:
+            saved.update(Agent(client=other))

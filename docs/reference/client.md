@@ -149,3 +149,7 @@ These are lazily initialized on first access. For most use cases, prefer the [Ag
 ## v3 preview sub-client
 
 `client.v3` / `async_client.v3` provide stored agents, secrets, numbers and project-wide session reads with the owning client's transport/auth. This protected custom adapter is separate from the Fern-generated v2 resources above. See [v3 workflows](../guides/v3-api-preview.md) for staging configuration and [all 20 operations](./v3.md) for conditional headers, typed dictionary responses and cursor iterators. Preview availability requires this checkout, not an assumed PyPI release.
+
+## Project provisioning
+
+Use `client.secrets` and `client.numbers` for project provisioning (await methods with `AsyncAgora`). They share the underlying resources and transport with the advanced namespace. The [agent workflow](../guides/agent-workflow.md) combines these with `Agent.save()` and saved-handle updates. Existing `client.agents` continues to manage running sessions, so stored-agent CRUD stays available through `SavedAgent` or advanced `client.v3.agents`.

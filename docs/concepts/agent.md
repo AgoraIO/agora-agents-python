@@ -8,7 +8,7 @@ description: The Agent builder — configure an AI agent with LLM, TTS, STT, and
 
 The `Agent` class is a fluent builder for configuring AI agent properties. Pass a bound `Agora` or `AsyncAgora` client with `client=...` — it is required for `create_session()` and `create_async_session()`. The builder collects vendor settings (LLM, TTS, STT, MLLM, avatar) and produces a fully configured `AgentSession` when you call `create_session()`. The agent instance name is set on `create_session(name=...)`, not on the `Agent` constructor.
 
-In the [v3 preview](../guides/v3-api-preview.md), the same local builder can save a stored configuration with `deploy()` / `deploy_async()`. Its stored name is passed to deploy, and the returned handle manages inbound-number assignments. This does not start a session or change the v2 `create_session()` lifecycle. Secret references require deployment; they cannot be sent to v2 sessions.
+In the [v3 preview](../guides/v3-api-preview.md), the same local builder can save a stored configuration with `save()` / `save_async()`. Its stored name is passed to deploy, and the returned handle manages inbound-number assignments. This does not start a session or change the v2 `create_session()` lifecycle. Secret references require deployment; they cannot be sent to v2 sessions.
 
 ## Constructor
 

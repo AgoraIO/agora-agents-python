@@ -7,11 +7,11 @@ The Agora Conversational AI SDK provides convenient access to the Agora Conversa
 enabling you to build voice-powered AI agents with support for both cascading flows (ASR -> LLM -> TTS) 
 and multimodal flows (MLLM) for real-time audio processing.
 
-## v3 stored-agent preview
+## Run or save the same agent configuration
 
-This checkout's additive v3 preview supports stored-agent `deploy()` / `deploy_async()` and redeploy by saved ID; project secrets and `secret_ref()` credentials; immutable `with_variable()` definitions; and number assignment, unassignment, and client-side `list_numbers()` scans. `client.v3` exposes all 20 staging operations with typed dictionaries, raw ETags/headers, conditional writes, and cursor pagination. v3 sessions are read-only; session writes and campaigns are not implemented. Existing v2 sessions and resources retain their current behavior.
+Use one `Agent` builder to configure providers, then call `create_session(...).start()` for a running session or `save()` for a `SavedAgent`. Async applications use `create_async_session()` and `save_async()`. A saved handle owns `update(config)`, deletion, number assignment/unassignment, and client-side `list_numbers()` scans. Use `client.secrets` and `client.numbers` for provisioning, with `secret_ref()` credentials and immutable `with_variable()` definitions for saved configurations.
 
-Use this `feat/v3-api-preview` checkout for evaluation; these features are not a claim about the published PyPI release. Start with the [staging workflow guide](docs/guides/v3-api-preview.md) or [complete v3 reference](docs/reference/v3.md). This protected custom adapter was generated locally from staging OpenAPI, not through the canonical Fern pipeline.
+Saving and project provisioning require this `feat/v3-api-preview` checkout; their presence here does not imply a published PyPI release. Existing session behavior is preserved. See the [daily agent workflow](docs/guides/agent-workflow.md), [persistence transport guide](docs/guides/v3-api-preview.md), and [advanced 20-operation reference](docs/reference/v3.md) for ETags, cursor pagination and read-only project session queries. `deploy` / `DeployedAgent` remain compatibility names. Saved-agent session starts and campaigns await backend support.
 
 ## Install
 

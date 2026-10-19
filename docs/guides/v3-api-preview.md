@@ -1,11 +1,11 @@
-# v3 stored-agent preview (P1)
+# Saving agent configurations (preview transport guide)
 
-Use `Agent.deploy()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers all 20 published staging operations. See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
+For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers all 20 published staging operations. See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
 
 | Object or API | Meaning | Available now |
 |---|---|---|
 | `Agent` | Immutable local builder | Existing vendor configuration plus `with_variable` and deploy |
-| v3 stored agent / `DeployedAgent` | Persisted configuration identified by `agent_id` | Create, read, conditional update, delete, inbound-number assignment and number listing |
+| v3 stored agent / `SavedAgent` | Persisted configuration identified by `agent_id` | Create, read, conditional update, delete, inbound-number assignment and number listing |
 | v2 `AgentSession` | Running RTC instance, also historically called an agent | Existing `create_session(...).start()` lifecycle |
 | v3 session | Running instance identified by `agent_session_id` | Low-level list and get only |
 
@@ -33,7 +33,7 @@ export DEEPGRAM_API_KEY='YOUR_DEEPGRAM_KEY'
 
 The base URL is an HTTP(S) **origin**, without a project path, query or fragment. The SDK appends `/conversational-ai/v3/projects/{appid}`. `V3Options(base_url=...)` overrides the environment variable; headers apply only to v3. Existing client authentication still supplies the Authorization header. Production paths, regional availability and Basic-auth acceptance remain unconfirmed; use the supplied staging configuration for evaluation.
 
-This complete cascaded configuration stores one project secret set, then deploys a stored agent. Set creation is a one-time provisioning step; subsequent runs can update secrets separately using the [secret methods](../reference/v3.md#secrets-eight-operations).
+This complete cascaded configuration stores one project secret set, then saves a reusable agent. Set creation is a one-time provisioning step; subsequent runs can update secrets separately using the [secret methods](../reference/v3.md#secrets-eight-operations).
 
 ```python
 import os
@@ -50,7 +50,7 @@ client = Agora(
         "X-Consumer-Username": os.environ["AGORA_V3_CONSUMER_USERNAME"],
     }),
 )
-client.v3.secrets.create(
+client.secrets.create(
     name="support",
     secrets={"openai": os.environ["OPENAI_API_KEY"], "deepgram": os.environ["DEEPGRAM_API_KEY"]},
     idempotency_key="support-secrets-initial-provisioning",
@@ -71,32 +71,32 @@ agent = (
     .with_variable("customer_name", type="str", required=True)
     .with_variable("resolved", type="bool", extract=True, description="Was the issue resolved?")
 )
-support = agent.deploy(name="Support")
-print(support.id, support.etag)  # Persist the ID for the next deploy.
+support = agent.save(name="Support")
+print(support.id, support.etag)  # Persist the ID for the next update.
 ```
 
 The example endpoints are existing vendor configuration, not additional v3 defaults. Use backend-approved provider endpoints/models for your staging deployment. Managed mode may also require an explicit provider URL on staging.
 
-## Redeploy, load and delete
+## Update, load and delete
 
-Pass the saved ID to update the same stored agent. Omitting `agent_id` always creates another configuration; matching names do not provide upsert or deduplication.
+Use `saved.update(config)` to update the same stored agent while preserving its ID and name. Pass `name="New name"` to rename it. The configuration must use the exact same client object, preventing accidental writes to another project. `agent.save()` creates another configuration; matching names do not provide upsert or deduplication. The advanced `agent.save(agent_id=...)` form remains available.
 
 ```python
-from agora_agent import DeployedAgent
+from agora_agent import SavedAgent
 
-support = agent.deploy(name="Support", agent_id=support.id)
-loaded = DeployedAgent.get(client, support.id)
+support = support.update(agent)  # Preserve the saved ID and name.
+loaded = SavedAgent.get(client, support.id)
 print(loaded.id, loaded.name, loaded.etag, loaded.data)
 # loaded.delete()  # Delete the stored configuration when it is no longer needed.
 ```
 
-Redeploy GETs the latest ETag, then sends one conditional PATCH. It recursively nulls stale readable mutable fields, including nested provider params; IDs, timestamps and resolved credential metadata are excluded. Credentials come from the builder. Switching an existing module to managed mode explicitly nulls `api_key`.
+Updating GETs the latest ETag, then sends one conditional PATCH. It recursively nulls stale readable mutable fields, including nested provider params; IDs, timestamps and resolved credential metadata are excluded. Credentials come from the builder. Switching an existing module to managed mode explicitly nulls `api_key`.
 
-This is a merge patch rather than a guaranteed replacement. Write-only keys and headers cannot be reconstructed from GET, and omitted hidden values remain subject to backend merge semantics. Keep intended credentials in the builder or use a targeted [low-level update](../reference/v3.md#agents-five-operations) when retaining existing hidden credentials matters. Agent deploy conflicts are surfaced without retry.
+This is a merge patch rather than a guaranteed replacement. Write-only keys and headers cannot be reconstructed from GET, and omitted hidden values remain subject to backend merge semantics. Keep intended credentials in the builder or use a targeted [low-level update](../reference/v3.md#agents-five-operations) when retaining existing hidden credentials matters. Saved-agent update conflicts are surfaced without retry.
 
 ## Assign and discover inbound numbers
 
-Create the SIP number in the same project before assignment, either through your provisioning workflow or `client.v3.numbers.create(number=..., sip_trunk={"hostname": ...})`. Number registration details and unsupported staging options are in the [reference](../reference/v3.md#numbers-five-operations).
+Create the SIP number in the same project before assignment, either through your provisioning workflow or `client.numbers.create(number=..., sip_trunk={"hostname": ...})`. Number registration details and unsupported staging options are in the [reference](../reference/v3.md#numbers-five-operations).
 
 ```python
 support.assign_number("+12025550123", max_call_duration_seconds=900,
@@ -136,7 +136,7 @@ page = client.v3.sessions.list(limit=20, status="RUNNING", channel="room")
 if page["has_more"]:
     next_page = client.v3.sessions.list(limit=20, status="RUNNING", channel="room",
                                        cursor=page["next_cursor"])
-for number in client.v3.numbers.iter_all(limit=100):
+for number in client.numbers.iter_all(limit=100):
     print(number["number_id"])
 ```
 
@@ -146,11 +146,11 @@ A 412 raises `PreconditionFailedError`, a subclass of `ApiError`; other HTTP fai
 
 ## Async applications
 
-Use `AsyncAgora`, the same low-level keyword arguments, and `await agent.deploy_async(...)`. The deployed handle is `AsyncDeployedAgent`; `get`, `delete`, `assign_number`, `unassign_number` and `list_numbers` are awaitable. `with_variable` and the vendor builders stay local and synchronous.
+Use `AsyncAgora`, the same low-level keyword arguments, and `await agent.save_async(...)`. The saved handle is `AsyncSavedAgent`; `get`, `update`, `delete`, `assign_number`, `unassign_number` and `list_numbers` are awaitable. `with_variable` and the vendor builders stay local and synchronous.
 
 ```python
 import os
-from agora_agent import Agent, AsyncAgora, AsyncDeployedAgent, Area, V3Options
+from agora_agent import Agent, AsyncAgora, AsyncSavedAgent, Area, V3Options
 
 async def inspect_stored_agent(agent_id: str):
     client = AsyncAgora(
@@ -161,24 +161,25 @@ async def inspect_stored_agent(agent_id: str):
             "X-Consumer-Username": os.environ["AGORA_V3_CONSUMER_USERNAME"],
         }),
     )
-    support = await AsyncDeployedAgent.get(client, agent_id)
+    support = await AsyncSavedAgent.get(client, agent_id)
     numbers = await support.list_numbers()
     async for page in client.v3.sessions.iter_pages(limit=20, status="RUNNING"):
         print(page["data"]["count"])
     return support, numbers
 
 # With a fully configured Agent bound to AsyncAgora:
-# support = await agent.deploy_async(name="Support", agent_id=saved_id)
+# support = await agent.save_async(name="Support")
+# support = await support.update(agent)
 # await support.assign_number("+12025550123")
 # await support.unassign_number("+12025550123")
 # await support.delete()
 ```
 
-Use `await error.latest()` after an async 412. `deploy()` requires an `Agora` client; `deploy_async()` requires `AsyncAgora`. Passing the other client kind raises `TypeError` before deployment.
+Use `await error.latest()` after an async 412. `save()` requires an `Agora` client; `save_async()` requires `AsyncAgora`. Passing the other client kind raises `TypeError` before saving.
 
 ## Compatibility and backend limits
 
-Existing v2 resources and `Agent.create_session()` behavior remain available. A v3 `secret_ref` cannot be sent as a v2 API key: `create_session`, `create_async_session` and `to_properties` reject it with `SecretRefNotSupportedError("secret_ref requires deploy()")`. Build a separate configuration with inline credentials for an existing v2 session. Variables configure stored-agent definitions; this phase does not add session-start variable values or an AgentKit extraction-results helper.
+Existing v2 resources and `Agent.create_session()` behavior remain available. A v3 `secret_ref` cannot be sent as a v2 API key: `create_session`, `create_async_session` and `to_properties` reject it with `SecretRefNotSupportedError("secret_ref requires save() or deploy()")`. Use inline or managed credentials for current sessions; their transport cannot dereference persistence-only secret references. Variables configure stored-agent definitions; this phase does not add session-start variable values or an AgentKit extraction-results helper.
 
 `with_variable` returns a new builder. Names match `^[a-z][a-z0-9_]{0,63}$`; supported types are `str`, `int`, `float`, `bool`, `date`, `datetime`; `extract=True` requires a nonempty description (at most 2,000 characters). `options`, when supplied, contains 1–100 unique primitive values: equivalent numbers such as `1` and `1.0` count as duplicates, while `True`, `1`, and `"1"` remain distinct JSON types. `secret_ref(set_name, key)` validates 1–64 letters, digits, underscores or hyphens per component and returns `$secrets.<set>.<key>`. It creates a reference, not a secret value.
 
@@ -205,3 +206,7 @@ The adapter shares the existing client's HTTP transport, authentication and curr
 The v3 low-level methods and TypedDict wire schemas were generated locally from the staging OpenAPI reviewed for this preview. They are protected custom code under `src/agora_agent/v3`, with a handwritten shared-transport adapter and AgentKit mapping. **They are not output from the repository's Fern generation pipeline.** This Python checkout does not contain the local generator or a vendored OpenAPI snapshot, so a reproducible generation workflow is not currently checked in.
 
 See [the v3 source](../../src/agora_agent/v3/client.py), [wire schemas](../../src/agora_agent/v3/types.py), [AgentKit mapping](../../src/agora_agent/agentkit/v3.py), and [offline contract tests](../../tests/custom/test_v3_preview.py). Preserve `.fernignore` protection when integrating a future canonical Fern namespace.
+
+## Compatibility names
+
+`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`, and `AsyncDeployedAgent` is exactly `AsyncSavedAgent`. `client.secrets` / `client.numbers` share the same resource objects as their advanced `client.v3` counterparts. These aliases do not duplicate requests or configuration. A saved agent has no session-start method until the endpoint and complete contract for starting by `agent_id` are available; create current sessions from the original `Agent` configuration.

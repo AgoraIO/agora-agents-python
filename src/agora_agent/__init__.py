@@ -155,7 +155,7 @@ def __getattr__(attr_name: str) -> typing.Any:
 def __dir__() -> typing.List[str]:
     return list(__all__)
 
-from .agentkit.v3 import (DeployedAgent, AsyncDeployedAgent, SecretRef, secret_ref, UnsupportedFieldError, NumberNotFoundError, SecretRefNotSupportedError)
+from .agentkit.v3 import (SavedAgent, AsyncSavedAgent, DeployedAgent, AsyncDeployedAgent, SecretRef, secret_ref, UnsupportedFieldError, NumberNotFoundError, SecretRefNotSupportedError)
 from .v3 import V3Options, PreconditionFailedError
 
-__all__ = sorted(set(__all__) | {"DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"} | {"V3Options", "PreconditionFailedError"})
+__all__ = sorted(set(__all__) | {"SavedAgent", "AsyncSavedAgent", "DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"} | {"V3Options", "PreconditionFailedError"})

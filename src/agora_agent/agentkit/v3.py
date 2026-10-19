@@ -4,10 +4,13 @@ from __future__ import annotations
 import copy
 import re
 import time
-from typing import List, Mapping, Optional
+from typing import TYPE_CHECKING, List, Mapping, Optional
 
 from ..v3 import PreconditionFailedError
 from ..v3.types import AgentResponse, NumberResponse
+
+if TYPE_CHECKING:
+    from .agent import Agent
 
 
 class UnsupportedFieldError(ValueError):
@@ -39,7 +42,7 @@ def secret_ref(secret_set: str, key: str) -> SecretRef:
 
 def guard_v2(value):
     if isinstance(value, str) and value.startswith("$secrets."):
-        raise SecretRefNotSupportedError("secret_ref requires deploy()")
+        raise SecretRefNotSupportedError("secret_ref requires save() or deploy()")
     if isinstance(value, Mapping):
         for item in value.values():
             guard_v2(item)
@@ -380,12 +383,12 @@ def _require_client(agent, async_):
     from ..pool_client import Agora, AsyncAgora
     expected = AsyncAgora if async_ else Agora
     if not isinstance(agent._client, expected):
-        raise TypeError("deploy_async requires AsyncAgora" if async_ else "deploy requires Agora")
+        raise TypeError("save_async requires AsyncAgora" if async_ else "save requires Agora")
     if getattr(agent._client, "area_scope", None) == "cn":
         raise ValueError("v3 deployment in CN is unconfirmed; use a supported global area")
 
 
-def deploy(agent, *, name=None, agent_id=None) -> DeployedAgent:
+def save(agent, *, name=None, agent_id=None) -> SavedAgent:
     _require_client(agent, False)
     body = build_body(agent, name)
     raw = agent._client.v3.agents.with_raw_response
@@ -396,10 +399,10 @@ def deploy(agent, *, name=None, agent_id=None) -> DeployedAgent:
         old = {k: v for k, v in previous.data.items() if k in _MUTABLE}
         body = replacement_patch(old, body)
         response = raw.update(agent_id=agent_id, if_match=_require_etag(previous), **body)
-    return DeployedAgent(agent._client, response)
+    return SavedAgent(agent._client, response)
 
 
-async def deploy_async(agent, *, name=None, agent_id=None) -> AsyncDeployedAgent:
+async def save_async(agent, *, name=None, agent_id=None) -> AsyncSavedAgent:
     _require_client(agent, True)
     body = build_body(agent, name)
     raw = agent._client.v3.agents.with_raw_response
@@ -409,7 +412,7 @@ async def deploy_async(agent, *, name=None, agent_id=None) -> AsyncDeployedAgent
         previous = await raw.get(agent_id=agent_id)
         old = {k: v for k, v in previous.data.items() if k in _MUTABLE}
         response = await raw.update(agent_id=agent_id, if_match=_require_etag(previous), **replacement_patch(old, body))
-    return AsyncDeployedAgent(agent._client, response)
+    return AsyncSavedAgent(agent._client, response)
 
 
 def _normalize(number):
@@ -434,7 +437,7 @@ def _policy(max_call_duration_seconds, max_silence_duration_ms):
     return policy
 
 
-class _DeployedAgentBase:
+class _SavedAgentBase:
     def __init__(self, client, response):
         self._client = client
         self.id: str = response.data["agent_id"]
@@ -443,10 +446,16 @@ class _DeployedAgentBase:
         self.data: AgentResponse = response.data
         self.raw = client.v3.agents
 
-class DeployedAgent(_DeployedAgentBase):
+class SavedAgent(_SavedAgentBase):
     @classmethod
-    def get(cls, client, agent_id) -> DeployedAgent:
+    def get(cls, client, agent_id) -> SavedAgent:
         return cls(client, client.v3.agents.with_raw_response.get(agent_id=agent_id))
+
+    def update(self, config: Agent, *, name: Optional[str] = None) -> SavedAgent:
+        """Save a replacement configuration to this ID, preserving its name."""
+        if config._client is not self._client:
+            raise ValueError("SavedAgent.update requires a configuration bound to the same client")
+        return config.save(name=self.name if name is None else name, agent_id=self.id)
 
     def delete(self):
         return self.raw.delete(agent_id=self.id)
@@ -498,10 +507,16 @@ class DeployedAgent(_DeployedAgentBase):
         return self._assign(number, None, {})
 
 
-class AsyncDeployedAgent(_DeployedAgentBase):
+class AsyncSavedAgent(_SavedAgentBase):
     @classmethod
-    async def get(cls, client, agent_id) -> AsyncDeployedAgent:
+    async def get(cls, client, agent_id) -> AsyncSavedAgent:
         return cls(client, await client.v3.agents.with_raw_response.get(agent_id=agent_id))
+
+    async def update(self, config: Agent, *, name: Optional[str] = None) -> AsyncSavedAgent:
+        """Save a replacement configuration to this ID, preserving its name."""
+        if config._client is not self._client:
+            raise ValueError("AsyncSavedAgent.update requires a configuration bound to the same client")
+        return await config.save_async(name=self.name if name is None else name, agent_id=self.id)
 
     async def delete(self):
         return await self.raw.delete(agent_id=self.id)
@@ -551,3 +566,9 @@ class AsyncDeployedAgent(_DeployedAgentBase):
 
     async def unassign_number(self, number) -> NumberResponse:
         return await self._assign(number, None, {})
+
+# Compatibility names are exact aliases; all paths share the same implementation.
+DeployedAgent = SavedAgent
+AsyncDeployedAgent = AsyncSavedAgent
+deploy = save
+deploy_async = save_async

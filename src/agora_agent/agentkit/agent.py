@@ -7,7 +7,7 @@ import warnings
 
 if typing.TYPE_CHECKING:
     from .agent_session import AgentSession, AsyncAgentSession
-    from .v3 import DeployedAgent, AsyncDeployedAgent
+    from .v3 import DeployedAgent, AsyncDeployedAgent, SavedAgent, AsyncSavedAgent
     from ..core.domain import Area
     from ..pool_client import Agora, AsyncAgora
 
@@ -870,15 +870,23 @@ class Agent:
         new_agent._v3_variables = {**getattr(self, "_v3_variables", {}), name: variable_definition(name, definition, **fields)}
         return new_agent
 
+    def save(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "SavedAgent":
+        """Save this configuration and return its persistent handle."""
+        from .v3 import save
+        return save(self, name=name, agent_id=agent_id)
+
+    async def save_async(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "AsyncSavedAgent":
+        """Save using a bound AsyncAgora client and return its persistent handle."""
+        from .v3 import save_async
+        return await save_async(self, name=name, agent_id=agent_id)
+
     def deploy(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "DeployedAgent":
-        """Create a v3 stored agent, or conditionally redeploy an existing ID."""
-        from .v3 import deploy
-        return deploy(self, name=name, agent_id=agent_id)
+        """Compatibility alias for save()."""
+        return self.save(name=name, agent_id=agent_id)
 
     async def deploy_async(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "AsyncDeployedAgent":
-        """Deploy using a bound AsyncAgora client."""
-        from .v3 import deploy_async
-        return await deploy_async(self, name=name, agent_id=agent_id)
+        """Compatibility alias for save_async()."""
+        return await self.save_async(name=name, agent_id=agent_id)
 
     def create_session(
         self,

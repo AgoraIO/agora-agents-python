@@ -21,6 +21,8 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 
 ## Start here
 
+- Use the [Agent workflow](./guides/agent-workflow.md) for one configuration builder that creates a running session or explicitly saves a reusable configuration.
+
 - Start with [Quick Start](./getting-started/quick-start.md). It shows the baseline app-credentials setup and starts a cascading ASR -> LLM -> TTS agent.
 - Use [MLLM Flow](./guides/mllm-flow.md) when your agent uses one supported realtime multimodal model.
 - Use [Cascading Flow](./guides/cascading-flow.md) for more examples of the default ASR -> LLM -> TTS flow, including provider-specific configuration.

@@ -230,11 +230,11 @@ agent = agent.with_filler_words(filler_words)
 
 `generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults. Set `context_message_limit` to cap the number of recent messages and `history_character_limit` to cap the number of conversation-history characters passed to the filler-word model.
 
-## v3 stored-agent preview
+## Save configurations (preview checkout)
 
-`with_variable(name, definition=None, **fields)` returns a new builder with a typed variable definition. `deploy(name=None, agent_id=None)` stores the configuration with an `Agora` client; `await deploy_async(...)` does so with `AsyncAgora`. Deploy arguments are keyword-only. Passing `agent_id` updates that stored configuration with a fresh ETag instead of creating another one.
+`with_variable(name, definition=None, **fields)` returns a new builder with a typed variable definition. `save(name=None, agent_id=None)` stores the configuration with an `Agora` client; `await save_async(...)` does so with `AsyncAgora`. Deploy arguments are keyword-only. After saving, use `saved.update(config)` to reuse its ID/name with a fresh ETag; an advanced `agent_id` argument is also supported. Updates require the same bound client object.
 
-The returned `DeployedAgent` / `AsyncDeployedAgent` supports loading, deletion, number assignment/unassignment, and `list_numbers()` project-page scans. Deployment does not start a session. Existing v2 session methods below retain their behavior and reject v3 secret references. See the [v3 workflow guide](../guides/v3-api-preview.md) and [complete reference](./v3.md) for strict mapping, language precedence, secrets, pagination, conflicts and preview limits.
+The returned `SavedAgent` / `AsyncSavedAgent` supports loading, `update(config)`, deletion, number assignment/unassignment, and `list_numbers()` project-page scans. Saving does not start a session. `deploy()` / `deploy_async()` and the `DeployedAgent` handle names remain compatibility aliases. Existing v2 session methods below retain their behavior and reject v3 secret references. See the [v3 workflow guide](../guides/v3-api-preview.md) and [complete reference](./v3.md) for strict mapping, language precedence, secrets, pagination, conflicts and preview limits.
 
 ## `create_session()`
 
