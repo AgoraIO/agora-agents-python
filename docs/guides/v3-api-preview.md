@@ -182,7 +182,7 @@ Existing v2 resources and `Agent.create_session()` behavior remain available. A 
 
 `with_variable` returns a new builder. Names match `^[a-z][a-z0-9_]{0,63}$`; supported types are `str`, `int`, `float`, `bool`, `date`, `datetime`; `extract=True` requires a nonempty description. `secret_ref(set_name, key)` validates 1–64 letters, digits, underscores or hyphens per component and returns `$secrets.<set>.<key>`. It creates a reference, not a secret value.
 
-The central mapper reuses existing vendor configs. Vendor instructions and greetings take precedence over deprecated Agent fields; realtime `params.instructions` moves to top-level instructions. Provider API keys become `{mode: "byok", api_key: ...}`, while absent keys select `managed`. Turn detection/interruption, supported text/audio greetings, silence settings and filler words are converted to v3 shapes.
+The central mapper reuses existing vendor configs. Vendor instructions and greetings take precedence over deprecated Agent fields; realtime `params.instructions` moves to top-level instructions, and supported vendor messages move to top-level `messages`. Provider API keys become `{mode: "byok", api_key: ...}`, while absent keys select `managed`. Realtime Agora, server and semantic VAD settings, supported text/audio greetings, silence settings and filler words are converted to v3 shapes. Greeting playback modes `single_every` and `single_first` map to `each_join` and `first_join`; other v2 modes without a v3 equivalent are rejected. A managed MiniMax TTS preset model is retained in `tts.params.model`.
 
 | Constraint | Current behavior |
 |---|---|

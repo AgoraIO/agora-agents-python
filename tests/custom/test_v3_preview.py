@@ -374,6 +374,82 @@ def test_realtime_instructions_and_audio_greeting_mapping():
     assert greeting == {"mode": "audio", "url": "https://audio.example/greeting.wav", "text": "Hi", "download_timeout_ms": 1000, "pcm_sample_rate": 16000}
 
 
+def test_realtime_vendor_messages_use_top_level_and_preserve_instruction_precedence():
+    from agora_agent import OpenAIRealtime
+    client = make_client(lambda _: pytest.fail("pure mapping"))
+    agent = Agent(client=client, instructions="Deprecated instructions").with_mllm(
+        OpenAIRealtime(
+            api_key="key", instructions="Provider instructions",
+            messages=[{"role": "system", "content": "Explicit system message"},
+                      {"role": "user", "content": "Hello"}],
+        )
+    )
+    body = build_body(agent)
+    assert body["instructions"] == "Explicit system message"
+    assert body["messages"] == [{"role": "user", "content": "Hello"}]
+    assert "messages" not in body["pipeline"]["mllm"]
+    assert "instructions" not in body["pipeline"]["mllm"].get("params", {})
+
+    params_only = build_body(Agent(client=client, instructions="Deprecated").with_mllm(
+        OpenAIRealtime(api_key="key", instructions="Provider", messages=[{"role": "assistant", "content": "Hi"}])
+    ))
+    assert params_only["instructions"] == "Provider"
+    assert params_only["messages"] == [{"role": "assistant", "content": "Hi"}]
+    with pytest.raises(UnsupportedFieldError, match=r"mllm.messages\[0\]"):
+        build_body(Agent(client=client).with_mllm(OpenAIRealtime(
+            api_key="key", messages=[{"role": "tool", "content": "unsupported"}]
+        )))
+
+
+@pytest.mark.parametrize("mode,config,expected", [
+    ("agora_vad", {"agora_vad_config": {"threshold": 0.5}}, {"type": "agora_vad", "threshold": 0.5}),
+    ("server_vad", {"server_vad_config": {"threshold": 0.6, "idle_timeout_ms": 5000}},
+     {"type": "server_vad", "threshold": 0.6, "idle_timeout_ms": 5000}),
+    ("semantic_vad", {"semantic_vad_config": {"eagerness": "high"}},
+     {"type": "semantic_vad", "eagerness": "high"}),
+])
+def test_real_realtime_vendor_turn_detection_flattens_create_schema_fields(mode, config, expected):
+    from agora_agent import OpenAIRealtime
+    from agora_agent.types.mllm_turn_detection import MllmTurnDetection
+    client = make_client(lambda _: pytest.fail("pure mapping"))
+    turn = MllmTurnDetection(mode=mode, **config)
+    body = build_body(Agent(client=client).with_mllm(OpenAIRealtime(api_key="key", turn_detection=turn)))
+    actual = body["pipeline"]["turn_detection"]
+    assert actual == expected
+
+
+def test_realtime_turn_detection_rejects_incompatible_config_without_dropping_it():
+    from agora_agent import OpenAIRealtime
+    from agora_agent.types.mllm_turn_detection import MllmTurnDetection
+    client = make_client(lambda _: pytest.fail("pure mapping"))
+    turn = MllmTurnDetection(mode="server_vad", semantic_vad_config={"eagerness": "high"})
+    with pytest.raises(UnsupportedFieldError, match="semantic_vad_config"):
+        build_body(Agent(client=client).with_mllm(OpenAIRealtime(api_key="key", turn_detection=turn)))
+
+
+def test_greeting_playback_mode_aliases_and_unsupported_mode():
+    client = make_client(lambda _: pytest.fail("pure mapping"))
+    for old, new in (("single_first", "first_join"), ("single_every", "each_join")):
+        body = build_body(Agent(client=client, greeting="Hello", greeting_configs={"mode": old}))
+        assert body["greeting"] == {"mode": "text", "text": "Hello", "on": new}
+    with pytest.raises(UnsupportedFieldError, match="greeting_configs.mode"):
+        build_body(Agent(client=client, greeting="Hello", greeting_configs={"mode": "unknown"}))
+
+
+def test_managed_minimax_preset_hint_becomes_provider_param():
+    from agora_agent import MiniMaxTTS
+    client = make_client(lambda _: pytest.fail("pure mapping"))
+    agent = Agent(client=client).with_tts(MiniMaxTTS(model="speech-2.6-turbo", voice_id="voice"))
+    tts = build_body(agent)["pipeline"]["tts"]
+    assert tts["credential"] == {"mode": "managed"}
+    assert tts["params"]["model"] == "speech-2.6-turbo"
+    assert "_minimax_preset_model" not in tts
+    explicit = Agent(client=client).with_tts(MiniMaxTTS(
+        model="speech-2.6-turbo", voice_id="voice", additional_params={"model": "speech-2.8-turbo"}
+    ))
+    assert build_body(explicit)["pipeline"]["tts"]["params"]["model"] == "speech-2.8-turbo"
+
+
 @pytest.mark.parametrize("async_", [False, True])
 @pytest.mark.asyncio
 async def test_list_numbers_scans_pages_filters_agent_and_avoids_detail_gets(async_):

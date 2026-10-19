@@ -89,6 +89,10 @@ def dump(value):
 def module(config, category, errors):
     config = dump(config)
     params = dict(config.pop("params", {}) or {})
+    if category == "tts" and config.get("vendor") == "minimax":
+        preset_model = config.pop("_minimax_preset_model", None)
+        if preset_model is not None:
+            params.setdefault("model", preset_model)
     keys = []
     for source in (config, params):
         for field in ("api_key", "key", "api_subscription_key"):
@@ -225,19 +229,30 @@ def build_body(agent, name=None):
     if realtime:
         realtime_params = conversational.get("params", {})
         if isinstance(realtime_params, dict) and "instructions" in realtime_params:
-            result["instructions"] = realtime_params.pop("instructions")
-    messages = conversational.pop("system_messages", None)
-    if messages is not None:
-        system = [m["content"] for m in messages if m.get("role") == "system"]
-        if system:
-            if any(not isinstance(v, str) for v in system):
-                errors.append("llm.system_messages.content")
+            instructions = realtime_params.pop("instructions")
+            if not isinstance(instructions, str):
+                errors.append("mllm.params.instructions")
             else:
+                result["instructions"] = instructions
+    messages = conversational.pop("messages" if realtime else "system_messages", None)
+    if messages is not None:
+        source = "mllm.messages" if realtime else "llm.system_messages"
+        if not isinstance(messages, list):
+            errors.append(source)
+        else:
+            valid = []
+            for index, message in enumerate(messages):
+                if not isinstance(message, dict) or set(message) != {"role", "content"} or message.get("role") not in {"system", "user", "assistant"} or not isinstance(message.get("content"), str):
+                    errors.append(f"{source}[{index}]")
+                else:
+                    valid.append(message)
+            system = [m["content"] for m in valid if m["role"] == "system"]
+            if system:
                 result["instructions"] = "\n".join(system)
-        non_system = [m for m in messages if m.get("role") != "system"]
-        if non_system:
-            result["messages"] = non_system
-    elif "instructions" not in result and agent._instructions is not None:
+            non_system = [m for m in valid if m["role"] != "system"]
+            if non_system:
+                result["messages"] = non_system
+    if "instructions" not in result and agent._instructions is not None:
         result["instructions"] = agent._instructions
     greeting_text = conversational.pop("greeting_message", agent._greeting)
     greeting_url = conversational.pop("greeting_audio_url", None)
@@ -246,17 +261,22 @@ def build_body(agent, name=None):
         greeting["download_timeout_ms"] = greeting.pop("audio_download_timeout_ms")
     if "audio_pcm_sample_rate" in greeting:
         greeting["pcm_sample_rate"] = greeting.pop("audio_pcm_sample_rate")
-    errors.extend("greeting_configs." + k for k in greeting if k not in {"on", "delay_ms", "download_timeout_ms", "pcm_sample_rate"})
+    errors.extend("greeting_configs." + k for k in greeting if k not in {"mode", "on", "delay_ms", "download_timeout_ms", "pcm_sample_rate"})
+    if "mode" in greeting:
+        mode = greeting.pop("mode")
+        mapped = {"single_every": "each_join", "single_first": "first_join", "each_join": "each_join", "first_join": "first_join"}.get(mode) if isinstance(mode, str) else None
+        if mapped is None or ("on" in greeting and greeting["on"] != mapped):
+            errors.append("greeting_configs.mode")
+        else:
+            greeting["on"] = mapped
+    if "on" in greeting and greeting["on"] not in ("each_join", "first_join"):
+        errors.append("greeting_configs.on")
     if greeting_url and not greeting_text:
         errors.append("greeting_audio_url (v3 requires companion greeting text)")
     if greeting_url or greeting_text is not None:
         result["greeting"] = {"mode": "audio" if greeting_url else "text", "text": greeting_text or "", **greeting}
         if greeting_url:
             result["greeting"]["url"] = greeting_url
-        if "mode" in greeting:
-            # v2 greeting configs mode controls when playback occurs.
-            result["greeting"]["on"] = greeting["mode"]
-            result["greeting"]["mode"] = "audio" if greeting_url else "text"
     elif greeting:
         errors.append("greeting_configs (requires greeting)")
     if conversational.pop("template_variables", None):
@@ -266,8 +286,24 @@ def build_body(agent, name=None):
         if td:
             td = dump(td)
             mode = td.pop("mode", td.pop("type", None))
-            nested = td.pop("agora_vad_config", {})
-            pipeline["turn_detection"] = {"type": mode, **nested, **td}
+            configurations = {"agora_vad": "agora_vad_config", "server_vad": "server_vad_config", "semantic_vad": "semantic_vad_config"}
+            allowed = {
+                "agora_vad": {"interrupt_duration_ms", "prefix_padding_ms", "silence_duration_ms", "threshold"},
+                "server_vad": {"prefix_padding_ms", "silence_duration_ms", "threshold", "idle_timeout_ms", "start_of_speech_sensitivity", "end_of_speech_sensitivity"},
+                "semantic_vad": {"eagerness"},
+            }
+            if not isinstance(mode, str) or mode not in configurations:
+                errors.append("mllm.turn_detection.mode")
+            else:
+                nested = td.pop(configurations[mode], {}) or {}
+                if not isinstance(nested, dict):
+                    errors.append("mllm.turn_detection." + configurations[mode])
+                    nested = {}
+                direct = {key: td.pop(key) for key in tuple(td) if key in allowed[mode]}
+                errors.extend("mllm.turn_detection." + key for key in direct if key in nested and direct[key] != nested[key])
+                errors.extend("mllm.turn_detection." + key for key in td)
+                errors.extend("mllm.turn_detection." + key for key in nested if key not in allowed[mode])
+                pipeline["turn_detection"] = {"type": mode, **nested, **direct}
         if agent._turn_detection is not None or agent._interruption is not None:
             errors.append("turn_detection (configure realtime vendor turn_detection)")
     else:
