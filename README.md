@@ -7,6 +7,12 @@ The Agora Conversational AI SDK provides convenient access to the Agora Conversa
 enabling you to build voice-powered AI agents with support for both cascading flows (ASR -> LLM -> TTS) 
 and multimodal flows (MLLM) for real-time audio processing.
 
+## v3 stored-agent preview
+
+This checkout's additive v3 preview supports stored-agent `deploy()` / `deploy_async()` and redeploy by saved ID; project secrets and `secret_ref()` credentials; immutable `with_variable()` definitions; and number assignment, unassignment, and client-side `list_numbers()` scans. `client.v3` exposes all 20 staging operations with typed dictionaries, raw ETags/headers, conditional writes, and cursor pagination. v3 sessions are read-only; session writes and campaigns are not implemented. Existing v2 sessions and resources retain their current behavior.
+
+Use this `feat/v3-api-preview` checkout for evaluation; these features are not a claim about the published PyPI release. Start with the [staging workflow guide](docs/guides/v3-api-preview.md) or [complete v3 reference](docs/reference/v3.md). This protected custom adapter was generated locally from staging OpenAPI, not through the canonical Fern pipeline.
+
 ## Install
 
 ```sh
@@ -371,7 +377,3 @@ a proof of concept, but know that we will not be able to merge it as-is. We sugg
 an issue first to discuss with us!
 
 On the other hand, contributions to the README are always very welcome!
-
-### v3 stored-agent preview
-
-The additive `client.v3` API and AgentKit `deploy()` / `deploy_async()` save stored agent configurations without changing v2 session behavior. See the [v3 preview guide](docs/guides/v3-api-preview.md) for a complete staging quick start, deploy updates, secret references, number assignment/listing, async usage and backend limits. The [v3 reference](docs/reference/v3.md) lists all 20 low-level operations and their conditional headers. This protected custom adapter is locally generated from staging OpenAPI, not from the canonical Fern pipeline.

@@ -230,6 +230,12 @@ agent = agent.with_filler_words(filler_words)
 
 `generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults.
 
+## v3 stored-agent preview
+
+`with_variable(name, definition=None, **fields)` returns a new builder with a typed variable definition. `deploy(name=None, agent_id=None)` stores the configuration with an `Agora` client; `await deploy_async(...)` does so with `AsyncAgora`. Deploy arguments are keyword-only. Passing `agent_id` updates that stored configuration with a fresh ETag instead of creating another one.
+
+The returned `DeployedAgent` / `AsyncDeployedAgent` supports loading, deletion, number assignment/unassignment, and `list_numbers()` project-page scans. Deployment does not start a session. Existing v2 session methods below retain their behavior and reject v3 secret references. See the [v3 workflow guide](../guides/v3-api-preview.md) and [complete reference](./v3.md) for strict mapping, language precedence, secrets, pagination, conflicts and preview limits.
+
 ## `create_session()`
 
 <!-- snippet: fragment -->

@@ -26,8 +26,8 @@ client = Agora(
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `area` | `Area` | Yes | — | Region for API routing (`Area.US`, `Area.EU`, `Area.AP`, `Area.CN`) |
-| `app_id` | `str` | Yes* | — | Agora App ID (app-credentials mode) |
-| `app_certificate` | `str` | Yes* | — | Agora App Certificate (app-credentials mode) |
+| `app_id` | `str` | Yes | — | Agora App ID (app-credentials mode) |
+| `app_certificate` | `str` | Yes | — | Agora App Certificate (app-credentials mode) |
 | `customer_id` | `str` | Yes* | — | Customer ID (Basic Auth mode) |
 | `customer_secret` | `str` | Yes* | — | Customer Secret (Basic Auth mode) |
 | `auth_token` | `str` | No | — | Pre-built raw REST token; SDK sets `Authorization: agora token=<auth_token>` |
@@ -36,8 +36,9 @@ client = Agora(
 | `follow_redirects` | `bool` | No | `True` | Whether to follow HTTP redirects |
 | `httpx_client` | `httpx.Client` | No | `None` | Custom httpx client instance |
 | `debug` | `bool` | No | `False` | Log HTTP requests and responses when `True` |
+| `v3` | `V3Options` | No | `None` | Preview-only origin and headers; see the [v3 reference](./v3.md) |
 
-*Provide either `app_id` + `app_certificate`, or `customer_id` + `customer_secret`. `auth_token` is mutually exclusive with `customer_id` / `customer_secret`.
+*`app_id` and `app_certificate` are required constructor arguments in every auth mode; the certificate is used for automatic app-credential auth. Supply `customer_id` and `customer_secret` together to select Basic auth. `auth_token` is mutually exclusive with that pair.
 
 When `area=Area.CN`, the constructor returns a `CNAgora` instance; global areas return `GlobalAgoraClient`. Both are subclasses of `Agora` and behave the same at runtime.
 
@@ -144,3 +145,7 @@ Both `Agora` and `AsyncAgora` expose Fern-generated sub-clients as properties:
 | `client.phone_numbers` | `PhoneNumbersClient` / `AsyncPhoneNumbersClient` | Phone number management |
 
 These are lazily initialized on first access. For most use cases, prefer the [AgentSession](./session.md) API instead of calling `client.agents` directly.
+
+## v3 preview sub-client
+
+`client.v3` / `async_client.v3` provide stored agents, secrets, numbers and project-wide session reads with the owning client's transport/auth. This protected custom adapter is separate from the Fern-generated v2 resources above. See [v3 workflows](../guides/v3-api-preview.md) for staging configuration and [all 20 operations](./v3.md) for conditional headers, typed dictionary responses and cursor iterators. Preview availability requires this checkout, not an assumed PyPI release.

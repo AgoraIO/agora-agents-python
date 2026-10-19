@@ -16,3 +16,5 @@ from agora_agent_server_sdk_compat import Agora, Area
 ```
 
 Maintainers: dual-publish steps live in the repository release workflow, not in the root README.
+
+The shim exposes features from the installed `agora-agents` version; it does not independently add API support. The [v3 stored-agent preview](../../docs/guides/v3-api-preview.md) requires the preview checkout and is not implied by installing the compatibility package from PyPI. Existing v2 imports remain available.

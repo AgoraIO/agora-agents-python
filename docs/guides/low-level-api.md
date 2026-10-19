@@ -10,6 +10,8 @@ Use the `Agent` builder and `AgentSession` for conversational agent starts. That
 
 Generated clients are still available for API surface that AgentKit does not wrap yet, such as telephony and phone-number management.
 
+For stored-agent configuration, project secrets, SIP numbers and read-only sessions, the additive [v3 preview adapter](./v3-api-preview.md) provides 20 operations under `client.v3`. It is separate from the Fern-generated v2 clients described below. See the [v3 reference](../reference/v3.md) for raw ETags, conditional writes and cursor pagination.
+
 ## Client setup
 
 ```python
