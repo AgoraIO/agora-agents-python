@@ -4,7 +4,7 @@ from __future__ import annotations
 import copy
 import re
 import time
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from ..v3 import PreconditionFailedError
 from ..v3.types import AgentResponse, NumberResponse
@@ -412,6 +412,13 @@ class DeployedAgent(_DeployedAgentBase):
     def delete(self):
         return self.raw.delete(agent_id=self.id)
 
+    def list_numbers(self) -> List[NumberResponse]:
+        """Scan project number pages and return numbers assigned to this agent."""
+        return [
+            number for number in self._client.v3.numbers.iter_all(limit=100)
+            if (number.get("inbound") or {}).get("agent") == self.id
+        ]
+
     def _resolve_number(self, number):
         identifier = _number_id(number)
         if identifier.startswith("+"):
@@ -459,6 +466,13 @@ class AsyncDeployedAgent(_DeployedAgentBase):
 
     async def delete(self):
         return await self.raw.delete(agent_id=self.id)
+
+    async def list_numbers(self) -> List[NumberResponse]:
+        """Scan project number pages and return numbers assigned to this agent."""
+        return [
+            number async for number in self._client.v3.numbers.iter_all(limit=100)
+            if (number.get("inbound") or {}).get("agent") == self.id
+        ]
 
     async def _resolve_number(self, number):
         identifier = _number_id(number)

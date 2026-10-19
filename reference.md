@@ -1,4 +1,6 @@
 # Reference
+
+For the additive stored-agent preview, see the [v3 API reference](docs/reference/v3.md) and [v3 workflows](docs/guides/v3-api-preview.md). The v3 adapter covers 20 staging operations alongside the existing v2 resources documented below.
 ## Agents
 <details><summary><code>client.agents.<a href="src/agora_agent/agents/client.py">start</a>(...)</code></summary>
 <dl>

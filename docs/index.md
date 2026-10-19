@@ -30,6 +30,7 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 | Layer | What it does | When to use |
 |---|---|---|
 | **AgentKit** (`Agent`, `AgentSession`, vendor classes) | High-level builder pattern, lifecycle, typed vendors | Most use cases |
+| **v3 preview adapter** (`client.v3`) | Stored agents, secrets, SIP numbers and project session reads | Staging v3 integrations; [workflow guide](./guides/v3-api-preview.md) |
 | **Generated REST clients** (`client.agents`, `client.telephony`) | Typed access to REST APIs not covered by AgentKit | Advanced use cases |
 
 ## Documentation
@@ -60,3 +61,7 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 | [Session Reference](./reference/session.md) | Full `AgentSession` / `AsyncAgentSession` API |
 | [Vendor Reference](./reference/vendors.md) | Constructor options for all vendor classes |
 | [Error Reference](./reference/errors.md) | v2.7 status codes and error reason values |
+
+## v3 stored-agent preview
+
+The additive v3 adapter stores reusable agent configurations while existing v2 sessions keep their current lifecycle. Start with the [v3 workflow guide](./guides/v3-api-preview.md), or consult the [complete 20-operation v3 reference](./reference/v3.md). The preview uses protected custom/local-generated code rather than the canonical Fern pipeline.

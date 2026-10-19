@@ -372,3 +372,28 @@ def test_realtime_instructions_and_audio_greeting_mapping():
                  "greeting_configs": {"audio_download_timeout_ms": 1000, "audio_pcm_sample_rate": 16000}}
     greeting = build_body(base)["greeting"]
     assert greeting == {"mode": "audio", "url": "https://audio.example/greeting.wav", "text": "Hi", "download_timeout_ms": 1000, "pcm_sample_rate": 16000}
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_list_numbers_scans_pages_filters_agent_and_avoids_detail_gets(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        assert request.method == "GET" and request.url.path.endswith("/numbers")
+        assert request.url.params["limit"] == "100"
+        second = request.url.params.get("cursor") == "second"
+        numbers = ([{"number_id": "match2", "inbound": {"agent": "a"}},
+                    {"number_id": "unassigned", "inbound": {"agent": None}}] if second else
+                   [{"number_id": "match1", "inbound": {"agent": "a"}},
+                    {"number_id": "other", "inbound": {"agent": "b"}},
+                    {"number_id": "null", "inbound": None}, {"number_id": "missing"}])
+        return httpx.Response(200, json={"data": {"count": len(numbers), "list": numbers},
+                                        "has_more": not second, "next_cursor": None if second else "second"})
+    from agora_agent.v3 import RawResponse
+    client = make_client(handler, async_)
+    cls = AsyncDeployedAgent if async_ else DeployedAgent
+    deployed = cls(client, RawResponse({"agent_id": "a", "agent_name": "Support"}, httpx.Headers(), 200, None))
+    numbers = await deployed.list_numbers() if async_ else deployed.list_numbers()
+    assert [number["number_id"] for number in numbers] == ["match1", "match2"]
+    assert len(calls) == 2

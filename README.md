@@ -374,4 +374,4 @@ On the other hand, contributions to the README are always very welcome!
 
 ### v3 stored-agent preview
 
-The additive `client.v3` API and AgentKit `deploy()` / `deploy_async()` save stored agent configurations without changing v2 session behavior. See the [v3 preview guide](docs/guides/v3-api-preview.md) for staging overrides, typed wire responses, ETags, secret references, number assignment, async usage and current backend limitations.
+The additive `client.v3` API and AgentKit `deploy()` / `deploy_async()` save stored agent configurations without changing v2 session behavior. See the [v3 preview guide](docs/guides/v3-api-preview.md) for a complete staging quick start, deploy updates, secret references, number assignment/listing, async usage and backend limits. The [v3 reference](docs/reference/v3.md) lists all 20 low-level operations and their conditional headers. This protected custom adapter is locally generated from staging OpenAPI, not from the canonical Fern pipeline.
