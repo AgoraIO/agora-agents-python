@@ -5,12 +5,23 @@ import httpx
 import pytest
 
 from agora_agent import (
-    Agent, Agora, AsyncAgora, Area, AsyncDeployedAgent, DeployedAgent,
-    DeepgramSTT, OpenAI, OpenAITTS, NumberNotFoundError, PreconditionFailedError,
-    SecretRefNotSupportedError, UnsupportedFieldError, V3Options, secret_ref,
+    Agent,
+    Agora,
+    Area,
+    AsyncAgora,
+    AsyncDeployedAgent,
+    DeepgramSTT,
+    DeployedAgent,
+    NumberNotFoundError,
+    OpenAI,
+    OpenAITTS,
+    PreconditionFailedError,
+    SecretRefNotSupportedError,
+    UnsupportedFieldError,
+    V3Options,
+    secret_ref,
 )
 from agora_agent.agentkit.v3 import build_body, module
-
 
 OPERATIONS = [
     ("agents", "create", {"agent_name": "Support"}, "POST", "agents", {"agent_name": "Support"}),
@@ -434,6 +445,8 @@ def test_greeting_playback_mode_aliases_and_unsupported_mode():
         assert body["greeting"] == {"mode": "text", "text": "Hello", "on": new}
     with pytest.raises(UnsupportedFieldError, match="greeting_configs.mode"):
         build_body(Agent(client=client, greeting="Hello", greeting_configs={"mode": "unknown"}))
+    with pytest.raises(UnsupportedFieldError, match="greeting_configs.pcm_sample_rate"):
+        build_body(Agent(client=client, greeting="Hello", greeting_configs={"audio_pcm_sample_rate": 16000}))
 
 
 def test_managed_minimax_preset_hint_becomes_provider_param():

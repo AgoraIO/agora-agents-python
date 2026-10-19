@@ -188,7 +188,7 @@ The central mapper reuses existing vendor configs. Vendor instructions and greet
 |---|---|
 | Builder fields without stored-agent equivalents | One `UnsupportedFieldError.fields` list before network access: SAL, advanced features, geofence, labels, RTC, pipeline IDs, parameters other than `silence_config` |
 | Value-valued `template_variables` | Rejected; use `with_variable` definitions |
-| Multipart AWS/Vertex credentials, removed avatar vendors, numeric v2 TTS `skip_patterns`, unmappable deprecated turn/greeting settings | Rejected rather than guessed or silently omitted |
+| Multipart AWS/Vertex credentials, removed avatar vendors, numeric v2 TTS `skip_patterns`, audio-only settings on text greetings, unmappable deprecated turn/greeting settings | Rejected rather than guessed or silently omitted |
 | Tools/MCP/custom provider destinations | Deferred backend support; the server may reject otherwise typed fields |
 | Number `end_call`, `transfer`, `allowed_ips`, SIP-password secret references | Currently rejected or unsupported on staging |
 | Writes and retry options | All low-level writes disable automatic retries, even when `max_retries` is requested; assignment has only its explicit one-conflict retry |

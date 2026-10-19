@@ -4,7 +4,7 @@ from __future__ import annotations
 import copy
 import re
 import time
-from typing import Any, Dict, List, Mapping, Optional
+from typing import List, Mapping, Optional
 
 from ..v3 import PreconditionFailedError
 from ..v3.types import AgentResponse, NumberResponse
@@ -271,6 +271,8 @@ def build_body(agent, name=None):
             greeting["on"] = mapped
     if "on" in greeting and greeting["on"] not in ("each_join", "first_join"):
         errors.append("greeting_configs.on")
+    if not greeting_url:
+        errors.extend("greeting_configs." + key for key in ("download_timeout_ms", "pcm_sample_rate") if key in greeting)
     if greeting_url and not greeting_text:
         errors.append("greeting_audio_url (v3 requires companion greeting text)")
     if greeting_url or greeting_text is not None:
