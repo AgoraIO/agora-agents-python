@@ -184,6 +184,8 @@ Existing v2 resources and `Agent.create_session()` behavior remain available. A 
 
 The central mapper reuses existing vendor configs. Vendor instructions and greetings take precedence over deprecated Agent fields; realtime `params.instructions` moves to top-level instructions, and supported vendor messages move to top-level `messages`. Provider API keys become `{mode: "byok", api_key: ...}`, while absent keys select `managed`. Realtime Agora, server and semantic VAD settings, supported text/audio greetings, silence settings and filler words are converted to v3 shapes. Greeting playback modes `single_every` and `single_first` map to `each_join` and `first_join`; other v2 modes without a v3 equivalent are rejected. A managed MiniMax TTS preset model is retained in `tts.params.model`.
 
+For cascaded deployment, `with_turn_detection({"language": "de-DE"})` sets `pipeline.asr.language`; provider-specific `params.language` remains separate. A configured STT follows v2 interaction-language precedence (the explicit turn language, otherwise `en-US`). An explicit interaction language without an STT vendor uses the existing managed `ares` fallback, without inventing a URL; configure an approved vendor endpoint if staging requires one. A partial builder with neither STT nor an interaction language keeps ASR absent.
+
 | Constraint | Current behavior |
 |---|---|
 | Builder fields without stored-agent equivalents | One `UnsupportedFieldError.fields` list before network access: SAL, advanced features, geofence, labels, RTC, pipeline IDs, parameters other than `silence_config` |

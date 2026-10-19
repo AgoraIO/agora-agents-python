@@ -174,7 +174,7 @@ def test_deploy_mapping_and_immutable_variables():
     assert body["messages"] == [{"role": "user", "content": "Hello"}]
     assert body["greeting"] == {"mode": "text", "text": "Hi"}
     assert body["variables"]["resolved"]["type"] == "bool"
-    assert body["pipeline"]["asr"] == {"vendor": "deepgram", "model": "nova-3", "credential": {"mode": "byok", "api_key": "$secrets.prod.dg"}}
+    assert body["pipeline"]["asr"] == {"vendor": "deepgram", "model": "nova-3", "language": "en-US", "credential": {"mode": "byok", "api_key": "$secrets.prod.dg"}}
     assert body["pipeline"]["llm"]["credential"]["api_key"] == "$secrets.prod.openai"
     assert "variables" not in build_body(base)
     assert deployed.raw is client.v3.agents
@@ -486,3 +486,44 @@ async def test_list_numbers_scans_pages_filters_agent_and_avoids_detail_gets(asy
     numbers = await deployed.list_numbers() if async_ else deployed.list_numbers()
     assert [number["number_id"] for number in numbers] == ["match1", "match2"]
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_deploy_preserves_interaction_and_provider_languages(async_):
+    requests = []
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(201, json={"agent_id": "a", "agent_name": "German"}, headers={"ETag": '"1"'})
+    agent = (Agent(client=make_client(handler, async_))
+             .with_stt(DeepgramSTT(api_key="key", model="nova-3", language="fr"))
+             .with_turn_detection({"mode": "default", "language": "de-DE"}))
+    if async_:
+        await agent.deploy_async(name="German")
+    else:
+        agent.deploy(name="German")
+    pipeline = json.loads(requests[0].content)["pipeline"]
+    assert pipeline["asr"]["language"] == "de-DE"
+    assert pipeline["asr"]["params"]["language"] == "fr"
+    assert "language" not in pipeline.get("turn_detection", {})
+    v2 = agent.to_properties(channel="room", agent_uid="1", remote_uids=["*"], token="rtc",
+                             allow_missing_vendor_categories={"llm", "tts"}).model_dump(exclude_none=True)
+    assert v2["asr"]["language"] == pipeline["asr"]["language"]
+    assert v2["asr"]["params"]["language"] == pipeline["asr"]["params"]["language"]
+
+
+def test_explicit_interaction_language_uses_existing_managed_asr_fallback():
+    requests = []
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(201, json={"agent_id": "a", "agent_name": "Japanese"}, headers={"ETag": '"1"'})
+    client = make_client(handler)
+    Agent(client=client).with_turn_detection({"language": "ja-JP"}).deploy(name="Japanese")
+    pipeline = json.loads(requests[0].content)["pipeline"]
+    assert pipeline["asr"] == {"vendor": "ares", "language": "ja-JP", "credential": {"mode": "managed"}}
+    assert "language" not in pipeline.get("turn_detection", {})
+    assert "asr" not in build_body(Agent(client=client))["pipeline"]
+    assert "asr" not in build_body(Agent(client=client).with_llm(OpenAI(model="gpt-4o-mini")))["pipeline"]
+    default = build_body(Agent(client=client).with_stt(DeepgramSTT(api_key="key", model="nova-3", language="fr")))
+    assert default["pipeline"]["asr"]["language"] == "en-US"
+    assert default["pipeline"]["asr"]["params"]["language"] == "fr"

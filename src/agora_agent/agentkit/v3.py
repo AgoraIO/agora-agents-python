@@ -111,7 +111,7 @@ def module(config, category, errors):
         "avatar": {"vendor", "url", "enabled"},
     }[category]
     # v2 provider serializers keep endpoints and ASR/LLM model choices in params.
-    for field in ("url", "model", "language"):
+    for field in ("url", "model"):
         if field in params and field in allowed:
             result[field] = params.pop(field)
     if "base_url" in params and "url" not in result:
@@ -317,12 +317,13 @@ def build_body(agent, name=None):
         pipeline[category] = module(conversational, category, errors)
     for source, target in (("stt", "asr"), ("tts", "tts"), ("avatar", "avatar")):
         value = getattr(agent, "_" + source, None)
+        if target == "asr" and not realtime:
+            language = agent._field_value(agent._turn_detection, "language")
+            if value is not None or language is not None:
+                # Preserve v2 interaction-language precedence and its existing
+                # managed ASR fallback, without adding ASR to partial builders.
+                value = agent._resolve_asr_config(agent._resolve_turn_detection_config())
         if value is not None and (not realtime or target == "avatar"):
-            value = dump(value)
-            if target == "asr" and agent._turn_detection is not None:
-                language = dump(agent._turn_detection).get("language")
-                if language:
-                    value.setdefault("language", language)
             pipeline[target] = module(value, target, errors)
     if "silence_config" in params:
         if realtime:
