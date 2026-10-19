@@ -734,7 +734,7 @@ async def test_new_session_stop_404_is_idempotent_and_controls_never_request(asy
     def handler(request):
         calls.append(request)
         if request.url.path.endswith("/stop"):
-            return httpx.Response(404, json={"code": "TaskNotFound"})
+            return httpx.Response(404, json={"reason": "TaskNotFound"})
         return httpx.Response(201, json={"agent_session_id": "new", "status": "running", "created_at": 1})
     agent = configured(make_client(handler, async_))
     session = (agent.create_async_session if async_ else agent.create_session)(channel="room", agent_uid="1", remote_uids=["2"])
@@ -759,3 +759,24 @@ async def test_new_session_stop_404_is_idempotent_and_controls_never_request(asy
 def test_new_session_duration_rejects_invalid_precision(seconds):
     with pytest.raises(ValueError):
         configured(make_client(lambda _: pytest.fail("must not send"))).create_session(channel="r", agent_uid="1", remote_uids=[], max_duration=seconds)
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_new_session_stop_does_not_hide_unrelated_404(async_):
+    def handler(request):
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(404, json={"reason": "ProjectNotFound"})
+        return httpx.Response(201, json={"agent_session_id": "new", "status": "running", "created_at": 1})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=[])
+    if async_:
+        await session.start()
+        with pytest.raises(Exception) as caught:
+            await session.stop()
+    else:
+        session.start()
+        with pytest.raises(Exception) as caught:
+            session.stop()
+    assert caught.value.status_code == 404
+    assert session.status == "error"

@@ -713,7 +713,9 @@ class AgentSession(_AgentSessionBase):
             try:
                 self._client.v3.sessions.stop(agent_session_id=self._agent_id)
             except Exception as error:
-                if getattr(error, "status_code", None) != 404:
+                body = getattr(error, "body", None)
+                if not (getattr(error, "status_code", None) == 404
+                        and isinstance(body, dict) and body.get("reason") == "TaskNotFound"):
                     self._status = "error"
                     self._emit("error", error)
                     raise
@@ -1134,7 +1136,9 @@ class AsyncAgentSession(_AgentSessionBase):
             try:
                 await self._client.v3.sessions.stop(agent_session_id=self._agent_id)
             except Exception as error:
-                if getattr(error, "status_code", None) != 404:
+                body = getattr(error, "body", None)
+                if not (getattr(error, "status_code", None) == 404
+                        and isinstance(body, dict) and body.get("reason") == "TaskNotFound"):
                     self._status = "error"
                     self._emit("error", error)
                     raise
