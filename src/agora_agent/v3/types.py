@@ -808,3 +808,33 @@ class AgentCreateRequest(TypedDict, total=False):
     filler_words: Union['AgentCreateModel_FillerWords', None]
 
 __all__ = ['AgentDeleteResponse', 'AgentListData', 'AgentListItem', 'AgentListResponse', 'AgentResponse', 'AgoraVadTurnDetection', 'AudioGreeting', 'DisabledInterruption', 'EndCallPolicy', 'ErrorReason', 'ErrorResponse', 'FillerTrigger', 'FillerWords', 'GeneratedFillerContent', 'InboundCallPolicy', 'InboundInput', 'InboundOutput', 'JsonValue', 'KeywordInterruption', 'ManualTurnBoundary', 'Message', 'NumberCreate', 'NumberDeleteResponse', 'NumberListData', 'NumberListResponse', 'NumberPatch', 'NumberResponse', 'ResolvedAsr', 'ResolvedAvatar', 'ResolvedCascadedPipeline', 'ResolvedCredential', 'ResolvedLlm', 'ResolvedMllm', 'ResolvedRealtimePipeline', 'ResolvedTts', 'SecretCreate', 'SecretDeleted', 'SecretKey', 'SecretKeyWrite', 'SecretList', 'SecretPage', 'SecretReplace', 'SecretSet', 'SecretUpdate', 'SemanticTurnEnd', 'SemanticTurnStart', 'SemanticVadTurnDetection', 'ServerVadTurnDetection', 'SessionAnalysis', 'SessionData', 'SessionList', 'SessionResponse', 'SessionSummary', 'SilenceConfig', 'SipAuth', 'SipTrunkInput', 'SipTrunkOutput', 'SpeechInterruption', 'StaticFillerContent', 'TextGreeting', 'TransferPolicy', 'TurnDetection', 'VadTurnEnd', 'VadTurnStart', 'VariableDefinition', 'AgentCreateModel_AgoraVadTurnDetection', 'AgentCreateModel_AudioGreeting', 'AgentCreateModel_ByokCredential', 'AgentCreateModel_CascadedPipeline', 'AgentCreateModel_DisabledInterruption', 'AgentCreateModel_FillerTrigger', 'AgentCreateModel_FillerWords', 'AgentCreateModel_GeneratedFillerContent', 'AgentCreateModel_JsonValue', 'AgentCreateModel_KeywordInterruption', 'AgentCreateModel_ManagedCredential', 'AgentCreateModel_ManualTurnBoundary', 'AgentCreateModel_Message', 'AgentCreateModel_ProviderModule', 'AgentCreateModel_RealtimePipeline', 'AgentCreateModel_SemanticTurnEnd', 'AgentCreateModel_SemanticTurnStart', 'AgentCreateModel_SemanticVadTurnDetection', 'AgentCreateModel_ServerVadTurnDetection', 'AgentCreateModel_SilenceConfig', 'AgentCreateModel_SpeechInterruption', 'AgentCreateModel_StaticFillerContent', 'AgentCreateModel_TextGreeting', 'AgentCreateModel_TurnDetection', 'AgentCreateModel_VadTurnEnd', 'AgentCreateModel_VadTurnStart', 'AgentCreateModel_VariableDefinition', 'AgentCreateModel', 'AgentPatchRequest_CredentialPatch', 'AgentPatchRequest_FillerContentPatch', 'AgentPatchRequest_FillerTriggerPatch', 'AgentPatchRequest_FillerWordsPatch', 'AgentPatchRequest_GreetingPatch', 'AgentPatchRequest_InterruptionPatch', 'AgentPatchRequest_JsonValue', 'AgentPatchRequest_Message', 'AgentPatchRequest_PipelinePatch', 'AgentPatchRequest_PipelineTurnDetectionPatch', 'AgentPatchRequest_ProviderModulePatch', 'AgentPatchRequest_SilenceConfigPatch', 'AgentPatchRequest_TurnBoundaryPatch', 'AgentPatchRequest_VariableDefinitionPatch', 'AgentPatchRequest', 'Contract_VariableDefinitions', 'Contract_ModelCredential', 'Contract_Llm', 'Contract_CascadedPipeline', 'Contract_Pipeline', 'Contract_SemanticVadTurnDetection', 'Contract_SilenceConfig', 'Contract_ServerVadTurnDetection', 'Contract_McpServer', 'Contract_VariableDefinition', 'Contract_Greeting', 'Contract_Asr', 'Contract_FillerWords', 'Contract_Interruption', 'Contract_TurnStart', 'Contract_FunctionTool', 'Contract_Tts', 'Contract_RealtimePipeline', 'Contract_Mllm', 'Contract_Avatar', 'Contract_RealtimeTurnDetection', 'Contract_FunctionToolServer', 'Contract_TurnEnd', 'Contract_Message', 'Contract_AgentCreateInput', 'Contract_TurnDetection', 'Contract_AgoraVadTurnDetection', 'Contract_FunctionToolExecution', 'Contract_JsonSchema', 'AgentCreateRequest']
+# Session write shapes from the refreshed Bruno collection (not the older OpenAPI).
+class RtcSessionTransport(TypedDict):
+    type: Literal['rtc']
+    channel: str
+    uid: str
+    subscribe_uids: List[str]
+
+
+class SessionLifecycle(TypedDict, total=False):
+    idle_timeout_ms: int
+    max_duration_ms: int
+
+
+class EphemeralSessionAgent(TypedDict, total=False):
+    instructions: str
+    messages: List[AgentCreateModel_Message]
+    greeting: Union[AgentCreateModel_TextGreeting, AgentCreateModel_AudioGreeting]
+    variables: Dict[str, AgentCreateModel_VariableDefinition]
+    pipeline: Union[AgentCreateModel_CascadedPipeline, AgentCreateModel_RealtimePipeline]
+    filler_words: AgentCreateModel_FillerWords
+
+
+class StartSessionResponse(TypedDict):
+    agent_session_id: str
+    status: str
+    # Bruno establishes this field but does not specify its timestamp format.
+    created_at: Any
+
+
+__all__ += ['RtcSessionTransport', 'SessionLifecycle', 'EphemeralSessionAgent', 'StartSessionResponse']

@@ -19,17 +19,21 @@ from .types import (
     AgentPatchRequest_PipelinePatch,
     AgentPatchRequest_VariableDefinitionPatch,
     AgentResponse,
+    EphemeralSessionAgent,
     InboundInput,
     NumberDeleteResponse,
     NumberListResponse,
     NumberResponse,
+    RtcSessionTransport,
     SecretDeleted,
     SecretKey,
     SecretList,
     SecretSet,
+    SessionLifecycle,
     SessionList,
     SessionResponse,
     SipTrunkInput,
+    StartSessionResponse,
 )
 from typing_extensions import Literal
 
@@ -173,6 +177,15 @@ def _NumbersClient(owner, options):
     return client
 
 class SessionsClient(Resource):
+    def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return self.with_raw_response.start(agent_id=agent_id, transport=transport, client_reference=client_reference, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options).data
+
+    def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return self.with_raw_response.start_ephemeral(agent=agent, transport=transport, client_reference=client_reference, lifecycle=lifecycle, appid=appid, request_options=request_options).data
+
+    def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> dict:
+        return self.with_raw_response.stop(agent_session_id=agent_session_id, appid=appid, request_options=request_options).data
+
     with_raw_response: SessionsRawClient
 
     def list(self, *, appid: Optional[str] = None, channel: Optional[Union[str, None]] = None, status: Optional[str] = None, started_after: Optional[Union[int, None]] = None, started_before: Optional[Union[int, None]] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, request_options: Optional[dict] = None) -> 'SessionList':
@@ -183,6 +196,16 @@ class SessionsClient(Resource):
 
 
 class SessionsRawClient(Resource):
+    def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        segment(agent_id)
+        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={}, params={}, request_options=request_options)
+
+    def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={}, params={}, request_options=request_options)
+
+    def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}/stop', body=None, headers={}, params={}, request_options=request_options)
+
     def list(self, *, appid: Optional[str] = None, channel: Optional[Union[str, None]] = None, status: Optional[str] = None, started_after: Optional[Union[int, None]] = None, started_before: Optional[Union[int, None]] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, request_options: Optional[dict] = None) -> RawResponse:
         return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body=None, headers={}, params={'channel': channel, 'status': status, 'started_after': started_after, 'started_before': started_before, 'limit': limit, 'cursor': cursor}, request_options=request_options)
 
@@ -340,6 +363,15 @@ def _AsyncNumbersClient(owner, options):
     return client
 
 class AsyncSessionsClient(AsyncResource):
+    async def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return (await self.with_raw_response.start(agent_id=agent_id, transport=transport, client_reference=client_reference, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options)).data
+
+    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return (await self.with_raw_response.start_ephemeral(agent=agent, transport=transport, client_reference=client_reference, lifecycle=lifecycle, appid=appid, request_options=request_options)).data
+
+    async def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> dict:
+        return (await self.with_raw_response.stop(agent_session_id=agent_session_id, appid=appid, request_options=request_options)).data
+
     with_raw_response: AsyncSessionsRawClient
 
     async def list(self, *, appid: Optional[str] = None, channel: Optional[Union[str, None]] = None, status: Optional[str] = None, started_after: Optional[Union[int, None]] = None, started_before: Optional[Union[int, None]] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, request_options: Optional[dict] = None) -> 'SessionList':
@@ -350,6 +382,16 @@ class AsyncSessionsClient(AsyncResource):
 
 
 class AsyncSessionsRawClient(AsyncResource):
+    async def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        segment(agent_id)
+        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={}, params={}, request_options=request_options)
+
+    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={}, params={}, request_options=request_options)
+
+    async def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}/stop', body=None, headers={}, params={}, request_options=request_options)
+
     async def list(self, *, appid: Optional[str] = None, channel: Optional[Union[str, None]] = None, status: Optional[str] = None, started_after: Optional[Union[int, None]] = None, started_before: Optional[Union[int, None]] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, request_options: Optional[dict] = None) -> RawResponse:
         return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body=None, headers={}, params={'channel': channel, 'status': status, 'started_after': started_after, 'started_before': started_before, 'limit': limit, 'cursor': cursor}, request_options=request_options)
 

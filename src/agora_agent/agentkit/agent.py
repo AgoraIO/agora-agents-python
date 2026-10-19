@@ -902,6 +902,9 @@ class Agent:
         expires_in: typing.Optional[int] = None,
         debug: typing.Optional[bool] = None,
         warn: typing.Optional[typing.Callable[[str], None]] = None,
+        max_duration: typing.Optional[float] = None,
+        client_reference: typing.Optional[str] = None,
+        labels: typing.Optional[typing.Dict[str, str]] = None,
     ) -> "AgentSession":
         """Create a synchronous session bound to this agent configuration.
 
@@ -917,8 +920,14 @@ class Agent:
         """
         from .agent_session import AgentSession
 
-        from .v3 import guard_v2
-        guard_v2(self.config)
+        from .session_backend import create_session, needs_session_backend
+        if needs_session_backend(self) or max_duration is not None or client_reference is not None or labels is not None:
+            return create_session(self, asynchronous=False, channel=channel,
+                agent_uid=agent_uid, remote_uids=remote_uids, name=name,
+                client_reference=client_reference, idle_timeout=idle_timeout,
+                max_duration=max_duration, labels=labels, token=token,
+                enable_string_uid=enable_string_uid, preset=preset,
+                pipeline_id=pipeline_id, expires_in=expires_in, debug=debug, warn=warn)
         resolved_client = self._client
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
@@ -957,6 +966,9 @@ class Agent:
         expires_in: typing.Optional[int] = None,
         debug: typing.Optional[bool] = None,
         warn: typing.Optional[typing.Callable[[str], None]] = None,
+        max_duration: typing.Optional[float] = None,
+        client_reference: typing.Optional[str] = None,
+        labels: typing.Optional[typing.Dict[str, str]] = None,
     ) -> "AsyncAgentSession":
         """Create an async session for use with :class:`~agora_agent.AsyncAgora`.
 
@@ -966,8 +978,14 @@ class Agent:
         """
         from .agent_session import AsyncAgentSession
 
-        from .v3 import guard_v2
-        guard_v2(self.config)
+        from .session_backend import create_session, needs_session_backend
+        if needs_session_backend(self) or max_duration is not None or client_reference is not None or labels is not None:
+            return create_session(self, asynchronous=True, channel=channel,
+                agent_uid=agent_uid, remote_uids=remote_uids, name=name,
+                client_reference=client_reference, idle_timeout=idle_timeout,
+                max_duration=max_duration, labels=labels, token=token,
+                enable_string_uid=enable_string_uid, preset=preset,
+                pipeline_id=pipeline_id, expires_in=expires_in, debug=debug, warn=warn)
         resolved_client = self._client
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")

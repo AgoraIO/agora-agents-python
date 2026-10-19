@@ -447,6 +447,15 @@ class _SavedAgentBase:
         self.raw = client.v3.agents
 
 class SavedAgent(_SavedAgentBase):
+    def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
+                       name=None, client_reference=None, idle_timeout=None,
+                       max_duration=None, labels=None, debug=None, warn=None):
+        from .session_backend import create_session
+        return create_session(self, channel=channel, agent_uid=agent_uid,
+            remote_uids=remote_uids, name=name, client_reference=client_reference,
+            idle_timeout=idle_timeout, max_duration=max_duration, labels=labels,
+            debug=debug, warn=warn)
+
     @classmethod
     def get(cls, client, agent_id) -> SavedAgent:
         return cls(client, client.v3.agents.with_raw_response.get(agent_id=agent_id))
@@ -508,6 +517,17 @@ class SavedAgent(_SavedAgentBase):
 
 
 class AsyncSavedAgent(_SavedAgentBase):
+    def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
+                       name=None, client_reference=None, idle_timeout=None,
+                       max_duration=None, labels=None, debug=None, warn=None):
+        from .session_backend import create_session
+        return create_session(self, asynchronous=True, channel=channel,
+            agent_uid=agent_uid, remote_uids=remote_uids, name=name,
+            client_reference=client_reference, idle_timeout=idle_timeout,
+            max_duration=max_duration, labels=labels, debug=debug, warn=warn)
+
+    create_async_session = create_session
+
     @classmethod
     async def get(cls, client, agent_id) -> AsyncSavedAgent:
         return cls(client, await client.v3.agents.with_raw_response.get(agent_id=agent_id))

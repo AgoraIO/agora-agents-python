@@ -44,6 +44,9 @@ OPERATIONS = [
     ("numbers", "delete", {"number_id": "n"}, "DELETE", "numbers/n", None),
     ("sessions", "list", {"channel": "room", "status": "ACTIVE", "started_after": 12, "started_before": 25}, "GET", "sessions", None),
     ("sessions", "get", {"agent_session_id": "s"}, "GET", "sessions/s", None),
+    ("sessions", "start", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}, "POST", "sessions", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}),
+    ("sessions", "start_ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "client_reference": "test", "lifecycle": {"max_duration_ms": 120000}}, "POST", "sessions/ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "client_reference": "test", "lifecycle": {"max_duration_ms": 120000}}),
+    ("sessions", "stop", {"agent_session_id": "session/a"}, "POST", "sessions/session%2Fa/stop", None),
 ]
 
 
@@ -63,6 +66,8 @@ def check_request(request, operation):
     assert request.headers["Gateway"] == "secret"
     if body is not None:
         assert json.loads(request.content) == body
+    elif method == "POST":
+        assert request.content == b""
     for key, header in (("if_match", "If-Match"), ("if_none_match", "If-None-Match"), ("idempotency_key", "Idempotency-Key")):
         if key in kwargs:
             assert request.headers[header] == kwargs[key]
@@ -72,7 +77,7 @@ def check_request(request, operation):
 
 
 @pytest.mark.parametrize("operation", OPERATIONS)
-def test_all_twenty_sync_wire_operations(operation):
+def test_all_documented_sync_wire_operations(operation):
     def handler(request):
         check_request(request, operation)
         return httpx.Response(200, json={"ok": True}, headers={"ETag": '"etag"', "Agora-Request-Id": "trace"})
@@ -87,7 +92,7 @@ def test_all_twenty_sync_wire_operations(operation):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("operation", OPERATIONS)
-async def test_all_twenty_async_wire_operations(operation):
+async def test_all_documented_async_wire_operations(operation):
     def handler(request):
         check_request(request, operation)
         return httpx.Response(200, json={"ok": True}, headers={"ETag": '"etag"'})
@@ -98,7 +103,7 @@ async def test_all_twenty_async_wire_operations(operation):
     assert await getattr(getattr(client.v3, resource), method)(**kwargs) == {"ok": True}
 
 
-def test_namespace_is_additive_and_pending_writes_absent():
+def test_namespace_is_additive_and_out_of_scope_features_absent():
     client = make_client(lambda _: httpx.Response(200, json={}))
     assert client.agents is not client.v3.agents
     assert not hasattr(client.v3.sessions, "create")
@@ -248,13 +253,10 @@ def test_multipart_credentials_and_numeric_skip_patterns_rejected():
 
 def test_secret_ref_v2_guard_at_all_boundaries():
     agent = configured(make_client(lambda _: pytest.fail("must not send")))
-    for call in (lambda: agent.to_properties(channel="c", agent_uid="1", remote_uids=["*"]),
-                 lambda: agent.create_session(channel="c", agent_uid="1", remote_uids=["*"]),
-                 lambda: agent.create_async_session(channel="c", agent_uid="1", remote_uids=["*"])):
-        with pytest.raises(SecretRefNotSupportedError, match="requires save"):
-            call()
-    with pytest.raises(ValueError):
-        secret_ref("prod.bad", "key")
+    with pytest.raises(SecretRefNotSupportedError, match="requires save"):
+        agent.to_properties(channel="c", agent_uid="1", remote_uids=["*"])
+    assert agent.create_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
+    assert agent.create_async_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
 
 
 def test_number_resolution_pagination_conflict_retry_and_unassign():
@@ -628,8 +630,8 @@ async def test_one_builder_creates_session_or_saved_handle_with_unversioned_prov
     assert updated.id == loaded.id == saved.id == "a"
     assert updated.name == saved.name == "Support"
     assert agent.config == snapshot
-    assert not hasattr(saved, "create_session")
-    assert not hasattr(saved, "create_async_session")
+    assert callable(saved.create_session)
+    assert hasattr(saved, "create_async_session") is async_
     assert sum(r.method == "POST" and r.url.path.endswith("/agents") for r in calls) == 1
     patch = next(r for r in calls if r.method == "PATCH" and r.url.path.endswith("/agents/a"))
     assert patch.headers["If-Match"] == '"current"'
@@ -656,3 +658,104 @@ async def test_saved_update_rejects_another_client_before_network(async_):
             await saved.update(Agent(client=other))
         else:
             saved.update(Agent(client=other))
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("stored", [False, True])
+@pytest.mark.asyncio
+async def test_saved_and_secret_ephemeral_lifecycle(async_, stored):
+    from agora_agent import AsyncSavedAgent, SavedAgent
+    from agora_agent.v3 import RawResponse
+    calls = []
+    def handler(request):
+        calls.append(request)
+        path = request.url.path
+        if request.method == "POST" and not path.endswith("/stop"):
+            body = json.loads(request.content)
+            assert body["transport"] == {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}
+            assert body["lifecycle"] == {"idle_timeout_ms": 1500, "max_duration_ms": 120000}
+            assert body["client_reference"] == "reference"
+            if stored:
+                assert body["agent_id"] == "stored-id"
+                assert body["labels"] == {"owner": "test"}
+                assert path.endswith("/sessions")
+            else:
+                assert path.endswith("/sessions/ephemeral")
+                assert "agent_name" not in body["agent"]
+                assert body["agent"]["pipeline"]["llm"]["credential"]["api_key"] == "$secrets.prod.openai"
+                assert "variables" in body["agent"]
+            return httpx.Response(201, json={"agent_session_id": "new-session-id", "status": "running", "created_at": "unspecified"})
+        assert path.endswith("/sessions/new-session-id" + ("/stop" if request.method == "POST" else ""))
+        if request.method == "POST":
+            assert request.content == b""
+            return httpx.Response(200, json={})
+        return httpx.Response(200, json={"agent_session_id": "new-session-id", "status": "RUNNING", "start_ts": 1})
+    client = make_client(handler, async_)
+    if stored:
+        cls = AsyncSavedAgent if async_ else SavedAgent
+        owner = cls(client, RawResponse(data={"agent_id": "stored-id", "agent_name": "Support"}, headers=httpx.Headers(), status_code=200, response=httpx.Response(200)))
+    else:
+        owner = configured(client).with_variable("customer", type="str")
+    remote = ["2"]
+    kwargs = dict(channel="room", agent_uid="1", remote_uids=remote, client_reference="reference", idle_timeout=1.5, max_duration=120)
+    if stored:
+        kwargs["labels"] = {"owner": "test"}
+    session = (owner.create_async_session(**kwargs) if async_ and not stored else owner.create_session(**kwargs))
+    remote.append("mutation")
+    assert session.raw is client.v3.sessions
+    assert session.raw_agent_management is None
+    if async_:
+        assert await session.start() == "new-session-id"
+        assert (await session.get_info())["status"] == "RUNNING"
+        with pytest.raises(NotImplementedError):
+            await session.say("No unsupported controls")
+        await session.stop()
+    else:
+        assert session.start() == "new-session-id"
+        assert session.get_info()["status"] == "RUNNING"
+        with pytest.raises(NotImplementedError):
+            session.say("No unsupported controls")
+        session.stop()
+    assert session.status == "stopped"
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize("option,value", [("token", "token"), ("preset", "test"), ("pipeline_id", "id"), ("expires_in", 60), ("enable_string_uid", False), ("labels", {})])
+def test_ephemeral_rejects_undocumented_options(option, value):
+    agent = configured(make_client(lambda _: pytest.fail("must not send")))
+    with pytest.raises(ValueError):
+        agent.create_session(channel="room", agent_uid="1", remote_uids=["*"], **{option: value})
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_new_session_stop_404_is_idempotent_and_controls_never_request(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(404, json={"code": "TaskNotFound"})
+        return httpx.Response(201, json={"agent_session_id": "new", "status": "running", "created_at": 1})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="room", agent_uid="1", remote_uids=["2"])
+    if async_:
+        await session.start()
+    else:
+        session.start()
+    for method, args in (("interrupt", ()), ("think", ("test",)), ("update", ({},)), ("get_history", ()), ("get_turns", ()), ("get_all_turns", ())):
+        with pytest.raises(NotImplementedError):
+            result = getattr(session, method)(*args)
+            if async_:
+                await result
+    if async_:
+        await session.stop()
+    else:
+        session.stop()
+    assert session.status == "stopped"
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("seconds", [-1, float("nan"), float("inf"), True, 0.00001])
+def test_new_session_duration_rejects_invalid_precision(seconds):
+    with pytest.raises(ValueError):
+        configured(make_client(lambda _: pytest.fail("must not send"))).create_session(channel="r", agent_uid="1", remote_uids=[], max_duration=seconds)

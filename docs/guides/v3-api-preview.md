@@ -1,6 +1,6 @@
 # Saving agent configurations (preview transport guide)
 
-For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers all 20 published staging operations. See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
+For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers 23 staging operations (20 from OpenAPI plus three session writes from refreshed Bruno). See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
 
 | Object or API | Meaning | Available now |
 |---|---|---|
@@ -9,7 +9,7 @@ For the everyday builder → session or saved-agent flow, start with the [agent 
 | v2 `AgentSession` | Running RTC instance, also historically called an agent | Existing `create_session(...).start()` lifecycle |
 | v3 session | Running instance identified by `agent_session_id` | Low-level list and get only |
 
-Deploying stores configuration; it does not start a session. v3 session writes, outbound calls, AgentKit analysis helpers and campaigns await backend schemas and are not implemented. The SDK package version continues to describe package compatibility independently of the REST API version.
+Saving stores configuration; it does not itself start a session. Call `saved.create_session(...).start()` to start by ID. Outbound calls, AgentKit analysis helpers and campaign APIs are outside this SDK workflow. The SDK package version continues to describe package compatibility independently of the REST API version.
 
 ## Quick start with staging
 
@@ -179,7 +179,7 @@ Use `await error.latest()` after an async 412. `save()` requires an `Agora` clie
 
 ## Compatibility and backend limits
 
-Existing v2 resources and `Agent.create_session()` behavior remain available. A v3 `secret_ref` cannot be sent as a v2 API key: `create_session`, `create_async_session` and `to_properties` reject it with `SecretRefNotSupportedError("secret_ref requires save() or deploy()")`. Use inline or managed credentials for current sessions; their transport cannot dereference persistence-only secret references. Variables configure stored-agent definitions; this phase does not add session-start variable values or an AgentKit extraction-results helper.
+Existing resources and ordinary inline `Agent.create_session()` behavior remain available. Secret references and variable definitions select ephemeral session start automatically; a saved handle selects start by stored ID. `to_properties()` still refuses secret references because it explicitly serializes the older session contract. New session start has no documented variable-value override or AgentKit extraction-results helper. See the [daily workflow](./agent-workflow.md) for session options and unsupported controls.
 
 `with_variable` returns a new builder. Names match `^[a-z][a-z0-9_]{0,63}$`; supported types are `str`, `int`, `float`, `bool`, `date`, `datetime`; `extract=True` requires a nonempty description (at most 2,000 characters). `options`, when supplied, contains 1–100 unique primitive values: equivalent numbers such as `1` and `1.0` count as duplicates, while `True`, `1`, and `"1"` remain distinct JSON types. `secret_ref(set_name, key)` validates 1–64 letters, digits, underscores or hyphens per component and returns `$secrets.<set>.<key>`. It creates a reference, not a secret value.
 
@@ -197,16 +197,16 @@ For cascaded deployment, `with_turn_detection({"language": "de-DE"})` sets `pipe
 | Writes and retry options | All low-level writes disable automatic retries, even when `max_retries` is requested; assignment has only its explicit one-conflict retry |
 | Agent and number creation | Agent POST has no idempotency key; numbers currently ignore their declared key. An uncertain create outcome requires inspection before manual retry |
 | CN and production | AgentKit CN deployment is refused; production path, regional coverage and Basic-auth support remain unconfirmed |
-| Session writes, outbound calling, AgentKit analysis and campaigns | No implementation until schemas are published |
+| Outbound calling, AgentKit analysis and campaign APIs | Not included in this SDK session workflow |
 
 The adapter shares the existing client's HTTP transport, authentication and current regional-pool origin. The staging override applies only to v3. These docs and offline tests do not establish live backend availability.
 
 ## Maintainer provenance
 
-The v3 low-level methods and TypedDict wire schemas were generated locally from the staging OpenAPI reviewed for this preview. They are protected custom code under `src/agora_agent/v3`, with a handwritten shared-transport adapter and AgentKit mapping. **They are not output from the repository's Fern generation pipeline.** This Python checkout does not contain the local generator or a vendored OpenAPI snapshot, so a reproducible generation workflow is not currently checked in.
+The original 20 low-level methods and TypedDict wire schemas were generated locally from staging OpenAPI. Three handwritten session write methods and their TypedDict shapes follow the refreshed Bruno `sessions/start`, `start-ephemeral`, and `stop` examples; the older OpenAPI does not contain these writes. They are protected custom code under `src/agora_agent/v3`, with a handwritten shared-transport adapter and AgentKit mapping. **They are not output from the repository's Fern generation pipeline.** This Python checkout does not contain the local generator or a vendored OpenAPI snapshot, so a reproducible generation workflow is not currently checked in.
 
 See [the v3 source](../../src/agora_agent/v3/client.py), [wire schemas](../../src/agora_agent/v3/types.py), [AgentKit mapping](../../src/agora_agent/agentkit/v3.py), and [offline contract tests](../../tests/custom/test_v3_preview.py). Preserve `.fernignore` protection when integrating a future canonical Fern namespace.
 
 ## Compatibility names
 
-`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`, and `AsyncDeployedAgent` is exactly `AsyncSavedAgent`. `client.secrets` / `client.numbers` share the same resource objects as their advanced `client.v3` counterparts. These aliases do not duplicate requests or configuration. A saved agent has no session-start method until the endpoint and complete contract for starting by `agent_id` are available; create current sessions from the original `Agent` configuration.
+`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`, and `AsyncDeployedAgent` is exactly `AsyncSavedAgent`. `client.secrets` / `client.numbers` share the same resource objects as their advanced `client.v3` counterparts. These aliases do not duplicate requests or configuration. Saved handles create sessions by ID; the original builder also starts directly, using ephemeral start when secret references or variables require it.

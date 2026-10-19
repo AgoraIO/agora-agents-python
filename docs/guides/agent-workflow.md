@@ -65,7 +65,25 @@ saved = saved.update(referenced)
 
 Secret creation and number registration are provisioning operations, not steps to repeat for every conversation. Save IDs and use conditional updates for existing resources. `list_numbers()` scans all project pages and filters assignments locally; it costs one request per page, with no individual number GETs.
 
-Secret references remain server-side persistence inputs. A current session must use inline or managed credentials from its original builder; passing a literal secret reference to session start is rejected before the request. No secret values are recoverable through GET, and the SDK does not implicitly cache or reverse saved credentials. A saved handle does not yet start sessions: the new start API is expected to accept `agent_id`, but its endpoint and complete request contract are still pending.
+The same builder can start directly with secret references and variable definitions: the SDK sends an ephemeral inline agent, without saving it or reading secret values back. Saved handles start by their stored ID. Neither flow implicitly caches or reverses write-only credentials.
+
+```python
+session = saved.create_session(
+    channel="room", agent_uid="1", remote_uids=["2"],
+    client_reference="support-call", idle_timeout=60, max_duration=120,
+    labels={"owner": "support"},
+)
+session_id = session.start()
+info = session.get_info()
+session.stop()
+
+# Secret references and variables use the same session interface.
+ephemeral = referenced.create_session(channel="room", agent_uid="1", remote_uids=["2"])
+ephemeral.start()
+ephemeral.stop()
+```
+
+`idle_timeout` and `max_duration` are seconds (converted to integer milliseconds). `name` is an alias for `client_reference` in these new sessions; conflicting values are rejected. `labels` is supported only for saved starts. Token, preset, pipeline ID, token-expiry and string-UID overrides are not documented for saved/ephemeral starts and are rejected. For these sessions, `say`, `interrupt`, `think`, `update`, history and turn helpers raise `NotImplementedError` locally; their IDs are never sent to the older control endpoints. `get_info()` returns the project session response, and `.status` normalizes its status to lowercase.
 
 ## Async applications
 
@@ -85,6 +103,6 @@ Use `await AsyncSavedAgent.get(client, saved_id)` to load another handle, and aw
 
 ## Advanced transport and compatibility
 
-Application code does not select a REST version. The current transport uses the established session API for running conversations and the stored-agent preview API for persistence/provisioning. See [transport behavior and limits](./v3-api-preview.md) and the [complete low-level reference](../reference/v3.md) for ETags, raw headers, cursor pagination, strict mapping, project session reads, staging overrides and deferred features.
+Application code does not select a REST version. Ordinary inline configurations retain the established session transport. Configurations with secret references or variable definitions, or the new `client_reference`/`max_duration` options, use the documented ephemeral session transport. Saved handles use the documented start-by-ID transport. See [transport behavior and limits](./v3-api-preview.md) and the [complete low-level reference](../reference/v3.md) for ETags, raw headers, cursor pagination, strict mapping, project session reads, staging overrides and deferred features.
 
-`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`; the async handle names are likewise identical aliases. Advanced `client.v3` resources remain available, including read-only project session queries; the existing `client.agents` running-session resource retains its behavior.
+`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`; the async handle names are likewise identical aliases. Advanced `client.v3` resources remain available, including session start/stop and project queries; the existing `client.agents` running-session resource retains its behavior.

@@ -66,4 +66,4 @@ The Agora Conversational AI Python SDK lets you build voice-powered AI agents on
 
 ## v3 stored-agent preview
 
-The additive v3 adapter stores reusable agent configurations while existing v2 sessions keep their current lifecycle. Start with the [v3 workflow guide](./guides/v3-api-preview.md), or consult the [complete 20-operation v3 reference](./reference/v3.md). The preview uses protected custom/local-generated code rather than the canonical Fern pipeline.
+The additive v3 adapter stores reusable agent configurations and starts saved or ephemeral sessions, while existing inline sessions keep their current lifecycle. Start with the [v3 workflow guide](./guides/v3-api-preview.md), or consult the [complete 23-operation v3 reference](./reference/v3.md). The preview uses protected custom/local-generated code rather than the canonical Fern pipeline.

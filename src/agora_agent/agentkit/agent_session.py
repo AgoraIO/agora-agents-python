@@ -112,7 +112,9 @@ class _AgentSessionBase:
         expires_in: typing.Optional[int] = None,
         debug: typing.Optional[bool] = None,
         warn: typing.Optional[typing.Callable[[str], None]] = None,
+        _session_backend: typing.Optional[typing.Dict[str, typing.Any]] = None,
     ):
+        self._session_backend = _session_backend
         self._client = client
         self._agent = agent
         self._app_id = app_id
@@ -167,12 +169,12 @@ class _AgentSessionBase:
         Use this to access any new endpoints that Fern generates without
         waiting for agentkit method updates.
         """
-        return self._agents
+        return self._client.v3.sessions if self._session_backend is not None else self._agents
 
     @property
     def raw_agent_management(self) -> typing.Any:
         """Direct access to the underlying Fern-generated AgentManagement client."""
-        return self._agent_management
+        return None if self._session_backend is not None else self._agent_management
 
     def _require_agent_management(self) -> typing.Any:
         """Return the management client when the configured client supports it."""
@@ -598,6 +600,25 @@ class AgentSession(_AgentSessionBase):
         ValueError
             If avatar/TTS configuration is invalid.
         """
+        if self._session_backend is not None:
+            if self._status not in ("idle", "stopped", "error"):
+                raise RuntimeError(f"Cannot start session in {self._status} state")
+            self._status = "starting"
+            try:
+                resource = self._client.v3.sessions
+                method = resource.start if self._session_backend["stored"] else resource.start_ephemeral
+                response = method(**self._session_backend["body"])
+                identifier = response.get("agent_session_id")
+                if not isinstance(identifier, str) or not identifier:
+                    raise RuntimeError("Session response is missing agent_session_id")
+                self._agent_id = identifier
+                self._status = str(response["status"]).lower()
+                self._emit("started", {"agent_id": identifier, "agent_session_id": identifier})
+                return identifier
+            except Exception as error:
+                self._status = "error"
+                self._emit("error", error)
+                raise
         if self._status not in ("idle", "stopped", "error"):
             raise RuntimeError(f"Cannot start session in {self._status} state")
 
@@ -685,6 +706,20 @@ class AgentSession(_AgentSessionBase):
         server returns 404, which this method treats as a successful stop
         rather than raising an error.
         """
+        if self._session_backend is not None:
+            if self._status != "running" or not self._agent_id:
+                raise RuntimeError(f"Cannot stop session in {self._status} state")
+            self._status = "stopping"
+            try:
+                self._client.v3.sessions.stop(agent_session_id=self._agent_id)
+            except Exception as error:
+                if getattr(error, "status_code", None) != 404:
+                    self._status = "error"
+                    self._emit("error", error)
+                    raise
+            self._status = "stopped"
+            self._emit("stopped", {"agent_id": self._agent_id, "agent_session_id": self._agent_id})
+            return
         if self._status != "running":
             raise RuntimeError(f"Cannot stop session in {self._status} state")
         if not self._agent_id:
@@ -730,6 +765,8 @@ class AgentSession(_AgentSessionBase):
         interruptable : bool, optional
             Whether the message can be interrupted by the user.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("say is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot say in {self._status} state")
         if not self._agent_id:
@@ -752,6 +789,8 @@ class AgentSession(_AgentSessionBase):
 
     def interrupt(self) -> None:
         """Interrupt the agent while it is speaking or thinking."""
+        if self._session_backend is not None:
+            raise NotImplementedError("interrupt is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot interrupt in {self._status} state")
         if not self._agent_id:
@@ -778,6 +817,8 @@ class AgentSession(_AgentSessionBase):
         ``"interrupt"``. Pass ``on_listening_action="inject"`` explicitly to
         preserve the pre-v2.7 behavior.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("think is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot think in {self._status} state")
         if not self._agent_id:
@@ -812,6 +853,8 @@ class AgentSession(_AgentSessionBase):
         properties : UpdateAgentsRequestProperties
             Partial configuration to update.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("update is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot update in {self._status} state")
         if not self._agent_id:
@@ -826,6 +869,8 @@ class AgentSession(_AgentSessionBase):
 
     def get_history(self) -> typing.Any:
         """Get the conversation history."""
+        if self._session_backend is not None:
+            raise NotImplementedError("get_history is not documented for stored or ephemeral sessions")
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
@@ -835,6 +880,12 @@ class AgentSession(_AgentSessionBase):
 
     def get_info(self) -> typing.Any:
         """Get the current session info."""
+        if self._session_backend is not None:
+            if not self._agent_id:
+                raise RuntimeError("No session ID available")
+            response = self._client.v3.sessions.get(agent_session_id=self._agent_id)
+            self._status = str(response["status"]).lower()
+            return response
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
@@ -850,6 +901,8 @@ class AgentSession(_AgentSessionBase):
         options: typing.Optional["GetTurnsOptions"] = None,
     ) -> GetTurnsAgentsResponse:
         """Get turn-by-turn analytics and timing details for this session."""
+        if self._session_backend is not None:
+            raise NotImplementedError("get_turns is not documented for stored or ephemeral sessions")
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
@@ -877,6 +930,8 @@ class AgentSession(_AgentSessionBase):
         the fields required to advance, or if requesting the next page returns
         a page index that did not advance.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("get_all_turns is not documented for stored or ephemeral sessions")
         response = self.get_turns(page_index=1, page_size=page_size)
         all_turns = self._response_turns(response)
         pagination = self._response_pagination(response)
@@ -966,6 +1021,25 @@ class AsyncAgentSession(_AgentSessionBase):
         ValueError
             If avatar/TTS configuration is invalid.
         """
+        if self._session_backend is not None:
+            if self._status not in ("idle", "stopped", "error"):
+                raise RuntimeError(f"Cannot start session in {self._status} state")
+            self._status = "starting"
+            try:
+                resource = self._client.v3.sessions
+                method = resource.start if self._session_backend["stored"] else resource.start_ephemeral
+                response = await method(**self._session_backend["body"])
+                identifier = response.get("agent_session_id")
+                if not isinstance(identifier, str) or not identifier:
+                    raise RuntimeError("Session response is missing agent_session_id")
+                self._agent_id = identifier
+                self._status = str(response["status"]).lower()
+                self._emit("started", {"agent_id": identifier, "agent_session_id": identifier})
+                return identifier
+            except Exception as error:
+                self._status = "error"
+                self._emit("error", error)
+                raise
         if self._status not in ("idle", "stopped", "error"):
             raise RuntimeError(f"Cannot start session in {self._status} state")
 
@@ -1053,6 +1127,20 @@ class AsyncAgentSession(_AgentSessionBase):
         server returns 404, which this method treats as a successful stop
         rather than raising an error.
         """
+        if self._session_backend is not None:
+            if self._status != "running" or not self._agent_id:
+                raise RuntimeError(f"Cannot stop session in {self._status} state")
+            self._status = "stopping"
+            try:
+                await self._client.v3.sessions.stop(agent_session_id=self._agent_id)
+            except Exception as error:
+                if getattr(error, "status_code", None) != 404:
+                    self._status = "error"
+                    self._emit("error", error)
+                    raise
+            self._status = "stopped"
+            self._emit("stopped", {"agent_id": self._agent_id, "agent_session_id": self._agent_id})
+            return
         if self._status != "running":
             raise RuntimeError(f"Cannot stop session in {self._status} state")
         if not self._agent_id:
@@ -1098,6 +1186,8 @@ class AsyncAgentSession(_AgentSessionBase):
         interruptable : bool, optional
             Whether the message can be interrupted by the user.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("say is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot say in {self._status} state")
         if not self._agent_id:
@@ -1120,6 +1210,8 @@ class AsyncAgentSession(_AgentSessionBase):
 
     async def interrupt(self) -> None:
         """Interrupt the agent while it is speaking or thinking."""
+        if self._session_backend is not None:
+            raise NotImplementedError("interrupt is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot interrupt in {self._status} state")
         if not self._agent_id:
@@ -1146,6 +1238,8 @@ class AsyncAgentSession(_AgentSessionBase):
         ``"interrupt"``. Pass ``on_listening_action="inject"`` explicitly to
         preserve the pre-v2.7 behavior.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("think is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot think in {self._status} state")
         if not self._agent_id:
@@ -1180,6 +1274,8 @@ class AsyncAgentSession(_AgentSessionBase):
         properties : UpdateAgentsRequestProperties
             Partial configuration to update.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("update is not documented for stored or ephemeral sessions")
         if self._status != "running":
             raise RuntimeError(f"Cannot update in {self._status} state")
         if not self._agent_id:
@@ -1194,6 +1290,8 @@ class AsyncAgentSession(_AgentSessionBase):
 
     async def get_history(self) -> typing.Any:
         """Get the conversation history."""
+        if self._session_backend is not None:
+            raise NotImplementedError("get_history is not documented for stored or ephemeral sessions")
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
@@ -1203,6 +1301,12 @@ class AsyncAgentSession(_AgentSessionBase):
 
     async def get_info(self) -> typing.Any:
         """Get the current session info."""
+        if self._session_backend is not None:
+            if not self._agent_id:
+                raise RuntimeError("No session ID available")
+            response = await self._client.v3.sessions.get(agent_session_id=self._agent_id)
+            self._status = str(response["status"]).lower()
+            return response
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
@@ -1218,6 +1322,8 @@ class AsyncAgentSession(_AgentSessionBase):
         options: typing.Optional["GetTurnsOptions"] = None,
     ) -> GetTurnsAgentsResponse:
         """Get turn-by-turn analytics and timing details for this session."""
+        if self._session_backend is not None:
+            raise NotImplementedError("get_turns is not documented for stored or ephemeral sessions")
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
@@ -1245,6 +1351,8 @@ class AsyncAgentSession(_AgentSessionBase):
         the fields required to advance, or if requesting the next page returns
         a page index that did not advance.
         """
+        if self._session_backend is not None:
+            raise NotImplementedError("get_all_turns is not documented for stored or ephemeral sessions")
         response = await self.get_turns(page_index=1, page_size=page_size)
         all_turns = self._response_turns(response)
         pagination = self._response_pagination(response)
