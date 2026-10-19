@@ -527,3 +527,40 @@ def test_explicit_interaction_language_uses_existing_managed_asr_fallback():
     default = build_body(Agent(client=client).with_stt(DeepgramSTT(api_key="key", model="nova-3", language="fr")))
     assert default["pipeline"]["asr"]["language"] == "en-US"
     assert default["pipeline"]["asr"]["params"]["language"] == "fr"
+
+
+@pytest.mark.parametrize("options", [["same", "same"], [1, 1.0], [0, -0.0]])
+def test_variable_options_reject_json_numeric_duplicates(options):
+    with pytest.raises(ValueError, match="unique"):
+        Agent(client=make_client(lambda _: pytest.fail("no network expected"))).with_variable("choice", type="float", options=options)
+
+
+def test_variable_options_distinguish_booleans_strings_and_numbers():
+    Agent(client=make_client(lambda _: pytest.fail("no network expected"))).with_variable("choice", type="str", options=[True, 1, "1", False, 0])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("async_client", [False, True])
+async def test_conflict_latest_preserves_context_without_write_conditions(async_client):
+    calls = []
+    extra = {"iF-mAtCh": '"old"', "If-None-Match": "*", "Idempotency-Key": "once",
+             "Authorization": "Bearer override", "X-Custom": "kept"}
+    def handler(request):
+        calls.append(request)
+        if request.method == "PATCH":
+            return httpx.Response(412, json={"error": "stale"})
+        assert not any(key in request.headers for key in ("If-Match", "If-None-Match", "Idempotency-Key"))
+        assert request.headers["Authorization"] == "Bearer override"
+        assert request.headers["X-Custom"] == "kept"
+        return httpx.Response(200, json={"agent_id": "a"})
+    client = make_client(handler, async_client)
+    with pytest.raises(PreconditionFailedError) as exc:
+        result = client.v3.agents.update(agent_id="a", if_match='"old"', request_options={"additional_headers": extra})
+        if async_client:
+            await result
+    result = exc.value.latest()
+    if async_client:
+        result = await result
+    assert result == {"agent_id": "a"}
+    assert len(calls) == 2
+    assert extra["iF-mAtCh"] == '"old"'

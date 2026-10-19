@@ -71,7 +71,7 @@ def variable_definition(name, definition=None, **fields):
         options = result["options"]
         if not isinstance(options, list) or not 1 <= len(options) <= 100:
             raise ValueError("options must contain 1-100 unique primitive values")
-        if any(not isinstance(v, (str, int, float, bool)) for v in options) or len({(type(v), v) for v in options}) != len(options):
+        if any(not isinstance(v, (str, int, float, bool)) for v in options) or len({(bool if isinstance(v, bool) else str if isinstance(v, str) else float, v) for v in options}) != len(options):
             raise ValueError("options must contain unique primitive values")
     return copy.deepcopy(result)
 

@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, Mapping, Optional, TypeVar
+from typing import Any, Generic, Mapping, Optional, TypeVar
 from urllib.parse import quote, urlsplit
 
 import httpx
-from ..core.api_error import ApiError
 from ..agentkit.token import generate_convo_ai_token
+from ..core.api_error import ApiError
 
 _UNSET: Any = object()
 T = TypeVar("T")
@@ -105,7 +105,7 @@ class Resource:
                 **self._arguments(method, path, body, headers, params, request_options)))
         except PreconditionFailedError as error:
             latest_path = path.split("/keys/")[0]
-            error._latest = lambda: self._request("GET", latest_path, body=None, headers={}, params={}, request_options=request_options).data
+            error._latest = lambda: self._request("GET", latest_path, body=None, headers={}, params={}, request_options=_reload_options(request_options)).data
             raise
 
     def iter_pages(self, **kwargs):
@@ -127,6 +127,16 @@ class Resource:
             yield from page["data"]["list"]
 
 
+def _reload_options(request_options):
+    """Keep request context without replaying write preconditions on the reload."""
+    options = dict(request_options or {})
+    options["additional_headers"] = {
+        key: value for key, value in options.get("additional_headers", {}).items()
+        if key.lower() not in {"if-match", "if-none-match", "idempotency-key"}
+    }
+    return options
+
+
 class AsyncResource(Resource):
     async def _request(self, method, path, *, body, headers, params, request_options):
         try:
@@ -134,7 +144,7 @@ class AsyncResource(Resource):
                 **self._arguments(method, path, body, headers, params, request_options)))
         except PreconditionFailedError as error:
             async def latest():
-                response = await self._request("GET", path.split("/keys/")[0], body=None, headers={}, params={}, request_options=request_options)
+                response = await self._request("GET", path.split("/keys/")[0], body=None, headers={}, params={}, request_options=_reload_options(request_options))
                 return response.data
             error._latest = latest
             raise

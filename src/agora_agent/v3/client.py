@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Any, Optional, Dict, List, Union
-from typing_extensions import Literal
-from ._transport import Resource, AsyncResource, RawResponse
-from ._transport import _UNSET, segment
+
+from typing import Dict, List, Optional, Union
+
+from ._transport import _UNSET, AsyncResource, RawResponse, Resource, segment
 from .types import (
     AgentCreateModel_AudioGreeting,
     AgentCreateModel_CascadedPipeline,
@@ -31,6 +31,8 @@ from .types import (
     SessionResponse,
     SipTrunkInput,
 )
+from typing_extensions import Literal
+
 
 class AgentsClient(Resource):
     with_raw_response: AgentsRawClient

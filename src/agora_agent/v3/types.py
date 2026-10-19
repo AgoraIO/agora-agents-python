@@ -1,7 +1,10 @@
 """Typed staging OpenAPI wire schemas. Dictionaries preserve omitted versus null fields."""
 from __future__ import annotations
+
 from typing import Any, Dict, List, Union
-from typing_extensions import TypedDict, Required, Literal
+
+from typing_extensions import Literal, Required, TypedDict
+
 
 class AgentDeleteResponse(TypedDict, total=False):
     deleted: Required[Literal[True]]
