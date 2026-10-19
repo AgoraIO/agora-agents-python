@@ -7,6 +7,7 @@ import warnings
 
 if typing.TYPE_CHECKING:
     from .agent_session import AgentSession, AsyncAgentSession
+    from .v3 import DeployedAgent, AsyncDeployedAgent
     from ..core.domain import Area
     from ..pool_client import Agora, AsyncAgora
 
@@ -857,6 +858,23 @@ class Agent:
             "greeting_configs": self._greeting_configs,
         }
 
+    def with_variable(self, name: str, definition: typing.Optional[typing.Dict[str, typing.Any]] = None, **fields: typing.Any) -> "Agent":
+        """Return a new builder with a typed v3 template/extraction variable."""
+        from .v3 import variable_definition
+        new_agent = self._clone()
+        new_agent._v3_variables = {**getattr(self, "_v3_variables", {}), name: variable_definition(name, definition, **fields)}
+        return new_agent
+
+    def deploy(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "DeployedAgent":
+        """Create a v3 stored agent, or conditionally redeploy an existing ID."""
+        from .v3 import deploy
+        return deploy(self, name=name, agent_id=agent_id)
+
+    async def deploy_async(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "AsyncDeployedAgent":
+        """Deploy using a bound AsyncAgora client."""
+        from .v3 import deploy_async
+        return await deploy_async(self, name=name, agent_id=agent_id)
+
     def create_session(
         self,
         channel: str,
@@ -886,6 +904,8 @@ class Agent:
         """
         from .agent_session import AgentSession
 
+        from .v3 import guard_v2
+        guard_v2(self.config)
         resolved_client = self._client
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
@@ -933,6 +953,8 @@ class Agent:
         """
         from .agent_session import AsyncAgentSession
 
+        from .v3 import guard_v2
+        guard_v2(self.config)
         resolved_client = self._client
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
@@ -972,6 +994,8 @@ class Agent:
         skip_vendor_validation_categories: typing.Optional[typing.AbstractSet[str]] = None,
         allow_missing_vendor_categories: typing.Optional[typing.AbstractSet[str]] = None,
     ) -> StartAgentsRequestProperties:
+        from .v3 import guard_v2
+        guard_v2(self.config)
         # Validate the MLLM + enabled-avatar combination BEFORE generating the
         # RTC token so callers get a clear, actionable error first (matches the
         # TypeScript and Go SDKs' fail-fast contract).
@@ -1138,6 +1162,7 @@ class Agent:
 
     def _clone(self) -> "Agent":
         new_agent = self.__class__.__new__(self.__class__, self._client)
+        new_agent._v3_variables = getattr(self, "_v3_variables", {})
         new_agent._client = self._client
         new_agent._pipeline_id = self._pipeline_id
         new_agent._llm = self._llm

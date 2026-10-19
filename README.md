@@ -371,3 +371,7 @@ a proof of concept, but know that we will not be able to merge it as-is. We sugg
 an issue first to discuss with us!
 
 On the other hand, contributions to the README are always very welcome!
+
+### v3 stored-agent preview
+
+The additive `client.v3` API and AgentKit `deploy()` / `deploy_async()` save stored agent configurations without changing v2 session behavior. See the [v3 preview guide](docs/guides/v3-api-preview.md) for staging overrides, typed wire responses, ETags, secret references, number assignment, async usage and current backend limitations.

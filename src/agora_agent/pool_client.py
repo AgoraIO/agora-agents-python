@@ -12,6 +12,7 @@ import typing_extensions
 
 from .agentkit.regional_agent import RegionalAgent
 from .agentkit.vendors.region import AreaScope, area_to_scope
+from .v3 import V3Options, V3Client, AsyncV3Client
 from .client import Agora as BaseAgora
 from .client import AsyncAgora as BaseAsyncAgora
 from .core.api_error import ApiError
@@ -223,6 +224,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> "CNAgora": ...
 
     @typing.overload
@@ -240,6 +242,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> "GlobalAgoraClient": ...
 
     @typing.overload
@@ -257,6 +260,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> "Agora[_AreaT]": ...
 
     def __new__(cls, **kwargs: typing.Any) -> typing.Any:
@@ -283,6 +287,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> None: ...
 
     @typing.overload
@@ -300,6 +305,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> None: ...
 
     @typing.overload
@@ -317,6 +323,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> None: ...
 
     def __init__(
@@ -333,7 +340,9 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ):
+        self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
         self.app_id = app_id
@@ -374,6 +383,12 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
+
+    @property
+    def v3(self) -> V3Client:
+        if not hasattr(self, "_v3_client"):
+            self._v3_client = V3Client(self, self._v3_options)
+        return self._v3_client
 
     @property
     def pool(self) -> Pool:
@@ -559,6 +574,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> "CNAsyncAgora": ...
 
     @typing.overload
@@ -576,6 +592,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> "GlobalAsyncAgoraClient": ...
 
     @typing.overload
@@ -593,6 +610,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> "AsyncAgora[_AreaT]": ...
 
     def __new__(cls, **kwargs: typing.Any) -> typing.Any:
@@ -619,6 +637,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> None: ...
 
     @typing.overload
@@ -636,6 +655,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> None: ...
 
     @typing.overload
@@ -653,6 +673,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ) -> None: ...
 
     def __init__(
@@ -669,7 +690,9 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
         debug: bool = False,
+        v3: typing.Optional[V3Options] = None,
     ):
+        self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
         self.app_id = app_id
@@ -710,6 +733,12 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
+
+    @property
+    def v3(self) -> AsyncV3Client:
+        if not hasattr(self, "_v3_client"):
+            self._v3_client = AsyncV3Client(self, self._v3_options)
+        return self._v3_client
 
     @property
     def pool(self) -> Pool:

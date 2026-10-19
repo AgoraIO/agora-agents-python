@@ -31,3 +31,6 @@ requirements.txt
 .fern/replay.lock
 .fern/replay.yml
 .gitattributes
+
+# Additive v3 preview adapter and typed staging contracts are maintained manually.
+src/agora_agent/v3/
