@@ -389,6 +389,8 @@ class Agent:
 
         _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
 
+    _v3_variables: typing.Dict[str, typing.Dict[str, typing.Any]]
+
     @typing.overload
     def __new__(
         cls,
