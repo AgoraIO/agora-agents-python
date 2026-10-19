@@ -18,8 +18,14 @@ def needs_session_backend(agent):
 def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids,
                    name=None, client_reference=None, idle_timeout=None, max_duration=None,
                    labels=None, debug=None, warn=None, **unsupported):
+    from ..pool_client import Agora, AsyncAgora
     from .agent_session import AgentSession, AsyncAgentSession
     from .v3 import build_body
+    client = owner._client
+    if not isinstance(client, AsyncAgora if asynchronous else Agora):
+        raise TypeError("Session requires AsyncAgora" if asynchronous else "Session requires Agora")
+    if getattr(client, "area_scope", None) == "cn":
+        raise ValueError("Stored and ephemeral sessions in CN are unconfirmed")
     invalid = [key for key, value in unsupported.items() if value is not None]
     if invalid:
         raise ValueError("Unsupported session options: " + ", ".join(sorted(invalid)))
@@ -27,10 +33,8 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         raise ValueError("channel must be nonempty")
     if not isinstance(agent_uid, str) or not agent_uid.strip():
         raise ValueError("agent_uid must be nonempty")
-    if not isinstance(remote_uids, list) or any(not isinstance(v, str) or not v for v in remote_uids):
+    if not isinstance(remote_uids, list) or any(not isinstance(v, str) or not v.strip() for v in remote_uids):
         raise ValueError("remote_uids must be a list of nonempty strings")
-    if name is not None and client_reference is not None and name != client_reference:
-        raise ValueError("name and client_reference must agree when both are supplied")
     body = {"transport": {"type": "rtc", "channel": channel, "uid": agent_uid,
                            "subscribe_uids": list(remote_uids)}}
     reference = client_reference if client_reference is not None else name
@@ -55,9 +59,6 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         agent = build_body(owner)
         agent.pop("agent_name", None)
         body["agent"] = agent
-    client = owner._client
-    if client is None:
-        raise ValueError("client is required")
     session_type = AsyncAgentSession if asynchronous else AgentSession
     return session_type(client=client, agent=owner, app_id=client.app_id,
                         name=reference or "", channel=channel, agent_uid=agent_uid,

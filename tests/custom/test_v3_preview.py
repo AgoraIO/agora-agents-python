@@ -256,7 +256,7 @@ def test_secret_ref_v2_guard_at_all_boundaries():
     with pytest.raises(SecretRefNotSupportedError, match="requires save"):
         agent.to_properties(channel="c", agent_uid="1", remote_uids=["*"])
     assert agent.create_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
-    assert agent.create_async_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
+    assert configured(make_client(lambda _: pytest.fail("must not send"), True)).create_async_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
 
 
 def test_number_resolution_pagination_conflict_retry_and_unassign():
@@ -780,3 +780,25 @@ async def test_new_session_stop_does_not_hide_unrelated_404(async_):
             session.stop()
     assert caught.value.status_code == 404
     assert session.status == "error"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("stored", [False, True])
+def test_new_sessions_reject_cn_before_network(async_, stored):
+    from agora_agent import AsyncSavedAgent, SavedAgent
+    from agora_agent.v3 import RawResponse
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    client._area = Area.CN
+    owner = ((AsyncSavedAgent if async_ else SavedAgent)(client, RawResponse(data={"agent_id": "id", "agent_name": "name"}, headers=httpx.Headers(), status_code=200, response=httpx.Response(200))) if stored else configured(client))
+    method = owner.create_async_session if async_ and not stored else owner.create_session
+    with pytest.raises(ValueError, match="CN"):
+        method(channel="r", agent_uid="1", remote_uids=["2"])
+
+
+def test_new_sessions_reference_precedence_and_whitespace_uids():
+    from agora_agent.agentkit.session_backend import create_session
+    agent = configured(make_client(lambda _: pytest.fail("must not send")))
+    session = create_session(agent, channel="r", agent_uid="1", remote_uids=["2"], name="fallback", client_reference="explicit")
+    assert session._session_backend["body"]["client_reference"] == "explicit"
+    with pytest.raises(ValueError, match="remote_uids"):
+        create_session(agent, channel="r", agent_uid="1", remote_uids=[" "])

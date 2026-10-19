@@ -83,7 +83,7 @@ ephemeral.start()
 ephemeral.stop()
 ```
 
-`idle_timeout` and `max_duration` are seconds (converted to integer milliseconds). `name` is an alias for `client_reference` in these new sessions; conflicting values are rejected. `labels` is supported only for saved starts. Token, preset, pipeline ID, token-expiry and string-UID overrides are not documented for saved/ephemeral starts and are rejected. For these sessions, `say`, `interrupt`, `think`, `update`, history and turn helpers raise `NotImplementedError` locally; their IDs are never sent to the older control endpoints. `get_info()` returns the project session response, and `.status` normalizes its status to lowercase.
+`idle_timeout` and `max_duration` are seconds (converted to integer milliseconds). `client_reference` takes precedence over the optional `name` fallback in these new sessions. `labels` is supported only for saved starts. Token, preset, pipeline ID, token-expiry and string-UID overrides are not documented for saved/ephemeral starts and are rejected. For these sessions, `say`, `interrupt`, `think`, `update`, history and turn helpers raise `NotImplementedError` locally; their IDs are never sent to the older control endpoints. `get_info()` returns the project session response, and `.status` normalizes its status to lowercase.
 
 ## Async applications
 
