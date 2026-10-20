@@ -1214,6 +1214,38 @@ def test_start_session_rime_tts_preserves_wire_aliases() -> None:
     assert "model_id" not in params
 
 
+@pytest.mark.parametrize(
+    "tts,expected",
+    [
+        (
+            CartesiaTTS(
+                credential_mode=CredentialMode.MANAGED, voice_id="voice", model_id="sonic-2", sample_rate=24000
+            ),
+            {
+                "vendor": "cartesia",
+                "credential_mode": "managed",
+                "params": {
+                    "voice": {"mode": "id", "id": "voice"},
+                    "model_id": "sonic-2",
+                    "output_format": {"container": "raw", "sample_rate": 24000},
+                },
+            },
+        ),
+        (
+            FishAudioTTS(credential_mode=CredentialMode.MANAGED, reference_id="ref", backend="speech-1.5"),
+            {
+                "vendor": "fishaudio",
+                "credential_mode": "managed",
+                "params": {"reference_id": "ref", "backend": "speech-1.5"},
+            },
+        ),
+    ],
+)
+def test_start_session_cartesia_fishaudio_managed_credentials(tts, expected) -> None:
+    properties = dump_wire(start_session(full_agent_with_tts(tts))["properties"])
+    assert properties["tts"] == expected
+
+
 def test_start_session_rime_tts_managed_credentials() -> None:
     agent = full_agent_with_tts(
         RimeTTS(

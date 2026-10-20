@@ -262,9 +262,13 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 
 ### `CartesiaTTS`
 
+Set `credential_mode=CredentialMode.MANAGED` to use Agora-managed credentials without an API key.
+Omitting the mode retains BYOK behavior. An explicit mode is serialized as top-level `tts.credential_mode`; an empty or omitted API key is excluded from `tts.params`.
+
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `api_key` | `str` | Yes | — | Cartesia API key |
+| `credential_mode` | `Literal["managed", "byok"]` | No | `None` | Defaults to BYOK when omitted |
+| `api_key` | `str` | BYOK only | `None` | Cartesia API key; optional in managed mode |
 | `voice_id` | `str` | Yes | — | Voice ID (serialized as `{"mode": "id", "id": "..."}`) |
 | `model_id` | `str` | Yes | — | Model ID |
 | `base_url` | `str` | No | `None` | WebSocket URL |
@@ -391,9 +395,13 @@ AgentKit serializes `credential_mode` at the top level of the Rime TTS configura
 
 ### `FishAudioTTS`
 
+Set `credential_mode=CredentialMode.MANAGED` to use Agora-managed credentials without an API key.
+Omitting the mode retains BYOK behavior. An explicit mode is serialized as top-level `tts.credential_mode`; an empty or omitted API key is excluded from `tts.params`.
+
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `key` | `str` | Yes | — | Fish Audio API key |
+| `credential_mode` | `Literal["managed", "byok"]` | No | `None` | Defaults to BYOK when omitted |
+| `key` | `str` | BYOK only | `None` | Fish Audio API key; optional in managed mode |
 | `reference_id` | `str` | Yes | — | Reference ID |
 | `backend` | `str` | Yes | — | Backend model version |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |

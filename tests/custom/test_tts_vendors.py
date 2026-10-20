@@ -283,6 +283,101 @@ def test_new_global_tts_requires_api_key(tts_class) -> None:
         tts_class()
 
 
+@pytest.mark.parametrize(
+    "vendor,options,key_field,expected_params",
+    [
+        (
+            CartesiaTTS,
+            {
+                "voice_id": "voice",
+                "model_id": "sonic-2",
+                "sample_rate": 24000,
+                "base_url": "wss://api.cartesia.ai/tts/websocket",
+                "language": "en",
+            },
+            "api_key",
+            {
+                "voice": {"mode": "id", "id": "voice"},
+                "model_id": "sonic-2",
+                "output_format": {"container": "raw", "sample_rate": 24000},
+                "base_url": "wss://api.cartesia.ai/tts/websocket",
+                "language": "en",
+            },
+        ),
+        (
+            FishAudioTTS,
+            {"reference_id": "ref", "backend": "speech-1.5"},
+            "key",
+            {"reference_id": "ref", "backend": "speech-1.5"},
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "mode,key",
+    [
+        (None, "tts-key"),
+        (CredentialMode.BYOK, "tts-key"),
+        (CredentialMode.MANAGED, None),
+        (CredentialMode.MANAGED, ""),
+        (CredentialMode.MANAGED, "tts-key"),
+    ],
+)
+def test_cartesia_fishaudio_credential_modes(vendor, options, key_field, expected_params, mode, key) -> None:
+    config = vendor(credential_mode=mode, skip_patterns=[1, 2], **options, **{key_field: key}).to_config()
+    params = dict(expected_params)
+    if key:
+        params["api_key"] = key
+    expected = {
+        "vendor": "cartesia" if vendor is CartesiaTTS else "fishaudio",
+        "params": params,
+        "skip_patterns": [1, 2],
+    }
+    if mode is not None:
+        expected["credential_mode"] = mode
+    assert config == expected
+
+
+@pytest.mark.parametrize(
+    "vendor,options,key_field",
+    [
+        (CartesiaTTS, {"voice_id": "voice", "model_id": "sonic-2"}, "api_key"),
+        (FishAudioTTS, {"reference_id": "ref", "backend": "speech-1.5"}, "key"),
+    ],
+)
+@pytest.mark.parametrize("mode", [None, CredentialMode.BYOK])
+@pytest.mark.parametrize("key", [None, ""])
+def test_cartesia_fishaudio_byok_requires_key(vendor, options, key_field, mode, key) -> None:
+    with pytest.raises(ValueError, match=f"requires {key_field}"):
+        vendor(credential_mode=mode, **options, **{key_field: key})
+
+
+@pytest.mark.parametrize(
+    "vendor,options,key_field",
+    [
+        (CartesiaTTS, {"voice_id": "voice", "model_id": "sonic-2"}, "api_key"),
+        (FishAudioTTS, {"reference_id": "ref", "backend": "speech-1.5"}, "key"),
+    ],
+)
+def test_cartesia_fishaudio_rejects_unknown_mode(vendor, options, key_field) -> None:
+    with pytest.raises(ValueError, match="credential_mode"):
+        vendor(credential_mode="unknown", **options, **{key_field: "tts-key"})
+
+
+@pytest.mark.parametrize(
+    "vendor,options,missing",
+    [
+        (CartesiaTTS, {"voice_id": "voice", "model_id": "sonic-2"}, "voice_id"),
+        (CartesiaTTS, {"voice_id": "voice", "model_id": "sonic-2"}, "model_id"),
+        (FishAudioTTS, {"reference_id": "ref", "backend": "speech-1.5"}, "reference_id"),
+        (FishAudioTTS, {"reference_id": "ref", "backend": "speech-1.5"}, "backend"),
+    ],
+)
+def test_cartesia_fishaudio_managed_requires_voice_and_model(vendor, options, missing) -> None:
+    remaining = {name: value for name, value in options.items() if name != missing}
+    with pytest.raises(ValueError, match=missing):
+        vendor(credential_mode=CredentialMode.MANAGED, **remaining)
+
+
 def test_rime_tts_managed_credential_mode_params() -> None:
     config = RimeTTS(
         credential_mode=CredentialMode.MANAGED,

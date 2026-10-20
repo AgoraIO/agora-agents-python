@@ -188,7 +188,8 @@ class OpenAITTS(OpenAITTSOptions, BaseTTS):
 class CartesiaTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    api_key: str = Field(..., description="Cartesia API key")
+    api_key: Optional[str] = Field(default=None, description="Cartesia API key; optional in managed mode")
+    credential_mode: Optional[Literal["managed", "byok"]] = Field(default=None, description="Credential mode; defaults to BYOK")
     voice_id: str = Field(..., description="Voice ID")
     model_id: str = Field(..., description="Model ID")
     base_url: Optional[str] = Field(default=None, description="WebSocket URL")
@@ -196,15 +197,22 @@ class CartesiaTTSOptions(BaseModel):
     sample_rate: Optional[CartesiaSampleRate] = Field(default=None, description="Sample rate in Hz")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+    @model_validator(mode="after")
+    def _validate_credential_mode(self) -> "CartesiaTTSOptions":
+        if self.credential_mode != CredentialMode.MANAGED and not self.api_key:
+            raise ValueError("CartesiaTTS requires api_key for credential_mode='byok' or when credential_mode is omitted")
+        return self
+
 
 class CartesiaTTS(CartesiaTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
-            "api_key": self.api_key,
             "model_id": self.model_id,
             "voice": {"mode": "id", "id": self.voice_id},
         }
 
+        if self.api_key:
+            params["api_key"] = self.api_key
         if self.base_url is not None:
             params["base_url"] = self.base_url
         if self.sample_rate is not None:
@@ -213,6 +221,8 @@ class CartesiaTTS(CartesiaTTSOptions, BaseTTS):
             params["language"] = self.language
 
         result: Dict[str, Any] = {"vendor": "cartesia", "params": params}
+        if self.credential_mode is not None:
+            result["credential_mode"] = self.credential_mode
         if self.skip_patterns is not None:
             result["skip_patterns"] = self.skip_patterns
         return result
@@ -432,10 +442,17 @@ class RimeTTS(RimeTTSOptions, BaseTTS):
 class FishAudioTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    key: str = Field(..., description="Fish Audio API key")
+    key: Optional[str] = Field(default=None, description="Fish Audio API key; optional in managed mode")
+    credential_mode: Optional[Literal["managed", "byok"]] = Field(default=None, description="Credential mode; defaults to BYOK")
     reference_id: str = Field(..., description="Reference ID")
     backend: str = Field(..., description="Backend")
     skip_patterns: Optional[List[int]] = Field(default=None)
+
+    @model_validator(mode="after")
+    def _validate_credential_mode(self) -> "FishAudioTTSOptions":
+        if self.credential_mode != CredentialMode.MANAGED and not self.key:
+            raise ValueError("FishAudioTTS requires key for credential_mode='byok' or when credential_mode is omitted")
+        return self
 
 
 class FishAudioTTS(FishAudioTTSOptions, BaseTTS):
@@ -445,12 +462,15 @@ class FishAudioTTS(FishAudioTTSOptions, BaseTTS):
 
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
-            "api_key": self.key,
             "reference_id": self.reference_id,
             "backend": self.backend,
         }
+        if self.key:
+            params["api_key"] = self.key
 
         result: Dict[str, Any] = {"vendor": "fishaudio", "params": params}
+        if self.credential_mode is not None:
+            result["credential_mode"] = self.credential_mode
         if self.skip_patterns is not None:
             result["skip_patterns"] = self.skip_patterns
         return result
