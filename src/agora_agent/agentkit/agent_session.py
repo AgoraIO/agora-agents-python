@@ -260,6 +260,7 @@ class _AgentSessionBase:
             sample_rate = (
                 tts_params.get("sample_rate")
                 or tts_params.get("sample_rate_hertz")
+                or tts_params.get("speech_sample_rate")
                 or tts_params.get("samplingRate")
             )
         if isinstance(sample_rate, int):

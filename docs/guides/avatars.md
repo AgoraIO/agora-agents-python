@@ -86,6 +86,25 @@ session.say('Hello! I am your visual assistant.')
 session.stop()
 ```
 
+## Anam Avatar
+
+Anam supports portrait models such as Cara 4 through `avatar_model`. Set
+`video_width` and `video_height` together for a custom resolution, or omit both
+to use the model default:
+
+```python
+from agora_agent import AnamAvatar
+
+avatar = AnamAvatar(
+    api_key="your-anam-key",
+    avatar_id="your-avatar-id",
+    avatar_model="cara_mk4",
+    video_width=720,
+    video_height=1280,
+)
+agent = agent.with_avatar(avatar)
+```
+
 ## Generic Avatar
 
 `GenericAvatar` supports custom avatar providers. `agora_appid`, `agora_channel`, and `agora_token` are optional when using `AgentSession.start()`.

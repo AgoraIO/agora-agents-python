@@ -6,6 +6,7 @@ from agora_agent.agentkit import (
     LlmStyle,
     MllmConfig,
     MllmVendor,
+    SpeakConfig,
     SttConfig,
     SttVendor,
     TtsConfig,
@@ -83,6 +84,21 @@ def test_with_audio_scenario_preserves_existing_parameters():
 
     assert _parameter(agent.config, "enable_metrics") is True
     assert _parameter(agent.config, "audio_scenario") == "chorus"
+
+
+def test_with_parameters_serializes_speak_settings():
+    agent = Agent(test_client()).with_parameters({"speak": SpeakConfig(batch=False)})
+
+    properties = agent.to_properties(
+        channel="room",
+        agent_uid="1",
+        remote_uids=["100"],
+        token="token",
+        skip_vendor_validation=True,
+    )
+
+    assert properties.parameters.speak is not None
+    assert properties.parameters.speak.batch is False
 
 
 def test_enable_rtm_defaults_data_channel_to_rtm():

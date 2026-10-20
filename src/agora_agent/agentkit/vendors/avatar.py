@@ -2,7 +2,7 @@ import warnings
 from typing import Any, Dict, Optional
 
 from .base import BaseAvatar
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 LIVEAVATAR_SAMPLE_RATE = 24000
 HEYGEN_SAMPLE_RATE = LIVEAVATAR_SAMPLE_RATE
@@ -199,8 +199,29 @@ class AnamAvatarOptions(BaseModel):
 
     api_key: str = Field(..., description="Anam API key")
     avatar_id: str = Field(..., description="Anam avatar ID")
+    avatar_model: Optional[str] = Field(
+        default=None,
+        description="Anam avatar model, such as cara_mk4 for Cara 4 portrait mode",
+    )
+    video_width: Optional[int] = Field(
+        default=None,
+        description="Output video width in pixels; set together with video_height",
+    )
+    video_height: Optional[int] = Field(
+        default=None,
+        description="Output video height in pixels; set together with video_width",
+    )
     enable: Optional[bool] = Field(default=None, description="Enable avatar (default: true)")
     additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional vendor-specific parameters")
+
+    @model_validator(mode="after")
+    def _validate_video_dimensions(self) -> "AnamAvatarOptions":
+        additional_params = self.additional_params or {}
+        has_video_width = self.video_width is not None or additional_params.get("video_width") is not None
+        has_video_height = self.video_height is not None or additional_params.get("video_height") is not None
+        if has_video_width != has_video_height:
+            raise ValueError("Anam avatar requires video_width and video_height together")
+        return self
 
 
 class AnamAvatar(AnamAvatarOptions, BaseAvatar):
@@ -209,13 +230,24 @@ class AnamAvatar(AnamAvatarOptions, BaseAvatar):
         return 0
 
     def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {
-            "api_key": self.api_key,
-            "avatar_id": self.avatar_id,
-        }
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update(
+            {
+                "api_key": self.api_key,
+                "avatar_id": self.avatar_id,
+            }
+        )
+        if self.avatar_model is not None:
+            params["avatar_model"] = self.avatar_model
+        if self.video_width is not None:
+            params["video_width"] = self.video_width
+        if self.video_height is not None:
+            params["video_height"] = self.video_height
 
-        if self.additional_params is not None:
-            params = {**self.additional_params, **params}
+        has_video_width = params.get("video_width") is not None
+        has_video_height = params.get("video_height") is not None
+        if has_video_width != has_video_height:
+            raise ValueError("Anam avatar requires video_width and video_height together")
 
         enable = self.enable if self.enable is not None else True
         return {"enable": enable, "vendor": "anam", "params": params}

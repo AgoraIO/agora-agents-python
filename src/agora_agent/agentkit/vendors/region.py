@@ -28,6 +28,7 @@ GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
     "assemblyai",
     "speechmatics",
     "sarvam",
+    "rtzr",
     "smallestai",
     "xai",
 )
@@ -43,6 +44,7 @@ CN_TTS_VENDORS: typing.Tuple[str, ...] = (
     "generic",
 )
 GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
+    "gemini",
     "microsoft",
     "elevenlabs",
     "minimax",

@@ -58,12 +58,13 @@ Used with `agent.with_tts()`. Each TTS vendor produces audio at a specific sampl
 | `ElevenLabsTTS` | ElevenLabs | `key`, `model_id`, `voice_id`, `base_url` | 16000, 22050, 24000, or 44100 Hz |
 | `MicrosoftTTS` | Microsoft Azure | `key`, `region`, `voice_name` | 8000, 16000, 24000, or 48000 Hz |
 | `OpenAITTS` | OpenAI | `voice` for Agora-managed global `tts-1`; `api_key`, `model`, `base_url`, `voice` for BYOK | 24000 Hz (fixed) |
-| `CartesiaTTS` | Cartesia | `api_key`, `voice_id`, `model_id` | 8000–48000 Hz |
+| `CartesiaTTS` | Cartesia | `voice_id`, `model_id`; `api_key` unless `credential_mode="managed"` | 8000–48000 Hz |
 | `GoogleTTS` | Google Cloud | `key`, `voice_name` | — |
+| `GeminiTTS` | Google Gemini TTS | `api_key`; model and voice have defaults | — |
 | `AmazonTTS` | Amazon Polly | `access_key`, `secret_key`, `region`, `voice_id`, `engine` | — |
 | `HumeAITTS` | Hume AI | `key`, `voice_id`, `provider` | — |
 | `RimeTTS` | Rime | `model_id`; BYOK also requires `key` and `speaker`, managed requires `base_url` | — |
-| `FishAudioTTS` | Fish Audio | `key`, `reference_id`, `backend` | — |
+| `FishAudioTTS` | Fish Audio | `reference_id`, `backend`; `key` unless `credential_mode="managed"` | — |
 | `MurfTTS` | Murf | `key`, `voice_id`, `model` | — |
 | `MiniMaxTTS` | MiniMax | `model` for supported Agora-managed global models; `key`, `group_id`, `model`, `voice_id`, `url` for BYOK | — |
 | `GenericTTS` | Generic OpenAI-compatible TTS over HTTP(S) | `url` | Configurable |
@@ -125,6 +126,7 @@ top-level `asr.keywords`. Both vendors also accept `additional_params`, serializ
 | `AssemblyAISTT` | AssemblyAI | `api_key`, `language` |
 | `AresSTT` | Ares | — (all optional) |
 | `SarvamSTT` | Sarvam | `api_key`, `language` |
+| `RtzrSTT` | RTZR | `client_id`, `client_secret` |
 | `XaiSTT` | xAI | `api_key` |
 
 ### CN STT Vendors

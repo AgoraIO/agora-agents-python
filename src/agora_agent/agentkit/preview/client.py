@@ -5,9 +5,9 @@ header. Agent sessions use these helpers to create private generated clients
 for preview traffic while the caller's ``Agora`` / ``AsyncAgora`` client stays
 on its production endpoint.
 
-Everything under ``agentkit/preview/`` is temporary. When a provider ships on
-the production gateway, remove its preview registration and move its class into
-the corresponding production vendor module.
+Preview registrations are temporary. When a provider ships on the production
+gateway, remove its registration and move its class into the corresponding
+production vendor module, retaining historical imports as aliases.
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ class PreviewFeatures:
     vendors on the preview endpoint.
     """
 
-    #: Gemini TTS preview gate. Gemini ASR and Live use production.
+    #: Legacy Gemini gate retained for compatibility. ASR, Live, and TTS use production.
     GEMINI_LIVE = "gemini-live"
     LIVE_MODELS = "live-models"
 
@@ -131,10 +131,10 @@ def create_preview_session_clients(
     raise TypeError("Unsupported Agora client wrapper")
 
 
-#: ASR vendors served only by the preview endpoint.
+#: Vendors served only by the preview endpoint, keyed by category.
 _PREVIEW_FEATURES_BY_CATEGORY: typing.Dict[str, typing.Dict[str, PreviewFeature]] = {
     "asr": {},
-    "tts": {"gemini": PreviewFeatures.GEMINI_LIVE},
+    "tts": {},
     "mllm": {},
 }
 

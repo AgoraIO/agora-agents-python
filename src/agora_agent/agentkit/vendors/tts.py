@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Dict, List, Literal, Optional
 from urllib.parse import urlsplit
 
@@ -5,6 +6,45 @@ from ..constants import CredentialMode
 from ..presets import MiniMaxPresetModels, OpenAITtsPresetModels
 from .base import BaseTTS, CartesiaSampleRate, ElevenLabsSampleRate, GoogleTTSSampleRate, MicrosoftSampleRate
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+class GeminiTTSModels:
+    """Gemini 3.8 Flash TTS model."""
+
+    FLASH_38 = "gemini-3.8-flash-tts"
+
+
+class GeminiTTS(BaseTTS):
+    """Production Gemini TTS; preview-era options and wire fields remain compatible."""
+
+    model_config = ConfigDict(extra="forbid")
+    api_key: str = Field(..., repr=False)
+    model: str = GeminiTTSModels.FLASH_38
+    voice: str = "Puck"
+    style: Optional[str] = None
+    additional_params: Optional[Dict[str, Any]] = None
+    skip_patterns: Optional[List[int]] = None
+
+    @field_validator("api_key", "model", "voice")
+    @classmethod
+    def require_nonblank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("GeminiTTS requires a nonblank value")
+        return value
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update({
+            "api_key": self.api_key,
+            "model": self.model,
+            "voice": self.voice,
+        })
+        if self.style is not None:
+            params["style"] = self.style
+        result: Dict[str, Any] = {"vendor": "gemini", "params": params}
+        if self.skip_patterns is not None:
+            result["skip_patterns"] = self.skip_patterns
+        return result
 
 
 class ElevenLabsTTSOptions(BaseModel):
@@ -148,7 +188,8 @@ class OpenAITTS(OpenAITTSOptions, BaseTTS):
 class CartesiaTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    api_key: str = Field(..., description="Cartesia API key")
+    api_key: Optional[str] = Field(default=None, description="Cartesia API key; optional in managed mode")
+    credential_mode: Optional[Literal["managed", "byok"]] = Field(default=None, description="Credential mode; defaults to BYOK")
     voice_id: str = Field(..., description="Voice ID")
     model_id: str = Field(..., description="Model ID")
     base_url: Optional[str] = Field(default=None, description="WebSocket URL")
@@ -156,15 +197,22 @@ class CartesiaTTSOptions(BaseModel):
     sample_rate: Optional[CartesiaSampleRate] = Field(default=None, description="Sample rate in Hz")
     skip_patterns: Optional[List[int]] = Field(default=None)
 
+    @model_validator(mode="after")
+    def _validate_credential_mode(self) -> "CartesiaTTSOptions":
+        if self.credential_mode != CredentialMode.MANAGED and not self.api_key:
+            raise ValueError("CartesiaTTS requires api_key for credential_mode='byok' or when credential_mode is omitted")
+        return self
+
 
 class CartesiaTTS(CartesiaTTSOptions, BaseTTS):
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
-            "api_key": self.api_key,
             "model_id": self.model_id,
             "voice": {"mode": "id", "id": self.voice_id},
         }
 
+        if self.api_key:
+            params["api_key"] = self.api_key
         if self.base_url is not None:
             params["base_url"] = self.base_url
         if self.sample_rate is not None:
@@ -173,6 +221,8 @@ class CartesiaTTS(CartesiaTTSOptions, BaseTTS):
             params["language"] = self.language
 
         result: Dict[str, Any] = {"vendor": "cartesia", "params": params}
+        if self.credential_mode is not None:
+            result["credential_mode"] = self.credential_mode
         if self.skip_patterns is not None:
             result["skip_patterns"] = self.skip_patterns
         return result
@@ -392,10 +442,17 @@ class RimeTTS(RimeTTSOptions, BaseTTS):
 class FishAudioTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    key: str = Field(..., description="Fish Audio API key")
+    key: Optional[str] = Field(default=None, description="Fish Audio API key; optional in managed mode")
+    credential_mode: Optional[Literal["managed", "byok"]] = Field(default=None, description="Credential mode; defaults to BYOK")
     reference_id: str = Field(..., description="Reference ID")
     backend: str = Field(..., description="Backend")
     skip_patterns: Optional[List[int]] = Field(default=None)
+
+    @model_validator(mode="after")
+    def _validate_credential_mode(self) -> "FishAudioTTSOptions":
+        if self.credential_mode != CredentialMode.MANAGED and not self.key:
+            raise ValueError("FishAudioTTS requires key for credential_mode='byok' or when credential_mode is omitted")
+        return self
 
 
 class FishAudioTTS(FishAudioTTSOptions, BaseTTS):
@@ -405,12 +462,15 @@ class FishAudioTTS(FishAudioTTSOptions, BaseTTS):
 
     def to_config(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {
-            "api_key": self.key,
             "reference_id": self.reference_id,
             "backend": self.backend,
         }
+        if self.key:
+            params["api_key"] = self.key
 
         result: Dict[str, Any] = {"vendor": "fishaudio", "params": params}
+        if self.credential_mode is not None:
+            result["credential_mode"] = self.credential_mode
         if self.skip_patterns is not None:
             result["skip_patterns"] = self.skip_patterns
         return result
@@ -568,8 +628,37 @@ class SarvamTTSOptions(BaseModel):
     pitch: Optional[float] = Field(default=None, description="Pitch adjustment")
     pace: Optional[float] = Field(default=None, description="Speed of speech")
     loudness: Optional[float] = Field(default=None, description="Volume level")
-    sample_rate: Optional[int] = Field(default=None, description="Audio sample rate in Hz")
+    speech_sample_rate: Optional[int] = Field(default=None, gt=0, description="Output speech sample rate in Hz")
+    enable_preprocessing: Optional[bool] = Field(
+        default=None,
+        description="Normalize English words and numeric entities before synthesis",
+    )
+    model: Optional[str] = Field(default=None, description="Sarvam TTS model")
+    sample_rate: Optional[int] = Field(
+        default=None,
+        gt=0,
+        description="Deprecated alias for speech_sample_rate",
+    )
+    additional_params: Optional[Dict[str, Any]] = Field(default=None, description="Additional Sarvam TTS parameters")
     skip_patterns: Optional[List[int]] = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _warn_deprecated_sample_rate(cls, values: Any) -> Any:
+        if isinstance(values, dict) and "sample_rate" in values:
+            warnings.warn(
+                "SarvamTTS.sample_rate is deprecated; use speech_sample_rate instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return values
+
+    @model_validator(mode="after")
+    def _validate_sample_rate_alias(self) -> "SarvamTTSOptions":
+        legacy_sample_rate = self.__dict__.get("sample_rate")
+        if self.speech_sample_rate is not None and legacy_sample_rate is not None:
+            raise ValueError("SarvamTTS accepts only one of speech_sample_rate or sample_rate")
+        return self
 
 
 class SarvamTTS(SarvamTTSOptions, BaseTTS):
@@ -578,19 +667,26 @@ class SarvamTTS(SarvamTTSOptions, BaseTTS):
         return None
 
     def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        params.update({
             "api_subscription_key": self.key,
             "speaker": self.speaker,
             "target_language_code": self.target_language_code,
-        }
+        })
         if self.pitch is not None:
             params["pitch"] = self.pitch
         if self.pace is not None:
             params["pace"] = self.pace
         if self.loudness is not None:
             params["loudness"] = self.loudness
-        if self.sample_rate is not None:
-            params["sample_rate"] = self.sample_rate
+        legacy_sample_rate = self.__dict__.get("sample_rate")
+        speech_sample_rate = self.speech_sample_rate if self.speech_sample_rate is not None else legacy_sample_rate
+        if speech_sample_rate is not None:
+            params["speech_sample_rate"] = speech_sample_rate
+        if self.enable_preprocessing is not None:
+            params["enable_preprocessing"] = self.enable_preprocessing
+        if self.model is not None:
+            params["model"] = self.model
 
         result: Dict[str, Any] = {"vendor": "sarvam", "params": params}
         if self.skip_patterns is not None:
