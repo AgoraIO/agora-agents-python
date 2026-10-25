@@ -229,6 +229,10 @@ info = await session.get_info()
 
 Retrieve paginated turn analytics for a completed or running session. In v2.7, the API defaults to page 1 and up to 50 turns per page. Responses include `agent_id`, `name`, `channel`, `total_turn_count`, `pagination`, and `turns`.
 
+In each turn's `end.metadata`, `playback_duration_ms` is the actual audio playback duration in milliseconds for `ok` and `interrupted` turns. `intended_playback_duration_ms` is the intended playback duration and is included only for `interrupted` turns. For example, actual playback of `120` with an intended duration of `300` means playback was interrupted before the intended duration elapsed.
+
+Both fields are optional. Check that `end` and `metadata` exist and compare each duration with `None` before using it, including for older responses that omit playback metadata; a returned `0` is a valid duration. Sync and async `get_turns()` and `get_all_turns()` preserve both fields.
+
 ```python
 page = session.get_turns(page_index=1, page_size=50)
 ```
