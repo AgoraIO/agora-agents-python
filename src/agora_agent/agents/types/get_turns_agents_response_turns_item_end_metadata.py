@@ -14,7 +14,12 @@ class GetTurnsAgentsResponseTurnsItemEndMetadata(UncheckedBaseModel):
 
     playback_duration_ms: typing.Optional[int] = pydantic.Field(default=None)
     """
-    The audio playback duration in milliseconds. Included only when `type` is `ok`.
+    The actual audio playback duration in milliseconds. Included when `type` is `ok` or `interrupted`.
+    """
+
+    intended_playback_duration_ms: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The intended audio playback duration in milliseconds. Included only when `type` is `interrupted`.
     """
 
     caused_by: typing.Optional[str] = pydantic.Field(default=None)
