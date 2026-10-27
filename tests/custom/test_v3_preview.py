@@ -29,7 +29,7 @@ OPERATIONS = [
     ("agents", "get", {"agent_id": "agent/a"}, "GET", "agents/agent%2Fa", None),
     ("agents", "update", {"agent_id": "a", "if_match": '"1"', "instructions": None}, "PATCH", "agents/a", {"instructions": None}),
     ("agents", "delete", {"agent_id": "a"}, "DELETE", "agents/a", None),
-    ("secrets", "create", {"name": "prod", "secrets": {"key": "private"}, "idempotency_key": "dedupe"}, "POST", "secrets", {"name": "prod", "secrets": {"key": "private"}}),
+    ("secrets", "create", {"name": "prod", "secrets": {"key": "private"}}, "POST", "secrets", {"name": "prod", "secrets": {"key": "private"}}),
     ("secrets", "list", {}, "GET", "secrets", None),
     ("secrets", "get", {"name": "prod"}, "GET", "secrets/prod", None),
     ("secrets", "replace", {"name": "prod", "if_match": '"1"', "secrets": {"k": "v"}}, "PUT", "secrets/prod", {"secrets": {"k": "v"}}),
@@ -37,7 +37,7 @@ OPERATIONS = [
     ("secrets", "delete", {"name": "prod", "if_match": '"1"'}, "DELETE", "secrets/prod", None),
     ("secrets", "set_key", {"name": "prod", "key": "k", "if_none_match": "*", "value": "v"}, "PUT", "secrets/prod/keys/k", {"value": "v"}),
     ("secrets", "delete_key", {"name": "prod", "key": "k", "if_match": '"1"'}, "DELETE", "secrets/prod/keys/k", None),
-    ("numbers", "create", {"number": "+12025550123", "sip_trunk": {"host": "sip.example"}, "idempotency_key": "number-key"}, "POST", "numbers", {"number": "+12025550123", "sip_trunk": {"host": "sip.example"}}),
+    ("numbers", "create", {"number": "+12025550123", "sip_trunk": {"host": "sip.example"}}, "POST", "numbers", {"number": "+12025550123", "sip_trunk": {"host": "sip.example"}}),
     ("numbers", "list", {}, "GET", "numbers", None),
     ("numbers", "get", {"number_id": "n"}, "GET", "numbers/n", None),
     ("numbers", "update", {"number_id": "n", "if_match": '"1"', "inbound": {"agent": None}}, "PATCH", "numbers/n", {"inbound": {"agent": None}}),
@@ -45,8 +45,16 @@ OPERATIONS = [
     ("sessions", "list", {"channel": "room", "status": "ACTIVE", "started_after": 12, "started_before": 25}, "GET", "sessions", None),
     ("sessions", "get", {"agent_session_id": "s"}, "GET", "sessions/s", None),
     ("sessions", "start", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}, "POST", "sessions", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}),
-    ("sessions", "start_ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "client_reference": "test", "lifecycle": {"max_duration_ms": 120000}}, "POST", "sessions/ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "client_reference": "test", "lifecycle": {"max_duration_ms": 120000}}),
+    ("sessions", "start_ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "lifecycle": {"max_duration_ms": 120000}}, "POST", "sessions/ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "lifecycle": {"max_duration_ms": 120000}}),
     ("sessions", "stop", {"agent_session_id": "session/a"}, "POST", "sessions/session%2Fa/stop", None),
+    ('campaigns', 'create', {'name': 'Outreach', 'agent_id': 'a', 'contacts': [{'phone': '+12025550123'}], 'schedule': {'mode': 'immediate'}, 'transport': {'type': 'telephony', 'from': 'n'}, 'idempotency_key': 'key'}, 'POST', 'campaigns', {'name': 'Outreach', 'agent_id': 'a', 'contacts': [{'phone': '+12025550123'}], 'schedule': {'mode': 'immediate'}, 'transport': {'type': 'telephony', 'from': 'n'}}),
+    ('campaigns', 'list', {'limit': 5, 'status': 'running'}, 'GET', 'campaigns', None),
+    ('campaigns', 'get', {'campaign_id': 'c/a'}, 'GET', 'campaigns/c%2Fa', None),
+    ('campaigns', 'update', {'campaign_id': 'c', 'if_match': '"1"', 'pacing': {'max_concurrent': 5}}, 'PATCH', 'campaigns/c', {'pacing': {'max_concurrent': 5}}),
+    ('campaigns', 'delete', {'campaign_id': 'c'}, 'DELETE', 'campaigns/c', None),
+    ('campaigns', 'pause', {'campaign_id': 'c', 'idempotency_key': 'key'}, 'POST', 'campaigns/c:pause', None),
+    ('campaigns', 'resume', {'campaign_id': 'c', 'idempotency_key': 'key'}, 'POST', 'campaigns/c:resume', None),
+    ('campaigns', 'cancel', {'campaign_id': 'c', 'idempotency_key': 'key'}, 'POST', 'campaigns/c:cancel', None),
 ]
 
 
@@ -55,15 +63,15 @@ def make_client(handler, async_=False, **kwargs):
     cls = AsyncAgora if async_ else Agora
     http = httpx.AsyncClient(transport=transport) if async_ else httpx.Client(transport=transport)
     return cls(area=Area.US, app_id="project", app_certificate="cert", auth_token="raw-token",
-               httpx_client=http, v3=V3Options(base_url="https://stage.example/", headers={"Gateway": "secret"}), **kwargs)
+               httpx_client=http, v3=V3Options(base_url="https://stage.example/", headers={"X-Test-Context": "test"}), **kwargs)
 
 
 def check_request(request, operation):
     _, _, kwargs, method, suffix, body = operation
     assert request.method == method
-    assert request.url.raw_path.split(b"?")[0] == ("/conversational-ai/v3/projects/project/" + suffix).encode()
+    assert request.url.raw_path.split(b"?")[0] == ("/conversational-ai/v1/projects/project/" + suffix).encode()
     assert request.headers["Authorization"] == "agora token=raw-token"
-    assert request.headers["Gateway"] == "secret"
+    assert request.headers["X-Test-Context"] == "test"
     if body is not None:
         assert json.loads(request.content) == body
     elif method == "POST":
@@ -107,7 +115,7 @@ def test_namespace_is_additive_and_out_of_scope_features_absent():
     client = make_client(lambda _: httpx.Response(200, json={}))
     assert client.agents is not client.v3.agents
     assert not hasattr(client.v3.sessions, "create")
-    assert not hasattr(client.v3, "campaigns")
+    assert client.campaigns is client.v3.campaigns
     assert not hasattr(DeployedAgent, "start_call")
 
 
@@ -255,8 +263,8 @@ def test_secret_ref_v2_guard_at_all_boundaries():
     agent = configured(make_client(lambda _: pytest.fail("must not send")))
     with pytest.raises(SecretRefNotSupportedError, match="requires save"):
         agent.to_properties(channel="c", agent_uid="1", remote_uids=["*"])
-    assert agent.create_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
-    assert configured(make_client(lambda _: pytest.fail("must not send"), True)).create_async_session(channel="c", agent_uid="1", remote_uids=["*"]).status == "idle"
+    assert agent.create_session(channel="c", agent_uid="1", remote_uids=["2"]).status == "idle"
+    assert configured(make_client(lambda _: pytest.fail("must not send"), True)).create_async_session(channel="c", agent_uid="1", remote_uids=["2"]).status == "idle"
 
 
 def test_number_resolution_pagination_conflict_retry_and_unassign():
@@ -342,14 +350,14 @@ async def test_async_cursor_pages_conflict_latest_and_redeploy():
     assert json.loads(calls[-1].content)["instructions"] is None
 
 
-def test_staging_environment_override_and_shared_basic_auth(monkeypatch):
+def test_environment_override_and_shared_token_auth(monkeypatch):
     calls = []
     monkeypatch.setenv("AGORA_AGENTS_V3_BASE_URL", "https://env-stage.example")
-    client = Agora(area=Area.US, app_id="project", app_certificate="cert", customer_id="id", customer_secret="secret",
+    client = Agora(area=Area.US, app_id="project", app_certificate="cert", auth_token="raw-token",
                    httpx_client=httpx.Client(transport=httpx.MockTransport(lambda r: calls.append(r) or httpx.Response(200, json={}))))
     client.v3.agents.list()
     assert calls[-1].url.host == "env-stage.example"
-    assert calls[-1].headers["Authorization"] == "Basic aWQ6c2VjcmV0"
+    assert calls[-1].headers["Authorization"] == "agora token=raw-token"
     # An explicit option wins, and does not change v2's configured base URL.
     explicit = make_client(lambda r: calls.append(r) or httpx.Response(200, json={}))
     before = explicit._client_wrapper.get_base_url()
@@ -546,13 +554,13 @@ def test_variable_options_distinguish_booleans_strings_and_numbers():
 async def test_conflict_latest_preserves_context_without_write_conditions(async_client):
     calls = []
     extra = {"iF-mAtCh": '"old"', "If-None-Match": "*", "Idempotency-Key": "once",
-             "Authorization": "Bearer override", "X-Custom": "kept"}
+             "Authorization": "agora token=override", "X-Custom": "kept"}
     def handler(request):
         calls.append(request)
         if request.method == "PATCH":
             return httpx.Response(412, json={"error": "stale"})
         assert not any(key in request.headers for key in ("If-Match", "If-None-Match", "Idempotency-Key"))
-        assert request.headers["Authorization"] == "Bearer override"
+        assert request.headers["Authorization"] == "agora token=override"
         assert request.headers["X-Custom"] == "kept"
         return httpx.Response(200, json={"agent_id": "a"})
     client = make_client(handler, async_client)
@@ -674,7 +682,7 @@ async def test_saved_and_secret_ephemeral_lifecycle(async_, stored):
             body = json.loads(request.content)
             assert body["transport"] == {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}
             assert body["lifecycle"] == {"idle_timeout_ms": 1500, "max_duration_ms": 120000}
-            assert body["client_reference"] == "reference"
+            assert "client_reference" not in body
             if stored:
                 assert body["agent_id"] == "stored-id"
                 assert body["labels"] == {"owner": "test"}
@@ -697,7 +705,7 @@ async def test_saved_and_secret_ephemeral_lifecycle(async_, stored):
     else:
         owner = configured(client).with_variable("customer", type="str")
     remote = ["2"]
-    kwargs = dict(channel="room", agent_uid="1", remote_uids=remote, client_reference="reference", idle_timeout=1.5, max_duration=120)
+    kwargs = dict(channel="room", agent_uid="1", remote_uids=remote, name="reference", idle_timeout=1.5, max_duration=120)
     if stored:
         kwargs["labels"] = {"owner": "test"}
     session = (owner.create_async_session(**kwargs) if async_ and not stored else owner.create_session(**kwargs))
@@ -720,7 +728,7 @@ async def test_saved_and_secret_ephemeral_lifecycle(async_, stored):
     assert len(calls) == 3
 
 
-@pytest.mark.parametrize("option,value", [("token", "token"), ("preset", "test"), ("pipeline_id", "id"), ("expires_in", 60), ("enable_string_uid", False), ("labels", {})])
+@pytest.mark.parametrize("option,value", [("preset", "test"), ("pipeline_id", "id"), ("expires_in", 60), ("enable_string_uid", False), ("client_reference", "removed")])
 def test_ephemeral_rejects_undocumented_options(option, value):
     agent = configured(make_client(lambda _: pytest.fail("must not send")))
     with pytest.raises(ValueError):
@@ -729,7 +737,7 @@ def test_ephemeral_rejects_undocumented_options(option, value):
 
 @pytest.mark.parametrize("async_", [False, True])
 @pytest.mark.asyncio
-async def test_new_session_stop_404_is_idempotent_and_controls_never_request(async_):
+async def test_new_session_stop_404_propagates_and_controls_never_request(async_):
     calls = []
     def handler(request):
         calls.append(request)
@@ -747,18 +755,20 @@ async def test_new_session_stop_404_is_idempotent_and_controls_never_request(asy
             result = getattr(session, method)(*args)
             if async_:
                 await result
-    if async_:
-        await session.stop()
-    else:
-        session.stop()
-    assert session.status == "stopped"
+    from agora_agent.core.api_error import ApiError
+    with pytest.raises(ApiError, match="TaskNotFound"):
+        if async_:
+            await session.stop()
+        else:
+            session.stop()
+    assert session.status == "error"
     assert len(calls) == 2
 
 
 @pytest.mark.parametrize("seconds", [-1, float("nan"), float("inf"), True, 0.00001])
 def test_new_session_duration_rejects_invalid_precision(seconds):
     with pytest.raises(ValueError):
-        configured(make_client(lambda _: pytest.fail("must not send"))).create_session(channel="r", agent_uid="1", remote_uids=[], max_duration=seconds)
+        configured(make_client(lambda _: pytest.fail("must not send"))).create_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=seconds)
 
 
 @pytest.mark.parametrize("async_", [False, True])
@@ -769,7 +779,7 @@ async def test_new_session_stop_does_not_hide_unrelated_404(async_):
             return httpx.Response(404, json={"reason": "ProjectNotFound"})
         return httpx.Response(201, json={"agent_session_id": "new", "status": "running", "created_at": 1})
     agent = configured(make_client(handler, async_))
-    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=[])
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"])
     if async_:
         await session.start()
         with pytest.raises(Exception) as caught:
@@ -798,7 +808,239 @@ def test_new_sessions_reject_cn_before_network(async_, stored):
 def test_new_sessions_reference_precedence_and_whitespace_uids():
     from agora_agent.agentkit.session_backend import create_session
     agent = configured(make_client(lambda _: pytest.fail("must not send")))
-    session = create_session(agent, channel="r", agent_uid="1", remote_uids=["2"], name="fallback", client_reference="explicit")
-    assert session._session_backend["body"]["client_reference"] == "explicit"
+    session = create_session(agent, channel="r", agent_uid="1", remote_uids=["2"], name="fallback")
+    assert "client_reference" not in session._session_backend["body"]
     with pytest.raises(ValueError, match="remote_uids"):
         create_session(agent, channel="r", agent_uid="1", remote_uids=[" "])
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("status,http_status,timestamp", [("STARTING", 200, "create_ts"), ("running", 201, "created_at")])
+@pytest.mark.asyncio
+async def test_corrected_sessions_supported_fields_and_rollout(async_, status, http_status, timestamp):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        if request.url.path.endswith("/stop"):
+            assert request.content == b""
+            return httpx.Response(200, json={})
+        if request.method == "GET":
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "FAILED", "start_ts": 1})
+        body = json.loads(request.content)
+        assert "client_reference" not in body
+        assert body["values"] == {"customer": "Ada"}
+        assert body["labels"] == {"team": "support"}
+        assert body["data_policy"] == {"retention": "none"}
+        assert body["transport"]["token"] == "rtc-only"
+        assert body["transport"]["audio_scenario"] == "chorus"
+        assert body["transport"]["encryption"] == {"mode": "aes_128_gcm", "key": "secret"}
+        assert body["lifecycle"]["graceful_stop"] == {"enabled": True, "timeout_ms": 10000}
+        assert request.headers["Idempotency-Key"] == "session-key"
+        assert "rtc-only" not in request.headers["Authorization"]
+        return httpx.Response(http_status, json={"agent_session_id": "s", "status": status, timestamp: 1}, headers={"Idempotent-Replayed": "true"})
+    client = make_client(handler, async_)
+    agent = configured(client)
+    method = agent.create_async_session if async_ else agent.create_session
+    session = method(channel="room", agent_uid="bot", remote_uids=["customer"], values={"customer": "Ada"}, labels={"team": "support"}, token="rtc-only", encryption={"mode": "aes_128_gcm", "key": "secret"}, audio_scenario="chorus", graceful_stop={"enabled": True, "timeout_ms": 10000}, data_policy={"retention": "none"}, idempotency_key="session-key")
+    if async_:
+        await session.start()
+        assert session.status == status.lower()
+        await session.stop()
+        assert (await session.get_info())["status"] == "FAILED"
+    else:
+        session.start()
+        assert session.status == status.lower()
+        session.stop()
+        assert session.get_info()["status"] == "FAILED"
+    assert session.status == "error"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("reason,expected", [("TaskNotRunning", "stopped"), ("TaskConflict", "stopping"), ("Other", "error")])
+@pytest.mark.asyncio
+async def test_new_stop_conflict_distinctions(async_, reason, expected):
+    from agora_agent.core.api_error import ApiError
+    def handler(request):
+        return httpx.Response(409, json={"reason": reason}) if request.url.path.endswith("/stop") else httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "STARTING"})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"])
+    if async_:
+        await session.start()
+        with pytest.raises(ApiError):
+            await session.stop()
+    else:
+        session.start()
+        with pytest.raises(ApiError):
+            session.stop()
+    assert session.status == expected
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_default_public_origin_and_signed_token(async_):
+    calls = []
+    http = (httpx.AsyncClient if async_ else httpx.Client)(transport=httpx.MockTransport(lambda r: calls.append(r) or httpx.Response(200, json={})))
+    client = (AsyncAgora if async_ else Agora)(area=Area.US, app_id="0" * 32, app_certificate="1" * 32, httpx_client=http)
+    result = client.v3.agents.list()
+    if async_:
+        await result
+    assert calls[0].url.host == "preview.ai.agora.io"
+    assert calls[0].url.path.startswith("/conversational-ai/v1/projects/")
+    assert calls[0].headers["Authorization"].startswith("agora token=")
+
+
+@pytest.mark.parametrize("field", ["customer_id", "customer_secret", "client_id", "client_secret", "customerId", "customerSecret", "clientId", "clientSecret", "username", "password"])
+def test_removed_basic_credentials_rejected_every_entrypoint(field):
+    for cls in (Agora, AsyncAgora):
+        with pytest.raises(TypeError):
+            cls(area=Area.US, app_id="p", app_certificate="c", **{field: "stale"})
+    client = make_client(lambda _: pytest.fail("must not send"))
+    with pytest.raises(ValueError, match="Basic"):
+        client.v3.agents.list(request_options={field: "stale"})
+
+
+@pytest.mark.parametrize("header,value", [("Authorization", "Basic stale"), ("X-Studio-Region", "us"), ("X-Studio-V2-Gateway-Secret", "secret"), ("X-Consumer-Username", "user")])
+def test_forbidden_headers_rejected_in_all_new_transport_layers(header, value):
+    for location in ("base", "v3", "request"):
+        client = make_client(lambda _: pytest.fail("must not send"))
+        options = {}
+        if location == "base":
+            client._client_wrapper._headers = {header: value}
+            # Authorization normally overwrites custom headers; inspect custom values too.
+        elif location == "v3":
+            client._v3_options = V3Options(headers={header: value})
+        else:
+            options = {"additional_headers": {header: value}}
+        with pytest.raises(ValueError):
+            client.v3.agents.list(request_options=options)
+
+
+@pytest.mark.parametrize("resource,kwargs", [("secrets", {"name": "s", "secrets": {"k": "v"}}), ("numbers", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}})])
+def test_unsupported_provisioning_idempotency_rejected(resource, kwargs):
+    method = getattr(make_client(lambda _: pytest.fail("must not send")).v3, resource).create
+    with pytest.raises(TypeError):
+        method(**kwargs, idempotency_key="old")
+    with pytest.raises(ValueError):
+        method(**kwargs, request_options={"additional_headers": {"Idempotency-Key": "old"}})
+
+
+def test_managed_endpoints_removed_byok_preserved_and_supported_avatar():
+    managed = module({"vendor": "openai", "url": "https://old", "params": {"url": "https://old", "base_url": "https://old"}}, "llm", [])
+    assert "url" not in managed and "params" not in managed
+    byok = module({"vendor": "openai", "api_key": "key", "url": "https://byok"}, "llm", [])
+    assert byok["url"] == "https://byok"
+    for vendor in ("sensetime", "spatius"):
+        errors = []
+        assert module({"vendor": vendor, "enable": True, "params": {}}, "avatar", errors)["vendor"] == vendor
+        assert not errors
+
+
+def test_builder_retention_farewell_mapping_uses_session_envelope():
+    session = configured(make_client(lambda _: pytest.fail("must not send"))).with_parameters({"opt_out": True, "farewell_config": {"graceful_enabled": True, "graceful_timeout_seconds": 10}}).create_session(channel="r", agent_uid="1", remote_uids=["2"])
+    body = session._session_backend["body"]
+    assert body["data_policy"] == {"retention": "none"}
+    assert body["lifecycle"]["graceful_stop"] == {"enabled": True, "timeout_ms": 10000}
+    assert "data_policy" not in body["agent"]
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("override", ["header", "basic_client", "credentials"])
+@pytest.mark.asyncio
+async def test_legacy_resource_token_policy_at_http_boundary(async_, override):
+    http = (httpx.AsyncClient if async_ else httpx.Client)(transport=httpx.MockTransport(lambda _: pytest.fail("must not send")), **({"auth": httpx.BasicAuth("id", "secret")} if override == "basic_client" else {}))
+    client = (AsyncAgora if async_ else Agora)(area=Area.US, app_id="p", app_certificate="c", auth_token="token", httpx_client=http)
+    options = {"additional_headers": {"authorization": "Basic stale"}} if override == "header" else {"clientSecret": "old"} if override == "credentials" else {}
+    with pytest.raises(ValueError):
+        result = client.agents.get("p", "legacy-id", request_options=options)
+        if async_:
+            await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_campaign_pages_and_conditional_reload(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        if request.method == "PATCH":
+            return httpx.Response(412, json={"reason": "PreconditionFailed"}, headers={"ETag": '"fresh"'})
+        if request.url.path.endswith("/campaigns/c"):
+            assert "If-Match" not in request.headers
+            return httpx.Response(200, json={"campaign_id": "c", "name": "Fresh"})
+        second = request.url.params.get("cursor") == "next"
+        return httpx.Response(200, json={"data": {"list": [{"campaign_id": "b" if second else "a"}]}, "has_more": not second, "next_cursor": None if second else "next"})
+    client = make_client(handler, async_)
+    assert client.campaigns is client.v3.campaigns
+    if async_:
+        assert [item["campaign_id"] async for item in client.campaigns.iter_all(limit=1)] == ["a", "b"]
+        with pytest.raises(PreconditionFailedError) as caught:
+            await client.campaigns.update(campaign_id="c", if_match='"old"', pacing={"max_concurrent": 2})
+        assert (await caught.value.latest())["name"] == "Fresh"
+    else:
+        assert [item["campaign_id"] for item in client.campaigns.iter_all(limit=1)] == ["a", "b"]
+        with pytest.raises(PreconditionFailedError) as caught:
+            client.campaigns.update(campaign_id="c", if_match='"old"', pacing={"max_concurrent": 2})
+        assert caught.value.latest()["name"] == "Fresh"
+    assert len(calls) == 4
+
+
+@pytest.mark.parametrize("extra", [{"remote_uids": ["*"]}, {"remote_uids": ["2", "3"]}, {"remote_uids": []}, {"remote_uids": ["name"]}, {"max_duration": 0}, {"idle_timeout": 3601}, {"graceful_stop": {"timeout_ms": 120001}}, {"data_policy": {"retention": "forever"}}, {"encryption": {"mode": "bad", "key": "key"}}])
+def test_session_schema_limits_reject_before_network(extra):
+    options = {"channel": "r", "agent_uid": "1", "remote_uids": ["2"], **extra}
+    with pytest.raises(ValueError):
+        configured(make_client(lambda _: pytest.fail("must not send"))).create_session(**options)
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_session_raw_rollout_normalizes_data_preserves_http_and_replay(async_):
+    client = make_client(lambda _: httpx.Response(201, json={"agent_session_id": "s", "created_at": 42, "status": "starting"}, headers={"Idempotent-Replayed": "true"}), async_)
+    result = client.v3.sessions.with_raw_response.start(agent_id="a", transport={"type": "rtc", "channel": "r", "uid": "1", "subscribe_uids": ["2"]}, idempotency_key="same")
+    raw = await result if async_ else result
+    assert raw.data == {"agent_session_id": "s", "create_ts": 42, "status": "STARTING"}
+    assert raw.status_code == 201
+    assert raw.response.json()["created_at"] == 42
+    assert raw.headers["Idempotent-Replayed"] == "true"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_successful_idempotent_handle_requires_new_handle_for_restart(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json={} if request.url.path.endswith("/stop") else {"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"], idempotency_key="one-session")
+    if async_:
+        await session.start()
+        await session.stop()
+        with pytest.raises(RuntimeError, match="new session handle"):
+            await session.start()
+    else:
+        session.start()
+        session.stop()
+        with pytest.raises(RuntimeError, match="new session handle"):
+            session.start()
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_unknown_start_can_retry_original_idempotency_key(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        assert request.headers["Idempotency-Key"] == "original"
+        return httpx.Response(503, json={"reason": "Busy"}) if len(calls) == 1 else httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "STARTING"})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"], idempotency_key="original")
+    if async_:
+        with pytest.raises(Exception):
+            await session.start()
+        assert await session.start() == "s"
+    else:
+        with pytest.raises(Exception):
+            session.start()
+        assert session.start() == "s"
+    assert len(calls) == 2

@@ -905,6 +905,12 @@ class Agent:
         max_duration: typing.Optional[float] = None,
         client_reference: typing.Optional[str] = None,
         labels: typing.Optional[typing.Dict[str, str]] = None,
+        values: typing.Optional[typing.Dict[str, typing.Union[str, int, float, bool]]] = None,
+        idempotency_key: typing.Optional[str] = None,
+        encryption: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        audio_scenario: typing.Optional[str] = None,
+        graceful_stop: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        data_policy: typing.Optional[typing.Dict[str, str]] = None,
     ) -> "AgentSession":
         """Create a synchronous session bound to this agent configuration.
 
@@ -921,11 +927,13 @@ class Agent:
         from .agent_session import AgentSession
 
         from .session_backend import create_session, needs_session_backend
-        if needs_session_backend(self) or max_duration is not None or client_reference is not None or labels is not None:
+        if needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy)):
             return create_session(self, asynchronous=False, channel=channel,
                 agent_uid=agent_uid, remote_uids=remote_uids, name=name,
                 client_reference=client_reference, idle_timeout=idle_timeout,
-                max_duration=max_duration, labels=labels, token=token,
+                max_duration=max_duration, labels=labels, token=token, values=values,
+                idempotency_key=idempotency_key, encryption=encryption, audio_scenario=audio_scenario,
+                graceful_stop=graceful_stop, data_policy=data_policy,
                 enable_string_uid=enable_string_uid, preset=preset,
                 pipeline_id=pipeline_id, expires_in=expires_in, debug=debug, warn=warn)
         resolved_client = self._client
@@ -969,6 +977,12 @@ class Agent:
         max_duration: typing.Optional[float] = None,
         client_reference: typing.Optional[str] = None,
         labels: typing.Optional[typing.Dict[str, str]] = None,
+        values: typing.Optional[typing.Dict[str, typing.Union[str, int, float, bool]]] = None,
+        idempotency_key: typing.Optional[str] = None,
+        encryption: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        audio_scenario: typing.Optional[str] = None,
+        graceful_stop: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        data_policy: typing.Optional[typing.Dict[str, str]] = None,
     ) -> "AsyncAgentSession":
         """Create an async session for use with :class:`~agora_agent.AsyncAgora`.
 
@@ -979,11 +993,13 @@ class Agent:
         from .agent_session import AsyncAgentSession
 
         from .session_backend import create_session, needs_session_backend
-        if needs_session_backend(self) or max_duration is not None or client_reference is not None or labels is not None:
+        if needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy)):
             return create_session(self, asynchronous=True, channel=channel,
                 agent_uid=agent_uid, remote_uids=remote_uids, name=name,
                 client_reference=client_reference, idle_timeout=idle_timeout,
-                max_duration=max_duration, labels=labels, token=token,
+                max_duration=max_duration, labels=labels, token=token, values=values,
+                idempotency_key=idempotency_key, encryption=encryption, audio_scenario=audio_scenario,
+                graceful_stop=graceful_stop, data_policy=data_policy,
                 enable_string_uid=enable_string_uid, preset=preset,
                 pipeline_id=pipeline_id, expires_in=expires_in, debug=debug, warn=warn)
         resolved_client = self._client

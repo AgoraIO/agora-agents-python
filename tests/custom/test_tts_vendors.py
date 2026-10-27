@@ -356,8 +356,7 @@ def _capture_start_request(tts) -> dict:
             area=Area.US,
             app_id="0" * 32,
             app_certificate="1" * 32,
-            customer_id="customer-id",
-            customer_secret="customer-secret",
+            auth_token="test-token",
             httpx_client=httpx_client,
         )
         agent = (

@@ -34,3 +34,8 @@ requirements.txt
 
 # Additive v3 preview adapter and typed staging contracts are maintained manually.
 src/agora_agent/v3/
+
+# Public token-only policy and transport enforcement are maintained manually.
+src/agora_agent/client.py
+src/agora_agent/core/public_auth.py
+src/agora_agent/core/http_client.py

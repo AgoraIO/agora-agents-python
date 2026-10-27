@@ -9,6 +9,7 @@ from urllib.parse import quote, urlsplit
 import httpx
 from ..agentkit.token import generate_convo_ai_token
 from ..core.api_error import ApiError
+from ..core.public_auth import validate_public_headers as _validate_public_headers
 
 _UNSET: Any = object()
 T = TypeVar("T")
@@ -16,7 +17,7 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class V3Options:
-    """Staging overrides. base_url is the origin, without the v3 project path."""
+    """Optional origin/header overrides; default public preview uses the v1 project path."""
     base_url: Optional[str] = None
     headers: Mapping[str, str] = field(default_factory=dict)
 
@@ -66,11 +67,12 @@ class Resource:
 
     def _arguments(self, method, path, body, headers, params, request_options):
         wrapper = self.owner._client_wrapper
+        if method == "POST" and path.endswith(("/sessions", "/sessions/ephemeral")):
+            from .session_contract import validate_session
+            validate_session({**body, **((request_options or {}).get("additional_body_parameters", {}) or {})})
         base = self.options.base_url or os.environ.get("AGORA_AGENTS_V3_BASE_URL")
         if not base:
-            # The existing pool's base may include the v2 path; v3 uses the same origin.
-            current = urlsplit(wrapper.get_base_url())
-            base = f"{current.scheme}://{current.netloc}"
+            base = "https://preview.ai.agora.io"
         parsed = urlsplit(base)
         if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
             raise ValueError("v3 base_url must be an HTTP(S) origin without query or fragment")
@@ -82,6 +84,16 @@ class Resource:
                 app_certificate=self.owner.app_certificate, channel_name="v3", uid=0)
             merged.setdefault("Authorization", f"agora token={token}")
         options = dict(request_options or {})
+        forbidden = {"customer_id", "customer_secret", "client_id", "client_secret", "customerId", "customerSecret", "clientId", "clientSecret", "username", "password"}
+        if forbidden.intersection(options):
+            raise ValueError("Basic credential overrides are not supported")
+        _validate_public_headers(wrapper.get_headers())
+        _validate_public_headers(wrapper.get_custom_headers() or {})
+        _validate_public_headers(merged)
+        _validate_public_headers(options.get("additional_headers", {}))
+        if method == "POST" and path.endswith(("/secrets", "/numbers", "/agents")):
+            if any(k.lower() == "idempotency-key" for source in (wrapper.get_headers(), merged, options.get("additional_headers", {})) for k in source):
+                raise ValueError("Idempotency-Key is not supported for agent, secret or number creation")
         # Retrying these POSTs can create duplicate resources; staging ignores number idempotency.
         if method != "GET":
             options["max_retries"] = 0
@@ -97,6 +109,12 @@ class Resource:
         if not 200 <= response.status_code < 300:
             error = PreconditionFailedError if response.status_code == 412 else ApiError
             raise error(status_code=response.status_code, headers=dict(response.headers), body=data)
+        if isinstance(data, dict) and "agent_session_id" in data:
+            data = dict(data)
+            if "created_at" in data and "create_ts" not in data:
+                data["create_ts"] = data.pop("created_at")
+            if isinstance(data.get("status"), str):
+                data["status"] = data["status"].upper()
         return RawResponse(data=data, headers=response.headers, status_code=response.status_code, response=response)
 
     def _request(self, method, path, *, body, headers, params, request_options):

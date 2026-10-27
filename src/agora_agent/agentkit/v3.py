@@ -128,10 +128,12 @@ def module(config, category, errors):
             errors.append(category + "." + field)
         else:
             result[field] = value
-    if category == "avatar" and result.get("vendor") in ("sensetime", "spatius"):
-        errors.append("avatar.vendor." + result["vendor"])
     if category == "tts" and any(not isinstance(v, str) for v in result.get("skip_patterns", [])):
         errors.append("tts.skip_patterns (numeric v2 patterns have no confirmed v3 mapping)")
+    if not keys:
+        result.pop("url", None)
+        for key in ("url", "base_url"):
+            params.pop(key, None)
     if params:
         result["params"] = params
     return result
@@ -449,11 +451,14 @@ class _SavedAgentBase:
 class SavedAgent(_SavedAgentBase):
     def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
                        name=None, client_reference=None, idle_timeout=None,
-                       max_duration=None, labels=None, debug=None, warn=None):
+                       max_duration=None, labels=None, values=None, idempotency_key=None, token=None,
+                       encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, debug=None, warn=None):
         from .session_backend import create_session
         return create_session(self, channel=channel, agent_uid=agent_uid,
             remote_uids=remote_uids, name=name, client_reference=client_reference,
             idle_timeout=idle_timeout, max_duration=max_duration, labels=labels,
+            values=values, idempotency_key=idempotency_key, token=token, encryption=encryption,
+            audio_scenario=audio_scenario, graceful_stop=graceful_stop, data_policy=data_policy,
             debug=debug, warn=warn)
 
     @classmethod
@@ -519,12 +524,15 @@ class SavedAgent(_SavedAgentBase):
 class AsyncSavedAgent(_SavedAgentBase):
     def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
                        name=None, client_reference=None, idle_timeout=None,
-                       max_duration=None, labels=None, debug=None, warn=None):
+                       max_duration=None, labels=None, values=None, idempotency_key=None, token=None,
+                       encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, debug=None, warn=None):
         from .session_backend import create_session
         return create_session(self, asynchronous=True, channel=channel,
             agent_uid=agent_uid, remote_uids=remote_uids, name=name,
             client_reference=client_reference, idle_timeout=idle_timeout,
-            max_duration=max_duration, labels=labels, debug=debug, warn=warn)
+            max_duration=max_duration, labels=labels, values=values, idempotency_key=idempotency_key,
+            token=token, encryption=encryption, audio_scenario=audio_scenario, graceful_stop=graceful_stop,
+            data_policy=data_policy, debug=debug, warn=warn)
 
     create_async_session = create_session
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Union
 
 from ._transport import _UNSET, AsyncResource, RawResponse, Resource, segment
+from .campaigns import AsyncCampaignsClient, CampaignsClient
 from .types import (
     AgentCreateModel_AudioGreeting,
     AgentCreateModel_CascadedPipeline,
@@ -19,6 +20,7 @@ from .types import (
     AgentPatchRequest_PipelinePatch,
     AgentPatchRequest_VariableDefinitionPatch,
     AgentResponse,
+    DataPolicy,
     EphemeralSessionAgent,
     InboundInput,
     NumberDeleteResponse,
@@ -59,19 +61,19 @@ class AgentsClient(Resource):
 
 class AgentsRawClient(Resource):
     def create(self, *, appid: Optional[str] = None, agent_name: str, instructions: Union[str, None] = _UNSET, messages: Union[List['AgentCreateModel_Message'], None] = _UNSET, greeting: Union[Union['AgentCreateModel_TextGreeting', 'AgentCreateModel_AudioGreeting'], None] = _UNSET, variables: Union[Dict[str, 'AgentCreateModel_VariableDefinition'], None] = _UNSET, pipeline: Union[Union['AgentCreateModel_CascadedPipeline', 'AgentCreateModel_RealtimePipeline'], None] = _UNSET, filler_words: Union['AgentCreateModel_FillerWords', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={}, params={}, request_options=request_options)
+        return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={}, params={}, request_options=request_options)
 
     def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.desc', 'create_ts.asc']] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
 
     def get(self, *, appid: Optional[str] = None, agent_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
 
     def update(self, *, appid: Optional[str] = None, agent_id: str, if_match: str, agent_name: Union[str, None] = _UNSET, instructions: Union[str, None] = _UNSET, messages: Union[List['AgentPatchRequest_Message'], None] = _UNSET, greeting: Union['AgentPatchRequest_GreetingPatch', None] = _UNSET, variables: Union[Dict[str, Union['AgentPatchRequest_VariableDefinitionPatch', None]], None] = _UNSET, pipeline: Union['AgentPatchRequest_PipelinePatch', None] = _UNSET, filler_words: Union['AgentPatchRequest_FillerWordsPatch', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('PATCH', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return self._request('PATCH', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     def delete(self, *, appid: Optional[str] = None, agent_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
 
 def _AgentsClient(owner, options):
     client = AgentsClient(owner, options)
@@ -81,8 +83,8 @@ def _AgentsClient(owner, options):
 class SecretsClient(Resource):
     with_raw_response: SecretsRawClient
 
-    def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> 'SecretSet':
-        return self.with_raw_response.create(appid=appid, idempotency_key=idempotency_key, name=name, secrets=secrets, request_options=request_options).data
+    def create(self, *, appid: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> 'SecretSet':
+        return self.with_raw_response.create(appid=appid, name=name, secrets=secrets, request_options=request_options).data
 
     def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.asc', 'create_ts.desc']] = None, request_options: Optional[dict] = None) -> 'SecretList':
         return self.with_raw_response.list(appid=appid, limit=limit, cursor=cursor, order=order, request_options=request_options).data
@@ -107,29 +109,29 @@ class SecretsClient(Resource):
 
 
 class SecretsRawClient(Resource):
-    def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body={'name': name, 'secrets': secrets}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
+    def create(self, *, appid: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> RawResponse:
+        return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body={'name': name, 'secrets': secrets}, headers={}, params={}, request_options=request_options)
 
     def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.asc', 'create_ts.desc']] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
 
     def get(self, *, appid: Optional[str] = None, name: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={}, params={}, request_options=request_options)
 
     def replace(self, *, appid: Optional[str] = None, name: str, if_match: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('PUT', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return self._request('PUT', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     def update(self, *, appid: Optional[str] = None, name: str, if_match: Optional[str] = None, secrets: Dict[str, Union[str, None]], request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('PATCH', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return self._request('PATCH', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     def delete(self, *, appid: Optional[str] = None, name: str, if_match: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     def set_key(self, *, appid: Optional[str] = None, name: str, key: str, if_match: Optional[str] = None, if_none_match: Optional[str] = None, value: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('PUT', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body={'value': value}, headers={'If-Match': if_match, 'If-None-Match': if_none_match}, params={}, request_options=request_options)
+        return self._request('PUT', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body={'value': value}, headers={'If-Match': if_match, 'If-None-Match': if_none_match}, params={}, request_options=request_options)
 
     def delete_key(self, *, appid: Optional[str] = None, name: str, key: str, if_match: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
 def _SecretsClient(owner, options):
     client = SecretsClient(owner, options)
@@ -139,8 +141,8 @@ def _SecretsClient(owner, options):
 class NumbersClient(Resource):
     with_raw_response: NumbersRawClient
 
-    def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> 'NumberResponse':
-        return self.with_raw_response.create(appid=appid, idempotency_key=idempotency_key, number=number, description=description, sip_trunk=sip_trunk, inbound=inbound, request_options=request_options).data
+    def create(self, *, appid: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> 'NumberResponse':
+        return self.with_raw_response.create(appid=appid, number=number, description=description, sip_trunk=sip_trunk, inbound=inbound, request_options=request_options).data
 
     def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.desc', 'create_ts.asc']] = None, request_options: Optional[dict] = None) -> 'NumberListResponse':
         return self.with_raw_response.list(appid=appid, limit=limit, cursor=cursor, order=order, request_options=request_options).data
@@ -156,20 +158,20 @@ class NumbersClient(Resource):
 
 
 class NumbersRawClient(Resource):
-    def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
+    def create(self, *, appid: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
+        return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={}, params={}, request_options=request_options)
 
     def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.desc', 'create_ts.asc']] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
 
     def get(self, *, appid: Optional[str] = None, number_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
 
     def update(self, *, appid: Optional[str] = None, number_id: str, if_match: str, number: Union[str, None] = _UNSET, description: Union[str, None] = _UNSET, sip_trunk: Union['SipTrunkInput', None] = _UNSET, inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('PATCH', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return self._request('PATCH', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     def delete(self, *, appid: Optional[str] = None, number_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
 
 def _NumbersClient(owner, options):
     client = NumbersClient(owner, options)
@@ -177,11 +179,11 @@ def _NumbersClient(owner, options):
     return client
 
 class SessionsClient(Resource):
-    def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
-        return self.with_raw_response.start(agent_id=agent_id, transport=transport, client_reference=client_reference, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options).data
+    def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return self.with_raw_response.start(agent_id=agent_id, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options).data
 
-    def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
-        return self.with_raw_response.start_ephemeral(agent=agent, transport=transport, client_reference=client_reference, lifecycle=lifecycle, appid=appid, request_options=request_options).data
+    def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return self.with_raw_response.start_ephemeral(agent=agent, labels=labels, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, appid=appid, request_options=request_options).data
 
     def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> dict:
         return self.with_raw_response.stop(agent_session_id=agent_session_id, appid=appid, request_options=request_options).data
@@ -196,21 +198,21 @@ class SessionsClient(Resource):
 
 
 class SessionsRawClient(Resource):
-    def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+    def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
         segment(agent_id)
-        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={}, params={}, request_options=request_options)
+        return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
-    def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={}, params={}, request_options=request_options)
+    def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, **({'labels': labels} if labels is not None else {}), 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
     def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}/stop', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}/stop', body=None, headers={}, params={}, request_options=request_options)
 
     def list(self, *, appid: Optional[str] = None, channel: Optional[Union[str, None]] = None, status: Optional[str] = None, started_after: Optional[Union[int, None]] = None, started_before: Optional[Union[int, None]] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body=None, headers={}, params={'channel': channel, 'status': status, 'started_after': started_after, 'started_before': started_before, 'limit': limit, 'cursor': cursor}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body=None, headers={}, params={'channel': channel, 'status': status, 'started_after': started_after, 'started_before': started_before, 'limit': limit, 'cursor': cursor}, request_options=request_options)
 
     def get(self, *, appid: Optional[str] = None, agent_session_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}', body=None, headers={}, params={}, request_options=request_options)
 
 def _SessionsClient(owner, options):
     client = SessionsClient(owner, options)
@@ -223,6 +225,7 @@ class V3Client:
         self.secrets = _SecretsClient(owner, options)
         self.numbers = _NumbersClient(owner, options)
         self.sessions = _SessionsClient(owner, options)
+        self.campaigns = CampaignsClient(owner, options)
 
 class AsyncAgentsClient(AsyncResource):
     with_raw_response: AsyncAgentsRawClient
@@ -245,19 +248,19 @@ class AsyncAgentsClient(AsyncResource):
 
 class AsyncAgentsRawClient(AsyncResource):
     async def create(self, *, appid: Optional[str] = None, agent_name: str, instructions: Union[str, None] = _UNSET, messages: Union[List['AgentCreateModel_Message'], None] = _UNSET, greeting: Union[Union['AgentCreateModel_TextGreeting', 'AgentCreateModel_AudioGreeting'], None] = _UNSET, variables: Union[Dict[str, 'AgentCreateModel_VariableDefinition'], None] = _UNSET, pipeline: Union[Union['AgentCreateModel_CascadedPipeline', 'AgentCreateModel_RealtimePipeline'], None] = _UNSET, filler_words: Union['AgentCreateModel_FillerWords', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={}, params={}, request_options=request_options)
+        return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={}, params={}, request_options=request_options)
 
     async def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.desc', 'create_ts.asc']] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
 
     async def get(self, *, appid: Optional[str] = None, agent_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
 
     async def update(self, *, appid: Optional[str] = None, agent_id: str, if_match: str, agent_name: Union[str, None] = _UNSET, instructions: Union[str, None] = _UNSET, messages: Union[List['AgentPatchRequest_Message'], None] = _UNSET, greeting: Union['AgentPatchRequest_GreetingPatch', None] = _UNSET, variables: Union[Dict[str, Union['AgentPatchRequest_VariableDefinitionPatch', None]], None] = _UNSET, pipeline: Union['AgentPatchRequest_PipelinePatch', None] = _UNSET, filler_words: Union['AgentPatchRequest_FillerWordsPatch', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('PATCH', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return await self._request('PATCH', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body={'agent_name': agent_name, 'instructions': instructions, 'messages': messages, 'greeting': greeting, 'variables': variables, 'pipeline': pipeline, 'filler_words': filler_words}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     async def delete(self, *, appid: Optional[str] = None, agent_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/agents/{segment(agent_id)}', body=None, headers={}, params={}, request_options=request_options)
 
 def _AsyncAgentsClient(owner, options):
     client = AsyncAgentsClient(owner, options)
@@ -267,8 +270,8 @@ def _AsyncAgentsClient(owner, options):
 class AsyncSecretsClient(AsyncResource):
     with_raw_response: AsyncSecretsRawClient
 
-    async def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> 'SecretSet':
-        return (await self.with_raw_response.create(appid=appid, idempotency_key=idempotency_key, name=name, secrets=secrets, request_options=request_options)).data
+    async def create(self, *, appid: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> 'SecretSet':
+        return (await self.with_raw_response.create(appid=appid, name=name, secrets=secrets, request_options=request_options)).data
 
     async def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.asc', 'create_ts.desc']] = None, request_options: Optional[dict] = None) -> 'SecretList':
         return (await self.with_raw_response.list(appid=appid, limit=limit, cursor=cursor, order=order, request_options=request_options)).data
@@ -293,29 +296,29 @@ class AsyncSecretsClient(AsyncResource):
 
 
 class AsyncSecretsRawClient(AsyncResource):
-    async def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body={'name': name, 'secrets': secrets}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
+    async def create(self, *, appid: Optional[str] = None, name: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> RawResponse:
+        return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body={'name': name, 'secrets': secrets}, headers={}, params={}, request_options=request_options)
 
     async def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.asc', 'create_ts.desc']] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
 
     async def get(self, *, appid: Optional[str] = None, name: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={}, params={}, request_options=request_options)
 
     async def replace(self, *, appid: Optional[str] = None, name: str, if_match: str, secrets: Dict[str, str], request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('PUT', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return await self._request('PUT', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     async def update(self, *, appid: Optional[str] = None, name: str, if_match: Optional[str] = None, secrets: Dict[str, Union[str, None]], request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('PATCH', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return await self._request('PATCH', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body={'secrets': secrets}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     async def delete(self, *, appid: Optional[str] = None, name: str, if_match: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return await self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     async def set_key(self, *, appid: Optional[str] = None, name: str, key: str, if_match: Optional[str] = None, if_none_match: Optional[str] = None, value: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('PUT', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body={'value': value}, headers={'If-Match': if_match, 'If-None-Match': if_none_match}, params={}, request_options=request_options)
+        return await self._request('PUT', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body={'value': value}, headers={'If-Match': if_match, 'If-None-Match': if_none_match}, params={}, request_options=request_options)
 
     async def delete_key(self, *, appid: Optional[str] = None, name: str, key: str, if_match: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return await self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/secrets/{segment(name)}/keys/{segment(key)}', body=None, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
 def _AsyncSecretsClient(owner, options):
     client = AsyncSecretsClient(owner, options)
@@ -325,8 +328,8 @@ def _AsyncSecretsClient(owner, options):
 class AsyncNumbersClient(AsyncResource):
     with_raw_response: AsyncNumbersRawClient
 
-    async def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> 'NumberResponse':
-        return (await self.with_raw_response.create(appid=appid, idempotency_key=idempotency_key, number=number, description=description, sip_trunk=sip_trunk, inbound=inbound, request_options=request_options)).data
+    async def create(self, *, appid: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> 'NumberResponse':
+        return (await self.with_raw_response.create(appid=appid, number=number, description=description, sip_trunk=sip_trunk, inbound=inbound, request_options=request_options)).data
 
     async def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.desc', 'create_ts.asc']] = None, request_options: Optional[dict] = None) -> 'NumberListResponse':
         return (await self.with_raw_response.list(appid=appid, limit=limit, cursor=cursor, order=order, request_options=request_options)).data
@@ -342,20 +345,20 @@ class AsyncNumbersClient(AsyncResource):
 
 
 class AsyncNumbersRawClient(AsyncResource):
-    async def create(self, *, appid: Optional[str] = None, idempotency_key: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
+    async def create(self, *, appid: Optional[str] = None, number: str, description: Union[str, None] = _UNSET, sip_trunk: 'SipTrunkInput', inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
+        return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={}, params={}, request_options=request_options)
 
     async def list(self, *, appid: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, order: Optional[Literal['create_ts.desc', 'create_ts.asc']] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers', body=None, headers={}, params={'limit': limit, 'cursor': cursor, 'order': order}, request_options=request_options)
 
     async def get(self, *, appid: Optional[str] = None, number_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
 
     async def update(self, *, appid: Optional[str] = None, number_id: str, if_match: str, number: Union[str, None] = _UNSET, description: Union[str, None] = _UNSET, sip_trunk: Union['SipTrunkInput', None] = _UNSET, inbound: Union['InboundInput', None] = _UNSET, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('PATCH', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={'If-Match': if_match}, params={}, request_options=request_options)
+        return await self._request('PATCH', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body={'number': number, 'description': description, 'sip_trunk': sip_trunk, 'inbound': inbound}, headers={'If-Match': if_match}, params={}, request_options=request_options)
 
     async def delete(self, *, appid: Optional[str] = None, number_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('DELETE', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('DELETE', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/numbers/{segment(number_id)}', body=None, headers={}, params={}, request_options=request_options)
 
 def _AsyncNumbersClient(owner, options):
     client = AsyncNumbersClient(owner, options)
@@ -363,11 +366,11 @@ def _AsyncNumbersClient(owner, options):
     return client
 
 class AsyncSessionsClient(AsyncResource):
-    async def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
-        return (await self.with_raw_response.start(agent_id=agent_id, transport=transport, client_reference=client_reference, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options)).data
+    async def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return (await self.with_raw_response.start(agent_id=agent_id, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options)).data
 
-    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
-        return (await self.with_raw_response.start_ephemeral(agent=agent, transport=transport, client_reference=client_reference, lifecycle=lifecycle, appid=appid, request_options=request_options)).data
+    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+        return (await self.with_raw_response.start_ephemeral(agent=agent, labels=labels, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, appid=appid, request_options=request_options)).data
 
     async def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> dict:
         return (await self.with_raw_response.stop(agent_session_id=agent_session_id, appid=appid, request_options=request_options)).data
@@ -382,21 +385,21 @@ class AsyncSessionsClient(AsyncResource):
 
 
 class AsyncSessionsRawClient(AsyncResource):
-    async def start(self, *, agent_id: str, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+    async def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
         segment(agent_id)
-        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={}, params={}, request_options=request_options)
+        return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
-    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, transport: RtcSessionTransport, client_reference: Optional[str] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, 'transport': transport, **({'client_reference': client_reference} if client_reference is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={}, params={}, request_options=request_options)
+    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+        return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, **({'labels': labels} if labels is not None else {}), 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
     async def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('POST', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}/stop', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}/stop', body=None, headers={}, params={}, request_options=request_options)
 
     async def list(self, *, appid: Optional[str] = None, channel: Optional[Union[str, None]] = None, status: Optional[str] = None, started_after: Optional[Union[int, None]] = None, started_before: Optional[Union[int, None]] = None, limit: Optional[int] = None, cursor: Optional[Union[str, None]] = None, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body=None, headers={}, params={'channel': channel, 'status': status, 'started_after': started_after, 'started_before': started_before, 'limit': limit, 'cursor': cursor}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body=None, headers={}, params={'channel': channel, 'status': status, 'started_after': started_after, 'started_before': started_before, 'limit': limit, 'cursor': cursor}, request_options=request_options)
 
     async def get(self, *, appid: Optional[str] = None, agent_session_id: str, request_options: Optional[dict] = None) -> RawResponse:
-        return await self._request('GET', f'/conversational-ai/v3/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}', body=None, headers={}, params={}, request_options=request_options)
+        return await self._request('GET', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/{segment(agent_session_id)}', body=None, headers={}, params={}, request_options=request_options)
 
 def _AsyncSessionsClient(owner, options):
     client = AsyncSessionsClient(owner, options)
@@ -409,3 +412,4 @@ class AsyncV3Client:
         self.secrets = _AsyncSecretsClient(owner, options)
         self.numbers = _AsyncNumbersClient(owner, options)
         self.sessions = _AsyncSessionsClient(owner, options)
+        self.campaigns = AsyncCampaignsClient(owner, options)

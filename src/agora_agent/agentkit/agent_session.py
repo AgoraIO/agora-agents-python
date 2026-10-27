@@ -601,6 +601,8 @@ class AgentSession(_AgentSessionBase):
             If avatar/TTS configuration is invalid.
         """
         if self._session_backend is not None:
+            if self._agent_id is not None and self._session_backend["body"].get("idempotency_key") is not None:
+                raise RuntimeError("Create a new session handle and key after a successful idempotent start")
             if self._status not in ("idle", "stopped", "error"):
                 raise RuntimeError(f"Cannot start session in {self._status} state")
             self._status = "starting"
@@ -612,7 +614,7 @@ class AgentSession(_AgentSessionBase):
                 if not isinstance(identifier, str) or not identifier:
                     raise RuntimeError("Session response is missing agent_session_id")
                 self._agent_id = identifier
-                self._status = str(response["status"]).lower()
+                self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
                 self._emit("started", {"agent_id": identifier, "agent_session_id": identifier})
                 return identifier
             except Exception as error:
@@ -707,18 +709,24 @@ class AgentSession(_AgentSessionBase):
         rather than raising an error.
         """
         if self._session_backend is not None:
-            if self._status != "running" or not self._agent_id:
+            if self._status not in ("starting", "running") or not self._agent_id:
                 raise RuntimeError(f"Cannot stop session in {self._status} state")
             self._status = "stopping"
             try:
                 self._client.v3.sessions.stop(agent_session_id=self._agent_id)
             except Exception as error:
-                body = getattr(error, "body", None)
-                if not (getattr(error, "status_code", None) == 404
-                        and isinstance(body, dict) and body.get("reason") == "TaskNotFound"):
+                if getattr(error, "status_code", None) == 409:
+                    reason = (getattr(error, "body", None) or {}).get("reason")
+                    if reason == "TaskNotRunning":
+                        self._status = "stopped"
+                    elif reason == "TaskConflict":
+                        self._status = "stopping"
+                    else:
+                        self._status = "error"
+                else:
                     self._status = "error"
-                    self._emit("error", error)
-                    raise
+                self._emit("error", error)
+                raise
             self._status = "stopped"
             self._emit("stopped", {"agent_id": self._agent_id, "agent_session_id": self._agent_id})
             return
@@ -886,7 +894,7 @@ class AgentSession(_AgentSessionBase):
             if not self._agent_id:
                 raise RuntimeError("No session ID available")
             response = self._client.v3.sessions.get(agent_session_id=self._agent_id)
-            self._status = str(response["status"]).lower()
+            self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
             return response
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
@@ -1024,6 +1032,8 @@ class AsyncAgentSession(_AgentSessionBase):
             If avatar/TTS configuration is invalid.
         """
         if self._session_backend is not None:
+            if self._agent_id is not None and self._session_backend["body"].get("idempotency_key") is not None:
+                raise RuntimeError("Create a new session handle and key after a successful idempotent start")
             if self._status not in ("idle", "stopped", "error"):
                 raise RuntimeError(f"Cannot start session in {self._status} state")
             self._status = "starting"
@@ -1035,7 +1045,7 @@ class AsyncAgentSession(_AgentSessionBase):
                 if not isinstance(identifier, str) or not identifier:
                     raise RuntimeError("Session response is missing agent_session_id")
                 self._agent_id = identifier
-                self._status = str(response["status"]).lower()
+                self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
                 self._emit("started", {"agent_id": identifier, "agent_session_id": identifier})
                 return identifier
             except Exception as error:
@@ -1130,18 +1140,24 @@ class AsyncAgentSession(_AgentSessionBase):
         rather than raising an error.
         """
         if self._session_backend is not None:
-            if self._status != "running" or not self._agent_id:
+            if self._status not in ("starting", "running") or not self._agent_id:
                 raise RuntimeError(f"Cannot stop session in {self._status} state")
             self._status = "stopping"
             try:
                 await self._client.v3.sessions.stop(agent_session_id=self._agent_id)
             except Exception as error:
-                body = getattr(error, "body", None)
-                if not (getattr(error, "status_code", None) == 404
-                        and isinstance(body, dict) and body.get("reason") == "TaskNotFound"):
+                if getattr(error, "status_code", None) == 409:
+                    reason = (getattr(error, "body", None) or {}).get("reason")
+                    if reason == "TaskNotRunning":
+                        self._status = "stopped"
+                    elif reason == "TaskConflict":
+                        self._status = "stopping"
+                    else:
+                        self._status = "error"
+                else:
                     self._status = "error"
-                    self._emit("error", error)
-                    raise
+                self._emit("error", error)
+                raise
             self._status = "stopped"
             self._emit("stopped", {"agent_id": self._agent_id, "agent_session_id": self._agent_id})
             return
@@ -1309,7 +1325,7 @@ class AsyncAgentSession(_AgentSessionBase):
             if not self._agent_id:
                 raise RuntimeError("No session ID available")
             response = await self._client.v3.sessions.get(agent_session_id=self._agent_id)
-            self._status = str(response["status"]).lower()
+            self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
             return response
         if not self._agent_id:
             raise RuntimeError("No agent ID available")

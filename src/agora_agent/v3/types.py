@@ -809,16 +809,20 @@ class AgentCreateRequest(TypedDict, total=False):
 
 __all__ = ['AgentDeleteResponse', 'AgentListData', 'AgentListItem', 'AgentListResponse', 'AgentResponse', 'AgoraVadTurnDetection', 'AudioGreeting', 'DisabledInterruption', 'EndCallPolicy', 'ErrorReason', 'ErrorResponse', 'FillerTrigger', 'FillerWords', 'GeneratedFillerContent', 'InboundCallPolicy', 'InboundInput', 'InboundOutput', 'JsonValue', 'KeywordInterruption', 'ManualTurnBoundary', 'Message', 'NumberCreate', 'NumberDeleteResponse', 'NumberListData', 'NumberListResponse', 'NumberPatch', 'NumberResponse', 'ResolvedAsr', 'ResolvedAvatar', 'ResolvedCascadedPipeline', 'ResolvedCredential', 'ResolvedLlm', 'ResolvedMllm', 'ResolvedRealtimePipeline', 'ResolvedTts', 'SecretCreate', 'SecretDeleted', 'SecretKey', 'SecretKeyWrite', 'SecretList', 'SecretPage', 'SecretReplace', 'SecretSet', 'SecretUpdate', 'SemanticTurnEnd', 'SemanticTurnStart', 'SemanticVadTurnDetection', 'ServerVadTurnDetection', 'SessionAnalysis', 'SessionData', 'SessionList', 'SessionResponse', 'SessionSummary', 'SilenceConfig', 'SipAuth', 'SipTrunkInput', 'SipTrunkOutput', 'SpeechInterruption', 'StaticFillerContent', 'TextGreeting', 'TransferPolicy', 'TurnDetection', 'VadTurnEnd', 'VadTurnStart', 'VariableDefinition', 'AgentCreateModel_AgoraVadTurnDetection', 'AgentCreateModel_AudioGreeting', 'AgentCreateModel_ByokCredential', 'AgentCreateModel_CascadedPipeline', 'AgentCreateModel_DisabledInterruption', 'AgentCreateModel_FillerTrigger', 'AgentCreateModel_FillerWords', 'AgentCreateModel_GeneratedFillerContent', 'AgentCreateModel_JsonValue', 'AgentCreateModel_KeywordInterruption', 'AgentCreateModel_ManagedCredential', 'AgentCreateModel_ManualTurnBoundary', 'AgentCreateModel_Message', 'AgentCreateModel_ProviderModule', 'AgentCreateModel_RealtimePipeline', 'AgentCreateModel_SemanticTurnEnd', 'AgentCreateModel_SemanticTurnStart', 'AgentCreateModel_SemanticVadTurnDetection', 'AgentCreateModel_ServerVadTurnDetection', 'AgentCreateModel_SilenceConfig', 'AgentCreateModel_SpeechInterruption', 'AgentCreateModel_StaticFillerContent', 'AgentCreateModel_TextGreeting', 'AgentCreateModel_TurnDetection', 'AgentCreateModel_VadTurnEnd', 'AgentCreateModel_VadTurnStart', 'AgentCreateModel_VariableDefinition', 'AgentCreateModel', 'AgentPatchRequest_CredentialPatch', 'AgentPatchRequest_FillerContentPatch', 'AgentPatchRequest_FillerTriggerPatch', 'AgentPatchRequest_FillerWordsPatch', 'AgentPatchRequest_GreetingPatch', 'AgentPatchRequest_InterruptionPatch', 'AgentPatchRequest_JsonValue', 'AgentPatchRequest_Message', 'AgentPatchRequest_PipelinePatch', 'AgentPatchRequest_PipelineTurnDetectionPatch', 'AgentPatchRequest_ProviderModulePatch', 'AgentPatchRequest_SilenceConfigPatch', 'AgentPatchRequest_TurnBoundaryPatch', 'AgentPatchRequest_VariableDefinitionPatch', 'AgentPatchRequest', 'Contract_VariableDefinitions', 'Contract_ModelCredential', 'Contract_Llm', 'Contract_CascadedPipeline', 'Contract_Pipeline', 'Contract_SemanticVadTurnDetection', 'Contract_SilenceConfig', 'Contract_ServerVadTurnDetection', 'Contract_McpServer', 'Contract_VariableDefinition', 'Contract_Greeting', 'Contract_Asr', 'Contract_FillerWords', 'Contract_Interruption', 'Contract_TurnStart', 'Contract_FunctionTool', 'Contract_Tts', 'Contract_RealtimePipeline', 'Contract_Mllm', 'Contract_Avatar', 'Contract_RealtimeTurnDetection', 'Contract_FunctionToolServer', 'Contract_TurnEnd', 'Contract_Message', 'Contract_AgentCreateInput', 'Contract_TurnDetection', 'Contract_AgoraVadTurnDetection', 'Contract_FunctionToolExecution', 'Contract_JsonSchema', 'AgentCreateRequest']
 # Session write shapes from the refreshed Bruno collection (not the older OpenAPI).
-class RtcSessionTransport(TypedDict):
+class RtcSessionTransport(TypedDict, total=False):
     type: Literal['rtc']
     channel: str
     uid: str
     subscribe_uids: List[str]
+    token: str
+    encryption: RtcEncryption
+    audio_scenario: Literal["aiserver", "chorus"]
 
 
 class SessionLifecycle(TypedDict, total=False):
     idle_timeout_ms: int
     max_duration_ms: int
+    graceful_stop: GracefulStop
 
 
 class EphemeralSessionAgent(TypedDict, total=False):
@@ -830,11 +834,178 @@ class EphemeralSessionAgent(TypedDict, total=False):
     filler_words: AgentCreateModel_FillerWords
 
 
-class StartSessionResponse(TypedDict):
+class StartSessionResponse(TypedDict, total=False):
     agent_session_id: str
     status: str
-    # Bruno establishes this field but does not specify its timestamp format.
-    created_at: Any
+    create_ts: int
+    # Accepted only during backend rollout.
+    created_at: int
 
 
 __all__ += ['RtcSessionTransport', 'SessionLifecycle', 'EphemeralSessionAgent', 'StartSessionResponse']
+
+
+class RtcEncryption(TypedDict, total=False):
+    mode: Literal["aes_128_xts", "aes_128_ecb", "aes_256_xts", "sm4_128_ecb", "aes_128_gcm", "aes_256_gcm", "aes_128_gcm2", "aes_256_gcm2"]
+    key: str
+    salt: str
+
+class GracefulStop(TypedDict, total=False):
+    enabled: bool
+    timeout_ms: int
+
+class DataPolicy(TypedDict, total=False):
+    retention: Literal["30_days", "none"]
+
+__all__ += ["RtcEncryption", "GracefulStop", "DataPolicy"]
+
+# Campaign schemas from the supplied OpenAPI; retry pacing fields remain unconfirmed.
+
+
+class CallingDay(TypedDict, total=False):
+    weekday: Required[Literal['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']]
+    ranges: Required[List[TimeRange]]
+
+
+class CampaignCallPolicy(TypedDict, total=False):
+    max_ring_duration_ms: Union[int, None]
+    max_call_duration_seconds: Union[int, None]
+    voicemail: Union[CampaignVoicemailPolicy, None]
+    max_silence_duration_ms: Union[int, None]
+    end_call: Union[CampaignEndCallPolicy, None]
+    transfer: Union[CampaignTransferPolicy, None]
+
+
+class CampaignCounts(TypedDict, total=False):
+    contacts: Required[int]
+    pending: Required[int]
+    calling: Required[int]
+    completed: Required[int]
+    failed: Required[int]
+    canceled: Required[int]
+
+
+class CampaignCreate(TypedDict, total=False):
+    name: Required[str]
+    agent_id: Required[str]
+    transport: Required[CampaignTransport]
+    contacts: Required[List[ContactInput]]
+    lifecycle: CampaignLifecycle
+    pacing: Pacing
+    schedule: Required[Union[ImmediateSchedule, ScheduledSchedule]]
+
+
+class CampaignDeleteResponse(TypedDict, total=False):
+    deleted: Literal[True]
+
+
+class CampaignEndCallPolicy(TypedDict, total=False):
+    on_conversation_complete: bool
+    on_user_request: bool
+    on_fax: bool
+    on_ai_assistant: bool
+
+
+class CampaignFailure(TypedDict, total=False):
+    code: Required[str]
+    provider: Union[str, None]
+    message: Required[str]
+    ts: Required[int]
+
+
+class CampaignLifecycle(TypedDict, total=False):
+    idle_timeout_ms: int
+    max_duration_ms: int
+    graceful_stop: GracefulStop
+
+
+class CampaignListData(TypedDict, total=False):
+    count: Required[int]
+    list: Required[List[CampaignResponse]]
+
+
+class CampaignListResponse(TypedDict, total=False):
+    data: Required[CampaignListData]
+    has_more: Required[bool]
+    next_cursor: Required[Union[str, None]]
+
+
+class CampaignPatch(TypedDict, total=False):
+    lifecycle: Union[CampaignLifecycle, None]
+    pacing: Union[PacingPatch, None]
+    schedule: Union[Union[ImmediateSchedule, ScheduledSchedule], None]
+    transport: Union[CampaignTransportPatch, None]
+
+
+class CampaignResponse(TypedDict, total=False):
+    campaign_id: Required[str]
+    name: Required[str]
+    status: Required[Literal['scheduled', 'running', 'paused', 'completed', 'canceled', 'failed']]
+    agent_id: Required[str]
+    transport: Required[CampaignTransportResponse]
+    lifecycle: Required[CampaignLifecycle]
+    schedule: Required[Union[ImmediateSchedule, ScheduledSchedule]]
+    counts: Required[CampaignCounts]
+    create_ts: Required[int]
+    start_ts: Required[Union[int, None]]
+    complete_ts: Required[Union[int, None]]
+    failure: Required[Union[CampaignFailure, None]]
+
+
+class CampaignTransferPolicy(TypedDict, total=False):
+    phone_number: Required[str]
+    description: Required[str]
+
+
+CampaignTransport = TypedDict('CampaignTransport', {'type': Required[Literal['telephony']], 'from': Required[Union[str, List[str]]], 'call_policy': Union[CampaignCallPolicy, None]}, total=False)
+
+
+class CampaignTransportPatch(TypedDict, total=False):
+    call_policy: Union[CampaignCallPolicy, None]
+
+
+CampaignTransportResponse = TypedDict('CampaignTransportResponse', {'type': Required[Literal['telephony']], 'from': Required[List[str]], 'call_policy': Union[CampaignCallPolicy, None]}, total=False)
+
+
+class CampaignVoicemailPolicy(TypedDict, total=False):
+    mode: Required[Literal['continue', 'hangup']]
+
+
+class ContactInput(TypedDict, total=False):
+    phone: Required[str]
+    values: Dict[str, Union[str, int, float, bool]]
+
+
+class ImmediateSchedule(TypedDict, total=False):
+    mode: Required[Literal['immediate']]
+    timezone: str
+    days: List[CallingDay]
+
+
+class Pacing(TypedDict, total=False):
+    max_concurrent: int
+    max_calls_per_second: Union[int, None]
+    max_attempts: int
+    retry_backoff_ms: int
+
+
+class PacingPatch(TypedDict, total=False):
+    max_concurrent: Union[int, None]
+    max_calls_per_second: Union[int, None]
+    max_attempts: Union[int, None]
+    retry_backoff_ms: Union[int, None]
+
+
+class ScheduledSchedule(TypedDict, total=False):
+    mode: Required[Literal['scheduled']]
+    timezone: Required[str]
+    start: Required[str]
+    end: Required[str]
+    days: List[CallingDay]
+
+
+class TimeRange(TypedDict, total=False):
+    start: Required[str]
+    end: Required[str]
+
+__all__ += ['CallingDay', 'CampaignCallPolicy', 'CampaignCounts', 'CampaignCreate', 'CampaignDeleteResponse', 'CampaignEndCallPolicy', 'CampaignFailure', 'CampaignLifecycle', 'CampaignListData', 'CampaignListResponse', 'CampaignPatch', 'CampaignResponse', 'CampaignTransferPolicy', 'CampaignTransport', 'CampaignTransportPatch', 'CampaignTransportResponse', 'CampaignVoicemailPolicy', 'ContactInput', 'ImmediateSchedule', 'Pacing', 'PacingPatch', 'ScheduledSchedule', 'TimeRange']

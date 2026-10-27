@@ -2,26 +2,25 @@
 
 from __future__ import annotations
 
-import base64
 import json
 import logging
 import typing
 
 import httpx
 import typing_extensions
-
+from .agentkit.debug import redact_headers, redact_secrets, redact_url
 from .agentkit.regional_agent import RegionalAgent
+from .agentkit.token import generate_convo_ai_token
 from .agentkit.vendors.region import AreaScope, area_to_scope
-from .v3 import V3Options, V3Client, AsyncV3Client
-from .v3.client import SecretsClient, NumbersClient, AsyncSecretsClient, AsyncNumbersClient
 from .client import Agora as BaseAgora
 from .client import AsyncAgora as BaseAsyncAgora
 from .core.api_error import ApiError
 from .core.domain import Area, Pool
-from .agentkit.debug import redact_headers, redact_secrets, redact_url
-from .agentkit.token import generate_convo_ai_token
+from .v3 import AsyncV3Client, V3Client, V3Options
+from .v3.campaigns import AsyncCampaignsClient, CampaignsClient
+from .v3.client import AsyncNumbersClient, AsyncSecretsClient, NumbersClient, SecretsClient
 
-_AUTH_MODE = typing.Literal["app-credentials", "basic", "token"]
+_AUTH_MODE = typing.Literal["app-credentials", "token"]
 _DEBUG_LOGGER = logging.getLogger("agora_agent")
 _AreaT = typing.TypeVar("_AreaT", bound=Area)
 _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
@@ -109,10 +108,6 @@ def _create_debug_async_client(
     )
 
 
-def _basic_auth_header(customer_id: str, customer_secret: str) -> str:
-    encoded = base64.b64encode(f"{customer_id}:{customer_secret}".encode()).decode()
-    return f"Basic {encoded}"
-
 
 class Agora(BaseAgora, typing.Generic[_AreaT]):
     """
@@ -135,21 +130,10 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
     app_certificate : str
         Your Agora App Certificate.
 
-    customer_id : typing.Optional[str]
-        Customer ID for Basic auth. When provided together with
-        ``customer_secret``, the client uses
-        ``Authorization: Basic base64(customer_id:customer_secret)``.
-        When omitted the client operates in *app-credentials* mode and
-        auto-generates a ConvoAI token per request.
-
-    customer_secret : typing.Optional[str]
-        Customer secret for Basic auth (required when ``customer_id`` is set).
-
     auth_token : typing.Optional[str]
         Pre-built raw token for REST API authentication. Pass the raw token
         string — the SDK automatically sets the header as
         ``Authorization: agora token=<auth_token>``.
-        Mutually exclusive with ``customer_id``/``customer_secret``.
 
     headers : typing.Optional[typing.Dict[str, str]]
         Additional headers to send with every request.
@@ -186,15 +170,14 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_certificate="YOUR_APP_CERTIFICATE",
     )
 
-    # Basic auth mode
+    # Prebuilt token mode
     from agora_agent import Agora, Area
 
     client = Agora(
         area=Area.US,
         app_id="YOUR_APP_ID",
         app_certificate="YOUR_APP_CERTIFICATE",
-        customer_id="YOUR_CUSTOMER_ID",
-        customer_secret="YOUR_CUSTOMER_SECRET",
+        auth_token="YOUR_TOKEN",
     )
 
     # Pre-built token mode (for debugging or custom token lifecycles)
@@ -217,8 +200,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -235,8 +216,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: _GlobalArea,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -253,8 +232,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: _AreaT,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -280,8 +257,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -298,8 +273,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: _GlobalArea,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -316,8 +289,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: _AreaT,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -333,8 +304,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         area: typing.Any,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -343,20 +312,15 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         debug: bool = False,
         v3: typing.Optional[V3Options] = None,
     ):
+        from .core.public_auth import validate_public_headers
+        validate_public_headers(headers)
         self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
         self.app_id = app_id
         self.app_certificate = app_certificate
 
-        if customer_id is not None:
-            if customer_secret is None:
-                raise ValueError("customer_secret is required when customer_id is provided")
-            if auth_token is not None:
-                raise ValueError("auth_token and customer_id/customer_secret are mutually exclusive")
-            self.auth_mode: _AUTH_MODE = "basic"
-            authorization = _basic_auth_header(customer_id, customer_secret)
-        elif auth_token is not None:
+        if auth_token is not None:
             self.auth_mode = "token"
             authorization = f"agora token={auth_token}"
         else:
@@ -377,8 +341,6 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         super().__init__(
             base_url=self._pool.get_current_url(),
             authorization=authorization,
-            username="",
-            password="",
             headers=headers,
             timeout=timeout,
             follow_redirects=follow_redirects,
@@ -390,6 +352,11 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         if not hasattr(self, "_v3_client"):
             self._v3_client = V3Client(self, self._v3_options)
         return self._v3_client
+
+    @property
+    def campaigns(self) -> CampaignsClient:
+        """Project campaign operations using the shared token transport."""
+        return self.v3.campaigns
 
     @property
     def secrets(self) -> SecretsClient:
@@ -511,21 +478,10 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
     app_certificate : str
         Your Agora App Certificate.
 
-    customer_id : typing.Optional[str]
-        Customer ID for Basic auth. When provided together with
-        ``customer_secret``, the client uses
-        ``Authorization: Basic base64(customer_id:customer_secret)``.
-        When omitted the client operates in *app-credentials* mode and
-        auto-generates a ConvoAI token per request.
-
-    customer_secret : typing.Optional[str]
-        Customer secret for Basic auth (required when ``customer_id`` is set).
-
     auth_token : typing.Optional[str]
         Pre-built raw token for REST API authentication. Pass the raw token
         string — the SDK automatically sets the header as
         ``Authorization: agora token=<auth_token>``.
-        Mutually exclusive with ``customer_id``/``customer_secret``.
 
     headers : typing.Optional[typing.Dict[str, str]]
         Additional headers to send with every request.
@@ -558,15 +514,14 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_certificate="YOUR_APP_CERTIFICATE",
     )
 
-    # Basic auth mode
+    # Prebuilt token mode
     from agora_agent import AsyncAgora, Area
 
     client = AsyncAgora(
         area=Area.US,
         app_id="YOUR_APP_ID",
         app_certificate="YOUR_APP_CERTIFICATE",
-        customer_id="YOUR_CUSTOMER_ID",
-        customer_secret="YOUR_CUSTOMER_SECRET",
+        auth_token="YOUR_TOKEN",
     )
     """
 
@@ -577,8 +532,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -595,8 +548,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: _GlobalArea,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -613,8 +564,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: _AreaT,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -640,8 +589,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -658,8 +605,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: _GlobalArea,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -676,8 +621,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: _AreaT,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -693,8 +636,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         area: typing.Any,
         app_id: str,
         app_certificate: str,
-        customer_id: typing.Optional[str] = None,
-        customer_secret: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -703,20 +644,15 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         debug: bool = False,
         v3: typing.Optional[V3Options] = None,
     ):
+        from .core.public_auth import validate_public_headers
+        validate_public_headers(headers)
         self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
         self.app_id = app_id
         self.app_certificate = app_certificate
 
-        if customer_id is not None:
-            if customer_secret is None:
-                raise ValueError("customer_secret is required when customer_id is provided")
-            if auth_token is not None:
-                raise ValueError("auth_token and customer_id/customer_secret are mutually exclusive")
-            self.auth_mode: _AUTH_MODE = "basic"
-            authorization = _basic_auth_header(customer_id, customer_secret)
-        elif auth_token is not None:
+        if auth_token is not None:
             self.auth_mode = "token"
             authorization = f"agora token={auth_token}"
         else:
@@ -737,8 +673,6 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         super().__init__(
             base_url=self._pool.get_current_url(),
             authorization=authorization,
-            username="",
-            password="",
             headers=headers,
             timeout=timeout,
             follow_redirects=follow_redirects,
@@ -750,6 +684,11 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         if not hasattr(self, "_v3_client"):
             self._v3_client = AsyncV3Client(self, self._v3_options)
         return self._v3_client
+
+    @property
+    def campaigns(self) -> AsyncCampaignsClient:
+        """Project campaign operations using the shared token transport."""
+        return self.v3.campaigns
 
     @property
     def secrets(self) -> AsyncSecretsClient:

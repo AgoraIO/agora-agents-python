@@ -34,8 +34,6 @@ class Agora:
 
 
     authorization : str
-    username : typing.Union[str, typing.Callable[[], str]]
-    password : typing.Union[str, typing.Callable[[], str]]
     headers : typing.Optional[typing.Dict[str, str]]
         Additional headers to send with every request.
 
@@ -53,9 +51,7 @@ class Agora:
     from agora_agent import Agora
 
     client = Agora(
-        authorization="YOUR_AUTHORIZATION",
-        username="YOUR_USERNAME",
-        password="YOUR_PASSWORD",
+        authorization="agora token=YOUR_TOKEN",
     )
     """
 
@@ -65,21 +61,23 @@ class Agora:
         base_url: typing.Optional[str] = None,
         environment: AgoraEnvironment = AgoraEnvironment.DEFAULT,
         authorization: str,
-        username: typing.Union[str, typing.Callable[[], str]],
-        password: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.Client] = None,
     ):
+        from .core.public_auth import validate_public_headers
+        validate_public_headers(headers)
+        if authorization and not authorization.lower().startswith("agora token="):
+            raise ValueError("Only Agora token authentication is supported")
         _defaulted_timeout = (
             timeout if timeout is not None else 60 if httpx_client is None else httpx_client.timeout.read
         )
         self._client_wrapper = SyncClientWrapper(
             base_url=_get_base_url(base_url=base_url, environment=environment),
             authorization=authorization,
-            username=username,
-            password=password,
+            username="",
+            password="",
             headers=headers,
             httpx_client=httpx_client
             if httpx_client is not None
@@ -145,8 +143,6 @@ class AsyncAgora:
 
 
     authorization : str
-    username : typing.Union[str, typing.Callable[[], str]]
-    password : typing.Union[str, typing.Callable[[], str]]
     headers : typing.Optional[typing.Dict[str, str]]
         Additional headers to send with every request.
 
@@ -164,9 +160,7 @@ class AsyncAgora:
     from agora_agent import AsyncAgora
 
     client = AsyncAgora(
-        authorization="YOUR_AUTHORIZATION",
-        username="YOUR_USERNAME",
-        password="YOUR_PASSWORD",
+        authorization="agora token=YOUR_TOKEN",
     )
     """
 
@@ -176,21 +170,23 @@ class AsyncAgora:
         base_url: typing.Optional[str] = None,
         environment: AgoraEnvironment = AgoraEnvironment.DEFAULT,
         authorization: str,
-        username: typing.Union[str, typing.Callable[[], str]],
-        password: typing.Union[str, typing.Callable[[], str]],
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
         httpx_client: typing.Optional[httpx.AsyncClient] = None,
     ):
+        from .core.public_auth import validate_public_headers
+        validate_public_headers(headers)
+        if authorization and not authorization.lower().startswith("agora token="):
+            raise ValueError("Only Agora token authentication is supported")
         _defaulted_timeout = (
             timeout if timeout is not None else 60 if httpx_client is None else httpx_client.timeout.read
         )
         self._client_wrapper = AsyncClientWrapper(
             base_url=_get_base_url(base_url=base_url, environment=environment),
             authorization=authorization,
-            username=username,
-            password=password,
+            username="",
+            password="",
             headers=headers,
             httpx_client=httpx_client
             if httpx_client is not None

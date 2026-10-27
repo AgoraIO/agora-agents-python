@@ -13,6 +13,7 @@ import httpx
 from .file import File, convert_file_dict_to_httpx_tuples
 from .force_multipart import FORCE_MULTIPART
 from .jsonable_encoder import jsonable_encoder
+from .public_auth import validate_public_headers, validate_public_options
 from .query_encoder import encode_query
 from .remove_none_from_dict import remove_none_from_dict
 from .request_options import RequestOptions
@@ -192,6 +193,13 @@ class HttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
+        validate_public_options(request_options)
+        validate_public_headers(self.base_headers())
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("HTTP Basic auth overrides are not supported")
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -289,6 +297,13 @@ class HttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.Iterator[httpx.Response]:
+        validate_public_options(request_options)
+        validate_public_headers(self.base_headers())
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("HTTP Basic auth overrides are not supported")
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -390,6 +405,13 @@ class AsyncHttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
+        validate_public_options(request_options)
+        validate_public_headers(self.base_headers())
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("HTTP Basic auth overrides are not supported")
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -487,6 +509,13 @@ class AsyncHttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.AsyncIterator[httpx.Response]:
+        validate_public_options(request_options)
+        validate_public_headers(self.base_headers())
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("HTTP Basic auth overrides are not supported")
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
