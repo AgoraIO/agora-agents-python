@@ -46,6 +46,15 @@ def validate(value, schema, path="body"):
                 raise ValueError(path + " does not match " + keyword + " in the public contract")
     for candidate in schema.get("allOf", []):
         validate(value, candidate, path)
+    if "if" in schema:
+        try:
+            validate(value, schema["if"], path)
+        except ValueError:
+            branch = schema.get("else")
+        else:
+            branch = schema.get("then")
+        if branch is not None:
+            validate(value, branch, path)
     if "not" in schema:
         try:
             validate(value, schema["not"], path)

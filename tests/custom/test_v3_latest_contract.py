@@ -155,3 +155,12 @@ async def test_no_body_operations_do_not_accept_hidden_write_body(async_):
 def test_same_vendor_alternate_credential_form_clears_hidden_key():
     patch = replacement_patch({"vendor": "amazon", "credential": {"mode": "byok"}}, {"vendor": "amazon", "credential": {"mode": "byok", "fields": {"access_key": "$secrets.prod.access", "secret_key": "$secrets.prod.secret"}}}, "llm")
     assert patch["credential"]["fields"] == {"api_key": None, "access_key": "$secrets.prod.access", "secret_key": "$secrets.prod.secret"}
+
+
+@pytest.mark.parametrize("module", [
+    {"vendor": "amazon", "credential": {"mode": "byok", "fields": {"api_key": "wrong-field"}}},
+    {"vendor": "deepgram", "credential": {"mode": "managed"}, "url": "https://custom.example"},
+])
+def test_vendor_conditional_credentials_are_validated(module):
+    with pytest.raises(ValueError):
+        validate_write("POST", "/conversational-ai/v1/projects/p/sessions/ephemeral", {"agent": {"pipeline": {"mode": "cascaded", "asr": module}}, "transport": {"type": "rtc", "channel": "r", "subscribe_uids": ["2"]}})
