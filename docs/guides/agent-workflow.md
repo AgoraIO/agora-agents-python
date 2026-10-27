@@ -2,7 +2,7 @@
 
 Configure an immutable `Agent` with providers once. Create a session when you want a running conversation, or save the configuration when you want a persistent agent and inbound-number assignments. Async clients follow the same flow with awaitable network methods.
 
-Saving and project secrets/numbers require this preview checkout, installed with `python -m pip install -e .` from the repository root. These features are not implied by a published PyPI version. Configure the approved staging origin and gateway headers as described in the [transport setup](./v3-api-preview.md#quick-start-with-staging).
+Saving and project secrets/numbers require this preview checkout, installed with `python -m pip install -e .` from the repository root. These features are not implied by a published PyPI version. Use token authentication with the public preview origin as described in the [transport setup](./v3-api-preview.md#quick-start-with-staging).
 
 ```python
 import os
@@ -70,7 +70,7 @@ The same builder can start directly with secret references and variable definiti
 ```python
 session = saved.create_session(
     channel="room", agent_uid="1", remote_uids=["2"],
-    client_reference="support-call", idle_timeout=60, max_duration=120,
+    idle_timeout=60, max_duration=120, idempotency_key="support-call",
     labels={"owner": "support"},
 )
 session_id = session.start()
@@ -83,7 +83,22 @@ ephemeral.start()
 ephemeral.stop()
 ```
 
-`idle_timeout` and `max_duration` are seconds (converted to integer milliseconds). `client_reference` takes precedence over the optional `name` fallback in these new sessions. `labels` is supported only for saved starts. Token, preset, pipeline ID, token-expiry and string-UID overrides are not documented for saved/ephemeral starts and are rejected. For these sessions, `say`, `interrupt`, `think`, `update`, history and turn helpers raise `NotImplementedError` locally; their IDs are never sent to the older control endpoints. `get_info()` returns the project session response, and `.status` normalizes its status to lowercase.
+`idle_timeout` and `max_duration` are seconds, converted to integer milliseconds. `values`, `labels`, `token` (RTC only), `encryption`, `audio_scenario`, `graceful_stop`, `data_policy` and `idempotency_key` work for both saved and ephemeral sessions. Exactly one subscriber is required; wildcard subscriptions are unsupported. Agent/subscriber UID types must match. The agreed contract permits string UIDs; numeric-only validation may remain during backend rollout.
+
+`name` stays a local label for these sessions; it is never sent as `client_reference`. The obsolete `client_reference` option raises an error. Legacy inline sessions retain their existing name/transport behavior. Preset, pipeline-ID, expiry and explicit string-UID switches are rejected on saved/ephemeral sessions.
+
+```python
+session = saved.create_session(
+    channel="room", agent_uid="1002", remote_uids=["1001"],
+    values={"customer_name": "Ada"}, labels={"team": "support"},
+    graceful_stop={"enabled": True, "timeout_ms": 10000},
+    data_policy={"retention": "none"}, idempotency_key="support-call-4821",
+)
+```
+
+Retention `none` disables stored conversation data and post-call extraction; operational-data exceptions remain open. Builder `parameters.opt_out` maps to session retention; `farewell_config.graceful_enabled` / `graceful_timeout_seconds` map to graceful stop (seconds × 1000). These are session options, not persisted agent fields; pass them when starting a saved agent. Graceful stop does not create a farewell message.
+
+Only start, stop and `get_info` are available for new session IDs; say/interrupt/think/update/history/turn helpers fail locally. The proposed session PATCH/action endpoints are not implemented. Start accepts corrected 200/`create_ts`/uppercase statuses and rollout 201/`created_at`/lowercase; low-level data normalizes to uppercase and `create_ts`. Handle states remain lowercase (`FAILED` becomes `error`). STARTING sessions can be stopped or read. Stop failures propagate: `404 TaskNotFound` is not success; `409 TaskNotRunning` records stopped and `409 TaskConflict` records stopping, while preserving the error for the caller.
 
 ## Async applications
 
@@ -103,6 +118,11 @@ Use `await AsyncSavedAgent.get(client, saved_id)` to load another handle, and aw
 
 ## Advanced transport and compatibility
 
-Application code does not select a REST version. Ordinary inline configurations retain the established session transport. Configurations with secret references or variable definitions, or the new `client_reference`/`max_duration` options, use the documented ephemeral session transport. Saved handles use the documented start-by-ID transport. See [transport behavior and limits](./v3-api-preview.md) and the [complete low-level reference](../reference/v3.md) for ETags, raw headers, cursor pagination, strict mapping, project session reads, staging overrides and deferred features.
+Application code does not select a REST version. Ordinary inline configurations retain the established session transport. Configurations with secret references or variable definitions, or new session options such as `values`, `labels` or `max_duration`, use the documented ephemeral session transport. Saved handles use the documented start-by-ID transport. See [transport behavior and limits](./v3-api-preview.md) and the [complete low-level reference](../reference/v3.md) for ETags, raw headers, cursor pagination, strict mapping, project session reads, staging overrides and deferred features.
 
 `deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`; the async handle names are likewise identical aliases. Advanced `client.v3` resources remain available, including session start/stop and project queries; the existing `client.agents` running-session resource retains its behavior.
+
+
+## Campaign provisioning
+
+`client.campaigns` (or async `client.campaigns`) exposes the eight documented operations. Campaign creation and pause/resume/cancel accept `idempotency_key`; update requires `if_match`. Use raw GET to obtain the current ETag. Contact lists contain 1–5,000 entries and cannot be edited after creation. Retry pacing fields remain unconfirmed; the SDK implements no calling/retry algorithm. No contact-result, upload, event or webhook endpoints are invented. See the [campaign reference](../reference/v3.md#campaigns-eight-operations).

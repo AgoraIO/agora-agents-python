@@ -1,6 +1,6 @@
 # Reference
 
-For the additive stored-agent preview, see the [v3 API reference](docs/reference/v3.md) and [v3 workflows](docs/guides/v3-api-preview.md). The v3 adapter covers 20 staging operations alongside the existing v2 resources documented below.
+For the additive stored-agent preview, see the [v3 API reference](docs/reference/v3.md) and [v3 workflows](docs/guides/v3-api-preview.md). The v3 adapter covers 31 documented operations alongside the existing v2 resources documented below.
 ## Agents
 <details><summary><code>client.agents.<a href="src/agora_agent/agents/client.py">start</a>(...)</code></summary>
 <dl>
@@ -29,7 +29,7 @@ Create and start a Conversational AI agent instance.
 <dd>
 
 ```python
-from agora_agent import Agora, MicrosoftTtsParams, Tts_Microsoft
+from agora_agent import Area, Agora, MicrosoftTtsParams, Tts_Microsoft
 from agora_agent.agents import (
     StartAgentsRequestProperties,
     StartAgentsRequestPropertiesAsr,
@@ -40,9 +40,10 @@ from agora_agent.agents import (
 )
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.start(
     appid="appid",
@@ -184,12 +185,13 @@ Retrieve a list of agents that meet the specified conditions.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 response = client.agents.list(
     appid="appid",
@@ -317,12 +319,13 @@ Get the current state information of the specified agent instance.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.get(
     appid="appid",
@@ -400,12 +403,13 @@ Call this endpoint while the agent is running to retrieve the conversation histo
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.get_history(
     appid="appid",
@@ -485,12 +489,13 @@ You can query sessions within the last 7 days.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.get_turns(
     appid="appid",
@@ -582,12 +587,13 @@ Stop the specified conversational agent instance. The API responds after request
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.stop(
     appid="appid",
@@ -663,16 +669,17 @@ Adjust Conversation AI Engine parameters at runtime.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 from agora_agent.agents import (
     UpdateAgentsRequestProperties,
     UpdateAgentsRequestPropertiesLlm,
 )
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.update(
     appid="appid",
@@ -776,12 +783,13 @@ Note: The speak API is not supported when using `mllm` configuration.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.speak(
     appid="appid",
@@ -893,12 +901,13 @@ Interrupt the specified agent while speaking or thinking.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agents.interrupt(
     appid="appid",
@@ -982,12 +991,13 @@ Use this endpoint for the following scenarios:
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.agent_management.agent_think(
     appid="appid",
@@ -1135,12 +1145,13 @@ Query historical call records for a specified appid based on the filter criteria
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 response = client.telephony.list(
     appid="appid",
@@ -1268,16 +1279,17 @@ Use this endpoint to initiate an outbound call to the specified number and creat
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 from agora_agent.telephony import (
     CallTelephonyRequestProperties,
     CallTelephonyRequestSip,
 )
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.telephony.call(
     appid="appid",
@@ -1393,12 +1405,13 @@ Retrieve the call status and related information of a specified agent.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.telephony.get(
     appid="appid",
@@ -1474,12 +1487,13 @@ Instruct the agent to proactively hang up the ongoing call and leave the RTC cha
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.telephony.hangup(
     appid="appid",
@@ -1556,12 +1570,13 @@ Retrieve a list of all imported phone numbers under the current account.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.phone_numbers.list()
 
@@ -1618,16 +1633,17 @@ Import a pre-configured phone number that can be used for inbound or outbound ca
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 from agora_agent.phone_numbers import (
     AddPhoneNumbersRequestInboundConfig,
     AddPhoneNumbersRequestOutboundConfig,
 )
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.phone_numbers.add(
     provider="byo",
@@ -1757,12 +1773,13 @@ Retrieve detailed information for a specific phone number.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.phone_numbers.get(
     phone_number="phone_number",
@@ -1832,12 +1849,13 @@ After calling this endpoint, the number stops receiving calls routed through thi
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.phone_numbers.delete(
     phone_number="phone_number",
@@ -1904,16 +1922,17 @@ Update the configuration for a phone number.
 <dd>
 
 ```python
-from agora_agent import Agora
+from agora_agent import Area, Agora
 from agora_agent.phone_numbers import (
     UpdatePhoneNumbersRequestInboundConfig,
     UpdatePhoneNumbersRequestOutboundConfig,
 )
 
 client = Agora(
-    authorization="YOUR_AUTHORIZATION",
-    username="YOUR_USERNAME",
-    password="YOUR_PASSWORD",
+    area=Area.US,
+    app_id="YOUR_APP_ID",
+    app_certificate="YOUR_APP_CERTIFICATE",
+    auth_token="YOUR_RAW_TOKEN",
 )
 client.phone_numbers.update(
     phone_number="phone_number",

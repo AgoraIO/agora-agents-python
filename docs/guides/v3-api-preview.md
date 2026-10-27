@@ -1,15 +1,15 @@
 # Saving agent configurations (preview transport guide)
 
-For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers 23 staging operations (20 from OpenAPI plus three session writes from refreshed Bruno). See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
+For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers 31 documented operations, including eight campaign operations. See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
 
 | Object or API | Meaning | Available now |
 |---|---|---|
 | `Agent` | Immutable local builder | Existing vendor configuration plus `with_variable` and deploy |
 | v3 stored agent / `SavedAgent` | Persisted configuration identified by `agent_id` | Create, read, conditional update, delete, inbound-number assignment and number listing |
 | v2 `AgentSession` | Running RTC instance, also historically called an agent | Existing `create_session(...).start()` lifecycle |
-| v3 session | Running instance identified by `agent_session_id` | Low-level list and get only |
+| v3 session | Running instance identified by `agent_session_id` | Start saved/ephemeral, list, get and stop |
 
-Saving stores configuration; it does not itself start a session. Call `saved.create_session(...).start()` to start by ID. Outbound calls, AgentKit analysis helpers and campaign APIs are outside this SDK workflow. The SDK package version continues to describe package compatibility independently of the REST API version.
+Saving stores configuration; it does not itself start a session. Call `saved.create_session(...).start()` to start by ID. The low-level campaign API is available; high-level outbound-call helpers and AgentKit analysis helpers are not included. The SDK package version continues to describe package compatibility independently of the REST API version.
 
 ## Quick start with staging
 
@@ -19,19 +19,16 @@ Install from this repository's `feat/v3-api-preview` checkout:
 python -m pip install -e .
 ```
 
-See [installation](../getting-started/installation.md) for prerequisites. v3 is a preview branch feature; these examples do not imply that a released package contains it. Obtain an approved staging origin and gateway credentials, then set:
+See [installation](../getting-started/installation.md) for prerequisites. v3 is a preview branch feature; these examples do not imply that a released package contains it. The default public preview origin is `https://preview.ai.agora.io`. Configure App ID and App Certificate (or supply `auth_token`), then set:
 
 ```sh
 export AGORA_APP_ID='YOUR_APP_ID'
 export AGORA_APP_CERTIFICATE='YOUR_APP_CERTIFICATE'
-export AGORA_AGENTS_V3_BASE_URL='https://YOUR_STAGING_HOST'
-export AGORA_V3_GATEWAY_SECRET='YOUR_GATEWAY_SECRET'
-export AGORA_V3_CONSUMER_USERNAME='YOUR_CONSUMER_USERNAME'
 export OPENAI_API_KEY='YOUR_OPENAI_KEY'
 export DEEPGRAM_API_KEY='YOUR_DEEPGRAM_KEY'
 ```
 
-The base URL is an HTTP(S) **origin**, without a project path, query or fragment. The SDK appends `/conversational-ai/v3/projects/{appid}`. `V3Options(base_url=...)` overrides the environment variable; headers apply only to v3. Existing client authentication still supplies the Authorization header. Production paths, regional availability and Basic-auth acceptance remain unconfirmed; use the supplied staging configuration for evaluation.
+The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. Authentication is token-only: a prebuilt `auth_token` or App ID/App Certificate signing. Internal gateway headers, `X-Studio-Region` and Basic authorization overrides are rejected. Region/failover guarantees remain open; AgentKit refuses CN for these resources.
 
 This complete cascaded configuration stores one project secret set, then saves a reusable agent. Set creation is a one-time provisioning step; subsequent runs can update secrets separately using the [secret methods](../reference/v3.md#secrets-eight-operations).
 
@@ -45,15 +42,10 @@ client = Agora(
     area=Area.US,
     app_id=os.environ["AGORA_APP_ID"],
     app_certificate=os.environ["AGORA_APP_CERTIFICATE"],
-    v3=V3Options(headers={
-        "X-Studio-V2-Gateway-Secret": os.environ["AGORA_V3_GATEWAY_SECRET"],
-        "X-Consumer-Username": os.environ["AGORA_V3_CONSUMER_USERNAME"],
-    }),
 )
 client.secrets.create(
     name="support",
     secrets={"openai": os.environ["OPENAI_API_KEY"], "deepgram": os.environ["DEEPGRAM_API_KEY"]},
-    idempotency_key="support-secrets-initial-provisioning",
 )
 agent = (
     Agent(client=client)
@@ -75,7 +67,7 @@ support = agent.save(name="Support")
 print(support.id, support.etag)  # Persist the ID for the next update.
 ```
 
-The example endpoints are existing vendor configuration, not additional v3 defaults. Use backend-approved provider endpoints/models for your staging deployment. Managed mode may also require an explicit provider URL on staging.
+The example endpoints are existing vendor configuration, not additional v3 defaults. Use backend-approved provider endpoints/models for your staging deployment. Managed modules omit top-level and parameter URLs; the server selects the endpoint. BYOK modules retain their configured URLs.
 
 ## Update, load and delete
 
@@ -92,7 +84,7 @@ print(loaded.id, loaded.name, loaded.etag, loaded.data)
 
 Updating GETs the latest ETag, then sends one conditional PATCH. It recursively nulls stale readable mutable fields, including nested provider params; IDs, timestamps and resolved credential metadata are excluded. Credentials come from the builder. Switching an existing module to managed mode explicitly nulls `api_key`.
 
-This is a merge patch rather than a guaranteed replacement. Write-only keys and headers cannot be reconstructed from GET, and omitted hidden values remain subject to backend merge semantics. Keep intended credentials in the builder or use a targeted [low-level update](../reference/v3.md#agents-five-operations) when retaining existing hidden credentials matters. Saved-agent update conflicts are surfaced without retry.
+The reply marks full-replacement PATCH behavior as **Planned**, so the current SDK conservatively keeps this conditional merge-compatible update until backend support is confirmed. It does not assume planned replacement or name-based upsert. Write-only keys and headers cannot be reconstructed from GET, and omitted hidden values remain subject to backend merge semantics. Keep intended credentials in the builder or use a targeted [low-level update](../reference/v3.md#agents-five-operations) when retaining existing hidden credentials matters. Saved-agent update conflicts are surfaced without retry.
 
 ## Assign and discover inbound numbers
 
@@ -156,10 +148,6 @@ async def inspect_stored_agent(agent_id: str):
     client = AsyncAgora(
         area=Area.US, app_id=os.environ["AGORA_APP_ID"],
         app_certificate=os.environ["AGORA_APP_CERTIFICATE"],
-        v3=V3Options(headers={
-            "X-Studio-V2-Gateway-Secret": os.environ["AGORA_V3_GATEWAY_SECRET"],
-            "X-Consumer-Username": os.environ["AGORA_V3_CONSUMER_USERNAME"],
-        }),
     )
     support = await AsyncSavedAgent.get(client, agent_id)
     numbers = await support.list_numbers()
@@ -185,28 +173,35 @@ Existing resources and ordinary inline `Agent.create_session()` behavior remain 
 
 The central mapper reuses existing vendor configs. Vendor instructions and greetings take precedence over deprecated Agent fields; realtime `params.instructions` moves to top-level instructions, and supported vendor messages move to top-level `messages`. Provider API keys become `{mode: "byok", api_key: ...}`, while absent keys select `managed`. Realtime Agora, server and semantic VAD settings, supported text/audio greetings, silence settings and filler words are converted to v3 shapes. Greeting playback modes `single_every` and `single_first` map to `each_join` and `first_join`; other v2 modes without a v3 equivalent are rejected. A managed MiniMax TTS preset model is retained in `tts.params.model`.
 
-For cascaded deployment, `with_turn_detection({"language": "de-DE"})` sets `pipeline.asr.language`; provider-specific `params.language` remains separate. A configured STT follows v2 interaction-language precedence (the explicit turn language, otherwise `en-US`). An explicit interaction language without an STT vendor uses the existing managed `ares` fallback, without inventing a URL; configure an approved vendor endpoint if staging requires one. A partial builder with neither STT nor an interaction language keeps ASR absent.
+For cascaded deployment, `with_turn_detection({"language": "de-DE"})` sets `pipeline.asr.language`; provider-specific `params.language` remains separate. A configured STT follows v2 interaction-language precedence (the explicit turn language, otherwise `en-US`). An explicit interaction language without an STT vendor uses the existing managed `ares` fallback, without inventing a URL; managed modules omit URLs and let the server select the endpoint. A partial builder with neither STT nor an interaction language keeps ASR absent.
 
 | Constraint | Current behavior |
 |---|---|
 | Builder fields without stored-agent equivalents | One `UnsupportedFieldError.fields` list before network access: SAL, advanced features, geofence, labels, RTC, pipeline IDs, parameters other than `silence_config` |
 | Value-valued `template_variables` | Rejected; use `with_variable` definitions |
-| Multipart AWS/Vertex credentials, removed avatar vendors, numeric v2 TTS `skip_patterns`, audio-only settings on text greetings, unmappable deprecated turn/greeting settings | Rejected rather than guessed or silently omitted |
+| Multipart AWS/Vertex credentials, numeric v2 TTS `skip_patterns`, audio-only settings on text greetings, unmappable deprecated turn/greeting settings | Rejected rather than guessed or silently omitted |
 | Tools/MCP/custom provider destinations | Deferred backend support; the server may reject otherwise typed fields |
 | Number `end_call`, `transfer`, `allowed_ips`, SIP-password secret references | Currently rejected or unsupported on staging |
 | Writes and retry options | All low-level writes disable automatic retries, even when `max_retries` is requested; assignment has only its explicit one-conflict retry |
-| Agent and number creation | Agent POST has no idempotency key; numbers currently ignore their declared key. An uncertain create outcome requires inspection before manual retry |
-| CN and production | AgentKit CN deployment is refused; production path, regional coverage and Basic-auth support remain unconfirmed |
-| Outbound calling, AgentKit analysis and campaign APIs | Not included in this SDK session workflow |
+| Agent and number creation | Agent, secret and number creation do not support idempotency keys and reject explicit key arguments/headers. An uncertain create outcome requires inspection before manual retry |
+| Routing | Public preview host and v1 project path are confirmed; regional availability/failover remain open, and CN is refused |
+| Session controls and analysis helpers | Proposed PATCH/actions and AgentKit analysis helpers are not implemented |
 
-The adapter shares the existing client's HTTP transport, authentication and current regional-pool origin. The staging override applies only to v3. These docs and offline tests do not establish live backend availability.
+The adapter shares the existing client's HTTP transport, authentication. New resources use the confirmed public preview origin; the origin override applies only to these resources. These docs and offline tests do not establish live backend availability.
 
 ## Maintainer provenance
 
-The original 20 low-level methods and TypedDict wire schemas were generated locally from staging OpenAPI. Three handwritten session write methods and their TypedDict shapes follow the refreshed Bruno `sessions/start`, `start-ephemeral`, and `stop` examples; the older OpenAPI does not contain these writes. They are protected custom code under `src/agora_agent/v3`, with a handwritten shared-transport adapter and AgentKit mapping. **They are not output from the repository's Fern generation pipeline.** This Python checkout does not contain the local generator or a vendored OpenAPI snapshot, so a reproducible generation workflow is not currently checked in.
+Wire schemas and methods are locally maintained from the supplied OpenAPI and engineering reply. The reply takes precedence where it corrects routing, authentication policy, session idempotency, status and timestamps. Campaign schema retry fields remain unconfirmed; no retry algorithm is implemented. They are protected custom code under `src/agora_agent/v3`, with a handwritten shared-transport adapter and AgentKit mapping. **They are not output from the repository's Fern generation pipeline.** This Python checkout does not contain the local generator or a vendored OpenAPI snapshot, so a reproducible generation workflow is not currently checked in.
 
 See [the v3 source](../../src/agora_agent/v3/client.py), [wire schemas](../../src/agora_agent/v3/types.py), [AgentKit mapping](../../src/agora_agent/agentkit/v3.py), and [offline contract tests](../../tests/custom/test_v3_preview.py). Preserve `.fernignore` protection when integrating a future canonical Fern namespace.
 
 ## Compatibility names
 
 `deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`, and `AsyncDeployedAgent` is exactly `AsyncSavedAgent`. `client.secrets` / `client.numbers` share the same resource objects as their advanced `client.v3` counterparts. These aliases do not duplicate requests or configuration. Saved handles create sessions by ID; the original builder also starts directly, using ephemeral start when secret references or variables require it.
+
+
+## Session idempotency
+
+Session start and ephemeral start accept `idempotency_key`, sent only as `Idempotency-Key`. The server retains keys for 24 hours and marks replays `Idempotent-Replayed: true`. Same-key/different-body or in-flight reuse returns `409 IdempotencyKeyConflict`. After an accepted or uncertain outcome, keep the same key; a new key may create a second session. The SDK performs no automatic write retries. Agent, secret and number creation reject idempotency keys. Campaign create/pause/resume/cancel accept them.
+
+After an idempotent start succeeds, use a new session handle and a new key for a genuinely new session. Restarting the same successful handle with its old explicit key is rejected locally because it would replay the ended session. An initial failed/unknown request without a returned ID may retry on the same handle with the original key.

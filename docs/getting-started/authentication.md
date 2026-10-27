@@ -50,22 +50,9 @@ session = agent.create_session(
 print(client.auth_mode)  # "app-credentials"
 ```
 
-## Legacy auth modes
+## Pre-built REST tokens
 
-The generated client still supports pre-minted REST tokens and HTTP Basic Auth for legacy integrations. Do not use those modes for new session integrations. Use app credentials so AgentKit can mint short-lived ConvoAI REST auth and RTC join tokens for each session.
-
-### HTTP Basic Auth
-
-```python
-client = Agora(
-    area=Area.US,
-    app_id="your-app-id",
-    app_certificate="your-app-certificate",
-    customer_id="your-customer-id",
-    customer_secret="your-customer-secret",
-)
-print(client.auth_mode)  # "basic"
-```
+The public SDK supports token authentication only: pass a raw `auth_token`, or let the SDK sign tokens from `app_id` and `app_certificate`. Customer ID/secret, client ID/secret and Basic authorization overrides are rejected. REST authentication is separate from the optional RTC transport token.
 
 ### Pre-built REST token
 
@@ -81,4 +68,4 @@ client = Agora(
 print(client.auth_mode)  # "token"
 ```
 
-`auth_token` is mutually exclusive with `customer_id` / `customer_secret`.
+New resources use `https://preview.ai.agora.io/conversational-ai/v1/projects/{appid}`. Do not send internal gateway headers or `X-Studio-Region`.
