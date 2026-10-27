@@ -1195,10 +1195,16 @@ def test_builder_labels_map_to_new_session_labels():
 
 
 @pytest.mark.parametrize("async_", [False, True])
-@pytest.mark.parametrize("override", ["header", "basic_client", "credentials"])
+@pytest.mark.parametrize("override", ["header", "basic_client", "custom_client", "credentials"])
 @pytest.mark.asyncio
 async def test_legacy_resource_token_policy_at_http_boundary(async_, override):
-    http = (httpx.AsyncClient if async_ else httpx.Client)(transport=httpx.MockTransport(lambda _: pytest.fail("must not send")), **({"auth": httpx.BasicAuth("id", "secret")} if override == "basic_client" else {}))
+    class BearerAuth(httpx.Auth):
+        def auth_flow(self, request):
+            request.headers["Authorization"] = "Bearer injected"
+            yield request
+
+    auth = httpx.BasicAuth("id", "secret") if override == "basic_client" else BearerAuth() if override == "custom_client" else None
+    http = (httpx.AsyncClient if async_ else httpx.Client)(transport=httpx.MockTransport(lambda _: pytest.fail("must not send")), **({"auth": auth} if auth is not None else {}))
     client = (AsyncAgora if async_ else Agora)(area=Area.US, app_id="p", app_certificate="c", auth_token="token", httpx_client=http)
     options = {"additional_headers": {"authorization": "Basic stale"}} if override == "header" else {"clientSecret": "old"} if override == "credentials" else {}
     with pytest.raises(ValueError):

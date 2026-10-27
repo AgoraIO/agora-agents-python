@@ -207,8 +207,8 @@ class HttpClient:
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
-        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+        if getattr(transport_client, "auth", None) is not None:
+            raise ValueError("HTTP auth overrides are not supported; use Agora token authorization")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
@@ -310,8 +310,8 @@ class HttpClient:
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
-        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+        if getattr(transport_client, "auth", None) is not None:
+            raise ValueError("HTTP auth overrides are not supported; use Agora token authorization")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
@@ -417,8 +417,8 @@ class AsyncHttpClient:
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
-        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+        if getattr(transport_client, "auth", None) is not None:
+            raise ValueError("HTTP auth overrides are not supported; use Agora token authorization")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
@@ -520,8 +520,8 @@ class AsyncHttpClient:
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
-        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+        if getattr(transport_client, "auth", None) is not None:
+            raise ValueError("HTTP auth overrides are not supported; use Agora token authorization")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
