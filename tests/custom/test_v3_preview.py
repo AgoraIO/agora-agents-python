@@ -1129,3 +1129,103 @@ async def test_advertised_app_credentials_sign_raw_legacy_reads_each_call(async_
     assert len(calls) == 2
     assert all(r.headers["Authorization"].startswith("agora token=fresh-") for r in calls)
     assert calls[0].headers["Authorization"] != calls[1].headers["Authorization"]
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("extra", [False, True])
+@pytest.mark.asyncio
+async def test_new_session_geofence_maps_builder_or_explicit_option(async_, extra):
+    calls = []
+    client = make_client(lambda r: calls.append(r) or httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"}), async_)
+    agent = configured(client).with_geofence({"area": "GLOBAL", "exclude_area": "INDIA"})
+    method = agent.create_async_session if async_ else agent.create_session
+    session = method(channel="r", agent_uid="1", remote_uids=["2"], **({"geofence": {"area": "europe"}} if extra else {}))
+    if async_:
+        await session.start()
+    else:
+        session.start()
+    body = json.loads(calls[0].content)
+    assert body["transport"]["geofence"] == ({"area": "europe"} if extra else {"area": "global", "exclude_area": "india"})
+    assert "geofence" not in body["agent"]
+    assert agent.config["geofence"] == {"area": "GLOBAL", "exclude_area": "INDIA"}
+
+
+@pytest.mark.parametrize("fence", [{"area": "invalid"}, {"area": "europe", "exclude_area": "india"}, {"area": "global", "exclude_area": "global"}])
+def test_new_session_geofence_invalid_combinations_reject_locally(fence):
+    with pytest.raises(ValueError, match="geofence"):
+        configured(make_client(lambda _: pytest.fail("must not send"))).create_session(channel="r", agent_uid="1", remote_uids=["2"], geofence=fence)
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_duplicate_authorization_values_never_allow_hidden_basic(async_):
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    headers = httpx.Headers([("Authorization", "agora token=valid"), ("Authorization", "Basic hidden")])
+    for resource in (client.v3.agents, client.agents):
+        with pytest.raises(ValueError, match="token"):
+            result = (resource.get(agent_id="a", request_options={"additional_headers": headers}) if resource is client.v3.agents else resource.get("p", "legacy", request_options={"additional_headers": headers}))
+            if async_:
+                await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_prebuilt_rest_token_needs_no_app_certificate(async_):
+    calls = []
+    http = (httpx.AsyncClient if async_ else httpx.Client)(transport=httpx.MockTransport(lambda r: calls.append(r) or httpx.Response(200, json={"agent_id": "legacy", "status": "RUNNING"})))
+    client = (AsyncAgora if async_ else Agora)(area=Area.US, app_id="project", auth_token="existing-token", httpx_client=http)
+    result = client.agents.get("project", "legacy")
+    if async_:
+        await result
+    result = client.v3.agents.list()
+    if async_:
+        await result
+    assert len(calls) == 2
+    assert all(r.headers["Authorization"] == "agora token=existing-token" for r in calls)
+    assert client.app_certificate is None
+
+
+@pytest.mark.parametrize("cls", [Agora, AsyncAgora])
+@pytest.mark.parametrize("options", [{}, {"auth_token": ""}, {"auth_token": " "}, {"app_certificate": ""}])
+def test_client_requires_nonempty_token_or_signing_credentials(cls, options):
+    with pytest.raises(ValueError):
+        cls(area=Area.US, app_id="project", **options)
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_duplicate_auth_in_resource_header_overrides_is_rejected(async_):
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    client._v3_options = V3Options(headers=httpx.Headers([("Authorization", "agora token=good"), ("Authorization", "Basic hidden")]))
+    with pytest.raises(ValueError, match="token"):
+        result = client.v3.agents.list()
+        if async_:
+            await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_latest_strips_global_and_http_client_write_conditions_without_mutation(async_):
+    calls = []
+    defaults = httpx.Headers({"If-Match": "http-default", "If-None-Match": "*", "Idempotency-Key": "http-key", "X-HTTP-Context": "kept"})
+    def handler(request):
+        calls.append(request)
+        if request.method == "PATCH":
+            return httpx.Response(412, json={"reason": "PreconditionFailed"})
+        assert all(name not in request.headers for name in ("If-Match", "If-None-Match", "Idempotency-Key"))
+        assert request.headers["X-HTTP-Context"] == "kept"
+        assert request.headers["X-SDK-Context"] == "kept"
+        assert request.headers["X-V3-Context"] == "kept"
+        return httpx.Response(200, json={"agent_id": "a", "agent_name": "Latest"})
+    http = (httpx.AsyncClient if async_ else httpx.Client)(headers=defaults, transport=httpx.MockTransport(handler))
+    client = (AsyncAgora if async_ else Agora)(area=Area.US, app_id="p", auth_token="token", httpx_client=http, headers={"If-Match": "sdk-default", "X-SDK-Context": "kept"}, v3=V3Options(headers={"If-None-Match": "v3-default", "X-V3-Context": "kept"}))
+    with pytest.raises(PreconditionFailedError) as caught:
+        result = client.v3.agents.update(agent_id="a", if_match="explicit", instructions="next")
+        if async_:
+            await result
+    latest = await caught.value.latest() if async_ else caught.value.latest()
+    assert latest["agent_name"] == "Latest"
+    assert len(calls) == 2
+    assert http.headers["If-Match"] == "http-default"
+    assert client._client_wrapper.get_custom_headers()["If-Match"] == "sdk-default"
+    assert client._v3_options.headers["If-None-Match"] == "v3-default"

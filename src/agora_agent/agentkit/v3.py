@@ -457,13 +457,13 @@ class SavedAgent(_SavedAgentBase):
     def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
                        name=None, client_reference=None, idle_timeout=None,
                        max_duration=None, labels=None, values=None, idempotency_key=None, token=None,
-                       encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, debug=None, warn=None):
+                       encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None):
         from .session_backend import create_session
         return create_session(self, channel=channel, agent_uid=agent_uid,
             remote_uids=remote_uids, name=name, client_reference=client_reference,
             idle_timeout=idle_timeout, max_duration=max_duration, labels=labels,
             values=values, idempotency_key=idempotency_key, token=token, encryption=encryption,
-            audio_scenario=audio_scenario, graceful_stop=graceful_stop, data_policy=data_policy,
+            audio_scenario=audio_scenario, graceful_stop=graceful_stop, data_policy=data_policy, geofence=geofence,
             debug=debug, warn=warn)
 
     @classmethod
@@ -530,14 +530,14 @@ class AsyncSavedAgent(_SavedAgentBase):
     def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
                        name=None, client_reference=None, idle_timeout=None,
                        max_duration=None, labels=None, values=None, idempotency_key=None, token=None,
-                       encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, debug=None, warn=None):
+                       encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None):
         from .session_backend import create_session
         return create_session(self, asynchronous=True, channel=channel,
             agent_uid=agent_uid, remote_uids=remote_uids, name=name,
             client_reference=client_reference, idle_timeout=idle_timeout,
             max_duration=max_duration, labels=labels, values=values, idempotency_key=idempotency_key,
             token=token, encryption=encryption, audio_scenario=audio_scenario, graceful_stop=graceful_stop,
-            data_policy=data_policy, debug=debug, warn=warn)
+            data_policy=data_policy, geofence=geofence, debug=debug, warn=warn)
 
     create_async_session = create_session
 

@@ -816,6 +816,7 @@ class RtcSessionTransport(TypedDict, total=False):
     subscribe_uids: Required[List[str]]
     token: str
     encryption: RtcEncryption
+    geofence: RtcGeofence
     audio_scenario: Literal["aiserver", "chorus"]
 
 
@@ -1031,3 +1032,10 @@ TelephonyTransport = TypedDict("TelephonyTransport", {
 
 SessionTransport = Union[RtcSessionTransport, TelephonyTransport]
 __all__ += ["VoicemailPolicy", "CallPolicy", "TelephonyTransport", "SessionTransport"]
+
+
+class RtcGeofence(TypedDict, total=False):
+    area: Required[Literal["global", "north_america", "europe", "asia", "india", "japan"]]
+    exclude_area: Literal["north_america", "europe", "asia", "india", "japan"]
+
+__all__ += ["RtcGeofence"]

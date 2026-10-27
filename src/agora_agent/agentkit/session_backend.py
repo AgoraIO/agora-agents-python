@@ -21,10 +21,10 @@ def needs_session_backend(agent):
 def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids,
                    name=None, client_reference=None, idle_timeout=None, max_duration=None,
                    labels=None, values=None, idempotency_key=None, token=None, encryption=None,
-                   audio_scenario=None, graceful_stop=None, data_policy=None, debug=None, warn=None, **unsupported):
+                   audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None, **unsupported):
     from ..pool_client import Agora, AsyncAgora
     from .agent_session import AgentSession, AsyncAgentSession
-    from .v3 import build_body
+    from .v3 import build_body, dump
     client = owner._client
     if not isinstance(client, AsyncAgora if asynchronous else Agora):
         raise TypeError("Session requires AsyncAgora" if asynchronous else "Session requires Agora")
@@ -44,6 +44,10 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
     body = {"transport": {"type": "rtc", "channel": channel, "uid": agent_uid,
                            "subscribe_uids": list(remote_uids)}}
     reference = name
+    fence = geofence if geofence is not None else getattr(owner, "_geofence", None)
+    if fence is not None:
+        fence = dump(fence)
+        body["transport"]["geofence"] = {key: value.lower() if isinstance(value, str) else value for key, value in fence.items()}
     for key, value in (("token", token), ("encryption", encryption), ("audio_scenario", audio_scenario)):
         if value is not None:
             body["transport"][key] = copy.deepcopy(value)
@@ -64,9 +68,9 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
     if stored:
         body["agent_id"] = owner.id
     else:
-        from .v3 import dump
         params = dump(owner._parameters or {})
         inline = owner._clone()
+        inline._geofence = None
         inline._parameters = {k: v for k, v in params.items() if k not in {"opt_out", "farewell_config", "audio_scenario"}}
         if "opt_out" in params and not isinstance(params["opt_out"], bool):
             raise ValueError("parameters.opt_out must be bool")

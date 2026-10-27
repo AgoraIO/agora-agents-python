@@ -1,12 +1,15 @@
 """Token-only public SDK authentication policy (including transport overrides)."""
+import re
 
 
 def validate_public_headers(headers):
-    for name, value in (headers or {}).items():
+    source = headers or {}
+    items = source.multi_items() if hasattr(source, "multi_items") else source.items()
+    for name, value in items:
         lower = name.lower()
         if lower.startswith("x-studio-") or lower == "x-consumer-username" or lower.startswith("x-agora-gateway") or lower in {"gateway", "x-gateway-token", "x-gateway-key"}:
             raise ValueError("Internal gateway/region headers are not public: " + name)
-        if lower == "authorization" and value and not str(value).lower().startswith("agora token="):
+        if lower == "authorization" and value and not re.fullmatch(r"agora token=\S+", str(value), re.IGNORECASE):
             raise ValueError("Only Agora token authentication is supported")
 
 

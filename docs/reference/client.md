@@ -27,7 +27,7 @@ client = Agora(
 |---|---|---|---|---|
 | `area` | `Area` | Yes | — | Region for API routing (`Area.US`, `Area.EU`, `Area.AP`, `Area.CN`) |
 | `app_id` | `str` | Yes | — | Agora App ID (app-credentials mode) |
-| `app_certificate` | `str` | Yes | — | Agora App Certificate (app-credentials mode) |
+| `app_certificate` | `str` | Unless `auth_token` supplied | `None` | Agora App Certificate for signing |
 | `auth_token` | `str` | No | — | Pre-built raw REST token; SDK sets `Authorization: agora token=<auth_token>` |
 | `headers` | `Dict[str, str]` | No | `None` | Additional headers sent with every request |
 | `timeout` | `float` | No | `60` | Request timeout in seconds |
@@ -36,7 +36,7 @@ client = Agora(
 | `debug` | `bool` | No | `False` | Log HTTP requests and responses when `True` |
 | `v3` | `V3Options` | No | `None` | Preview-only origin and headers; see the [v3 reference](./v3.md) |
 
-`app_id` and `app_certificate` remain required constructor arguments. Omit `auth_token` to sign REST tokens automatically, or supply a raw prebuilt token. Basic credentials are not exposed.
+`app_id` is required; `app_certificate` is required only when `auth_token` is omitted. Omit `auth_token` to sign REST tokens automatically, or supply a raw prebuilt token. Basic credentials are not exposed.
 
 When `area=Area.CN`, the constructor returns a `CNAgora` instance; global areas return `GlobalAgoraClient`. Both are subclasses of `Agora` and behave the same at runtime.
 

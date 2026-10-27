@@ -77,6 +77,7 @@ class Resource:
         if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment or parsed.username is not None or parsed.password is not None or "?" in base or "#" in base:
             raise ValueError("v3 base_url must be an HTTP(S) origin without query or fragment")
         base = base.rstrip("/")
+        _validate_public_headers(self.options.headers)
         merged = dict(self.options.headers)
         merged.update({k: v for k, v in headers.items() if v is not None})
         if getattr(self.owner, "auth_mode", None) == "app-credentials":
@@ -148,6 +149,7 @@ class Resource:
 def _reload_options(request_options):
     """Keep request context without replaying write preconditions on the reload."""
     options = dict(request_options or {})
+    options["_strip_write_preconditions"] = True
     options["additional_headers"] = {
         key: value for key, value in options.get("additional_headers", {}).items()
         if key.lower() not in {"if-match", "if-none-match", "idempotency-key"}

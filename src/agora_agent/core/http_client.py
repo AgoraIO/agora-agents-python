@@ -218,7 +218,7 @@ class HttpClient:
         if (request_files is None or len(request_files) == 0) and force_multipart:
             request_files = FORCE_MULTIPART
 
-        response = self.httpx_client.request(
+        response = _request_with_reload_headers(self.httpx_client, bool((request_options or {}).get("_strip_write_preconditions")),
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
             headers=jsonable_encoder(
@@ -431,7 +431,7 @@ class AsyncHttpClient:
         json_body, data_body = get_request_body(json=json, data=data, request_options=request_options, omit=omit)
 
         # Add the input to each of these and do None-safety checks
-        response = await self.httpx_client.request(
+        response = await _async_request_with_reload_headers(self.httpx_client, bool((request_options or {}).get("_strip_write_preconditions")),
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
             headers=jsonable_encoder(
@@ -570,3 +570,26 @@ class AsyncHttpClient:
             timeout=timeout,
         ) as stream:
             yield stream
+
+
+def _without_write_conditions(request: httpx.Request) -> httpx.Request:
+    # Applied after httpx merges SDK and HTTP-client defaults, without mutating
+    # any shared client/header maps or losing auth, cookies and request context.
+    for name in ("If-Match", "If-None-Match", "Idempotency-Key"):
+        if name in request.headers:
+            del request.headers[name]
+    return request
+
+
+def _request_with_reload_headers(client, strip_conditions, **kwargs):
+    if not strip_conditions:
+        return client.request(**kwargs)
+    request = _without_write_conditions(client.build_request(**kwargs))
+    return client.send(request)
+
+
+async def _async_request_with_reload_headers(client, strip_conditions, **kwargs):
+    if not strip_conditions:
+        return await client.request(**kwargs)
+    request = _without_write_conditions(client.build_request(**kwargs))
+    return await client.send(request)

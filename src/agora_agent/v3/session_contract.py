@@ -52,7 +52,7 @@ def validate_session(body):
 
 
 def _validate_rtc_transport(transport):
-    _object(transport, {"type", "channel", "uid", "subscribe_uids", "token", "encryption", "audio_scenario"}, "transport")
+    _object(transport, {"type", "channel", "uid", "subscribe_uids", "token", "encryption", "audio_scenario", "geofence"}, "transport")
     if not isinstance(transport.get("channel"), str) or not 1 <= len(transport["channel"]) <= 256 or not transport["channel"].strip():
         raise ValueError("channel must contain 1-256 characters")
     uid = transport.get("uid")
@@ -64,6 +64,14 @@ def _validate_rtc_transport(transport):
     numeric = lambda value: re.fullmatch(r"[0-9]+", value) is not None
     if uid != "0" and numeric(uid) != numeric(subscribers[0]):
         raise ValueError("agent and subscriber must use the same UID type")
+    if transport.get("geofence") is not None:
+        fence = transport["geofence"]
+        _object(fence, {"area", "exclude_area"}, "geofence")
+        areas = {"global", "north_america", "europe", "asia", "india", "japan"}
+        if fence.get("area") not in areas:
+            raise ValueError("Invalid geofence.area")
+        if fence.get("exclude_area") is not None and (fence["area"] != "global" or fence["exclude_area"] not in areas - {"global"}):
+            raise ValueError("geofence.exclude_area is only supported with global area")
     if "token" in transport and not isinstance(transport["token"], str):
         raise ValueError("RTC token must be a string")
     if transport.get("audio_scenario", "aiserver") not in {"aiserver", "chorus"}:

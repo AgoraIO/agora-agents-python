@@ -62,10 +62,11 @@ Pass the raw token string. The SDK sets `Authorization: agora token=<auth_token>
 client = Agora(
     area=Area.US,
     app_id="your-app-id",
-    app_certificate="your-app-certificate",
-    auth_token="your-raw-token",
+    auth_token="your-raw-token",  # No certificate needed for prebuilt REST auth.
 )
 print(client.auth_mode)  # "token"
 ```
 
 New resources use `https://preview.ai.agora.io/conversational-ai/v1/projects/{appid}`. Do not send internal gateway headers or `X-Studio-Region`.
+
+A client with only a REST `auth_token` cannot generate RTC join tokens. Supply `token=` when starting an ordinary legacy RTC session, or also configure the App Certificate for RTC signing. Saved/ephemeral RTC sessions accept their optional token through `transport.token`.

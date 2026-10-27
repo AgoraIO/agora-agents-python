@@ -199,7 +199,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -215,7 +215,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: _GlobalArea,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -231,7 +231,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: _AreaT,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -256,7 +256,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -272,7 +272,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: _GlobalArea,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -288,7 +288,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: _AreaT,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -303,7 +303,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         *,
         area: typing.Any,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -314,6 +314,10 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
     ):
         from .core.public_auth import validate_public_headers
         validate_public_headers(headers)
+        if auth_token is not None and (not isinstance(auth_token, str) or not auth_token.strip()):
+            raise ValueError("auth_token must be a nonempty raw token")
+        if auth_token is None and (not isinstance(app_certificate, str) or not app_certificate.strip()):
+            raise ValueError("app_certificate is required unless auth_token is supplied")
         self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
@@ -348,7 +352,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         )
         if auth_token is None:
             self._client_wrapper._authorization_supplier = lambda: "agora token=" + generate_convo_ai_token(
-                app_id=self.app_id, app_certificate=self.app_certificate, channel_name="", uid=0,
+                app_id=self.app_id, app_certificate=typing.cast(str, self.app_certificate), channel_name="", uid=0,
             )
 
     @property
@@ -447,7 +451,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         if self.auth_mode == "app-credentials":
             token = generate_convo_ai_token(
                 app_id=self.app_id,
-                app_certificate=self.app_certificate,
+                app_certificate=typing.cast(str, self.app_certificate),
                 channel_name="stop",
                 uid=0,
             )
@@ -535,7 +539,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -551,7 +555,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: _GlobalArea,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -567,7 +571,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: _AreaT,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -592,7 +596,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: typing_extensions.Literal[Area.CN],
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -608,7 +612,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: _GlobalArea,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -624,7 +628,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: _AreaT,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -639,7 +643,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         *,
         area: typing.Any,
         app_id: str,
-        app_certificate: str,
+        app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -650,6 +654,10 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
     ):
         from .core.public_auth import validate_public_headers
         validate_public_headers(headers)
+        if auth_token is not None and (not isinstance(auth_token, str) or not auth_token.strip()):
+            raise ValueError("auth_token must be a nonempty raw token")
+        if auth_token is None and (not isinstance(app_certificate, str) or not app_certificate.strip()):
+            raise ValueError("app_certificate is required unless auth_token is supplied")
         self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
@@ -684,7 +692,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         )
         if auth_token is None:
             self._client_wrapper._authorization_supplier = lambda: "agora token=" + generate_convo_ai_token(
-                app_id=self.app_id, app_certificate=self.app_certificate, channel_name="", uid=0,
+                app_id=self.app_id, app_certificate=typing.cast(str, self.app_certificate), channel_name="", uid=0,
             )
 
     @property
@@ -783,7 +791,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         if self.auth_mode == "app-credentials":
             token = generate_convo_ai_token(
                 app_id=self.app_id,
-                app_certificate=self.app_certificate,
+                app_certificate=typing.cast(str, self.app_certificate),
                 channel_name="stop",
                 uid=0,
             )

@@ -83,7 +83,7 @@ ephemeral.start()
 ephemeral.stop()
 ```
 
-`idle_timeout` and `max_duration` are seconds, converted to integer milliseconds. `values`, `labels`, `token` (RTC only), `encryption`, `audio_scenario`, `graceful_stop`, `data_policy` and `idempotency_key` work for both saved and ephemeral sessions. Exactly one subscriber is required; wildcard subscriptions are unsupported. Agent/subscriber UID types must match. The agreed contract permits string UIDs; numeric-only validation may remain during backend rollout.
+`idle_timeout` and `max_duration` are seconds, converted to integer milliseconds. `values`, `labels`, `token` (RTC only), `encryption`, `audio_scenario`, `graceful_stop`, `data_policy`, `geofence` and `idempotency_key` work for both saved and ephemeral sessions. Exactly one subscriber is required; wildcard subscriptions are unsupported. Agent/subscriber UID types must match. The agreed contract permits string UIDs; numeric-only validation may remain during backend rollout.
 
 `name` stays a local label for these sessions; it is never sent as `client_reference`. The obsolete `client_reference` option raises an error. Legacy inline sessions retain their existing name/transport behavior. Preset, pipeline-ID, expiry and explicit string-UID switches are rejected on saved/ephemeral sessions.
 
@@ -126,3 +126,5 @@ Application code does not select a REST version. Ordinary inline configurations 
 ## Campaign provisioning
 
 `client.campaigns` (or async `client.campaigns`) exposes the eight documented operations. Campaign creation and pause/resume/cancel accept `idempotency_key`; update requires `if_match`. Use raw GET to obtain the current ETag. Contact lists contain 1–5,000 entries and cannot be edited after creation. Retry pacing fields remain unconfirmed; the SDK implements no calling/retry algorithm. No contact-result, upload, event or webhook endpoints are invented. See the [campaign reference](../reference/v3.md#campaigns-eight-operations).
+
+RTC geofence uses `area` (`global`, `north_america`, `europe`, `asia`, `india`, `japan`) and optional `exclude_area`, allowed only with global area. An existing builder geofence maps into new-session transport (uppercase legacy area names normalize to lowercase). This agreed correction still depends on backend rollout. Geofence is not saved-agent configuration.

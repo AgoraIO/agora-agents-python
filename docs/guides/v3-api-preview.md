@@ -134,7 +134,7 @@ for number in client.numbers.iter_all(limit=100):
 
 `iter_pages()` yields complete pages with `data.count`, `data.list`, `has_more` and `next_cursor`; `iter_all()` yields their items. Both reject missing or repeated continuation cursors. Cursor state is opaque: keep the same filters on subsequent requests. `list()` itself fetches one page. Session reads default to running sessions at the backend; request a historical filter such as `status="STOPPED,FAILED"` when needed. Iteration preserves the chosen filter rather than implicitly scanning every status.
 
-A 412 raises `PreconditionFailedError`, a subclass of `ApiError`; other HTTP failures raise `ApiError`. Both retain status, response headers and body (including server `detail` / `reason`). `latest()` reloads the affected resource; a secret-key conflict reloads its set. It preserves per-request authentication/context headers while stripping per-request `If-Match`, `If-None-Match` and `Idempotency-Key` headers from the reload. It returns normal parsed data rather than a raw response. To obtain the new ETag for a deliberate retry, GET through `.with_raw_response` again.
+A 412 raises `PreconditionFailedError`, a subclass of `ApiError`; other HTTP failures raise `ApiError`. Both retain status, response headers and body (including server `detail` / `reason`). `latest()` reloads the affected resource; a secret-key conflict reloads its set. It preserves authentication/context headers while stripping all SDK, per-request and HTTP-client default `If-Match`, `If-None-Match` and `Idempotency-Key` headers from the reload. It returns normal parsed data rather than a raw response. To obtain the new ETag for a deliberate retry, GET through `.with_raw_response` again.
 
 ## Async applications
 
