@@ -9,6 +9,12 @@ description = ""
 readme = "README.md"
 authors = []
 keywords = []
+include = [
+    { path = "src/agora_agent/v3/openapi.json", format = ["wheel", "sdist"] },
+    { path = "openapi.json", format = "sdist" },
+    { path = "openapi.yaml", format = "sdist" },
+    { path = "scripts/generate-v3-preview.py", format = "sdist" },
+]
 
 classifiers = [
     "Intended Audience :: Developers",
