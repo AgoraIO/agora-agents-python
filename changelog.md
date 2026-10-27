@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased preview rollout
+
+The current stored-agent, session and campaign preview rollout is available in the US only (PM confirmation, 2026-10-27). Availability may expand as rollout progresses.
+
 ## [v2.12.0] — 2026-10-07
 
 ### Added

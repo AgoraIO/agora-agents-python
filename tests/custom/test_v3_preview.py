@@ -1253,3 +1253,15 @@ async def test_stop_preserves_nonobject_409_api_error(async_, payload):
     assert caught.value.status_code == 409
     assert caught.value.body == payload
     assert session.status == "error"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("agent_uid", ["0", "1"])
+@pytest.mark.parametrize("subscriber_uid", ["0", "00", "000"])
+@pytest.mark.asyncio
+async def test_subscriber_zero_rejected_even_when_agent_zero_is_allowed(async_, agent_uid, subscriber_uid):
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    with pytest.raises(ValueError, match="subscribe_uids"):
+        result = client.v3.sessions.start(agent_id="a", transport={"type": "rtc", "channel": "r", "uid": agent_uid, "subscribe_uids": [subscriber_uid]})
+        if async_:
+            await result

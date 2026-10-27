@@ -83,7 +83,7 @@ ephemeral.start()
 ephemeral.stop()
 ```
 
-`idle_timeout` and `max_duration` are seconds, converted to integer milliseconds. `values`, `labels`, `token` (RTC only), `encryption`, `audio_scenario`, `graceful_stop`, `data_policy`, `geofence` and `idempotency_key` work for both saved and ephemeral sessions. Exactly one subscriber is required; wildcard subscriptions are unsupported. Agent/subscriber UID types must match. The agreed contract permits string UIDs; numeric-only validation may remain during backend rollout.
+`idle_timeout` and `max_duration` are seconds, converted to integer milliseconds. `values`, `labels`, `token` (RTC only), `encryption`, `audio_scenario`, `graceful_stop`, `data_policy`, `geofence` and `idempotency_key` work for both saved and ephemeral sessions. Exactly one nonzero subscriber is required; wildcard subscriptions are unsupported. Agent UID `0` can request automatic assignment. Agent/subscriber UID types must match. The agreed contract permits string UIDs; numeric-only validation may remain during backend rollout.
 
 `name` stays a local label for these sessions; it is never sent as `client_reference`. The obsolete `client_reference` option raises an error. Legacy inline sessions retain their existing name/transport behavior. Preset, pipeline-ID, expiry and explicit string-UID switches are rejected on saved/ephemeral sessions.
 

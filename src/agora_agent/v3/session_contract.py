@@ -59,7 +59,7 @@ def _validate_rtc_transport(transport):
     subscribers = transport.get("subscribe_uids")
     if not isinstance(uid, str) or not uid.strip():
         raise ValueError("uid must be a nonempty string")
-    if not isinstance(subscribers, list) or len(subscribers) != 1 or not isinstance(subscribers[0], str) or not subscribers[0].strip() or subscribers[0] == "*":
+    if not isinstance(subscribers, list) or len(subscribers) != 1 or not isinstance(subscribers[0], str) or not subscribers[0].strip() or (subscribers[0] == "*" or re.fullmatch(r"0+", subscribers[0])):
         raise ValueError("subscribe_uids must contain exactly one non-wildcard UID")
     numeric = lambda value: re.fullmatch(r"[0-9]+", value) is not None
     if uid != "0" and numeric(uid) != numeric(subscribers[0]):
