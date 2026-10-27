@@ -1265,3 +1265,30 @@ async def test_subscriber_zero_rejected_even_when_agent_zero_is_allowed(async_, 
         result = client.v3.sessions.start(agent_id="a", transport={"type": "rtc", "channel": "r", "uid": agent_uid, "subscribe_uids": [subscriber_uid]})
         if async_:
             await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("key", ["", " ", "\t"])
+@pytest.mark.parametrize("resource,method,kwargs", [
+    ("sessions", "start", {"agent_id": "a", "transport": {"type": "rtc", "channel": "r", "uid": "1", "subscribe_uids": ["2"]}}),
+    ("sessions", "start_ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "r", "uid": "1", "subscribe_uids": ["2"]}}),
+    ("campaigns", "create", {"name": "Campaign", "agent_id": "a", "transport": {"type": "telephony", "from": ["n"]}, "contacts": [{"phone": "+12025550123"}], "schedule": {"mode": "immediate"}}),
+    ("campaigns", "pause", {"campaign_id": "c"}),
+    ("campaigns", "resume", {"campaign_id": "c"}),
+    ("campaigns", "cancel", {"campaign_id": "c"}),
+])
+@pytest.mark.asyncio
+async def test_explicit_blank_idempotency_key_rejected_before_http(async_, key, resource, method, kwargs):
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    with pytest.raises(ValueError, match="Idempotency-Key"):
+        result = getattr(getattr(client.v3, resource), method)(**kwargs, idempotency_key=key)
+        if async_:
+            await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("key", ["", " ", "\t"])
+def test_agentkit_blank_idempotency_key_rejected_on_local_creation(async_, key):
+    agent = configured(make_client(lambda _: pytest.fail("must not send"), async_))
+    with pytest.raises(ValueError, match="idempotency_key"):
+        (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"], idempotency_key=key)

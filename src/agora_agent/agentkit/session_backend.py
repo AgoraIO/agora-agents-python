@@ -30,6 +30,8 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         raise TypeError("Session requires AsyncAgora" if asynchronous else "Session requires Agora")
     if getattr(client, "area_scope", None) == "cn":
         raise ValueError("Stored and ephemeral sessions in CN are unconfirmed")
+    if idempotency_key is not None and (not isinstance(idempotency_key, str) or not idempotency_key.strip()):
+        raise ValueError("idempotency_key must be a nonempty string")
     if client_reference is not None:
         raise ValueError("client_reference has been removed; use labels for application metadata")
     invalid = [key for key, value in unsupported.items() if value is not None]

@@ -9,6 +9,8 @@ def validate_public_headers(headers):
         lower = name.lower()
         if lower.startswith("x-studio-") or lower == "x-consumer-username" or lower.startswith("x-agora-gateway") or lower in {"gateway", "x-gateway-token", "x-gateway-key"}:
             raise ValueError("Internal gateway/region headers are not public: " + name)
+        if lower == "idempotency-key" and value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError("Idempotency-Key must be a nonempty string")
         if lower == "authorization" and value and not re.fullmatch(r"agora token=\S+", str(value), re.IGNORECASE):
             raise ValueError("Only Agora token authentication is supported")
 
