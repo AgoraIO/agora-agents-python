@@ -1044,3 +1044,30 @@ async def test_unknown_start_can_retry_original_idempotency_key(async_):
             session.start()
         assert session.start() == "s"
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("ephemeral", [False, True])
+@pytest.mark.asyncio
+async def test_lowlevel_telephony_session_transport_union(async_, ephemeral):
+    calls = []
+    source = "7b1e4c2d-5a6f-4e8b-9c0d-1f2a3b4c5d6e"
+    transport = {"type": "telephony", "from": source, "to": "+16505550188", "call_policy": {"max_ring_duration_ms": 30000, "max_call_duration_seconds": 900, "max_silence_duration_ms": 5000, "voicemail": {"mode": "hangup"}, "end_call": {"on_user_request": True}, "transfer": {"phone_number": "+12025550123", "description": "Talk to a person"}}}
+    def handler(request):
+        calls.append(request)
+        assert json.loads(request.content)["transport"] == transport
+        assert request.headers["Idempotency-Key"] == "call-1"
+        return httpx.Response(200, json={"agent_session_id": "phone-session", "create_ts": 1, "status": "STARTING"})
+    client = make_client(handler, async_)
+    method = client.v3.sessions.start_ephemeral if ephemeral else client.v3.sessions.start
+    result = method(**({"agent": {"instructions": "Help"}} if ephemeral else {"agent_id": "saved"}), transport=transport, idempotency_key="call-1")
+    response = await result if async_ else result
+    assert response["agent_session_id"] == "phone-session"
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("transport", [{"type": "telephony", "from": "+16505550188", "to": "+12025550123"}, {"type": "telephony", "from": "7b1e4c2d-5a6f-4e8b-9c0d-1f2a3b4c5d6e", "to": "national"}, {"type": "telephony", "from": "7b1e4c2d-5a6f-4e8b-9c0d-1f2a3b4c5d6e", "to": "+12025550123", "call_policy": {"max_ring_duration_ms": 0}}])
+def test_lowlevel_telephony_rejects_invalid_source_destination_and_policy(transport):
+    client = make_client(lambda _: pytest.fail("must not send"))
+    with pytest.raises(ValueError):
+        client.v3.sessions.start(agent_id="a", transport=transport)

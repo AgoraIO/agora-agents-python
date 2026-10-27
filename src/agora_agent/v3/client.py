@@ -26,7 +26,6 @@ from .types import (
     NumberDeleteResponse,
     NumberListResponse,
     NumberResponse,
-    RtcSessionTransport,
     SecretDeleted,
     SecretKey,
     SecretList,
@@ -34,6 +33,7 @@ from .types import (
     SessionLifecycle,
     SessionList,
     SessionResponse,
+    SessionTransport,
     SipTrunkInput,
     StartSessionResponse,
 )
@@ -179,10 +179,10 @@ def _NumbersClient(owner, options):
     return client
 
 class SessionsClient(Resource):
-    def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+    def start(self, *, agent_id: str, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
         return self.with_raw_response.start(agent_id=agent_id, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options).data
 
-    def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+    def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
         return self.with_raw_response.start_ephemeral(agent=agent, labels=labels, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, appid=appid, request_options=request_options).data
 
     def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> dict:
@@ -198,11 +198,11 @@ class SessionsClient(Resource):
 
 
 class SessionsRawClient(Resource):
-    def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+    def start(self, *, agent_id: str, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
         segment(agent_id)
         return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
-    def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+    def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
         return self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, **({'labels': labels} if labels is not None else {}), 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
     def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
@@ -366,10 +366,10 @@ def _AsyncNumbersClient(owner, options):
     return client
 
 class AsyncSessionsClient(AsyncResource):
-    async def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+    async def start(self, *, agent_id: str, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
         return (await self.with_raw_response.start(agent_id=agent_id, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, labels=labels, appid=appid, request_options=request_options)).data
 
-    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
+    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> StartSessionResponse:
         return (await self.with_raw_response.start_ephemeral(agent=agent, labels=labels, transport=transport, values=values, idempotency_key=idempotency_key, data_policy=data_policy, lifecycle=lifecycle, appid=appid, request_options=request_options)).data
 
     async def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> dict:
@@ -385,11 +385,11 @@ class AsyncSessionsClient(AsyncResource):
 
 
 class AsyncSessionsRawClient(AsyncResource):
-    async def start(self, *, agent_id: str, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+    async def start(self, *, agent_id: str, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, labels: Optional[Dict[str, str]] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
         segment(agent_id)
         return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions', body={'agent_id': agent_id, 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {}), **({'labels': labels} if labels is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
-    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: RtcSessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
+    async def start_ephemeral(self, *, agent: EphemeralSessionAgent, labels: Optional[Dict[str, str]] = None, transport: SessionTransport, values: Optional[Dict[str, Union[str, int, float, bool]]] = None, idempotency_key: Optional[str] = None, data_policy: Optional[DataPolicy] = None, lifecycle: Optional[SessionLifecycle] = None, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
         return await self._request('POST', f'/conversational-ai/v1/projects/{segment(self.owner.app_id if appid is None else appid)}/sessions/ephemeral', body={'agent': agent, **({'labels': labels} if labels is not None else {}), 'transport': transport, **({'values': values} if values is not None else {}), **({'data_policy': data_policy} if data_policy is not None else {}), **({'lifecycle': lifecycle} if lifecycle is not None else {})}, headers={'Idempotency-Key': idempotency_key}, params={}, request_options=request_options)
 
     async def stop(self, *, agent_session_id: str, appid: Optional[str] = None, request_options: Optional[dict] = None) -> RawResponse:
