@@ -716,7 +716,8 @@ class AgentSession(_AgentSessionBase):
                 self._client.v3.sessions.stop(agent_session_id=self._agent_id)
             except Exception as error:
                 if getattr(error, "status_code", None) == 409:
-                    reason = (getattr(error, "body", None) or {}).get("reason")
+                    error_body = getattr(error, "body", None)
+                    reason = error_body.get("reason") if isinstance(error_body, dict) else None
                     if reason == "TaskNotRunning":
                         self._status = "stopped"
                     elif reason == "TaskConflict":
@@ -1147,7 +1148,8 @@ class AsyncAgentSession(_AgentSessionBase):
                 await self._client.v3.sessions.stop(agent_session_id=self._agent_id)
             except Exception as error:
                 if getattr(error, "status_code", None) == 409:
-                    reason = (getattr(error, "body", None) or {}).get("reason")
+                    error_body = getattr(error, "body", None)
+                    reason = error_body.get("reason") if isinstance(error_body, dict) else None
                     if reason == "TaskNotRunning":
                         self._status = "stopped"
                     elif reason == "TaskConflict":

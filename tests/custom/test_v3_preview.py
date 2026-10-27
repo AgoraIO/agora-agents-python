@@ -1229,3 +1229,27 @@ async def test_latest_strips_global_and_http_client_write_conditions_without_mut
     assert http.headers["If-Match"] == "http-default"
     assert client._client_wrapper.get_custom_headers()["If-Match"] == "sdk-default"
     assert client._v3_options.headers["If-None-Match"] == "v3-default"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("payload", ["plain conflict", ["unexpected", "array"]])
+@pytest.mark.asyncio
+async def test_stop_preserves_nonobject_409_api_error(async_, payload):
+    from agora_agent.core.api_error import ApiError
+    def handler(request):
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(409, text=payload) if isinstance(payload, str) else httpx.Response(409, json=payload)
+        return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING", "create_ts": 1})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"])
+    if async_:
+        await session.start()
+        with pytest.raises(ApiError) as caught:
+            await session.stop()
+    else:
+        session.start()
+        with pytest.raises(ApiError) as caught:
+            session.stop()
+    assert caught.value.status_code == 409
+    assert caught.value.body == payload
+    assert session.status == "error"
