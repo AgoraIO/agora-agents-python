@@ -60,7 +60,7 @@ async def test_new_runtime_update_and_auto_uid(async_):
     assert requests[-1].method == "PATCH"
     assert json.loads(requests[-1].content) == {"transport": {"token": "renewed"}, "agent": {"overrides": {"messages": properties["messages"], "pipeline": {"mllm": properties["mllm"]}}}}
     assert properties == before
-    for invalid in ({"llm": {"params": {}}, "mllm": {"params": {}}}, {"llm": {"params": {"url": "https://other"}}}, {"token": None}, {"instructions": "no"}):
+    for invalid in ({"llm": {"params": {}}, "mllm": {"params": {}}}, {"llm": {"params": {"url": "https://other"}}}, {"mllm": {"params": {"endpoint": "https://other"}}}, {"token": None}, {"instructions": "no"}):
         count = len(requests)
         with pytest.raises(ValueError):
             result = session.update(invalid)

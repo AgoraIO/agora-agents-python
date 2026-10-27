@@ -157,6 +157,6 @@ def validate_write(method, path, body):
                 if tail.startswith("sessions/") and method == "PATCH":
                     pipeline = body.get("agent", {}).get("overrides", {}).get("pipeline", {})
                     for module in pipeline.values():
-                        if {"url", "base_url", "api_base_url"}.intersection(module.get("params", {})):
+                        if {"url", "base_url", "api_base_url", "endpoint"}.intersection(module.get("params", {})):
                             raise ValueError("Session update cannot change endpoint aliases")
             return
