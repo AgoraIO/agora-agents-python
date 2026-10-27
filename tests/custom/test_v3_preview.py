@@ -957,6 +957,77 @@ async def test_async_session_restart_does_not_expose_previous_id_while_starting(
     assert stopped_ids == ["s1", "s2"]
 
 
+@pytest.mark.asyncio
+async def test_async_session_info_uses_newest_issued_read():
+    first_entered = asyncio.Event()
+    release_first = asyncio.Event()
+    gets = 0
+    async def handler(request):
+        nonlocal gets
+        if request.method == "GET":
+            gets += 1
+            if gets == 1:
+                first_entered.set()
+                await asyncio.wait_for(release_first.wait(), timeout=3)
+                return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING"})
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "STOPPED"})
+        return httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"})
+    session = configured(make_client(handler, True)).create_async_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=1)
+    await session.start()
+    older = asyncio.create_task(session.get_info())
+    await asyncio.wait_for(first_entered.wait(), timeout=3)
+    await session.get_info()
+    assert session.status == "stopped"
+    release_first.set()
+    await older
+    assert session.status == "stopped"
+
+
+@pytest.mark.asyncio
+async def test_async_session_get_info_during_stop_cannot_restore_running():
+    stop_entered = asyncio.Event()
+    release_stop = asyncio.Event()
+    async def handler(request):
+        if request.url.path.endswith("/stop"):
+            stop_entered.set()
+            await asyncio.wait_for(release_stop.wait(), timeout=3)
+            return httpx.Response(200, json={})
+        if request.method == "GET":
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING"})
+        return httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"})
+    session = configured(make_client(handler, True)).create_async_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=1)
+    await session.start()
+    stopping = asyncio.create_task(session.stop())
+    await asyncio.wait_for(stop_entered.wait(), timeout=3)
+    await session.get_info()
+    assert session.status == "stopping"
+    release_stop.set()
+    await stopping
+    assert session.status == "stopped"
+
+
+@pytest.mark.asyncio
+async def test_async_stop_cancellation_clears_transition_and_allows_refresh():
+    stop_entered = asyncio.Event()
+    async def handler(request):
+        if request.url.path.endswith("/stop"):
+            stop_entered.set()
+            await asyncio.Event().wait()
+        if request.method == "GET":
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "STOPPED"})
+        return httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"})
+    session = configured(make_client(handler, True)).create_async_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=1)
+    await session.start()
+    stopping = asyncio.create_task(session.stop())
+    await asyncio.wait_for(stop_entered.wait(), timeout=3)
+    stopping.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await stopping
+    assert session.status == "error"
+    assert await session.get_info() == {"agent_session_id": "s", "status": "STOPPED"}
+    assert session.status == "stopped"
+
+
 @pytest.mark.parametrize("async_", [False, True])
 @pytest.mark.parametrize("reason,expected", [("TaskNotRunning", "stopped"), ("TaskConflict", "stopping"), ("Other", "error")])
 @pytest.mark.asyncio
