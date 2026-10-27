@@ -1139,6 +1139,26 @@ def test_blank_authorization_overrides_rejected_before_request():
     assert sent[0].headers.get_list("authorization") == ["agora token=override"]
 
 
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_generated_client_requires_effective_token_before_http(async_):
+    from agora_agent.client import Agora as GeneratedAgora
+    from agora_agent.client import AsyncAgora as GeneratedAsyncAgora
+
+    http = (httpx.AsyncClient if async_ else httpx.Client)(
+        transport=httpx.MockTransport(lambda _: pytest.fail("must not send"))
+    )
+    raw = (GeneratedAsyncAgora if async_ else GeneratedAgora)(authorization=None, httpx_client=http)
+    with pytest.raises(ValueError, match="authorization is required"):
+        result = raw.agents.get("project", "agent")
+        if async_:
+            await result
+    if async_:
+        await http.aclose()
+    else:
+        http.close()
+
+
 @pytest.mark.parametrize("resource,kwargs", [("secrets", {"name": "s", "secrets": {"k": "v"}}), ("numbers", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}})])
 def test_unsupported_provisioning_idempotency_rejected(resource, kwargs):
     method = getattr(make_client(lambda _: pytest.fail("must not send")).v3, resource).create

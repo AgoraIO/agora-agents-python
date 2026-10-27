@@ -24,7 +24,10 @@ def validate_public_options(options):
 
 def validate_effective_public_headers(*sources):
     """Validate the case-insensitive merged headers that will reach HTTPX."""
-    validate_public_headers(merge_public_headers(*sources))
+    merged = merge_public_headers(*sources)
+    validate_public_headers(merged)
+    if not any(name.lower() == "authorization" for name in merged):
+        raise ValueError("Agora token authorization is required")
 
 
 def merge_public_headers(*sources):
