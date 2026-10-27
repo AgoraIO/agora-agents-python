@@ -1071,3 +1071,39 @@ def test_lowlevel_telephony_rejects_invalid_source_destination_and_policy(transp
     client = make_client(lambda _: pytest.fail("must not send"))
     with pytest.raises(ValueError):
         client.v3.sessions.start(agent_id="a", transport=transport)
+
+
+@pytest.mark.parametrize("vendor", ["sensetime", "spatius"])
+@pytest.mark.parametrize("reference", [False, True])
+def test_public_avatar_vendor_keys_use_write_only_credential_envelope(vendor, reference):
+    import copy
+
+    from agora_agent.agentkit.vendors.cn import SenseTimeAvatar, SpatiusAvatar
+    calls = []
+    key = secret_ref("avatars", vendor) if reference else "inline-avatar-key"
+    avatar = (SenseTimeAvatar(agora_uid="3", app_id="app", app_key=key) if vendor == "sensetime" else SpatiusAvatar(agora_uid="3", spatius_app_id="app", spatius_avatar_id="avatar", spatius_api_key=key))
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(201, json={"agent_id": "a", "agent_name": "Avatar"}, headers={"ETag": '"1"'})
+    agent = configured(make_client(handler)).with_avatar(avatar)
+    before = copy.deepcopy(agent.config)
+    agent.save(name="Avatar")
+    body = json.loads(calls[0].content)["pipeline"]["avatar"]
+    assert body["vendor"] == vendor
+    assert body["credential"] == {"mode": "byok", "api_key": key}
+    assert "app_key" not in body.get("params", {})
+    assert "spatius_api_key" not in body.get("params", {})
+    assert body["params"]["agora_uid"] == "3"
+    assert agent.config == before
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize("origin", ["https://customer:secret@preview.ai.agora.io", "https://preview.ai.agora.io?", "https://preview.ai.agora.io#"])
+@pytest.mark.asyncio
+async def test_public_origin_rejects_embedded_credentials(async_, origin):
+    client = make_client(lambda _: pytest.fail("must not send"), async_)
+    client._v3_options = V3Options(base_url=origin)
+    with pytest.raises(ValueError, match="origin"):
+        result = client.v3.agents.list()
+        if async_:
+            await result

@@ -97,8 +97,13 @@ def module(config, category, errors):
         if preset_model is not None:
             params.setdefault("model", preset_model)
     keys = []
+    credential_fields = ["api_key", "key", "api_subscription_key"]
+    if category == "avatar" and config.get("vendor") == "sensetime":
+        credential_fields.append("app_key")
+    if category == "avatar" and config.get("vendor") == "spatius":
+        credential_fields.append("spatius_api_key")
     for source in (config, params):
-        for field in ("api_key", "key", "api_subscription_key"):
+        for field in credential_fields:
             if field in source:
                 keys.append(source.pop(field))
     multipart = {"aws_access_key_id", "aws_secret_access_key", "access_key", "secret_key", "adc_credentials_string", "service_account", "credentials"}

@@ -74,7 +74,7 @@ class Resource:
         if not base:
             base = "https://preview.ai.agora.io"
         parsed = urlsplit(base)
-        if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
+        if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment or parsed.username is not None or parsed.password is not None or "?" in base or "#" in base:
             raise ValueError("v3 base_url must be an HTTP(S) origin without query or fragment")
         base = base.rstrip("/")
         merged = dict(self.options.headers)
