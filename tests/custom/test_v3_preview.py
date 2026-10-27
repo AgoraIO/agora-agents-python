@@ -39,7 +39,7 @@ OPERATIONS = [
     ("secrets", "delete", {"name": "prod", "if_match": '"1"'}, "DELETE", "secrets/prod", None),
     ("secrets", "set_key", {"name": "prod", "key": "k", "if_none_match": "*", "value": "v"}, "PUT", "secrets/prod/keys/k", {"value": "v"}),
     ("secrets", "delete_key", {"name": "prod", "key": "k", "if_match": '"1"'}, "DELETE", "secrets/prod/keys/k", None),
-    ("numbers", "create", {"number": "+12025550123", "sip_trunk": {"host": "sip.example"}}, "POST", "numbers", {"number": "+12025550123", "sip_trunk": {"host": "sip.example"}}),
+    ("numbers", "create", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}}, "POST", "numbers", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}}),
     ("numbers", "list", {}, "GET", "numbers", None),
     ("numbers", "get", {"number_id": "n"}, "GET", "numbers/n", None),
     ("numbers", "update", {"number_id": "n", "if_match": '"1"', "inbound": {"agent": None}}, "PATCH", "numbers/n", {"inbound": {"agent": None}}),
@@ -48,6 +48,7 @@ OPERATIONS = [
     ("sessions", "get", {"agent_session_id": "s"}, "GET", "sessions/s", None),
     ("sessions", "start", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}, "POST", "sessions", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}),
     ("sessions", "start_ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "lifecycle": {"max_duration_ms": 120000}}, "POST", "sessions/ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "lifecycle": {"max_duration_ms": 120000}}),
+    ("sessions", "update", {"agent_session_id": "s", "transport": {"token": "new-token"}, "agent": {"overrides": {"pipeline": {"mllm": {"params": {"temperature": 0.2}}}}}}, "PATCH", "sessions/s", {"transport": {"token": "new-token"}, "agent": {"overrides": {"pipeline": {"mllm": {"params": {"temperature": 0.2}}}}}}),
     ("sessions", "stop", {"agent_session_id": "session/a"}, "POST", "sessions/session%2Fa/stop", None),
     ('campaigns', 'create', {'name': 'Outreach', 'agent_id': 'a', 'contacts': [{'phone': '+12025550123'}], 'schedule': {'mode': 'immediate'}, 'transport': {'type': 'telephony', 'from': 'n'}, 'idempotency_key': 'key'}, 'POST', 'campaigns', {'name': 'Outreach', 'agent_id': 'a', 'contacts': [{'phone': '+12025550123'}], 'schedule': {'mode': 'immediate'}, 'transport': {'type': 'telephony', 'from': 'n'}}),
     ('campaigns', 'list', {'limit': 5, 'status': 'running'}, 'GET', 'campaigns', None),
@@ -155,7 +156,7 @@ async def test_latest_reload_does_not_replay_additional_write_body(async_):
     with pytest.raises(PreconditionFailedError) as caught:
         result = client.v3.agents.update(
             agent_id="a", if_match='"old"', instructions="updated",
-            request_options={"additional_body_parameters": {"unexpected": "write-only"}},
+            request_options={"additional_body_parameters": {"messages": [{"role": "user", "content": "write-only"}]}},
         )
         if async_:
             await result
@@ -164,12 +165,12 @@ async def test_latest_reload_does_not_replay_additional_write_body(async_):
         latest = await latest
     assert latest == {"agent_id": "a"}
     assert calls[0].method == "PATCH"
-    assert json.loads(calls[0].content)["unexpected"] == "write-only"
+    assert json.loads(calls[0].content)["messages"] == [{"role": "user", "content": "write-only"}]
     assert calls[1].method == "GET"
     assert calls[1].content == b""
 
 
-@pytest.mark.parametrize("resource,kwargs", [("agents", {"agent_name": "x"}), ("numbers", {"number": "+1", "sip_trunk": {}})])
+@pytest.mark.parametrize("resource,kwargs", [("agents", {"agent_name": "x"}), ("numbers", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}})])
 def test_nonidempotent_create_is_never_retried(resource, kwargs):
     calls = []
     def handler(request):
@@ -197,7 +198,7 @@ def configured(client):
         .with_stt(DeepgramSTT(api_key=secret_ref("prod", "dg"), model="nova-3"))
         .with_llm(OpenAI(api_key=secret_ref("prod", "openai"), base_url="https://api.openai.com/v1/chat/completions", model="gpt-4o-mini",
                         system_messages=[{"role": "system", "content": "Vendor instructions"}, {"role": "user", "content": "Hello"}], greeting_message="Hi"))
-        .with_tts(OpenAITTS(api_key="tts-key", base_url="https://api.openai.com/v1/audio/speech", voice="alloy", model="tts-1")))
+        .with_tts(OpenAITTS(api_key=secret_ref("prod", "tts"), base_url="https://api.openai.com/v1/audio/speech", voice="alloy", model="tts-1")))
 
 
 def test_deploy_mapping_and_immutable_variables():
@@ -214,8 +215,8 @@ def test_deploy_mapping_and_immutable_variables():
     assert body["messages"] == [{"role": "user", "content": "Hello"}]
     assert body["greeting"] == {"mode": "text", "text": "Hi"}
     assert body["variables"]["resolved"]["type"] == "bool"
-    assert body["pipeline"]["asr"] == {"vendor": "deepgram", "model": "nova-3", "language": "en-US", "credential": {"mode": "byok", "api_key": "$secrets.prod.dg"}}
-    assert body["pipeline"]["llm"]["credential"]["api_key"] == "$secrets.prod.openai"
+    assert body["pipeline"]["asr"] == {"vendor": "deepgram", "model": "nova-3", "language": "en-US", "credential": {"mode": "byok", "fields": {"api_key": "$secrets.prod.dg"}}}
+    assert body["pipeline"]["llm"]["credential"]["fields"]["api_key"] == "$secrets.prod.openai"
     assert "variables" not in build_body(base)
     assert deployed.raw is client.v3.agents
     assert (deployed.id, deployed.name, deployed.etag) == ("a", "Support", '"1"')
@@ -237,7 +238,7 @@ def test_redeploy_recursively_clears_readable_fields_and_writeonly_key():
     assert "agent_id" not in patch and "create_ts" not in patch and "update_ts" not in patch
     assert patch["pipeline"]["asr"] is None
     assert patch["pipeline"]["llm"]["params"]["stale"] is None
-    assert patch["pipeline"]["llm"]["credential"] == {"mode": "managed", "api_key": None}
+    assert patch["pipeline"]["llm"]["credential"] == {"mode": "managed", "fields": None}
 
 
 def test_real_turn_interruption_greeting_and_silence_mapping():
@@ -277,12 +278,12 @@ def test_strict_unsupported_fields_are_aggregated_before_network():
 def test_multipart_credentials_and_numeric_skip_patterns_rejected():
     errors = []
     module({"vendor": "amazon", "params": {"aws_access_key_id": "a", "aws_secret_access_key": "s"}, "skip_patterns": [1]}, "tts", errors)
-    assert any("aws_secret_access_key" in x for x in errors)
+    assert not any("aws_secret_access_key" in x for x in errors)
     assert any("skip_patterns" in x for x in errors)
     errors = []
     result = module({"vendor": "microsoft", "params": {"api_subscription_key": "key", "region": "eastus"}}, "tts", errors)
     assert not errors
-    assert result["credential"] == {"mode": "byok", "api_key": "key"}
+    assert result["credential"] == {"mode": "byok", "fields": {"key": "key"}}
     assert result["params"] == {"region": "eastus"}
 
 
@@ -533,7 +534,7 @@ async def test_deploy_preserves_interaction_and_provider_languages(async_):
         requests.append(request)
         return httpx.Response(201, json={"agent_id": "a", "agent_name": "German"}, headers={"ETag": '"1"'})
     agent = (Agent(client=make_client(handler, async_))
-             .with_stt(DeepgramSTT(api_key="key", model="nova-3", language="fr"))
+             .with_stt(DeepgramSTT(api_key=secret_ref("prod", "dg"), model="nova-3", language="fr"))
              .with_turn_detection({"mode": "default", "language": "de-DE"}))
     if async_:
         await agent.deploy_async(name="German")
@@ -543,7 +544,7 @@ async def test_deploy_preserves_interaction_and_provider_languages(async_):
     assert pipeline["asr"]["language"] == "de-DE"
     assert pipeline["asr"]["params"]["language"] == "fr"
     assert "language" not in pipeline.get("turn_detection", {})
-    v2 = agent.to_properties(channel="room", agent_uid="1", remote_uids=["*"], token="rtc",
+    v2 = agent.with_stt(DeepgramSTT(api_key="inline", model="nova-3", language="fr")).to_properties(channel="room", agent_uid="1", remote_uids=["*"], token="rtc",
                              allow_missing_vendor_categories={"llm", "tts"}).model_dump(exclude_none=True)
     assert v2["asr"]["language"] == pipeline["asr"]["language"]
     assert v2["asr"]["params"]["language"] == pipeline["asr"]["params"]["language"]
@@ -561,7 +562,7 @@ def test_explicit_interaction_language_uses_existing_managed_asr_fallback():
     assert "language" not in pipeline.get("turn_detection", {})
     assert "asr" not in build_body(Agent(client=client))["pipeline"]
     assert "asr" not in build_body(Agent(client=client).with_llm(OpenAI(model="gpt-4o-mini")))["pipeline"]
-    default = build_body(Agent(client=client).with_stt(DeepgramSTT(api_key="key", model="nova-3", language="fr")))
+    default = build_body(Agent(client=client).with_stt(DeepgramSTT(api_key=secret_ref("prod", "dg"), model="nova-3", language="fr")))
     assert default["pipeline"]["asr"]["language"] == "en-US"
     assert default["pipeline"]["asr"]["params"]["language"] == "fr"
 
@@ -642,14 +643,15 @@ async def test_one_builder_creates_session_or_saved_handle_with_unversioned_prov
              .with_llm(OpenAI(api_key="inline-key", base_url="https://api.openai.com/v1/chat/completions", model="gpt-4o-mini"))
              .with_tts(OpenAITTS(api_key="tts-key", base_url="https://api.openai.com/v1/audio/speech", model="tts-1", voice="alloy")))
     snapshot = copy.deepcopy(agent.config)
+    saved_config = configured(client)
     if async_:
         session = agent.create_async_session(channel="room", agent_uid="1", remote_uids=["*"], token="rtc")
         assert await session.start() == "running-session"
         await client.secrets.create(name="support", secrets={"openai": "key"})
         number = await client.numbers.create(number="+12025550123", sip_trunk={"hostname": "sip.example"})
-        saved = await agent.save_async(name="Support")
+        saved = await saved_config.save_async(name="Support")
         await saved.assign_number(number)
-        updated = await saved.update(agent.with_greeting("Updated"))
+        updated = await saved.update(saved_config.with_greeting("Updated"))
         assert isinstance(saved, AsyncSavedAgent)
         loaded = await AsyncSavedAgent.get(client, saved.id)
     else:
@@ -657,9 +659,9 @@ async def test_one_builder_creates_session_or_saved_handle_with_unversioned_prov
         assert session.start() == "running-session"
         client.secrets.create(name="support", secrets={"openai": "key"})
         number = client.numbers.create(number="+12025550123", sip_trunk={"hostname": "sip.example"})
-        saved = agent.save(name="Support")
+        saved = saved_config.save(name="Support")
         saved.assign_number(number)
-        updated = saved.update(agent.with_greeting("Updated"))
+        updated = saved.update(saved_config.with_greeting("Updated"))
         assert isinstance(saved, SavedAgent)
         loaded = SavedAgent.get(client, saved.id)
     assert updated.id == loaded.id == saved.id == "a"
@@ -672,9 +674,9 @@ async def test_one_builder_creates_session_or_saved_handle_with_unversioned_prov
     assert patch.headers["If-Match"] == '"current"'
     assert json.loads(patch.content)["agent_name"] == "Support"
     if async_:
-        renamed = await saved.update(agent, name="Renamed")
+        renamed = await saved.update(saved_config, name="Renamed")
     else:
-        renamed = saved.update(agent, name="Renamed")
+        renamed = saved.update(saved_config, name="Renamed")
     assert renamed.name == "Renamed"
     assert saved.name == "Support"
 
@@ -717,7 +719,7 @@ async def test_saved_and_secret_ephemeral_lifecycle(async_, stored):
             else:
                 assert path.endswith("/sessions/ephemeral")
                 assert "agent_name" not in body["agent"]
-                assert body["agent"]["pipeline"]["llm"]["credential"]["api_key"] == "$secrets.prod.openai"
+                assert body["agent"]["pipeline"]["llm"]["credential"]["fields"]["api_key"] == "$secrets.prod.openai"
                 assert "variables" in body["agent"]
             return httpx.Response(201, json={"agent_session_id": "new-session-id", "status": "running", "created_at": "unspecified"})
         assert path.endswith("/sessions/new-session-id" + ("/stop" if request.method == "POST" else ""))
@@ -777,7 +779,7 @@ async def test_new_session_stop_404_propagates_and_controls_never_request(async_
         await session.start()
     else:
         session.start()
-    for method, args in (("interrupt", ()), ("think", ("test",)), ("update", ({},)), ("get_history", ()), ("get_turns", ()), ("get_all_turns", ())):
+    for method, args in (("interrupt", ()), ("think", ("test",)), ("get_history", ()), ("get_turns", ()), ("get_all_turns", ())):
         with pytest.raises(NotImplementedError):
             result = getattr(session, method)(*args)
             if async_:
@@ -821,15 +823,15 @@ async def test_new_session_stop_does_not_hide_unrelated_404(async_):
 
 @pytest.mark.parametrize("async_", [False, True])
 @pytest.mark.parametrize("stored", [False, True])
-def test_new_sessions_reject_cn_before_network(async_, stored):
+def test_preview_does_not_hardcode_rollout_regions(async_, stored):
     from agora_agent import AsyncSavedAgent, SavedAgent
     from agora_agent.v3 import RawResponse
     client = make_client(lambda _: pytest.fail("must not send"), async_)
     client._area = Area.CN
     owner = ((AsyncSavedAgent if async_ else SavedAgent)(client, RawResponse(data={"agent_id": "id", "agent_name": "name"}, headers=httpx.Headers(), status_code=200, response=httpx.Response(200))) if stored else configured(client))
     method = owner.create_async_session if async_ and not stored else owner.create_session
-    with pytest.raises(ValueError, match="CN"):
-        method(channel="r", agent_uid="1", remote_uids=["2"])
+    session = method(channel="r", agent_uid="1", remote_uids=["2"])
+    assert session.status == "idle"
 
 
 def test_new_sessions_reference_precedence_and_whitespace_uids():
@@ -1338,10 +1340,16 @@ def test_public_avatar_vendor_keys_use_write_only_credential_envelope(vendor, re
         return httpx.Response(201, json={"agent_id": "a", "agent_name": "Avatar"}, headers={"ETag": '"1"'})
     agent = configured(make_client(handler)).with_avatar(avatar)
     before = copy.deepcopy(agent.config)
-    agent.save(name="Avatar")
-    body = json.loads(calls[0].content)["pipeline"]["avatar"]
+    if reference:
+        agent.save(name="Avatar")
+        body = json.loads(calls[0].content)["pipeline"]["avatar"]
+    else:
+        with pytest.raises(ValueError, match="secret_ref"):
+            agent.save(name="Avatar")
+        assert not calls
+        body = build_body(agent)["pipeline"]["avatar"]
     assert body["vendor"] == vendor
-    assert body["credential"] == {"mode": "byok", "api_key": key}
+    assert body["credential"] == {"mode": "byok", "fields": {"app_key" if vendor == "sensetime" else "spatius_api_key": key}}
     assert "app_key" not in body.get("params", {})
     assert "spatius_api_key" not in body.get("params", {})
     assert body["params"]["agora_uid"] == "3"
@@ -1541,5 +1549,5 @@ async def test_explicit_blank_idempotency_key_rejected_before_http(async_, key, 
 @pytest.mark.parametrize("key", ["", " ", "\t"])
 def test_agentkit_blank_idempotency_key_rejected_on_local_creation(async_, key):
     agent = configured(make_client(lambda _: pytest.fail("must not send"), async_))
-    with pytest.raises(ValueError, match="idempotency_key"):
+    with pytest.raises(ValueError, match="Idempotency-Key"):
         (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"], idempotency_key=key)

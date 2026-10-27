@@ -71,6 +71,12 @@ class Resource:
 
     def _arguments(self, method, path, body, headers, params, request_options):
         wrapper = self.owner._client_wrapper
+        body = _body(body)
+        from .contract import validate_write
+        additional = (request_options or {}).get("additional_body_parameters", {}) or {}
+        if body is None and additional and method not in {"GET", "DELETE"}:
+            raise ValueError("This operation does not accept a request body")
+        validate_write(method, path, {**body, **additional} if isinstance(body, dict) else body)
         if method == "POST" and path.endswith(("/sessions", "/sessions/ephemeral")):
             from .session_contract import validate_session
             validate_session({**body, **((request_options or {}).get("additional_body_parameters", {}) or {})})

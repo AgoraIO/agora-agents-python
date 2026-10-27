@@ -6,25 +6,27 @@ Saving and project secrets/numbers require this preview checkout, installed with
 
 ```python
 import os
-from agora_agent import Agent, DeepgramSTT, OpenAI, OpenAITTS, SavedAgent
+from agora_agent import Agent, DeepgramSTT, OpenAI, OpenAITTS, SavedAgent, secret_ref
 
 # `client` is the Agora instance configured once in the linked transport setup.
+# Provision once; future runs reuse the stored secret set.
+client.secrets.create(name="support", secrets={"deepgram": os.environ["DEEPGRAM_API_KEY"], "openai": os.environ["OPENAI_API_KEY"]})
 agent = (
     Agent(client=client)
-    .with_stt(DeepgramSTT(api_key=os.environ["DEEPGRAM_API_KEY"], model="nova-3"))
+    .with_stt(DeepgramSTT(api_key=secret_ref("support", "deepgram"), model="nova-3"))
     .with_llm(OpenAI(
-        api_key=os.environ["OPENAI_API_KEY"], model="gpt-4o-mini",
+        api_key=secret_ref("support", "openai"), model="gpt-4o-mini",
         base_url="https://api.openai.com/v1/chat/completions",
         system_messages=[{"role": "system", "content": "Help callers briefly."}],
     ))
     .with_tts(OpenAITTS(
-        api_key=os.environ["OPENAI_API_KEY"], model="tts-1", voice="alloy",
+        api_key=secret_ref("support", "openai"), model="tts-1", voice="alloy",
         base_url="https://api.openai.com/v1/audio/speech",
     ))
 )
 
 # Choose a running conversation. Constructing the handle is local; start() calls the service.
-session = agent.create_session(channel="room", agent_uid="1", remote_uids=["*"])
+session = agent.create_session(channel="room", agent_uid="1", remote_uids=["2"])
 session_id = session.start()
 # session.stop()
 
@@ -63,6 +65,8 @@ referenced = agent.with_llm(OpenAI(
 saved = saved.update(referenced)
 ```
 
+Saving BYOK configuration requires explicit secret references for every provider credential. Ephemeral sessions can also use inline credentials; saving those configurations fails locally and never creates secrets automatically. Omit `agent_uid` on the new transport to request server assignment; one nonzero subscriber is still required.
+
 Secret creation and number registration are provisioning operations, not steps to repeat for every conversation. Save IDs and use conditional updates for existing resources. `list_numbers()` scans all project pages and filters assignments locally; it costs one request per page, with no individual number GETs.
 
 The same builder can start directly with secret references and variable definitions: the SDK sends an ephemeral inline agent, without saving it or reading secret values back. Saved handles start by their stored ID. Neither flow implicitly caches or reverses write-only credentials.
@@ -96,9 +100,9 @@ session = saved.create_session(
 )
 ```
 
-Retention `none` disables stored conversation data and post-call extraction; operational-data exceptions remain open. Builder `parameters.opt_out` maps to session retention; `farewell_config.graceful_enabled` / `graceful_timeout_seconds` map to graceful stop (seconds × 1000). These are session options, not persisted agent fields; pass them when starting a saved agent. Graceful stop does not create a farewell message.
+Retention `none` disables retained conversation content and post-call extraction; the session resource and operational metadata can remain visible independently. Builder `parameters.opt_out` maps to session retention; `farewell_config.graceful_enabled` / `graceful_timeout_seconds` map to graceful stop (seconds × 1000). These are session options, not persisted agent fields; pass them when starting a saved agent. Graceful stop does not create a farewell message.
 
-Only start, stop and `get_info` are available for new session IDs; say/interrupt/think/update/history/turn helpers fail locally. The proposed session PATCH/action endpoints are not implemented. Start accepts corrected 200/`create_ts`/uppercase statuses and rollout 201/`created_at`/lowercase; low-level data normalizes to uppercase and `create_ts`. Handle states remain lowercase (`FAILED` becomes `error`). STARTING sessions can be stopped or read. Stop failures propagate: `404 TaskNotFound` is not success; `409 TaskNotRunning` records stopped and `409 TaskConflict` records stopping, while preserving the error for the caller.
+Start, stop, `get_info` and a limited `update` are available for new session IDs; say/interrupt/think/history/turn helpers fail locally. `session.update({"token": "renewed", "llm": {"params": {"temperature": 0.2}}})` updates token and replaces active provider params. `messages` (or `llm.system_messages`) updates conversation messages; realtime uses `mllm.params`. Credentials, URLs and other fields are rejected. Start accepts corrected 200/`create_ts`/uppercase statuses and rollout 201/`created_at`/lowercase; low-level data normalizes to uppercase and `create_ts`. Handle states remain lowercase (`FAILED` becomes `error`). STARTING sessions can be stopped or read. Stop failures propagate: `404 TaskNotFound` is not success; `409 TaskNotRunning` records stopped and `409 TaskConflict` records stopping, while preserving the error for the caller.
 
 ## Async applications
 
@@ -106,7 +110,7 @@ Bind the builder to `AsyncAgora`, keep the same provider methods, and use:
 
 ```python
 async def use_async_agent(agent):
-    session = agent.create_async_session(channel="room", agent_uid="1", remote_uids=["*"])
+    session = agent.create_async_session(channel="room", agent_uid="1", remote_uids=["2"])
     await session.start()
     saved = await agent.save_async(name="Support")
     saved = await saved.update(agent.with_greeting("Hello"))

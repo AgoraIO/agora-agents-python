@@ -1,6 +1,6 @@
 # Saving agent configurations (preview transport guide)
 
-For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers 31 documented operations, including eight campaign operations. See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
+For the everyday builder → session or saved-agent flow, start with the [agent workflow guide](./agent-workflow.md). Use `Agent.save()` to save a reusable configuration and assign it to an existing inbound number. The additive `client.v3` namespace covers 32 documented operations, including eight campaign operations. See the [complete v3 reference](../reference/v3.md) for method arguments and required headers.
 
 | Object or API | Meaning | Available now |
 |---|---|---|
@@ -82,9 +82,9 @@ print(loaded.id, loaded.name, loaded.etag, loaded.data)
 # loaded.delete()  # Delete the stored configuration when it is no longer needed.
 ```
 
-Updating GETs the latest ETag, then sends one conditional PATCH. It recursively nulls stale readable mutable fields, including nested provider params; IDs, timestamps and resolved credential metadata are excluded. Credentials come from the builder. Switching an existing module to managed mode explicitly nulls `api_key`.
+Updating GETs the latest ETag, then sends one conditional PATCH. It recursively nulls stale readable mutable fields, including nested provider params; IDs, timestamps and resolved credential metadata are excluded. Credentials come from the builder. Switching an existing module to managed mode explicitly nulls `credential.fields`. Updates null omitted known credential-field names of the previous vendor before writing the desired fields, including alternate credential forms for the same vendor.
 
-The reply marks full-replacement PATCH behavior as **Planned**, so the current SDK conservatively keeps this conditional merge-compatible update until backend support is confirmed. It does not assume planned replacement or name-based upsert. Write-only keys and headers cannot be reconstructed from GET, and omitted hidden values remain subject to backend merge semantics. Keep intended credentials in the builder or use a targeted [low-level update](../reference/v3.md#agents-five-operations) when retaining existing hidden credentials matters. Saved-agent update conflicts are surfaced without retry.
+Agent PATCH uses JSON Merge Patch with If-Match. The SDK clears readable stale fields and known provider credential fields, and does not assume name-based upsert. Custom credential-field names and write-only headers cannot be reconstructed from GET; use a deliberate targeted [low-level update](../reference/v3.md#agents-five-operations) when retaining existing hidden credentials matters. Saved-agent update conflicts are surfaced without retry.
 
 ## Assign and discover inbound numbers
 
@@ -167,11 +167,11 @@ Use `await error.latest()` after an async 412. `save()` requires an `Agora` clie
 
 ## Compatibility and backend limits
 
-Existing resources and ordinary inline `Agent.create_session()` behavior remain available. Secret references and variable definitions select ephemeral session start automatically; a saved handle selects start by stored ID. `to_properties()` still refuses secret references because it explicitly serializes the older session contract. New session start has no documented variable-value override or AgentKit extraction-results helper. See the [daily workflow](./agent-workflow.md) for session options and unsupported controls.
+Existing resources and ordinary inline `Agent.create_session()` behavior remain available. Secret references and variable definitions select ephemeral session start automatically; a saved handle selects start by stored ID. `to_properties()` still refuses secret references because it explicitly serializes the older session contract. Session starts accept `values` overrides; the current response contract does not expose an analysis-result field or an AgentKit extraction-results helper. See the [daily workflow](./agent-workflow.md) for session options and unsupported controls.
 
-`with_variable` returns a new builder. Names match `^[a-z][a-z0-9_]{0,63}$`; supported types are `str`, `int`, `float`, `bool`, `date`, `datetime`; `extract=True` requires a nonempty description (at most 2,000 characters). `options`, when supplied, contains 1–100 unique primitive values: equivalent numbers such as `1` and `1.0` count as duplicates, while `True`, `1`, and `"1"` remain distinct JSON types. `secret_ref(set_name, key)` validates 1–64 letters, digits, underscores or hyphens per component and returns `$secrets.<set>.<key>`. It creates a reference, not a secret value.
+`with_variable` returns a new builder. Names match `^[a-z][a-z0-9_]{0,63}$`; supported types are `str`, `int`, `float`, `bool`, `date`, `datetime`; `extract=True` requires a nonempty description (at most 2,000 characters). `options`, when supplied, contains 1–100 unique primitive values: equivalent numbers such as `1` and `1.0` count as duplicates, while `True`, `1`, and `"1"` remain distinct JSON types. `secret_ref(set_name, key)` validates 1–64 letters, digits, underscores per component and returns `$secrets.<set>.<key>`. It creates a reference, not a secret value.
 
-The central mapper reuses existing vendor configs. Vendor instructions and greetings take precedence over deprecated Agent fields; realtime `params.instructions` moves to top-level instructions, and supported vendor messages move to top-level `messages`. Provider API keys become `{mode: "byok", api_key: ...}`, while absent keys select `managed`. Realtime Agora, server and semantic VAD settings, supported text/audio greetings, silence settings and filler words are converted to v3 shapes. Greeting playback modes `single_every` and `single_first` map to `each_join` and `first_join`; other v2 modes without a v3 equivalent are rejected. A managed MiniMax TTS preset model is retained in `tts.params.model`.
+The central mapper reuses existing vendor configs. Vendor instructions and greetings take precedence over deprecated Agent fields; realtime `params.instructions` moves to top-level instructions, and supported vendor messages move to top-level `messages`. Provider keys become `{mode: "byok", fields: {<vendor-field>: ...}}`; for example OpenAI uses `api_key`, Microsoft ASR uses `key`, and Amazon ASR uses `access_key_id` / `secret_access_key`. Multipart Amazon and Google credentials retain their vendor field names. Saving BYOK configuration requires explicit `$secrets.<set>.<key>` references; ephemeral session start also accepts inline values. The SDK never auto-stores keys. Absent keys select `managed`. Realtime Agora, server and semantic VAD settings, supported text/audio greetings, silence settings and filler words are converted to v3 shapes. Greeting playback modes `single_every` and `single_first` map to `each_join` and `first_join`; other v2 modes without a v3 equivalent are rejected. A managed MiniMax TTS preset model is retained in `tts.params.model`.
 
 For cascaded deployment, `with_turn_detection({"language": "de-DE"})` sets `pipeline.asr.language`; provider-specific `params.language` remains separate. A configured STT follows v2 interaction-language precedence (the explicit turn language, otherwise `en-US`). An explicit interaction language without an STT vendor uses the existing managed `ares` fallback, without inventing a URL; managed modules omit URLs and let the server select the endpoint. A partial builder with neither STT nor an interaction language keeps ASR absent.
 
@@ -179,19 +179,19 @@ For cascaded deployment, `with_turn_detection({"language": "de-DE"})` sets `pipe
 |---|---|
 | Builder fields without stored-agent equivalents | One `UnsupportedFieldError.fields` list before network access: SAL, advanced features, geofence, labels, RTC, pipeline IDs, parameters other than `silence_config` |
 | Value-valued `template_variables` | Rejected; use `with_variable` definitions |
-| Multipart AWS/Vertex credentials, numeric v2 TTS `skip_patterns`, audio-only settings on text greetings, unmappable deprecated turn/greeting settings | Rejected rather than guessed or silently omitted |
+| Unmapped multipart credentials, numeric v2 TTS `skip_patterns`, audio-only settings on text greetings, unmappable deprecated turn/greeting settings | Rejected rather than guessed or silently omitted |
 | Tools/MCP/custom provider destinations | Deferred backend support; the server may reject otherwise typed fields |
-| Number `end_call`, `transfer`, `allowed_ips`, SIP-password secret references | Currently rejected or unsupported on staging |
+| Number policies | Inbound `end_call` (including `on_voicemail`) and IPv4/CIDR/`*` `allowed_ips` are supported. Inbound transfer remains unsupported; SIP password references are not supported |
 | Writes and retry options | All low-level writes disable automatic retries, even when `max_retries` is requested; assignment has only its explicit one-conflict retry |
 | Agent and number creation | Agent, secret and number creation do not support idempotency keys and reject explicit key arguments/headers. An uncertain create outcome requires inspection before manual retry |
-| Routing | Public preview host and v1 project path are confirmed; regional availability/failover remain open, and CN is refused |
-| Session controls and analysis helpers | Proposed PATCH/actions and AgentKit analysis helpers are not implemented |
+| Routing | Public preview host and v1 project path are confirmed; availability follows rollout release notes; no preview region allowlist is hardcoded |
+| Session controls and analysis helpers | PATCH supports token, messages and active LLM/MLLM params only. Say/interrupt/think/history/turn and extraction-result helpers are unavailable on new session IDs |
 
 The adapter shares the existing client's HTTP transport, authentication. New resources use the confirmed public preview origin; the origin override applies only to these resources. These docs and offline tests do not establish live backend availability.
 
 ## Maintainer provenance
 
-Wire schemas and methods are locally maintained from the supplied OpenAPI and engineering reply. The reply takes precedence where it corrects routing, authentication policy, session idempotency, status and timestamps. Campaign schema retry fields remain unconfirmed; no retry algorithm is implemented. They are protected custom code under `src/agora_agent/v3`, with a handwritten shared-transport adapter and AgentKit mapping. **They are not output from the repository's Fern generation pipeline.** This Python checkout does not contain the local generator or a vendored OpenAPI snapshot, so a reproducible generation workflow is not currently checked in.
+The shared corrected [OpenAPI JSON](../../openapi.json) is the generation input; [openapi.yaml](../../openapi.yaml) is the equivalent release handoff. Run `python3 scripts/generate-v3-preview.py` to regenerate TypedDict wire models, sync/async resources and the packaged `src/agora_agent/v3/openapi.json` snapshot, then run Homebrew Ruff on generated Python. Transport, validation and AgentKit mapping are handwritten. All are protected by `.fernignore`; this is a local preview generator, **not Fern output**. Campaign retry fields have been removed from the current contract; no retry algorithm is implemented.
 
 See [the v3 source](../../src/agora_agent/v3/client.py), [wire schemas](../../src/agora_agent/v3/types.py), [AgentKit mapping](../../src/agora_agent/agentkit/v3.py), and [offline contract tests](../../tests/custom/test_v3_preview.py). Preserve `.fernignore` protection when integrating a future canonical Fern namespace.
 

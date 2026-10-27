@@ -28,10 +28,9 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
     client = owner._client
     if not isinstance(client, AsyncAgora if asynchronous else Agora):
         raise TypeError("Session requires AsyncAgora" if asynchronous else "Session requires Agora")
-    if getattr(client, "area_scope", None) == "cn":
-        raise ValueError("Stored and ephemeral sessions in CN are unconfirmed")
-    if idempotency_key is not None and (not isinstance(idempotency_key, str) or not idempotency_key.strip()):
-        raise ValueError("idempotency_key must be a nonempty string")
+    if idempotency_key is not None:
+        from ..core.public_auth import validate_public_headers
+        validate_public_headers({"Idempotency-Key": idempotency_key})
     if client_reference is not None:
         raise ValueError("client_reference has been removed; use labels for application metadata")
     invalid = [key for key, value in unsupported.items() if value is not None]
@@ -39,12 +38,13 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         raise ValueError("Unsupported session options: " + ", ".join(sorted(invalid)))
     if not isinstance(channel, str) or not channel.strip():
         raise ValueError("channel must be nonempty")
-    if not isinstance(agent_uid, str) or not agent_uid.strip():
+    if agent_uid is not None and (not isinstance(agent_uid, str) or not agent_uid.strip()):
         raise ValueError("agent_uid must be nonempty")
     if not isinstance(remote_uids, list) or any(not isinstance(v, str) or not v.strip() for v in remote_uids):
         raise ValueError("remote_uids must be a list of nonempty strings")
-    body = {"transport": {"type": "rtc", "channel": channel, "uid": agent_uid,
-                           "subscribe_uids": list(remote_uids)}}
+    body = {"transport": {"type": "rtc", "channel": channel, "subscribe_uids": list(remote_uids)}}
+    if agent_uid is not None:
+        body["transport"]["uid"] = agent_uid
     if labels is None:
         labels = getattr(owner, "_labels", None)
     reference = name
@@ -109,3 +109,37 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
                         name=reference or "", channel=channel, agent_uid=agent_uid,
                         remote_uids=list(remote_uids), debug=debug, warn=warn,
                         _session_backend={"stored": stored, "body": copy.deepcopy(body)})
+
+
+def update_body(properties):
+    """Map the existing runtime-update convenience shape to the public PATCH."""
+    from ..v3.contract import validate_write
+    value = properties.model_dump(exclude_unset=True) if hasattr(properties, "model_dump") else copy.deepcopy(properties)
+    if not isinstance(value, dict) or set(value) - {"token", "messages", "llm", "mllm"}:
+        raise ValueError("Session update supports token, messages, llm.params and mllm.params only")
+    result = {}
+    if "token" in value:
+        result["transport"] = {"token": value["token"]}
+    overrides = {}
+    if "messages" in value:
+        overrides["messages"] = value["messages"]
+    pipeline = {}
+    for category in ("llm", "mllm"):
+        if category not in value:
+            continue
+        module = value[category]
+        allowed = {"params", "system_messages"} if category == "llm" else {"params"}
+        if not isinstance(module, dict) or set(module) - allowed:
+            raise ValueError("Session update supports only provider params and llm.system_messages")
+        if "system_messages" in module:
+            if "messages" in overrides and overrides["messages"] != module["system_messages"]:
+                raise ValueError("Supply messages or llm.system_messages, not conflicting values")
+            overrides["messages"] = module["system_messages"]
+        if "params" in module:
+            pipeline[category] = {"params": module["params"]}
+    if pipeline:
+        overrides["pipeline"] = pipeline
+    if overrides:
+        result["agent"] = {"overrides": overrides}
+    validate_write("PATCH", "/conversational-ai/v1/projects/project/sessions/session", result)
+    return result

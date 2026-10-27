@@ -57,12 +57,12 @@ def _validate_rtc_transport(transport):
         raise ValueError("channel must contain 1-256 characters")
     uid = transport.get("uid")
     subscribers = transport.get("subscribe_uids")
-    if not isinstance(uid, str) or not uid.strip():
+    if uid is not None and (not isinstance(uid, str) or not uid.strip() or len(uid) > 255):
         raise ValueError("uid must be a nonempty string")
-    if not isinstance(subscribers, list) or len(subscribers) != 1 or not isinstance(subscribers[0], str) or not subscribers[0].strip() or (subscribers[0] == "*" or re.fullmatch(r"0+", subscribers[0])):
+    if not isinstance(subscribers, list) or len(subscribers) != 1 or not isinstance(subscribers[0], str) or not subscribers[0].strip() or len(subscribers[0]) > 255 or (subscribers[0] == "*" or re.fullmatch(r"0+", subscribers[0])):
         raise ValueError("subscribe_uids must contain exactly one non-wildcard UID")
     numeric = lambda value: re.fullmatch(r"[0-9]+", value) is not None
-    if uid != "0" and numeric(uid) != numeric(subscribers[0]):
+    if uid is not None and uid != "0" and numeric(uid) != numeric(subscribers[0]):
         raise ValueError("agent and subscriber must use the same UID type")
     if transport.get("geofence") is not None:
         fence = transport["geofence"]
@@ -108,7 +108,7 @@ def _validate_telephony_transport(transport):
             raise ValueError("Unsupported voicemail mode")
     if policy.get("end_call") is not None:
         end = policy["end_call"]
-        _object(end, {"on_conversation_complete", "on_user_request", "on_fax", "on_ai_assistant"}, "end_call")
+        _object(end, {"on_conversation_complete", "on_user_request", "on_fax", "on_ai_assistant", "on_voicemail"}, "end_call")
         if any(not isinstance(v, bool) for v in end.values()):
             raise ValueError("end_call settings must be bool")
     if policy.get("transfer") is not None:

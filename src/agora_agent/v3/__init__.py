@@ -1,4 +1,4 @@
-"""Additive v3 stored-agent preview. Sessions are read-only."""
+"""Stored-agent, session lifecycle and campaign preview resources."""
 from . import types
 from ._transport import PreconditionFailedError, RawResponse, V3Options
 from .client import AsyncV3Client, V3Client

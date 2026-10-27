@@ -32,11 +32,11 @@ class SecretRef(str):
 
 
 def secret_ref(secret_set: str, key: str) -> SecretRef:
-    pattern = r"[A-Za-z0-9_-]{1,64}"
+    pattern = r"[A-Za-z0-9_]{1,64}"
     if not isinstance(secret_set, str) or not re.fullmatch(pattern, secret_set):
-        raise ValueError("secret_set must contain 1-64 letters, digits, underscores or hyphens")
+        raise ValueError("secret_set must contain 1-64 letters, digits, underscores")
     if not isinstance(key, str) or not re.fullmatch(pattern, key):
-        raise ValueError("key must contain 1-64 letters, digits, underscores or hyphens")
+        raise ValueError("key must contain 1-64 letters, digits, underscores")
     return SecretRef(f"$secrets.{secret_set}.{key}")
 
 
@@ -96,21 +96,39 @@ def module(config, category, errors):
         preset_model = config.pop("_minimax_preset_model", None)
         if preset_model is not None:
             params.setdefault("model", preset_model)
-    keys = []
-    credential_fields = ["api_key", "key", "api_subscription_key"]
-    if category == "avatar" and config.get("vendor") == "sensetime":
-        credential_fields.append("app_key")
-    if category == "avatar" and config.get("vendor") == "spatius":
-        credential_fields.append("spatius_api_key")
+    if category == "llm" and config.get("style") == "bedrock":
+        config.setdefault("vendor", "amazon")
+        if "region" in config:
+            params.setdefault("region", config.pop("region"))
+    vendor = config.get("vendor")
+    provider_fields = {
+        ("asr", "amazon"): ("access_key_id", "secret_access_key"),
+        ("asr", "google"): ("adc_credentials_string",),
+        ("asr", "microsoft"): ("key",),
+        ("asr", "speechmatics"): ("key",),
+        ("llm", "amazon"): ("api_key", "access_key", "secret_key"),
+        ("tts", "amazon"): ("aws_access_key_id", "aws_secret_access_key"),
+        ("tts", "google"): ("credentials",),
+        ("tts", "sarvam"): ("api_subscription_key",),
+        **{("tts", name): ("key",) for name in ("elevenlabs", "humeai", "microsoft", "minimax")},
+        ("avatar", "sensetime"): ("app_key",),
+        ("avatar", "spatius"): ("spatius_api_key",),
+    }.get((category, vendor), ("api_key",))
+    fields = {}
+    all_credentials = {"api_key", "key", "api_subscription_key", "app_key", "spatius_api_key", "access_key_id", "secret_access_key", "aws_access_key_id", "aws_secret_access_key", "access_key", "secret_key", "adc_credentials_string", "service_account", "credentials"}
     for source in (config, params):
-        for field in credential_fields:
-            if field in source:
-                keys.append(source.pop(field))
-    multipart = {"aws_access_key_id", "aws_secret_access_key", "access_key", "secret_key", "adc_credentials_string", "service_account", "credentials"}
-    errors.extend(category + ".params." + k for k in params if k in multipart)
-    if len(set(keys)) > 1:
-        errors.append(category + ".credential (multiple different API keys)")
-    result = {"credential": {"mode": "byok", "api_key": keys[0]} if keys else {"mode": "managed"}}
+        for field in tuple(source):
+            if field not in all_credentials:
+                continue
+            value = source.pop(field)
+            target = field if field in provider_fields else provider_fields[0] if field in {"api_key", "key", "api_subscription_key"} and len(provider_fields) == 1 else None
+            if target is None:
+                errors.append(category + ".credential." + field)
+            elif target in fields and fields[target] != value:
+                errors.append(category + ".credential (multiple different " + target + " values)")
+            else:
+                fields[target] = value
+    result = {"credential": {"mode": "byok", "fields": fields} if fields else {"mode": "managed"}}
     allowed = {
         "asr": {"vendor", "url", "model", "language"},
         "llm": {"vendor", "url", "style", "model", "input_modalities", "output_modalities", "max_history", "failure_message", "tools", "mcp_servers", "headers"},
@@ -135,7 +153,7 @@ def module(config, category, errors):
             result[field] = value
     if category == "tts" and any(not isinstance(v, str) for v in result.get("skip_patterns", [])):
         errors.append("tts.skip_patterns (numeric v2 patterns have no confirmed v3 mapping)")
-    if not keys:
+    if not fields:
         result.pop("url", None)
         for key in ("url", "base_url"):
             params.pop(key, None)
@@ -365,18 +383,32 @@ def build_body(agent, name=None):
 _MUTABLE = {"agent_name", "instructions", "messages", "greeting", "variables", "pipeline", "filler_words"}
 
 
-def replacement_patch(previous, desired):
+def replacement_patch(previous, desired, category=None):
     """Clear readable stale keys recursively. Never echo IDs or credential metadata."""
     result = copy.deepcopy(desired)
+    # Responses hide credential fields. Clear the known old vendor's field names
+    # before merging a new vendor, so hidden write-only keys cannot survive.
+    if isinstance(previous.get("credential"), dict) and isinstance(desired.get("credential"), dict) and desired["credential"].get("mode") == "byok":
+        old_fields = {
+            ("asr", "amazon"): {"access_key_id", "secret_access_key"},
+            ("asr", "google"): {"adc_credentials_string"},
+            ("asr", "microsoft"): {"key"}, ("asr", "speechmatics"): {"key"},
+            ("llm", "amazon"): {"api_key", "access_key", "secret_key"},
+            ("tts", "amazon"): {"aws_access_key_id", "aws_secret_access_key"},
+            ("tts", "google"): {"credentials"}, ("tts", "sarvam"): {"api_subscription_key"},
+            **{("tts", vendor): {"key"} for vendor in ("elevenlabs", "humeai", "microsoft", "minimax")},
+            ("avatar", "sensetime"): {"app_key"}, ("avatar", "spatius"): {"spatius_api_key"},
+        }.get((category, previous.get("vendor")), {"api_key"})
+        result["credential"]["fields"] = {**{field: None for field in old_fields}, **result["credential"].get("fields", {})}
     for key, old in previous.items():
         if key not in result:
             result[key] = None
         elif isinstance(old, dict) and isinstance(result[key], dict):
             if key == "credential":
                 if result[key].get("mode") == "managed":
-                    result[key]["api_key"] = None
+                    result[key]["fields"] = None
                 continue  # Resolved credentials have read-only metadata and hide API keys.
-            result[key] = replacement_patch(old, result[key])
+            result[key] = replacement_patch(old, result[key], key if key in {"asr", "llm", "tts", "mllm", "avatar"} else category)
     return result
 
 
@@ -391,13 +423,13 @@ def _require_client(agent, async_):
     expected = AsyncAgora if async_ else Agora
     if not isinstance(agent._client, expected):
         raise TypeError("save_async requires AsyncAgora" if async_ else "save requires Agora")
-    if getattr(agent._client, "area_scope", None) == "cn":
-        raise ValueError("v3 deployment in CN is unconfirmed; use a supported global area")
 
 
 def save(agent, *, name=None, agent_id=None) -> SavedAgent:
     _require_client(agent, False)
     body = build_body(agent, name)
+    from ..v3.contract import _extras
+    _extras(body, saved=True)
     raw = agent._client.v3.agents.with_raw_response
     if agent_id is None:
         response = raw.create(**body)
@@ -412,6 +444,8 @@ def save(agent, *, name=None, agent_id=None) -> SavedAgent:
 async def save_async(agent, *, name=None, agent_id=None) -> AsyncSavedAgent:
     _require_client(agent, True)
     body = build_body(agent, name)
+    from ..v3.contract import _extras
+    _extras(body, saved=True)
     raw = agent._client.v3.agents.with_raw_response
     if agent_id is None:
         response = await raw.create(**body)
@@ -454,7 +488,7 @@ class _SavedAgentBase:
         self.raw = client.v3.agents
 
 class SavedAgent(_SavedAgentBase):
-    def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
+    def create_session(self, *, channel: str, agent_uid: Optional[str] = None, remote_uids: Optional[List[str]] = None,
                        name=None, client_reference=None, idle_timeout=None,
                        max_duration=None, labels=None, values=None, idempotency_key=None, token=None,
                        encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None):
@@ -527,7 +561,7 @@ class SavedAgent(_SavedAgentBase):
 
 
 class AsyncSavedAgent(_SavedAgentBase):
-    def create_session(self, *, channel: str, agent_uid: str, remote_uids: List[str],
+    def create_session(self, *, channel: str, agent_uid: Optional[str] = None, remote_uids: Optional[List[str]] = None,
                        name=None, client_reference=None, idle_timeout=None,
                        max_duration=None, labels=None, values=None, idempotency_key=None, token=None,
                        encryption=None, audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None):

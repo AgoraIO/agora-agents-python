@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased preview contract alignment
+
+- Shared root OpenAPI JSON/YAML, local reproducible wire generator, sync/async/raw session PATCH, and restored realtime MLLM contracts.
+- BYOK `credential.fields` preserves vendor credential names; saved writes require explicit secret references, ephemeral sessions permit inline values.
+- Optional RTC UID, inbound/voicemail end-call policies, SIP IPv4 allowlists, campaign create retention, 50,000-contact / 10 MiB limits. Removed campaign retry fields are rejected.
+- Six idempotent POST operations use optional 1–256 visible ASCII keys, 24-hour replay and replay response headers. No automatic write retries or region availability gates.
+
 ## Unreleased preview rollout
 
 The current stored-agent, session and campaign preview rollout is available in the US only (PM confirmation, 2026-10-27). Availability may expand as rollout progresses.

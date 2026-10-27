@@ -883,7 +883,11 @@ class AgentSession(_AgentSessionBase):
             Partial configuration to update.
         """
         if self._session_backend is not None:
-            raise NotImplementedError("update is not documented for stored or ephemeral sessions")
+            if self._status != "running" or not self._agent_id:
+                raise RuntimeError(f"Cannot update in {self._status} state")
+            from .session_backend import update_body
+            self._client.v3.sessions.update(agent_session_id=self._agent_id, **update_body(properties))
+            return
         if self._status != "running":
             raise RuntimeError(f"Cannot update in {self._status} state")
         if not self._agent_id:
@@ -1333,7 +1337,11 @@ class AsyncAgentSession(_AgentSessionBase):
             Partial configuration to update.
         """
         if self._session_backend is not None:
-            raise NotImplementedError("update is not documented for stored or ephemeral sessions")
+            if self._status != "running" or not self._agent_id:
+                raise RuntimeError(f"Cannot update in {self._status} state")
+            from .session_backend import update_body
+            await self._client.v3.sessions.update(agent_session_id=self._agent_id, **update_body(properties))
+            return
         if self._status != "running":
             raise RuntimeError(f"Cannot update in {self._status} state")
         if not self._agent_id:

@@ -948,8 +948,8 @@ class Agent:
     def create_session(
         self,
         channel: str,
-        agent_uid: str,
-        remote_uids: typing.List[str],
+        agent_uid: typing.Optional[str] = None,
+        remote_uids: typing.Optional[typing.List[str]] = None,
         name: typing.Optional[str] = None,
         token: typing.Optional[str] = None,
         idle_timeout: typing.Optional[int] = None,
@@ -984,7 +984,9 @@ class Agent:
         """
         from .agent_session import AgentSession
         from .session_backend import create_session, needs_session_backend
-        if needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy, geofence)):
+        if remote_uids is None:
+            raise ValueError("remote_uids is required")
+        if agent_uid is None or needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy, geofence)):
             return create_session(self, asynchronous=False, channel=channel,
                 agent_uid=agent_uid, remote_uids=remote_uids, name=name,
                 client_reference=client_reference, idle_timeout=idle_timeout,
@@ -1020,8 +1022,8 @@ class Agent:
     def create_async_session(
         self,
         channel: str,
-        agent_uid: str,
-        remote_uids: typing.List[str],
+        agent_uid: typing.Optional[str] = None,
+        remote_uids: typing.Optional[typing.List[str]] = None,
         name: typing.Optional[str] = None,
         token: typing.Optional[str] = None,
         idle_timeout: typing.Optional[int] = None,
@@ -1050,7 +1052,9 @@ class Agent:
         """
         from .agent_session import AsyncAgentSession
         from .session_backend import create_session, needs_session_backend
-        if needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy, geofence)):
+        if remote_uids is None:
+            raise ValueError("remote_uids is required")
+        if agent_uid is None or needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy, geofence)):
             return create_session(self, asynchronous=True, channel=channel,
                 agent_uid=agent_uid, remote_uids=remote_uids, name=name,
                 client_reference=client_reference, idle_timeout=idle_timeout,

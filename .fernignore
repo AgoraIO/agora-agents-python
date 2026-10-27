@@ -40,3 +40,7 @@ src/agora_agent/client.py
 src/agora_agent/core/public_auth.py
 src/agora_agent/core/http_client.py
 src/agora_agent/core/client_wrapper.py
+
+# Shared corrected release contract, local preview generation input/handoff.
+openapi.json
+openapi.yaml
