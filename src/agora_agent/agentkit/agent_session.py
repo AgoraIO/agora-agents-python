@@ -133,6 +133,11 @@ class _AgentSessionBase:
         self._warn = warn or warnings.warn
         self._agent_id: typing.Optional[str] = None
         self._status: str = "idle"
+        # New session lifecycle requests can overlap a GET. This revision keeps
+        # a late response from an older session state from overwriting a later
+        # start/stop transition.
+        self._v3_state_revision = 0
+        self._v3_transition_pending = False
         self._event_handlers: typing.Dict[
             str, typing.List[typing.Callable[..., None]]
         ] = {}
@@ -605,6 +610,9 @@ class AgentSession(_AgentSessionBase):
                 raise RuntimeError("Create a new session handle and key after a successful idempotent start")
             if self._status not in ("idle", "stopped", "error"):
                 raise RuntimeError(f"Cannot start session in {self._status} state")
+            self._v3_state_revision += 1
+            self._v3_transition_pending = True
+            self._agent_id = None
             self._status = "starting"
             try:
                 resource = self._client.v3.sessions
@@ -615,10 +623,14 @@ class AgentSession(_AgentSessionBase):
                     raise RuntimeError("Session response is missing agent_session_id")
                 self._agent_id = identifier
                 self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
+                self._v3_state_revision += 1
+                self._v3_transition_pending = False
                 self._emit("started", {"agent_id": identifier, "agent_session_id": identifier})
                 return identifier
-            except Exception as error:
+            except BaseException as error:
                 self._status = "error"
+                self._v3_state_revision += 1
+                self._v3_transition_pending = False
                 self._emit("error", error)
                 raise
         if self._status not in ("idle", "stopped", "error"):
@@ -711,10 +723,12 @@ class AgentSession(_AgentSessionBase):
         if self._session_backend is not None:
             if self._status not in ("starting", "running") or not self._agent_id:
                 raise RuntimeError(f"Cannot stop session in {self._status} state")
+            self._v3_state_revision += 1
+            self._v3_transition_pending = True
             self._status = "stopping"
             try:
                 self._client.v3.sessions.stop(agent_session_id=self._agent_id)
-            except Exception as error:
+            except BaseException as error:
                 if getattr(error, "status_code", None) == 409:
                     error_body = getattr(error, "body", None)
                     reason = error_body.get("reason") if isinstance(error_body, dict) else None
@@ -726,9 +740,13 @@ class AgentSession(_AgentSessionBase):
                         self._status = "error"
                 else:
                     self._status = "error"
+                self._v3_state_revision += 1
+                self._v3_transition_pending = False
                 self._emit("error", error)
                 raise
             self._status = "stopped"
+            self._v3_state_revision += 1
+            self._v3_transition_pending = False
             self._emit("stopped", {"agent_id": self._agent_id, "agent_session_id": self._agent_id})
             return
         if self._status != "running":
@@ -894,8 +912,13 @@ class AgentSession(_AgentSessionBase):
         if self._session_backend is not None:
             if not self._agent_id:
                 raise RuntimeError("No session ID available")
-            response = self._client.v3.sessions.get(agent_session_id=self._agent_id)
-            self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
+            self._v3_state_revision += 1
+            revision = self._v3_state_revision
+            session_id = self._agent_id
+            transition_pending = self._v3_transition_pending
+            response = self._client.v3.sessions.get(agent_session_id=session_id)
+            if revision == self._v3_state_revision and session_id == self._agent_id and not transition_pending and not self._v3_transition_pending:
+                self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
             return response
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
@@ -1037,6 +1060,9 @@ class AsyncAgentSession(_AgentSessionBase):
                 raise RuntimeError("Create a new session handle and key after a successful idempotent start")
             if self._status not in ("idle", "stopped", "error"):
                 raise RuntimeError(f"Cannot start session in {self._status} state")
+            self._v3_state_revision += 1
+            self._v3_transition_pending = True
+            self._agent_id = None
             self._status = "starting"
             try:
                 resource = self._client.v3.sessions
@@ -1047,10 +1073,14 @@ class AsyncAgentSession(_AgentSessionBase):
                     raise RuntimeError("Session response is missing agent_session_id")
                 self._agent_id = identifier
                 self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
+                self._v3_state_revision += 1
+                self._v3_transition_pending = False
                 self._emit("started", {"agent_id": identifier, "agent_session_id": identifier})
                 return identifier
-            except Exception as error:
+            except BaseException as error:
                 self._status = "error"
+                self._v3_state_revision += 1
+                self._v3_transition_pending = False
                 self._emit("error", error)
                 raise
         if self._status not in ("idle", "stopped", "error"):
@@ -1143,10 +1173,12 @@ class AsyncAgentSession(_AgentSessionBase):
         if self._session_backend is not None:
             if self._status not in ("starting", "running") or not self._agent_id:
                 raise RuntimeError(f"Cannot stop session in {self._status} state")
+            self._v3_state_revision += 1
+            self._v3_transition_pending = True
             self._status = "stopping"
             try:
                 await self._client.v3.sessions.stop(agent_session_id=self._agent_id)
-            except Exception as error:
+            except BaseException as error:
                 if getattr(error, "status_code", None) == 409:
                     error_body = getattr(error, "body", None)
                     reason = error_body.get("reason") if isinstance(error_body, dict) else None
@@ -1158,9 +1190,13 @@ class AsyncAgentSession(_AgentSessionBase):
                         self._status = "error"
                 else:
                     self._status = "error"
+                self._v3_state_revision += 1
+                self._v3_transition_pending = False
                 self._emit("error", error)
                 raise
             self._status = "stopped"
+            self._v3_state_revision += 1
+            self._v3_transition_pending = False
             self._emit("stopped", {"agent_id": self._agent_id, "agent_session_id": self._agent_id})
             return
         if self._status != "running":
@@ -1326,8 +1362,13 @@ class AsyncAgentSession(_AgentSessionBase):
         if self._session_backend is not None:
             if not self._agent_id:
                 raise RuntimeError("No session ID available")
-            response = await self._client.v3.sessions.get(agent_session_id=self._agent_id)
-            self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
+            self._v3_state_revision += 1
+            revision = self._v3_state_revision
+            session_id = self._agent_id
+            transition_pending = self._v3_transition_pending
+            response = await self._client.v3.sessions.get(agent_session_id=session_id)
+            if revision == self._v3_state_revision and session_id == self._agent_id and not transition_pending and not self._v3_transition_pending:
+                self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
             return response
         if not self._agent_id:
             raise RuntimeError("No agent ID available")

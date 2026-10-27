@@ -45,6 +45,8 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         raise ValueError("remote_uids must be a list of nonempty strings")
     body = {"transport": {"type": "rtc", "channel": channel, "uid": agent_uid,
                            "subscribe_uids": list(remote_uids)}}
+    if labels is None:
+        labels = getattr(owner, "_labels", None)
     reference = name
     fence = geofence if geofence is not None else getattr(owner, "_geofence", None)
     if fence is not None:
@@ -73,6 +75,7 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         params = dump(owner._parameters or {})
         inline = owner._clone()
         inline._geofence = None
+        inline._labels = None
         inline._parameters = {k: v for k, v in params.items() if k not in {"opt_out", "farewell_config", "audio_scenario"}}
         if "opt_out" in params and not isinstance(params["opt_out"], bool):
             raise ValueError("parameters.opt_out must be bool")

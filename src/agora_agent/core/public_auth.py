@@ -2,7 +2,7 @@
 import re
 
 
-def validate_public_headers(headers):
+def validate_public_headers(headers, *, allow_empty_authorization=False):
     source = headers or {}
     items = source.multi_items() if hasattr(source, "multi_items") else source.items()
     for name, value in items:
@@ -11,7 +11,7 @@ def validate_public_headers(headers):
             raise ValueError("Internal gateway/region headers are not public: " + name)
         if lower == "idempotency-key" and value is not None and (not isinstance(value, str) or not value.strip()):
             raise ValueError("Idempotency-Key must be a nonempty string")
-        if lower == "authorization" and value and not re.fullmatch(r"agora token=\S+", str(value), re.IGNORECASE):
+        if lower == "authorization" and value is not None and not (allow_empty_authorization and value == "") and not re.fullmatch(r"agora token=\S+", str(value), re.IGNORECASE):
             raise ValueError("Only Agora token authentication is supported")
 
 

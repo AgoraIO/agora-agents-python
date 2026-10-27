@@ -1,5 +1,7 @@
 """Offline contract tests for the additive v3 preview and v2 boundary."""
+import asyncio
 import json
+import threading
 
 import httpx
 import pytest
@@ -121,7 +123,7 @@ def test_namespace_is_additive_and_out_of_scope_features_absent():
 
 def test_reject_empty_identifiers_and_required_etag():
     client = make_client(lambda _: pytest.fail("request must not be sent"))
-    for kwargs in ({"agent_id": ""}, {"agent_id": "  "}, {"agent_id": "a", "appid": ""}):
+    for kwargs in ({"agent_id": ""}, {"agent_id": "  "}, {"agent_id": "."}, {"agent_id": ".."}, {"agent_id": "a", "appid": ""}):
         with pytest.raises(ValueError):
             client.v3.agents.get(**kwargs)
     with pytest.raises(TypeError):
@@ -140,6 +142,31 @@ def test_no_write_retries_and_latest_conflict():
     assert exc.value.headers["agora-request-id"] == "trace"
     assert exc.value.latest() == {"agent_id": "a"}
     assert calls[-1].method == "GET"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_latest_reload_does_not_replay_additional_write_body(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(412 if request.method == "PATCH" else 200, json={"agent_id": "a"})
+    client = make_client(handler, async_)
+    with pytest.raises(PreconditionFailedError) as caught:
+        result = client.v3.agents.update(
+            agent_id="a", if_match='"old"', instructions="updated",
+            request_options={"additional_body_parameters": {"unexpected": "write-only"}},
+        )
+        if async_:
+            await result
+    latest = caught.value.latest()
+    if async_:
+        latest = await latest
+    assert latest == {"agent_id": "a"}
+    assert calls[0].method == "PATCH"
+    assert json.loads(calls[0].content)["unexpected"] == "write-only"
+    assert calls[1].method == "GET"
+    assert calls[1].content == b""
 
 
 @pytest.mark.parametrize("resource,kwargs", [("agents", {"agent_name": "x"}), ("numbers", {"number": "+1", "sip_trunk": {}})])
@@ -855,6 +882,81 @@ async def test_corrected_sessions_supported_fields_and_rollout(async_, status, h
     assert session.status == "error"
 
 
+def test_sync_session_info_cannot_overwrite_a_later_stop():
+    entered = threading.Event()
+    release = threading.Event()
+    def handler(request):
+        if request.method == "GET":
+            entered.set()
+            assert release.wait(3)
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING"})
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(200, json={})
+        return httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"})
+    session = configured(make_client(handler)).create_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=1)
+    session.start()
+    thread = threading.Thread(target=session.get_info)
+    thread.start()
+    assert entered.wait(3)
+    session.stop()
+    release.set()
+    thread.join(3)
+    assert not thread.is_alive()
+    assert session.status == "stopped"
+
+
+@pytest.mark.asyncio
+async def test_async_session_info_cannot_overwrite_a_later_stop():
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    async def handler(request):
+        if request.method == "GET":
+            entered.set()
+            await asyncio.wait_for(release.wait(), timeout=3)
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING"})
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(200, json={})
+        return httpx.Response(200, json={"agent_session_id": "s", "create_ts": 1, "status": "RUNNING"})
+    session = configured(make_client(handler, True)).create_async_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=1)
+    await session.start()
+    pending = asyncio.create_task(session.get_info())
+    await asyncio.wait_for(entered.wait(), timeout=3)
+    await session.stop()
+    release.set()
+    await pending
+    assert session.status == "stopped"
+
+
+@pytest.mark.asyncio
+async def test_async_session_restart_does_not_expose_previous_id_while_starting():
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    starts = 0
+    stopped_ids = []
+    async def handler(request):
+        nonlocal starts
+        if request.url.path.endswith("/stop"):
+            stopped_ids.append(request.url.path.split("/")[-2])
+            return httpx.Response(200, json={})
+        starts += 1
+        if starts == 2:
+            entered.set()
+            await asyncio.wait_for(release.wait(), timeout=3)
+        return httpx.Response(200, json={"agent_session_id": f"s{starts}", "create_ts": starts, "status": "RUNNING"})
+    session = configured(make_client(handler, True)).create_async_session(channel="r", agent_uid="1", remote_uids=["2"], max_duration=1)
+    assert await session.start() == "s1"
+    await session.stop()
+    restart = asyncio.create_task(session.start())
+    await asyncio.wait_for(entered.wait(), timeout=3)
+    assert session.id is None
+    with pytest.raises(RuntimeError, match="starting"):
+        await session.stop()
+    release.set()
+    assert await restart == "s2"
+    await session.stop()
+    assert stopped_ids == ["s1", "s2"]
+
+
 @pytest.mark.parametrize("async_", [False, True])
 @pytest.mark.parametrize("reason,expected", [("TaskNotRunning", "stopped"), ("TaskConflict", "stopping"), ("Other", "error")])
 @pytest.mark.asyncio
@@ -873,6 +975,35 @@ async def test_new_stop_conflict_distinctions(async_, reason, expected):
         with pytest.raises(ApiError):
             session.stop()
     assert session.status == expected
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_session_can_refresh_after_stop_conflict_finishes(async_):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(409, json={"reason": "TaskConflict"})
+        if request.method == "POST":
+            return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING", "create_ts": 1})
+        return httpx.Response(200, json={"agent_session_id": "s", "status": "STOPPED", "create_ts": 1})
+    agent = configured(make_client(handler, async_))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"])
+    if async_:
+        await session.start()
+        with pytest.raises(Exception):
+            await session.stop()
+        assert session.status == "stopping"
+        await session.get_info()
+    else:
+        session.start()
+        with pytest.raises(Exception):
+            session.stop()
+        assert session.status == "stopping"
+        session.get_info()
+    assert session.status == "stopped"
+    assert len(calls) == 3
 
 
 @pytest.mark.parametrize("async_", [False, True])
@@ -915,6 +1046,20 @@ def test_forbidden_headers_rejected_in_all_new_transport_layers(header, value):
             client.v3.agents.list(request_options=options)
 
 
+def test_blank_authorization_overrides_rejected_before_request():
+    with pytest.raises(ValueError):
+        Agora(area=Area.US, app_id="project", app_certificate="cert", auth_token="token", headers={"Authorization": ""})
+    for location in ("v3", "request"):
+        client = make_client(lambda _: pytest.fail("must not send"))
+        if location == "v3":
+            client._v3_options = V3Options(headers={"Authorization": ""})
+            options = {}
+        else:
+            options = {"additional_headers": {"Authorization": ""}}
+        with pytest.raises(ValueError):
+            client.v3.agents.list(request_options=options)
+
+
 @pytest.mark.parametrize("resource,kwargs", [("secrets", {"name": "s", "secrets": {"k": "v"}}), ("numbers", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}})])
 def test_unsupported_provisioning_idempotency_rejected(resource, kwargs):
     method = getattr(make_client(lambda _: pytest.fail("must not send")).v3, resource).create
@@ -941,6 +1086,13 @@ def test_builder_retention_farewell_mapping_uses_session_envelope():
     assert body["data_policy"] == {"retention": "none"}
     assert body["lifecycle"]["graceful_stop"] == {"enabled": True, "timeout_ms": 10000}
     assert "data_policy" not in body["agent"]
+
+
+def test_builder_labels_map_to_new_session_labels():
+    agent = configured(make_client(lambda _: pytest.fail("must not send"))).with_labels({"team": "support"}).with_variable("customer", type="str")
+    session = agent.create_session(channel="r", agent_uid="1", remote_uids=["2"])
+    assert session._session_backend["body"]["labels"] == {"team": "support"}
+    assert "labels" not in session._session_backend["body"]["agent"]
 
 
 @pytest.mark.parametrize("async_", [False, True])

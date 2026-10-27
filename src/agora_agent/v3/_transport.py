@@ -47,6 +47,10 @@ class PreconditionFailedError(ApiError):
 def segment(value: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError("v3 path identifiers must be nonempty strings")
+    # RFC 3986 permits unescaped dots in a path segment. HTTP clients and
+    # proxies normalize the two dot-segments before sending the request.
+    if value in (".", ".."):
+        raise ValueError("v3 path identifiers cannot be dot segments")
     return quote(value, safe="")
 
 
@@ -150,6 +154,9 @@ def _reload_options(request_options):
     """Keep request context without replaying write preconditions on the reload."""
     options = dict(request_options or {})
     options["_strip_write_preconditions"] = True
+    # Additional body parameters belong to the failed write. The reload is a
+    # GET and must not carry that body into the fresh read.
+    options.pop("additional_body_parameters", None)
     options["additional_headers"] = {
         key: value for key, value in options.get("additional_headers", {}).items()
         if key.lower() not in {"if-match", "if-none-match", "idempotency-key"}

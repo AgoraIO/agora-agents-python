@@ -194,7 +194,10 @@ class HttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers())
+        # App-certificate clients can have an empty base Authorization
+        # placeholder because sessions supply a fresh ConvoAI token per call.
+        # Explicit client/per-request overrides are validated separately.
+        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
@@ -298,7 +301,7 @@ class HttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.Iterator[httpx.Response]:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers())
+        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
@@ -406,7 +409,7 @@ class AsyncHttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers())
+        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
@@ -510,7 +513,7 @@ class AsyncHttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.AsyncIterator[httpx.Response]:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers())
+        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
