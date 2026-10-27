@@ -117,6 +117,7 @@ def test_preview_gate_survives_raw_per_call_headers(header):
         session.raw.get("0" * 32, "agent-1", request_options={"additional_headers": headers})
         for req in requests:
             assert req.headers.get_list("agora-feature") == ["gemini-live"]
+            assert req.headers["Authorization"].startswith("agora token=")
         assert requests[-1].headers["x-custom"] == "preserved"
         assert headers[header] == ""
         assert client._client_wrapper.get_custom_headers()[header] == "caller-value"

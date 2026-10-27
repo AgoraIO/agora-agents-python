@@ -20,3 +20,21 @@ def validate_public_options(options):
     if forbidden.intersection(options or {}):
         raise ValueError("Basic credential overrides are not supported")
     validate_public_headers((options or {}).get("additional_headers", {}))
+
+
+def validate_effective_public_headers(*sources):
+    """Validate the case-insensitive merged headers that will reach HTTPX."""
+    validate_public_headers(merge_public_headers(*sources))
+
+
+def merge_public_headers(*sources):
+    """Merge header sources with HTTPX's case-insensitive precedence rules."""
+    import httpx
+
+    merged = httpx.Headers()
+    for source in sources:
+        if not source:
+            continue
+        items = source.multi_items() if hasattr(source, "multi_items") else source.items()
+        merged.update([(name, value) for name, value in items if value is not None])
+    return dict(merged)

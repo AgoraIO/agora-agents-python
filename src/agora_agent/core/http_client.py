@@ -13,7 +13,12 @@ import httpx
 from .file import File, convert_file_dict_to_httpx_tuples
 from .force_multipart import FORCE_MULTIPART
 from .jsonable_encoder import jsonable_encoder
-from .public_auth import validate_public_headers, validate_public_options
+from .public_auth import (
+    merge_public_headers,
+    validate_effective_public_headers,
+    validate_public_headers,
+    validate_public_options,
+)
 from .query_encoder import encode_query
 from .remove_none_from_dict import remove_none_from_dict
 from .request_options import RequestOptions
@@ -197,12 +202,19 @@ class HttpClient:
         # App-certificate clients can have an empty base Authorization
         # placeholder because sessions supply a fresh ConvoAI token per call.
         # Explicit client/per-request overrides are validated separately.
-        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
             raise ValueError("HTTP Basic auth overrides are not supported")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}) or {},
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -224,15 +236,7 @@ class HttpClient:
         response = _request_with_reload_headers(self.httpx_client, bool((request_options or {}).get("_strip_write_preconditions")),
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) or {} if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -301,12 +305,19 @@ class HttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.Iterator[httpx.Response]:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
             raise ValueError("HTTP Basic auth overrides are not supported")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}),
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -328,15 +339,7 @@ class HttpClient:
         with self.httpx_client.stream(
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -409,12 +412,19 @@ class AsyncHttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
             raise ValueError("HTTP Basic auth overrides are not supported")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}) or {},
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -437,15 +447,7 @@ class AsyncHttpClient:
         response = await _async_request_with_reload_headers(self.httpx_client, bool((request_options or {}).get("_strip_write_preconditions")),
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) or {} if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -513,12 +515,19 @@ class AsyncHttpClient:
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.AsyncIterator[httpx.Response]:
         validate_public_options(request_options)
-        validate_public_headers(self.base_headers(), allow_empty_authorization=True)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
         validate_public_headers(headers)
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
             raise ValueError("HTTP Basic auth overrides are not supported")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}),
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -540,15 +549,7 @@ class AsyncHttpClient:
         async with self.httpx_client.stream(
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(

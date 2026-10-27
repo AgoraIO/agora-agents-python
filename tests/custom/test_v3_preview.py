@@ -1129,6 +1129,14 @@ def test_blank_authorization_overrides_rejected_before_request():
             options = {"additional_headers": {"Authorization": ""}}
         with pytest.raises(ValueError):
             client.v3.agents.list(request_options=options)
+    from agora_agent.client import Agora as GeneratedAgora
+    raw = GeneratedAgora(authorization="", httpx_client=httpx.Client(transport=httpx.MockTransport(lambda _: pytest.fail("must not send"))))
+    with pytest.raises(ValueError):
+        raw.agents.get("project", "agent")
+    sent = []
+    raw = GeneratedAgora(authorization="", httpx_client=httpx.Client(transport=httpx.MockTransport(lambda request: sent.append(request) or httpx.Response(200, json={}))))
+    raw.agents.get("project", "agent", request_options={"additional_headers": {"authorization": "agora token=override"}})
+    assert sent[0].headers.get_list("authorization") == ["agora token=override"]
 
 
 @pytest.mark.parametrize("resource,kwargs", [("secrets", {"name": "s", "secrets": {"k": "v"}}), ("numbers", {"number": "+12025550123", "sip_trunk": {"hostname": "sip.example"}})])
