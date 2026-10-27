@@ -18,6 +18,7 @@ class BaseClientWrapper:
         timeout: typing.Optional[float] = None,
     ):
         self._authorization = authorization
+        self._authorization_supplier: typing.Optional[typing.Callable[[], str]] = None
         self._username = username
         self._password = password
         self._headers = headers
@@ -32,8 +33,8 @@ class BaseClientWrapper:
             "X-Fern-SDK-Version": "v2.12.0",
             **(self.get_custom_headers() or {}),
         }
-        headers["Authorization"] = httpx.BasicAuth(self._get_username(), self._get_password())._auth_header
-        headers["Authorization"] = self._authorization
+        supplier = getattr(self, "_authorization_supplier", None)
+        headers["Authorization"] = supplier() if supplier is not None else self._authorization
         return headers
 
     def _get_username(self) -> str:

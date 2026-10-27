@@ -346,6 +346,10 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
+        if auth_token is None:
+            self._client_wrapper._authorization_supplier = lambda: "agora token=" + generate_convo_ai_token(
+                app_id=self.app_id, app_certificate=self.app_certificate, channel_name="", uid=0,
+            )
 
     @property
     def v3(self) -> V3Client:
@@ -678,6 +682,10 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
+        if auth_token is None:
+            self._client_wrapper._authorization_supplier = lambda: "agora token=" + generate_convo_ai_token(
+                app_id=self.app_id, app_certificate=self.app_certificate, channel_name="", uid=0,
+            )
 
     @property
     def v3(self) -> AsyncV3Client:

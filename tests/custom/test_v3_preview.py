@@ -373,12 +373,12 @@ def test_default_auth_token_is_refreshed_per_v3_call(monkeypatch):
         generated.append(kwargs)
         return "fresh-" + str(len(generated))
     monkeypatch.setattr("agora_agent.v3._transport.generate_convo_ai_token", token)
-    client = Agora(area=Area.US, app_id="project", app_certificate="cert",
+    client = Agora(area=Area.US, app_id="0" * 32, app_certificate="1" * 32,
                    httpx_client=httpx.Client(transport=httpx.MockTransport(lambda r: calls.append(r) or httpx.Response(200, json={}))))
     client.v3.agents.list()
     client.v3.sessions.list()
     assert [r.headers["Authorization"] for r in calls] == ["agora token=fresh-1", "agora token=fresh-2"]
-    assert generated[0]["app_id"] == "project"
+    assert generated[0]["app_id"] == "0" * 32
 
 
 def test_realtime_instructions_and_audio_greeting_mapping():
@@ -1107,3 +1107,25 @@ async def test_public_origin_rejects_embedded_credentials(async_, origin):
         result = client.v3.agents.list()
         if async_:
             await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_advertised_app_credentials_sign_raw_legacy_reads_each_call(async_, monkeypatch):
+    calls = []
+    tokens = []
+    def sign(**kwargs):
+        assert kwargs["app_id"] == "app" and kwargs["app_certificate"] == "certificate"
+        token = "fresh-" + str(len(tokens))
+        tokens.append(token)
+        return token
+    monkeypatch.setattr("agora_agent.pool_client.generate_convo_ai_token", sign)
+    http = (httpx.AsyncClient if async_ else httpx.Client)(transport=httpx.MockTransport(lambda r: calls.append(r) or httpx.Response(200, json={"agent_id": "legacy", "status": "RUNNING"})))
+    client = (AsyncAgora if async_ else Agora)(area=Area.US, app_id="app", app_certificate="certificate", httpx_client=http)
+    for _ in range(2):
+        result = client.agents.get("app", "legacy")
+        if async_:
+            await result
+    assert len(calls) == 2
+    assert all(r.headers["Authorization"].startswith("agora token=fresh-") for r in calls)
+    assert calls[0].headers["Authorization"] != calls[1].headers["Authorization"]
