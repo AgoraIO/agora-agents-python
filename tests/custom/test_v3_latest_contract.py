@@ -164,3 +164,38 @@ def test_same_vendor_alternate_credential_form_clears_hidden_key():
 def test_vendor_conditional_credentials_are_validated(module):
     with pytest.raises(ValueError):
         validate_write("POST", "/conversational-ai/v1/projects/p/sessions/ephemeral", {"agent": {"pipeline": {"mode": "cascaded", "asr": module}}, "transport": {"type": "rtc", "channel": "r", "subscribe_uids": ["2"]}})
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_messages_shortcut_is_transport_independent(async_):
+    requests = []
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json={"agent_id": "legacy-session"})
+    client = make_client(handler, async_)
+    # Ordinary inline configuration keeps the established session transport.
+    agent = Agent(client=client).with_llm(OpenAI(api_key="inline", model="gpt", base_url="https://api.openai.com/v1/chat/completions"))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"], token="rtc")
+    session._status = "running"
+    session._agent_id = "legacy-session"
+    messages = [{"role": "system", "content": "Updated"}]
+    properties = {"messages": messages, "llm": {"params": {"temperature": 0.2}}}
+    before = copy.deepcopy(properties)
+    result = session.update(properties)
+    if async_:
+        await result
+    assert json.loads(requests[-1].content)["properties"] == {"llm": {"system_messages": messages, "params": {"temperature": 0.2}}}
+    assert properties == before
+    with pytest.raises(ValueError):
+        result = session.update({"messages": messages, "llm": {"system_messages": messages}})
+        if async_:
+            await result
+
+
+def test_realtime_params_with_legacy_messages_spelling_is_supported():
+    from agora_agent.agentkit.session_backend import update_body
+    messages = [{"role": "system", "content": "Updated"}]
+    assert update_body({"llm": {"system_messages": messages}, "mllm": {"params": {"temperature": 0.2}}}) == {"agent": {"overrides": {"messages": messages, "pipeline": {"mllm": {"params": {"temperature": 0.2}}}}}}
+    with pytest.raises(ValueError):
+        update_body({"messages": messages, "llm": {"system_messages": messages}})

@@ -132,8 +132,8 @@ def update_body(properties):
         if not isinstance(module, dict) or set(module) - allowed:
             raise ValueError("Session update supports only provider params and llm.system_messages")
         if "system_messages" in module:
-            if "messages" in overrides and overrides["messages"] != module["system_messages"]:
-                raise ValueError("Supply messages or llm.system_messages, not conflicting values")
+            if "messages" in overrides:
+                raise ValueError("Supply messages or llm.system_messages, not both")
             overrides["messages"] = module["system_messages"]
         if "params" in module:
             pipeline[category] = {"params": module["params"]}
@@ -143,3 +143,18 @@ def update_body(properties):
         result["agent"] = {"overrides": overrides}
     validate_write("PATCH", "/conversational-ai/v1/projects/project/sessions/session", result)
     return result
+
+
+def legacy_update_body(properties):
+    """Keep the messages shortcut independent of the selected session transport."""
+    value = properties.model_dump(exclude_unset=True) if hasattr(properties, "model_dump") else copy.deepcopy(properties)
+    if not isinstance(value, dict) or "messages" not in value:
+        return properties
+    from ..v3.contract import validate
+    messages = value.pop("messages")
+    validate(messages, {"type": "array", "items": {"$ref": "#/components/schemas/Message"}}, "messages")
+    llm = value.get("llm", {})
+    if not isinstance(llm, dict) or "system_messages" in llm:
+        raise ValueError("Supply messages or llm.system_messages, not both")
+    value["llm"] = {**llm, "system_messages": messages}
+    return value

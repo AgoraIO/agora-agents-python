@@ -893,10 +893,11 @@ class AgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
+        from .session_backend import legacy_update_body
         self._agents.update(
             self._app_id,
             self._agent_id,
-            properties=properties,
+            properties=legacy_update_body(properties),
             request_options=self._request_options(),
         )
 
@@ -1347,10 +1348,11 @@ class AsyncAgentSession(_AgentSessionBase):
         if not self._agent_id:
             raise RuntimeError("No agent ID available")
 
+        from .session_backend import legacy_update_body
         await self._agents.update(
             self._app_id,
             self._agent_id,
-            properties=properties,
+            properties=legacy_update_body(properties),
             request_options=self._request_options(),
         )
 
