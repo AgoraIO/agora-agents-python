@@ -117,7 +117,12 @@ def module(config, category, errors):
             config.setdefault("url", params.pop(endpoint))
     if category == "llm" and (vendor == "gemini" or config.get("style") == "gemini") and config.get("url"):
         parts = urlsplit(config["url"])
-        query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "key"]
+        entries = parse_qsl(parts.query, keep_blank_values=True)
+        for key, value in entries:
+            if key == "key":
+                config.setdefault("api_key", value)
+                break
+        query = [(key, value) for key, value in entries if key != "key"]
         config["url"] = urlunsplit(parts._replace(query=urlencode(query)))
     provider_fields = {
         ("asr", "amazon"): ("access_key_id", "secret_access_key"),
