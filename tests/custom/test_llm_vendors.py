@@ -90,7 +90,7 @@ def test_gemini_constructs_url_from_api_key_and_model() -> None:
     ).to_config()
 
     assert config["url"] == "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=google-key"
-    assert "api_key" not in config
+    assert config["api_key"] == "google-key"
     assert config["style"] == "gemini"
     assert config["params"]["model"] == "gemini-2.0-flash"
 
@@ -154,11 +154,7 @@ def test_llm_vendors_reject_missing_required_models() -> None:
         AmazonBedrock(access_key="aws-access", secret_key="aws-secret", region="us-east-1")  # type: ignore[call-arg]
 
 
-def test_openai_managed_mode_is_restricted_to_supported_models() -> None:
-    assert OpenAI(model="gpt-5-mini").to_config()["params"]["model"] == "gpt-5-mini"
-
-    with pytest.raises(Exception, match="api_key"):
-        OpenAI(model="gpt-4o")
-
-    with pytest.raises(Exception, match="does not allow vendor"):
-        OpenAI(model="gpt-5-mini", vendor="custom")
+def test_openai_managed_models_are_validated_by_the_service() -> None:
+    for model in ("gpt-5-mini", "gpt-5.6-luna", "future-model"):
+        assert OpenAI(model=model).to_config()["params"]["model"] == model
+    assert OpenAI(model="gpt-5.6-luna", vendor="openai").to_config()["vendor"] == "openai"

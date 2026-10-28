@@ -9,7 +9,7 @@ For the everyday builder → session or saved-agent flow, start with the [agent 
 | v2 `AgentSession` | Running RTC instance, also historically called an agent | Existing `create_session(...).start()` lifecycle |
 | v3 session | Running instance identified by `agent_session_id` | Start saved/ephemeral, list, get and stop |
 
-Saving stores configuration; it does not itself start a session. Call `saved.create_session(...).start()` to start by ID. The low-level campaign API is available; high-level outbound-call helpers and AgentKit analysis helpers are not included. The SDK package version continues to describe package compatibility independently of the REST API version.
+Saving stores configuration; it does not itself start a session. Call `saved.create_session(...).start()` to start by ID. Use `agent.call(...)` or `saved.call(...)` for outbound sessions and `client.campaigns` for campaigns. Session information includes optional typed `analysis` during rollout. The SDK package version continues to describe package compatibility independently of the REST API version.
 
 ## Quick start with staging
 
@@ -169,7 +169,7 @@ Use `await error.latest()` after an async 412. `save()` requires an `Agora` clie
 
 The preview supports cascaded ASR/LLM/TTS pipelines only. MLLM configurations cannot be saved or used with preview ephemeral-session options, and preview session updates reject MLLM parameters before network access. Existing inline MLLM sessions remain supported with an explicit `agent_uid` and the established session options.
 
-Existing resources and ordinary inline `Agent.create_session()` behavior remain available. Secret references and variable definitions select ephemeral session start automatically; a saved handle selects start by stored ID. `to_properties()` still refuses secret references because it explicitly serializes the older session contract. Session starts accept `values` overrides; the current response contract does not expose an analysis-result field or an AgentKit extraction-results helper. See the [daily workflow](./agent-workflow.md) for session options and unsupported controls.
+Existing resources and ordinary inline `Agent.create_session()` behavior remain available. Secret references and variable definitions select ephemeral session start automatically; a saved handle selects start by stored ID. `to_properties()` still refuses secret references because it explicitly serializes the older session contract. Session starts accept `values` overrides; session info exposes optional typed `analysis` for extraction results during rollout. See the [daily workflow](./agent-workflow.md) for session options and unsupported controls.
 
 `with_variable` returns a new builder. Names match `^[a-z][a-z0-9_]{0,63}$`; supported types are `str`, `int`, `float`, `bool`, `date`, `datetime`; `extract=True` requires a nonempty description (at most 2,000 characters). `options`, when supplied, contains 1–100 unique primitive values: equivalent numbers such as `1` and `1.0` count as duplicates, while `True`, `1`, and `"1"` remain distinct JSON types. `secret_ref(set_name, key)` validates 1–64 letters, digits, underscores per component and returns `$secrets.<set>.<key>`. It creates a reference, not a secret value.
 
@@ -199,7 +199,7 @@ See [the v3 source](../../src/agora_agent/v3/client.py), [wire schemas](../../sr
 
 ## Compatibility names
 
-`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`, and `AsyncDeployedAgent` is exactly `AsyncSavedAgent`. `client.secrets` / `client.numbers` share the same resource objects as their advanced `client.v3` counterparts. These aliases do not duplicate requests or configuration. Saved handles create sessions by ID; the original builder also starts directly, using ephemeral start when secret references or variables require it.
+`deploy()` / `deploy_async()` remain compatibility wrappers for `save()` / `save_async()`. `DeployedAgent` is exactly `SavedAgent`, and `AsyncDeployedAgent` is exactly `AsyncSavedAgent`. `client.secrets` / `client.numbers` share the same resource objects as their advanced `client.v3` counterparts. These aliases do not duplicate requests or configuration. Saved handles create sessions by ID; the original builder also starts directly, using ephemeral start when secret references or variables require it. Use `agent.create_ephemeral_session(...)` (or `create_async_ephemeral_session`) to select it explicitly.
 
 
 ## Session idempotency

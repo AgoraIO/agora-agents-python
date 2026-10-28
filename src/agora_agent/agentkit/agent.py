@@ -945,6 +945,28 @@ class Agent:
         """Compatibility alias for save_async()."""
         return await self.save_async(name=name, agent_id=agent_id)
 
+    def create_ephemeral_session(self, channel: str, agent_uid: typing.Optional[str] = None,
+                                 remote_uids: typing.Optional[typing.List[str]] = None, **options) -> "AgentSession":
+        """Configure an unsaved Platform session explicitly; call start() to run it."""
+        from .session_backend import create_session
+        return create_session(self, channel=channel, agent_uid=agent_uid, remote_uids=remote_uids, **options)
+
+    def create_async_ephemeral_session(self, channel: str, agent_uid: typing.Optional[str] = None,
+                                       remote_uids: typing.Optional[typing.List[str]] = None, **options) -> "AsyncAgentSession":
+        """Async-client equivalent of create_ephemeral_session()."""
+        from .session_backend import create_session
+        return create_session(self, asynchronous=True, channel=channel, agent_uid=agent_uid, remote_uids=remote_uids, **options)
+
+    def call(self, *, from_number: str, to: str, call_policy=None, **options) -> "AgentSession":
+        """Configure an outbound phone session; call start() to place the call."""
+        from .session_backend import create_call
+        return create_call(self, from_number=from_number, to=to, call_policy=call_policy, **options)
+
+    def call_async(self, *, from_number: str, to: str, call_policy=None, **options) -> "AsyncAgentSession":
+        """Configure an outbound call using an AsyncAgora client."""
+        from .session_backend import create_call
+        return create_call(self, asynchronous=True, from_number=from_number, to=to, call_policy=call_policy, **options)
+
     def create_session(
         self,
         channel: str,
@@ -1232,8 +1254,10 @@ class Agent:
 
         return _start_properties_from_mapping(base_kwargs)
 
-    def _resolve_llm_config(self) -> typing.Dict[str, typing.Any]:
+    def _resolve_llm_config(self, *, platform: bool = False) -> typing.Dict[str, typing.Any]:
         llm_config = dict(self._llm or {})
+        if not platform and llm_config.get("style") == "gemini" and "key=" in llm_config.get("url", ""):
+            llm_config.pop("api_key", None)
         if self._instructions is not None and "system_messages" not in llm_config:
             llm_config["system_messages"] = [{"role": "system", "content": self._instructions}]
         if self._greeting is not None and "greeting_message" not in llm_config:

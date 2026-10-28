@@ -5,6 +5,7 @@ import copy
 import re
 import time
 from typing import TYPE_CHECKING, List, Mapping, Optional
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ..v3 import PreconditionFailedError
 from ..v3.types import AgentResponse, NumberResponse
@@ -100,7 +101,24 @@ def module(config, category, errors):
         config.setdefault("vendor", "amazon")
         if "region" in config:
             params.setdefault("region", config.pop("region"))
+    if category == "avatar" and config.get("vendor") == "heygen":
+        config["vendor"] = "liveavatar"
     vendor = config.get("vendor")
+    if category == "asr":
+        if "keywords" in config:
+            params["keywords"] = config.pop("keywords")
+        language = config.get("language", params.pop("language", None))
+        if language is not None:
+            config["language"] = language
+        elif vendor in {"ares", "fengming"}:
+            config["language"] = "en-US"
+        endpoint = {"assemblyai": "ws_url", "speechmatics": "uri"}.get(vendor)
+        if endpoint and endpoint in params:
+            config.setdefault("url", params.pop(endpoint))
+    if category == "llm" and (vendor == "gemini" or config.get("style") == "gemini") and config.get("url"):
+        parts = urlsplit(config["url"])
+        query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "key"]
+        config["url"] = urlunsplit(parts._replace(query=urlencode(query)))
     provider_fields = {
         ("asr", "amazon"): ("access_key_id", "secret_access_key"),
         ("asr", "google"): ("adc_credentials_string",),
@@ -247,7 +265,7 @@ def build_body(agent, name=None):
     if not isinstance(result["agent_name"], str) or not result["agent_name"].strip():
         raise ValueError("name must be nonempty")
     pipeline = {"mode": "cascaded"}
-    conversational = dump(agent._resolve_llm_config()) or {}
+    conversational = dump(agent._resolve_llm_config(platform=True)) or {}
     messages = conversational.pop("system_messages", None)
     if messages is not None:
         source = "llm.system_messages"
@@ -307,9 +325,9 @@ def build_body(agent, name=None):
         if target == "asr":
             language = agent._field_value(agent._turn_detection, "language")
             if value is not None or language is not None:
-                # Preserve v2 interaction-language precedence and its existing
-                # managed ASR fallback, without adding ASR to partial builders.
-                value = agent._resolve_asr_config(agent._resolve_turn_detection_config())
+                value = dump(value or {"vendor": "fengming" if getattr(agent._client, "area_scope", None) == "cn" else "ares"})
+                if language is not None:
+                    value["language"] = language
         if value is not None:
             pipeline[target] = module(value, target, errors)
     if "silence_config" in params:
@@ -424,13 +442,19 @@ def _number_id(number):
     return number
 
 
-def _policy(max_call_duration_seconds, max_silence_duration_ms):
-    policy = {}
+def _policy(max_call_duration_seconds, max_silence_duration_ms, call_policy=None):
+    if call_policy is None and max_call_duration_seconds is None and max_silence_duration_ms is None:
+        return None
+    policy = copy.deepcopy(call_policy) if call_policy is not None else {}
+    if not isinstance(policy, dict):
+        raise ValueError("call_policy must be a mapping")
     for key, value in (("max_call_duration_seconds", max_call_duration_seconds), ("max_silence_duration_ms", max_silence_duration_ms)):
         if value is not None:
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 raise ValueError(key + " must be a positive integer")
             policy[key] = value
+    from ..v3.contract import validate
+    validate(policy, {"$ref": "#/components/schemas/InboundCallPolicy"}, "call_policy")
     return policy
 
 
@@ -455,6 +479,11 @@ class SavedAgent(_SavedAgentBase):
             values=values, idempotency_key=idempotency_key, token=token, encryption=encryption,
             audio_scenario=audio_scenario, graceful_stop=graceful_stop, data_policy=data_policy, geofence=geofence,
             debug=debug, warn=warn)
+
+    def call(self, *, from_number: str, to: str, call_policy=None, **options):
+        """Configure an outbound phone session; call start() to place the call."""
+        from .session_backend import create_call
+        return create_call(self, asynchronous=False, from_number=from_number, to=to, call_policy=call_policy, **options)
 
     @classmethod
     def get(cls, client, agent_id) -> SavedAgent:
@@ -501,7 +530,7 @@ class SavedAgent(_SavedAgentBase):
         for attempt in range(2):
             previous = raw.get(number_id=identifier)
             inbound = {"agent": agent_id}
-            if policy:
+            if policy is not None:
                 inbound["call_policy"] = policy
             try:
                 return raw.update(number_id=identifier, if_match=_require_etag(previous), inbound=inbound).data
@@ -509,11 +538,11 @@ class SavedAgent(_SavedAgentBase):
                 if attempt:
                     raise
 
-    def assign_number(self, number, *, max_call_duration_seconds=None, max_silence_duration_ms=None) -> NumberResponse:
-        return self._assign(number, self.id, _policy(max_call_duration_seconds, max_silence_duration_ms))
+    def assign_number(self, number, *, max_call_duration_seconds=None, max_silence_duration_ms=None, call_policy=None) -> NumberResponse:
+        return self._assign(number, self.id, _policy(max_call_duration_seconds, max_silence_duration_ms, call_policy))
 
     def unassign_number(self, number) -> NumberResponse:
-        return self._assign(number, None, {})
+        return self._assign(number, None, None)
 
 
 class AsyncSavedAgent(_SavedAgentBase):
@@ -530,6 +559,11 @@ class AsyncSavedAgent(_SavedAgentBase):
             data_policy=data_policy, geofence=geofence, debug=debug, warn=warn)
 
     create_async_session = create_session
+
+    def call(self, *, from_number: str, to: str, call_policy=None, **options):
+        """Configure an outbound phone session; call start() to place the call."""
+        from .session_backend import create_call
+        return create_call(self, asynchronous=True, from_number=from_number, to=to, call_policy=call_policy, **options)
 
     @classmethod
     async def get(cls, client, agent_id) -> AsyncSavedAgent:
@@ -576,7 +610,7 @@ class AsyncSavedAgent(_SavedAgentBase):
         for attempt in range(2):
             previous = await raw.get(number_id=identifier)
             inbound = {"agent": agent_id}
-            if policy:
+            if policy is not None:
                 inbound["call_policy"] = policy
             try:
                 return (await raw.update(number_id=identifier, if_match=_require_etag(previous), inbound=inbound)).data
@@ -584,11 +618,11 @@ class AsyncSavedAgent(_SavedAgentBase):
                 if attempt:
                     raise
 
-    async def assign_number(self, number, *, max_call_duration_seconds=None, max_silence_duration_ms=None) -> NumberResponse:
-        return await self._assign(number, self.id, _policy(max_call_duration_seconds, max_silence_duration_ms))
+    async def assign_number(self, number, *, max_call_duration_seconds=None, max_silence_duration_ms=None, call_policy=None) -> NumberResponse:
+        return await self._assign(number, self.id, _policy(max_call_duration_seconds, max_silence_duration_ms, call_policy))
 
     async def unassign_number(self, number) -> NumberResponse:
-        return await self._assign(number, None, {})
+        return await self._assign(number, None, None)
 
 # Compatibility names are exact aliases; all paths share the same implementation.
 DeployedAgent = SavedAgent

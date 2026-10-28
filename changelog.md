@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased
+
+- Correct Platform provider IDs, Gemini and Bedrock credentials, ASR language/keywords/endpoints, and HeyGen mapping. Managed OpenAI model availability is validated by the service.
+- Add explicit ephemeral-session and outbound-call helpers, full inbound call policies, RTC token generation for fixed numeric UIDs, Azure resource names, optional session analysis and secret-key metadata.
+- Fix Pydantic import configuration warnings and document Windows source checkout requirements.
+
 ## [v3.0.0-alpha.1] — 2026-10-28
 
 - Shared root OpenAPI JSON/YAML, local reproducible wire generator, sync/async/raw session PATCH, and cascaded-only preview contracts.

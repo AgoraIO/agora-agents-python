@@ -65,7 +65,7 @@ def make_client(handler, async_=False, **kwargs):
     transport = httpx.MockTransport(handler)
     cls = AsyncAgora if async_ else Agora
     http = httpx.AsyncClient(transport=transport) if async_ else httpx.Client(transport=transport)
-    return cls(area=Area.US, app_id="project", app_certificate="cert", auth_token="raw-token",
+    return cls(area=Area.US, app_id="project", auth_token="raw-token",
                httpx_client=http, v3=V3Options(base_url="https://stage.example/", headers={"X-Test-Context": "test"}), **kwargs)
 
 
@@ -215,7 +215,7 @@ def test_deploy_mapping_and_immutable_variables():
     assert body["messages"] == [{"role": "user", "content": "Hello"}]
     assert body["greeting"] == {"mode": "text", "text": "Hi"}
     assert body["variables"]["resolved"]["type"] == "bool"
-    assert body["pipeline"]["asr"] == {"vendor": "deepgram", "model": "nova-3", "language": "en-US", "credential": {"mode": "byok", "fields": {"api_key": "$secrets.prod.dg"}}}
+    assert body["pipeline"]["asr"] == {"vendor": "deepgram", "model": "nova-3", "credential": {"mode": "byok", "fields": {"api_key": "$secrets.prod.dg"}}}
     assert body["pipeline"]["llm"]["credential"]["fields"]["api_key"] == "$secrets.prod.openai"
     assert "variables" not in build_body(base)
     assert deployed.raw is client.v3.agents
@@ -483,12 +483,12 @@ async def test_deploy_preserves_interaction_and_provider_languages(async_):
         agent.deploy(name="German")
     pipeline = json.loads(requests[0].content)["pipeline"]
     assert pipeline["asr"]["language"] == "de-DE"
-    assert pipeline["asr"]["params"]["language"] == "fr"
+    assert "language" not in pipeline["asr"].get("params", {})
     assert "language" not in pipeline.get("turn_detection", {})
     v2 = agent.with_stt(DeepgramSTT(api_key="inline", model="nova-3", language="fr")).to_properties(channel="room", agent_uid="1", remote_uids=["*"], token="rtc",
                              allow_missing_vendor_categories={"llm", "tts"}).model_dump(exclude_none=True)
     assert v2["asr"]["language"] == pipeline["asr"]["language"]
-    assert v2["asr"]["params"]["language"] == pipeline["asr"]["params"]["language"]
+    assert v2["asr"]["params"]["language"] == "fr"
 
 
 def test_explicit_interaction_language_uses_existing_managed_asr_fallback():
@@ -504,8 +504,8 @@ def test_explicit_interaction_language_uses_existing_managed_asr_fallback():
     assert "asr" not in build_body(Agent(client=client))["pipeline"]
     assert "asr" not in build_body(Agent(client=client).with_llm(OpenAI(model="gpt-4o-mini")))["pipeline"]
     default = build_body(Agent(client=client).with_stt(DeepgramSTT(api_key=secret_ref("prod", "dg"), model="nova-3", language="fr")))
-    assert default["pipeline"]["asr"]["language"] == "en-US"
-    assert default["pipeline"]["asr"]["params"]["language"] == "fr"
+    assert default["pipeline"]["asr"]["language"] == "fr"
+    assert "language" not in default["pipeline"]["asr"].get("params", {})
 
 
 @pytest.mark.parametrize("options", [["same", "same"], [1, 1.0], [0, -0.0]])

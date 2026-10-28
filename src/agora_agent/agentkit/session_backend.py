@@ -18,10 +18,10 @@ def needs_session_backend(agent):
     return bool(getattr(agent, "_v3_variables", {})) or contains(agent.config) or any(key in params for key in ("opt_out", "farewell_config"))
 
 
-def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids,
+def create_session(owner, *, asynchronous=False, channel=None, agent_uid=None, remote_uids=None,
                    name=None, client_reference=None, idle_timeout=None, max_duration=None,
                    labels=None, values=None, idempotency_key=None, token=None, encryption=None,
-                   audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None, **unsupported):
+                   audio_scenario=None, graceful_stop=None, data_policy=None, geofence=None, debug=None, warn=None, _telephony=None, **unsupported):
     from ..pool_client import Agora, AsyncAgora
     from .agent_session import AgentSession, AsyncAgentSession
     from .v3 import build_body, dump
@@ -36,25 +36,30 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
     invalid = [key for key, value in unsupported.items() if value is not None]
     if invalid:
         raise ValueError("Unsupported session options: " + ", ".join(sorted(invalid)))
-    if not isinstance(channel, str) or not channel.strip():
-        raise ValueError("channel must be nonempty")
-    if agent_uid is not None and (not isinstance(agent_uid, str) or not agent_uid.strip()):
-        raise ValueError("agent_uid must be nonempty")
-    if not isinstance(remote_uids, list) or any(not isinstance(v, str) or not v.strip() for v in remote_uids):
-        raise ValueError("remote_uids must be a list of nonempty strings")
-    body = {"transport": {"type": "rtc", "channel": channel, "subscribe_uids": list(remote_uids)}}
-    if agent_uid is not None:
-        body["transport"]["uid"] = agent_uid
+    if _telephony is not None:
+        if any(value is not None for value in (channel, agent_uid, remote_uids, token, encryption, audio_scenario, geofence)):
+            raise ValueError("RTC options cannot be combined with a phone call")
+        body = {"transport": copy.deepcopy(_telephony)}
+    else:
+        if not isinstance(channel, str) or not channel.strip():
+            raise ValueError("channel must be nonempty")
+        if agent_uid is not None and (not isinstance(agent_uid, str) or not agent_uid.strip()):
+            raise ValueError("agent_uid must be nonempty")
+        if not isinstance(remote_uids, list) or any(not isinstance(v, str) or not v.strip() for v in remote_uids):
+            raise ValueError("remote_uids must be a list of nonempty strings")
+        body = {"transport": {"type": "rtc", "channel": channel, "subscribe_uids": list(remote_uids)}}
+        if agent_uid is not None:
+            body["transport"]["uid"] = agent_uid
+        fence = geofence if geofence is not None else getattr(owner, "_geofence", None)
+        if fence is not None:
+            fence = dump(fence)
+            body["transport"]["geofence"] = {key: value.lower() if isinstance(value, str) else value for key, value in fence.items()}
+        for key, value in (("token", token), ("encryption", encryption), ("audio_scenario", audio_scenario)):
+            if value is not None:
+                body["transport"][key] = copy.deepcopy(value)
     if labels is None:
         labels = getattr(owner, "_labels", None)
     reference = name
-    fence = geofence if geofence is not None else getattr(owner, "_geofence", None)
-    if fence is not None:
-        fence = dump(fence)
-        body["transport"]["geofence"] = {key: value.lower() if isinstance(value, str) else value for key, value in fence.items()}
-    for key, value in (("token", token), ("encryption", encryption), ("audio_scenario", audio_scenario)):
-        if value is not None:
-            body["transport"][key] = copy.deepcopy(value)
     for key, value in (("values", values), ("labels", labels), ("data_policy", data_policy)):
         if value is not None:
             body[key] = copy.deepcopy(value)
@@ -81,6 +86,8 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
             raise ValueError("parameters.opt_out must be bool")
         if data_policy is None and "opt_out" in params:
             body["data_policy"] = {"retention": "none" if params["opt_out"] else "30_days"}
+        if _telephony is not None and ("audio_scenario" in params or owner._geofence is not None):
+            raise ValueError("RTC settings cannot be combined with a phone call")
         if audio_scenario is None and "audio_scenario" in params:
             body["transport"]["audio_scenario"] = params["audio_scenario"]
         if graceful_stop is None and "farewell_config" in params:
@@ -106,8 +113,8 @@ def create_session(owner, *, asynchronous=False, channel, agent_uid, remote_uids
         body["idempotency_key"] = idempotency_key
     session_type = AsyncAgentSession if asynchronous else AgentSession
     return session_type(client=client, agent=owner, app_id=client.app_id,
-                        name=reference or "", channel=channel, agent_uid=agent_uid,
-                        remote_uids=list(remote_uids), debug=debug, warn=warn,
+                        name=reference or "", channel=channel or "", agent_uid=agent_uid,
+                        remote_uids=list(remote_uids or []), debug=debug, warn=warn,
                         _session_backend={"stored": stored, "body": copy.deepcopy(body)})
 
 
@@ -152,3 +159,27 @@ def legacy_update_body(properties):
         raise ValueError("Supply messages or llm.system_messages, not both")
     value["llm"] = {**llm, "system_messages": messages}
     return value
+
+
+def create_call(owner, *, from_number: str, to: str, call_policy=None, asynchronous=False, **options):
+    """Configure an outbound call using the same session lifecycle as RTC."""
+    transport = {"type": "telephony", "from": from_number, "to": to}
+    if call_policy is not None:
+        transport["call_policy"] = copy.deepcopy(call_policy)
+    return create_session(owner, asynchronous=asynchronous, _telephony=transport, **options)
+
+
+def prepare_start_body(session):
+    """Generate a fixed-UID RTC token once, preserving idempotent retry bodies."""
+    body = session._session_backend["body"]
+    transport = body["transport"]
+    uid = transport.get("uid")
+    certificate = getattr(session._client, "app_certificate", None)
+    generate = "token" not in transport or (session._session_backend.get("generated_rtc_token") and body.get("idempotency_key") is None)
+    if (transport.get("type") == "rtc" and generate and certificate
+            and isinstance(uid, str) and uid.isascii() and uid.isdigit() and int(uid) != 0):
+        from .token import generate_convo_ai_token
+        transport["token"] = generate_convo_ai_token(app_id=session._client.app_id,
+            app_certificate=certificate, channel_name=transport["channel"], uid=int(uid))
+        session._session_backend["generated_rtc_token"] = True
+    return body

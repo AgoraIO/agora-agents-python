@@ -1151,3 +1151,9 @@ and use the provider default `2x3`. Options and caller maps are not mutated.
 LemonSlice recommends the fixed `avatar_id="lemonslice"`; explicit overrides remain
 supported for backwards compatibility. Branded providers are no longer exact aliases,
 and LemonSlice selector validation is now mandatory.
+
+### Platform provider mapping
+
+Provider classes supply their vendor identifier automatically. Managed OpenAI model availability is validated by the service rather than a local model allowlist. Gemini's API key maps to `credential.fields.api_key`, including when a custom URL is supplied; Platform URLs never include the key query parameter. AzureOpenAI accepts either `endpoint` or `resource_name`. AmazonBedrock accepts `api_key` or the `access_key`/`secret_key` pair, exclusively, and uses vendor `amazon`.
+
+For Platform ASR, language is emitted once at module level; explicit interaction language takes precedence over the vendor language. Ares keywords map to `params.keywords`, and Ares defaults to `en-US`. AssemblyAI `ws_url` and Speechmatics `uri` map to module `url`. Legacy session serialization remains unchanged. HeyGen avatars map to `liveavatar` for Platform requests; prefer `LiveAvatarAvatar` for new code.

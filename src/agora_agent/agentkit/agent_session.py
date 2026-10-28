@@ -400,23 +400,7 @@ class _AgentSessionBase:
         if self._agent.tts is not None:
             properties["tts"] = self._dump_model(self._agent.tts)
         if self._agent.llm is not None:
-            llm = dict(self._agent.llm)
-            if self._agent.instructions is not None and "system_messages" not in llm:
-                llm["system_messages"] = [
-                    {"role": "system", "content": self._agent.instructions}
-                ]
-            if self._agent.greeting is not None and "greeting_message" not in llm:
-                llm["greeting_message"] = self._agent.greeting
-            if (
-                self._agent.greeting_configs is not None
-                and "greeting_configs" not in llm
-            ):
-                llm["greeting_configs"] = self._dump_model(self._agent.greeting_configs)
-            if self._agent.failure_message is not None and "failure_message" not in llm:
-                llm["failure_message"] = self._agent.failure_message
-            if self._agent.max_history is not None and "max_history" not in llm:
-                llm["max_history"] = self._agent.max_history
-            properties["llm"] = llm
+            properties["llm"] = self._agent._resolve_llm_config()
         if self._agent.stt is not None:
             turn_detection = properties.get("turn_detection") or {}
             properties["asr"] = self._dump_model(
@@ -617,7 +601,8 @@ class AgentSession(_AgentSessionBase):
             try:
                 resource = self._client.v3.sessions
                 method = resource.start if self._session_backend["stored"] else resource.start_ephemeral
-                response = method(**self._session_backend["body"])
+                from .session_backend import prepare_start_body
+                response = method(**prepare_start_body(self))
                 identifier = response.get("agent_session_id")
                 if not isinstance(identifier, str) or not identifier:
                     raise RuntimeError("Session response is missing agent_session_id")
@@ -1072,7 +1057,8 @@ class AsyncAgentSession(_AgentSessionBase):
             try:
                 resource = self._client.v3.sessions
                 method = resource.start if self._session_backend["stored"] else resource.start_ephemeral
-                response = await method(**self._session_backend["body"])
+                from .session_backend import prepare_start_body
+                response = await method(**prepare_start_body(self))
                 identifier = response.get("agent_session_id")
                 if not isinstance(identifier, str) or not identifier:
                     raise RuntimeError("Session response is missing agent_session_id")
