@@ -20,7 +20,7 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar` |
+| `Area.US`, `Area.EU`, `Area.AP` | `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar`, `Tavus`, `Protoface`, `LemonSlice` |
 | `Area.CN` | `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
@@ -1127,3 +1127,27 @@ Same options as `HeyGenAvatar`, but serializes `vendor: "liveavatar"`. `agora_to
 | `enable` | `bool` | No | `True` | Enable or disable the avatar |
 
 Avatar tokens are separate from the agent join token but generated with the same `generate_convo_ai_token` path, using the avatar's `agora_uid` as `uid`.
+
+### `Tavus`, `Protoface`, and `LemonSlice`
+
+`Tavus`, `Protoface`, and `LemonSlice` are provider wrappers around `GenericAvatar`,
+exported from `agora_agent`, `agora_agent.agentkit`, and `agora_agent.agentkit.vendors`.
+All serialize with `vendor="generic"` and retain generic session enrichment and token
+handling. Explicit `api_base_url` overrides are supported; `GenericAvatar` still requires it.
+
+| Provider | Default `api_base_url` | `avatar_id` |
+|---|---|---|
+| `Tavus` | `https://tavusapi.com/v2/conversations/agora` | Required |
+| `Protoface` | `https://api.protoface.com/v1/agora` | Required |
+| `LemonSlice` | `https://lemonslice.com/api/liveai/agora` | Defaults to `lemonslice` |
+
+LemonSlice requires exactly one nonempty string selector: `agent_id`, `agent_image_url`,
+or `agent_image_base64`. These optional typed fields serialize directly as snake_case
+keys in `avatar.params`. Selectors may also be supplied through `additional_params`;
+provided typed values override matching additional params before validation. Malformed
+alternative selectors (including whitespace and nonstrings) and multiple selectors are rejected.
+`aspect_ratio` accepts only `2x3`, `9x16`, or `1x1`; omitted values stay off the wire
+and use the provider default `2x3`. Options and caller maps are not mutated.
+LemonSlice recommends the fixed `avatar_id="lemonslice"`; explicit overrides remain
+supported for backwards compatibility. Branded providers are no longer exact aliases,
+and LemonSlice selector validation is now mandatory.

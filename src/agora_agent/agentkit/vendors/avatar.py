@@ -2,7 +2,8 @@ import warnings
 from typing import Any, Dict, Optional
 
 from .base import BaseAvatar
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from typing_extensions import Literal
 
 LIVEAVATAR_SAMPLE_RATE = 24000
 HEYGEN_SAMPLE_RATE = LIVEAVATAR_SAMPLE_RATE
@@ -188,10 +189,52 @@ class GenericAvatar(GenericAvatarOptions, BaseAvatar):
         return {"enable": enable, "vendor": "generic", "params": params}
 
 
-# Branded names share the generic constructor and wire configuration.
-Tavus = GenericAvatar
-Protoface = GenericAvatar
-LemonSlice = GenericAvatar
+class Tavus(GenericAvatar):
+    api_base_url: str = "https://tavusapi.com/v2/conversations/agora"
+
+
+class Protoface(GenericAvatar):
+    api_base_url: str = "https://api.protoface.com/v1/agora"
+
+
+class LemonSlice(GenericAvatar):
+    api_base_url: str = "https://lemonslice.com/api/liveai/agora"
+    avatar_id: str = "lemonslice"
+    agent_image_url: Optional[str] = None
+    agent_id: Optional[str] = None
+    agent_image_base64: Optional[str] = None
+    aspect_ratio: Optional[Literal["2x3", "9x16", "1x1"]] = None
+
+    def _provider_params(self) -> Dict[str, Any]:
+        params = dict(self.additional_params or {})
+        for key in ("agent_image_url", "agent_id", "agent_image_base64", "aspect_ratio"):
+            value = getattr(self, key)
+            if value is not None:
+                params[key] = value
+        selectors = ("agent_id", "agent_image_url", "agent_image_base64")
+        supplied = [key for key in selectors if key in params]
+        for key in supplied:
+            if not isinstance(params[key], str) or not params[key].strip():
+                raise ValueError(f"{key} must be a nonempty string")
+        if len(supplied) != 1:
+            raise ValueError("LemonSlice requires exactly one of agent_id, agent_image_url, agent_image_base64")
+        if "aspect_ratio" in params and params["aspect_ratio"] not in ("2x3", "9x16", "1x1"):
+            raise ValueError("aspect_ratio must be one of: 2x3, 9x16, 1x1")
+        return params
+
+    @model_validator(mode="after")
+    def validate_provider_params(self) -> "LemonSlice":
+        self._provider_params()
+        return self
+
+    def to_config(self) -> Dict[str, Any]:
+        # Delegate generic serialization without changing caller-owned options or maps.
+        provider_params = self._provider_params()
+        config = super().to_config()
+        for key in ("agent_image_url", "agent_id", "agent_image_base64", "aspect_ratio"):
+            if key in provider_params:
+                config["params"][key] = provider_params[key]
+        return config
 
 
 class AnamAvatarOptions(BaseModel):
