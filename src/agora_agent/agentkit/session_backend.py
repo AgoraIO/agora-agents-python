@@ -115,30 +115,24 @@ def update_body(properties):
     """Map the existing runtime-update convenience shape to the public PATCH."""
     from ..v3.contract import validate_write
     value = properties.model_dump(exclude_unset=True) if hasattr(properties, "model_dump") else copy.deepcopy(properties)
-    if not isinstance(value, dict) or set(value) - {"token", "messages", "llm", "mllm"}:
-        raise ValueError("Session update supports token, messages, llm.params and mllm.params only")
+    if not isinstance(value, dict) or set(value) - {"token", "messages", "llm"}:
+        raise ValueError("Preview session update supports token, messages and llm.params only; MLLM is not supported")
     result = {}
     if "token" in value:
         result["transport"] = {"token": value["token"]}
     overrides = {}
     if "messages" in value:
         overrides["messages"] = value["messages"]
-    pipeline = {}
-    for category in ("llm", "mllm"):
-        if category not in value:
-            continue
-        module = value[category]
-        allowed = {"params", "system_messages"} if category == "llm" else {"params"}
-        if not isinstance(module, dict) or set(module) - allowed:
+    if "llm" in value:
+        module = value["llm"]
+        if not isinstance(module, dict) or set(module) - {"params", "system_messages"}:
             raise ValueError("Session update supports only provider params and llm.system_messages")
         if "system_messages" in module:
             if "messages" in overrides:
                 raise ValueError("Supply messages or llm.system_messages, not both")
             overrides["messages"] = module["system_messages"]
         if "params" in module:
-            pipeline[category] = {"params": module["params"]}
-    if pipeline:
-        overrides["pipeline"] = pipeline
+            overrides["pipeline"] = {"llm": {"params": module["params"]}}
     if overrides:
         result["agent"] = {"overrides": overrides}
     validate_write("PATCH", "/conversational-ai/v1/projects/project/sessions/session", result)

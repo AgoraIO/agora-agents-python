@@ -48,7 +48,7 @@ OPERATIONS = [
     ("sessions", "get", {"agent_session_id": "s"}, "GET", "sessions/s", None),
     ("sessions", "start", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}, "POST", "sessions", {"agent_id": "saved", "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "labels": {"owner": "test"}}),
     ("sessions", "start_ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "lifecycle": {"max_duration_ms": 120000}}, "POST", "sessions/ephemeral", {"agent": {"instructions": "Help"}, "transport": {"type": "rtc", "channel": "room", "uid": "1", "subscribe_uids": ["2"]}, "lifecycle": {"max_duration_ms": 120000}}),
-    ("sessions", "update", {"agent_session_id": "s", "transport": {"token": "new-token"}, "agent": {"overrides": {"pipeline": {"mllm": {"params": {"temperature": 0.2}}}}}}, "PATCH", "sessions/s", {"transport": {"token": "new-token"}, "agent": {"overrides": {"pipeline": {"mllm": {"params": {"temperature": 0.2}}}}}}),
+    ("sessions", "update", {"agent_session_id": "s", "transport": {"token": "new-token"}, "agent": {"overrides": {"pipeline": {"llm": {"params": {"temperature": 0.2}}}}}}, "PATCH", "sessions/s", {"transport": {"token": "new-token"}, "agent": {"overrides": {"pipeline": {"llm": {"params": {"temperature": 0.2}}}}}}),
     ("sessions", "stop", {"agent_session_id": "session/a"}, "POST", "sessions/session%2Fa/stop", None),
     ('campaigns', 'create', {'name': 'Outreach', 'agent_id': 'a', 'contacts': [{'phone': '+12025550123'}], 'schedule': {'mode': 'immediate'}, 'transport': {'type': 'telephony', 'from': 'n'}, 'idempotency_key': 'key'}, 'POST', 'campaigns', {'name': 'Outreach', 'agent_id': 'a', 'contacts': [{'phone': '+12025550123'}], 'schedule': {'mode': 'immediate'}, 'transport': {'type': 'telephony', 'from': 'n'}}),
     ('campaigns', 'list', {'limit': 5, 'status': 'running'}, 'GET', 'campaigns', None),
@@ -409,71 +409,12 @@ def test_default_auth_token_is_refreshed_per_v3_call(monkeypatch):
     assert generated[0]["app_id"] == "0" * 32
 
 
-def test_realtime_instructions_and_audio_greeting_mapping():
-    from agora_agent import OpenAIRealtime
-    agent = Agent(client=make_client(lambda _: pytest.fail("mapping only"))).with_mllm(
-        OpenAIRealtime(api_key="key", model="gpt-realtime", instructions="Realtime instructions"))
-    body = build_body(agent)
-    assert body["instructions"] == "Realtime instructions"
-    assert "instructions" not in body["pipeline"]["mllm"].get("params", {})
+def test_audio_greeting_mapping():
     base = configured(make_client(lambda _: None))
     base._llm = {**base._llm, "greeting_audio_url": "https://audio.example/greeting.wav",
                  "greeting_configs": {"audio_download_timeout_ms": 1000, "audio_pcm_sample_rate": 16000}}
     greeting = build_body(base)["greeting"]
     assert greeting == {"mode": "audio", "url": "https://audio.example/greeting.wav", "text": "Hi", "download_timeout_ms": 1000, "pcm_sample_rate": 16000}
-
-
-def test_realtime_vendor_messages_use_top_level_and_preserve_instruction_precedence():
-    from agora_agent import OpenAIRealtime
-    client = make_client(lambda _: pytest.fail("pure mapping"))
-    agent = Agent(client=client, instructions="Deprecated instructions").with_mllm(
-        OpenAIRealtime(
-            api_key="key", instructions="Provider instructions",
-            messages=[{"role": "system", "content": "Explicit system message"},
-                      {"role": "user", "content": "Hello"}],
-        )
-    )
-    body = build_body(agent)
-    assert body["instructions"] == "Explicit system message"
-    assert body["messages"] == [{"role": "user", "content": "Hello"}]
-    assert "messages" not in body["pipeline"]["mllm"]
-    assert "instructions" not in body["pipeline"]["mllm"].get("params", {})
-
-    params_only = build_body(Agent(client=client, instructions="Deprecated").with_mllm(
-        OpenAIRealtime(api_key="key", instructions="Provider", messages=[{"role": "assistant", "content": "Hi"}])
-    ))
-    assert params_only["instructions"] == "Provider"
-    assert params_only["messages"] == [{"role": "assistant", "content": "Hi"}]
-    with pytest.raises(UnsupportedFieldError, match=r"mllm.messages\[0\]"):
-        build_body(Agent(client=client).with_mllm(OpenAIRealtime(
-            api_key="key", messages=[{"role": "tool", "content": "unsupported"}]
-        )))
-
-
-@pytest.mark.parametrize("mode,config,expected", [
-    ("agora_vad", {"agora_vad_config": {"threshold": 0.5}}, {"type": "agora_vad", "threshold": 0.5}),
-    ("server_vad", {"server_vad_config": {"threshold": 0.6, "idle_timeout_ms": 5000}},
-     {"type": "server_vad", "threshold": 0.6, "idle_timeout_ms": 5000}),
-    ("semantic_vad", {"semantic_vad_config": {"eagerness": "high"}},
-     {"type": "semantic_vad", "eagerness": "high"}),
-])
-def test_real_realtime_vendor_turn_detection_flattens_create_schema_fields(mode, config, expected):
-    from agora_agent import OpenAIRealtime
-    from agora_agent.types.mllm_turn_detection import MllmTurnDetection
-    client = make_client(lambda _: pytest.fail("pure mapping"))
-    turn = MllmTurnDetection(mode=mode, **config)
-    body = build_body(Agent(client=client).with_mllm(OpenAIRealtime(api_key="key", turn_detection=turn)))
-    actual = body["pipeline"]["turn_detection"]
-    assert actual == expected
-
-
-def test_realtime_turn_detection_rejects_incompatible_config_without_dropping_it():
-    from agora_agent import OpenAIRealtime
-    from agora_agent.types.mllm_turn_detection import MllmTurnDetection
-    client = make_client(lambda _: pytest.fail("pure mapping"))
-    turn = MllmTurnDetection(mode="server_vad", semantic_vad_config={"eagerness": "high"})
-    with pytest.raises(UnsupportedFieldError, match="semantic_vad_config"):
-        build_body(Agent(client=client).with_mllm(OpenAIRealtime(api_key="key", turn_detection=turn)))
 
 
 def test_greeting_playback_mode_aliases_and_unsupported_mode():

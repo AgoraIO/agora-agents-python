@@ -33,7 +33,7 @@ class AgentResponse(TypedDict, total=False):
     messages: Union[List[Message], None]
     greeting: Union[Union[TextGreeting, AudioGreeting], None]
     variables: Union[Dict[str, VariableDefinition], None]
-    pipeline: Union[ResolvedCascadedPipeline, ResolvedRealtimePipeline, None]
+    pipeline: Union[ResolvedCascadedPipeline, None]
     filler_words: Union[FillerWords, None]
 
 class AsrInput(TypedDict, total=False):
@@ -317,7 +317,7 @@ class PublicAgentInput(TypedDict, total=False):
     messages: Union[List[Message], None]
     greeting: Union[Union[TextGreeting, AudioGreeting], None]
     variables: Union[Dict[str, VariableDefinition], None]
-    pipeline: Union[CascadedPipelineInput, RealtimePipelineInput, None]
+    pipeline: Union[CascadedPipelineInput, None]
     filler_words: Union[FillerWords, None]
 
 class PublicByokCredential(TypedDict, total=False):
@@ -478,7 +478,6 @@ class SessionPatch(TypedDict, total=False):
 
 class SessionPipelinePatch(TypedDict, total=False):
     llm: SessionModulePatch
-    mllm: SessionModulePatch
 
 class SessionResponse(TypedDict, total=False):
     agent_session_id: Required[str]
@@ -608,7 +607,7 @@ class AgentRequest_AgentCreateInput(TypedDict, total=False):
     messages: Union[List[AgentRequest_Message], None]
     greeting: Union[Union[AgentRequest_TextGreeting, AgentRequest_AudioGreeting], None]
     variables: Union[Dict[str, AgentRequest_VariableDefinition], None]
-    pipeline: Union[AgentRequest_CascadedPipelineInput, AgentRequest_RealtimePipelineInput, None]
+    pipeline: Union[AgentRequest_CascadedPipelineInput, None]
     filler_words: Union[AgentRequest_FillerWords, None]
 
 class AgentRequest_AgentPatch(TypedDict, total=False):
@@ -617,7 +616,7 @@ class AgentRequest_AgentPatch(TypedDict, total=False):
     messages: Union[List[AgentRequest_Message], None]
     greeting: Union[AgentRequest_GreetingPatch, None]
     variables: Union[Dict[str, Union[AgentRequest_VariableDefinitionPatch, None]], None]
-    pipeline: Union[AgentRequest_PipelinePatch, None]
+    pipeline: Union[AgentRequest_CascadedPipelinePatch, None]
     filler_words: Union[AgentRequest_FillerWordsPatch, None]
 
 class AgentRequest_AsrInput(TypedDict, total=False):
@@ -912,127 +911,6 @@ class InboundEndCallPolicy(TypedDict, total=False):
     on_ai_assistant: bool
     on_fax: bool
 
-class AgoraVadTurnDetection(TypedDict, total=False):
-    type: Required[Literal['agora_vad']]
-    interrupt_duration_ms: int
-    prefix_padding_ms: int
-    silence_duration_ms: int
-    threshold: float
-
-class AgentRequest_AgoraVadTurnDetectionPatch(TypedDict, total=False):
-    type: Union[Literal['agora_vad'], None]
-    interrupt_duration_ms: Union[int, None]
-    prefix_padding_ms: Union[int, None]
-    silence_duration_ms: Union[int, None]
-    threshold: Union[float, None]
-
-class ServerVadTurnDetection(TypedDict, total=False):
-    type: Required[Literal['server_vad']]
-    prefix_padding_ms: int
-    silence_duration_ms: int
-    threshold: float
-    idle_timeout_ms: int
-    start_of_speech_sensitivity: Literal['START_SENSITIVITY_HIGH', 'START_SENSITIVITY_LOW']
-    end_of_speech_sensitivity: Literal['END_SENSITIVITY_HIGH', 'END_SENSITIVITY_LOW']
-
-class AgentRequest_ServerVadTurnDetectionPatch(TypedDict, total=False):
-    type: Union[Literal['server_vad'], None]
-    prefix_padding_ms: Union[int, None]
-    silence_duration_ms: Union[int, None]
-    threshold: Union[float, None]
-    idle_timeout_ms: Union[int, None]
-    start_of_speech_sensitivity: Union[Literal['START_SENSITIVITY_HIGH', 'START_SENSITIVITY_LOW'], None]
-    end_of_speech_sensitivity: Union[Literal['END_SENSITIVITY_HIGH', 'END_SENSITIVITY_LOW'], None]
-
-class SemanticVadTurnDetection(TypedDict, total=False):
-    type: Required[Literal['semantic_vad']]
-    eagerness: Literal['auto', 'low', 'medium', 'high']
-
-class AgentRequest_SemanticVadTurnDetectionPatch(TypedDict, total=False):
-    type: Union[Literal['semantic_vad'], None]
-    eagerness: Union[Literal['auto', 'low', 'medium', 'high'], None]
-
-class AgentRequest_MllmInput(TypedDict, total=False):
-    mcp_servers: Union[List[AgentRequest_McpServer], None]
-    credential: Union[Union[AgentRequest_ManagedCredential, AgentRequest_PublicByokCredential], None]
-    vendor: Required[str]
-    params: Union[AgentRequest_JSONObject, None]
-    url: Union[str, None]
-    model: Union[str, None]
-    headers: Union[Dict[str, str], None]
-    input_modalities: Union[List[Literal['text', 'audio']], None]
-    output_modalities: Union[List[Literal['text', 'audio']], None]
-
-class MllmInput(TypedDict, total=False):
-    mcp_servers: Union[List[McpServer], None]
-    credential: Union[Union[ManagedCredential, PublicByokCredential], None]
-    vendor: Required[str]
-    params: Union[JSONObject, None]
-    url: Union[str, None]
-    model: Union[str, None]
-    headers: Union[Dict[str, str], None]
-    input_modalities: Union[List[Literal['text', 'audio']], None]
-    output_modalities: Union[List[Literal['text', 'audio']], None]
-
-class AgentRequest_MllmPatch(TypedDict, total=False):
-    mcp_servers: Union[List[AgentRequest_McpServer], None]
-    credential: Union[AgentRequest_MllmCredentialPatch, None]
-    vendor: Union[str, None]
-    params: Union[AgentRequest_JSONObject, None]
-    url: Union[str, None]
-    model: Union[str, None]
-    headers: Union[Dict[str, str], None]
-    input_modalities: Union[List[Literal['text', 'audio']], None]
-    output_modalities: Union[List[Literal['text', 'audio']], None]
-
-class ResolvedMllm(TypedDict, total=False):
-    credential: Union[ResolvedCredential, None]
-    url: Union[str, None]
-    vendor: Union[str, None]
-    model: Union[str, None]
-    params: Union[Dict[str, JsonValue], None]
-    input_modalities: Union[List[Literal['text', 'audio']], None]
-    output_modalities: Union[List[Literal['text', 'audio']], None]
-    mcp_servers: Union[List[McpServer], None]
-
-class AgentRequest_MllmCredentialPatch(TypedDict, total=False):
-    mode: Union[Literal['managed', 'byok'], None]
-    fields: Union[Dict[str, Union[str, None]], None]
-
-class AgentRequest_RealtimePipelineInput(TypedDict, total=False):
-    mode: Required[Literal['realtime']]
-    avatar: Union[AgentRequest_AvatarInput, None]
-    turn_detection: Union[RealtimeTurnDetection, None]
-    mllm: Union[AgentRequest_MllmInput, None]
-
-class RealtimePipelineInput(TypedDict, total=False):
-    mode: Required[Literal['realtime']]
-    avatar: Union[AvatarInput, None]
-    turn_detection: Union[RealtimeTurnDetection, None]
-    mllm: Union[MllmInput, None]
-
-class ResolvedRealtimePipeline(TypedDict, total=False):
-    mode: Required[Literal['realtime']]
-    avatar: Union[ResolvedAvatar, None]
-    turn_detection: Union[RealtimeTurnDetection, None]
-    mllm: Union[ResolvedMllm, None]
-
-class AgentRequest_RealtimePipelinePatch(TypedDict, total=False):
-    mode: Union[Literal['realtime'], None]
-    avatar: Union[AgentRequest_AvatarPatch, None]
-    turn_detection: Union[AgentRequest_RealtimeTurnDetectionPatch, None]
-    mllm: Union[AgentRequest_MllmPatch, None]
-
-class AgentRequest_PipelinePatch(TypedDict, total=False):
-    mode: Union[Literal['cascaded', 'realtime'], None]
-    avatar: Union[AgentRequest_AvatarPatch, None]
-    turn_detection: Union[AgentRequest_CascadedTurnDetectionPatch, AgentRequest_RealtimeTurnDetectionPatch, None]
-    asr: Union[AgentRequest_AsrPatch, None]
-    tts: Union[AgentRequest_TtsPatch, None]
-    llm: Union[AgentRequest_LlmPatch, None]
-    silence_config: Union[AgentRequest_SilenceConfigPatch, None]
-    mllm: Union[AgentRequest_MllmPatch, None]
-
 AvatarVendor = Literal['akool', 'liveavatar', 'anam', 'sensetime', 'spatius', 'generic']
 ErrorReason = Literal['InvalidRequestBody', 'MissingRequiredField', 'InvalidFieldValue', 'InvalidModuleParameter', 'UnknownSecretReference', 'NotImplemented', 'InvalidPermission', 'ServiceNotEnabled', 'AccountSuspended', 'TaskNotFound', 'ResourceNotFound', 'AgentNotFound', 'NumberNotFound', 'NumberAlreadyExists', 'ResourceConflict', 'MethodNotAllowed', 'PayloadTooLarge', 'UnsupportedMediaType', 'TaskConflict', 'CampaignActive', 'CampaignInvalidState', 'CampaignNotEditable', 'IdempotencyKeyConflict', 'SecretSetAlreadyExists', 'SecretSetInUse', 'SecretSetEmpty', 'TaskNotRunning', 'RateLimitExceeded', 'PreconditionFailed', 'PreconditionRequired', 'ResourceQuotaLimitExceeded', 'ConcurrencyLimitExceeded', 'InternalError', 'ServiceUnavailable', 'ResourceAllocationFailed', 'TaskOperationTimeout']
 JSONObject = Dict[str, 'JsonValue']
@@ -1044,8 +922,6 @@ AgentRequest_JsonValue = Any
 AgentRequest_SkipPattern = Literal['fullwidth_parentheses', 'lenticular_brackets', 'parentheses', 'square_brackets', 'curly_braces']
 AgentCreateInput = AgentRequest_AgentCreateInput
 AgentPatch = AgentRequest_AgentPatch
-RealtimeTurnDetection = Union[AgoraVadTurnDetection, ServerVadTurnDetection, SemanticVadTurnDetection]
-AgentRequest_RealtimeTurnDetectionPatch = Union[AgentRequest_AgoraVadTurnDetectionPatch, AgentRequest_ServerVadTurnDetectionPatch, AgentRequest_SemanticVadTurnDetectionPatch]
 
 # Compatibility names retained for the additive preview namespace.
 AgentCreateModel = AgentCreateInput
@@ -1060,4 +936,4 @@ class RtcSessionTransport(RtcTransport, total=False):
     geofence: RtcGeofence
 SessionTransport = Union[RtcSessionTransport, TelephonyTransport]
 
-__all__ = ['AgentDeleteResponse', 'AgentListData', 'AgentListItem', 'AgentListResponse', 'AgentResponse', 'AsrInput', 'AudioGreeting', 'AvatarInput', 'AvatarVendor', 'CallPolicy', 'CallingDay', 'CampaignCallPolicy', 'CampaignCounts', 'CampaignCreate', 'CampaignDeleteResponse', 'CampaignEndCallPolicy', 'CampaignFailure', 'CampaignLifecycle', 'CampaignListData', 'CampaignListResponse', 'CampaignPatch', 'CampaignResponse', 'CampaignTransferPolicy', 'CampaignTransport', 'CampaignTransportPatch', 'CampaignTransportResponse', 'CampaignVoicemailPolicy', 'CascadedPipelineInput', 'ContactInput', 'DataPolicy', 'DisabledInterruption', 'ErrorReason', 'ErrorResponse', 'FillerTrigger', 'FillerWords', 'FunctionTool', 'GeneratedFillerContent', 'GracefulStop', 'ImmediateSchedule', 'InboundCallPolicy', 'InboundInput', 'InboundOutput', 'JSONObject', 'JsonValue', 'KeywordInterruption', 'Lifecycle', 'LlmInput', 'ManagedCredential', 'ManualTurnBoundary', 'McpServer', 'Message', 'NumberCreate', 'NumberDeleteResponse', 'NumberListData', 'NumberListResponse', 'NumberPatch', 'NumberResponse', 'Pacing', 'PacingPatch', 'PublicAgentInput', 'PublicByokCredential', 'PublicEphemeralSessionCreate', 'ResolvedAsr', 'ResolvedAvatar', 'ResolvedCascadedPipeline', 'ResolvedCredential', 'ResolvedLlm', 'ResolvedTts', 'RtcEncryption', 'RtcTransport', 'ScheduledSchedule', 'SecretCreate', 'SecretDeleted', 'SecretKey', 'SecretKeyWrite', 'SecretList', 'SecretPage', 'SecretReplace', 'SecretSet', 'SecretUpdate', 'SemanticTurnEnd', 'SemanticTurnStart', 'SessionAgentOverridesPatch', 'SessionAgentPatch', 'SessionCreate', 'SessionData', 'SessionList', 'SessionModulePatch', 'SessionPatch', 'SessionPipelinePatch', 'SessionResponse', 'SessionStartResponse', 'SessionStopResponse', 'SessionSummary', 'SessionTransportPatch', 'SessionUpdateResponse', 'SilenceConfig', 'SipAuth', 'SipTrunkInput', 'SipTrunkOutput', 'SkipPattern', 'SpeechInterruption', 'StaticFillerContent', 'TelephonyTransport', 'TextGreeting', 'TimeRange', 'ToolExecution', 'ToolServer', 'TransferPolicy', 'TtsInput', 'TurnDetection', 'VadTurnEnd', 'VadTurnStart', 'VariableDefinition', 'VoicemailPolicy', 'AgentRequest_AgentCreateInput', 'AgentRequest_AgentPatch', 'AgentRequest_AsrInput', 'AgentRequest_AsrPatch', 'AgentRequest_AudioGreeting', 'AgentRequest_AvatarInput', 'AgentRequest_AvatarPatch', 'AgentRequest_AvatarVendor', 'AgentRequest_CascadedPipelineInput', 'AgentRequest_CascadedPipelinePatch', 'AgentRequest_CascadedTurnDetectionPatch', 'AgentRequest_DisabledInterruption', 'AgentRequest_FillerContentPatch', 'AgentRequest_FillerTrigger', 'AgentRequest_FillerTriggerPatch', 'AgentRequest_FillerWords', 'AgentRequest_FillerWordsPatch', 'AgentRequest_FunctionTool', 'AgentRequest_GeneratedFillerContent', 'AgentRequest_GreetingPatch', 'AgentRequest_InterruptionPatch', 'AgentRequest_JSONObject', 'AgentRequest_JsonValue', 'AgentRequest_KeywordInterruption', 'AgentRequest_LlmInput', 'AgentRequest_LlmPatch', 'AgentRequest_ManagedCredential', 'AgentRequest_ManualTurnBoundary', 'AgentRequest_McpServer', 'AgentRequest_Message', 'AgentRequest_PublicByokCredential', 'AgentRequest_PublicCredentialPatch', 'AgentRequest_SemanticTurnEnd', 'AgentRequest_SemanticTurnStart', 'AgentRequest_SilenceConfig', 'AgentRequest_SilenceConfigPatch', 'AgentRequest_SkipPattern', 'AgentRequest_SpeechInterruption', 'AgentRequest_StaticFillerContent', 'AgentRequest_TextGreeting', 'AgentRequest_ToolExecution', 'AgentRequest_ToolServer', 'AgentRequest_TtsInput', 'AgentRequest_TtsPatch', 'AgentRequest_TurnBoundaryPatch', 'AgentRequest_TurnDetection', 'AgentRequest_VadTurnEnd', 'AgentRequest_VadTurnStart', 'AgentRequest_VariableDefinition', 'AgentRequest_VariableDefinitionPatch', 'AgentCreateInput', 'AgentPatch', 'SessionEndCallPolicy', 'InboundEndCallPolicy', 'AgoraVadTurnDetection', 'AgentRequest_AgoraVadTurnDetectionPatch', 'ServerVadTurnDetection', 'AgentRequest_ServerVadTurnDetectionPatch', 'SemanticVadTurnDetection', 'AgentRequest_SemanticVadTurnDetectionPatch', 'RealtimeTurnDetection', 'AgentRequest_RealtimeTurnDetectionPatch', 'AgentRequest_MllmInput', 'MllmInput', 'AgentRequest_MllmPatch', 'ResolvedMllm', 'AgentRequest_MllmCredentialPatch', 'AgentRequest_RealtimePipelineInput', 'RealtimePipelineInput', 'ResolvedRealtimePipeline', 'AgentRequest_RealtimePipelinePatch', 'AgentRequest_PipelinePatch', 'AgentCreateModel', 'AgentPatchRequest', 'SessionLifecycle', 'EphemeralSessionAgent', 'StartSessionResponse', 'RtcGeofence', 'RtcSessionTransport', 'SessionTransport']
+__all__ = ['AgentDeleteResponse', 'AgentListData', 'AgentListItem', 'AgentListResponse', 'AgentResponse', 'AsrInput', 'AudioGreeting', 'AvatarInput', 'AvatarVendor', 'CallPolicy', 'CallingDay', 'CampaignCallPolicy', 'CampaignCounts', 'CampaignCreate', 'CampaignDeleteResponse', 'CampaignEndCallPolicy', 'CampaignFailure', 'CampaignLifecycle', 'CampaignListData', 'CampaignListResponse', 'CampaignPatch', 'CampaignResponse', 'CampaignTransferPolicy', 'CampaignTransport', 'CampaignTransportPatch', 'CampaignTransportResponse', 'CampaignVoicemailPolicy', 'CascadedPipelineInput', 'ContactInput', 'DataPolicy', 'DisabledInterruption', 'ErrorReason', 'ErrorResponse', 'FillerTrigger', 'FillerWords', 'FunctionTool', 'GeneratedFillerContent', 'GracefulStop', 'ImmediateSchedule', 'InboundCallPolicy', 'InboundInput', 'InboundOutput', 'JSONObject', 'JsonValue', 'KeywordInterruption', 'Lifecycle', 'LlmInput', 'ManagedCredential', 'ManualTurnBoundary', 'McpServer', 'Message', 'NumberCreate', 'NumberDeleteResponse', 'NumberListData', 'NumberListResponse', 'NumberPatch', 'NumberResponse', 'Pacing', 'PacingPatch', 'PublicAgentInput', 'PublicByokCredential', 'PublicEphemeralSessionCreate', 'ResolvedAsr', 'ResolvedAvatar', 'ResolvedCascadedPipeline', 'ResolvedCredential', 'ResolvedLlm', 'ResolvedTts', 'RtcEncryption', 'RtcTransport', 'ScheduledSchedule', 'SecretCreate', 'SecretDeleted', 'SecretKey', 'SecretKeyWrite', 'SecretList', 'SecretPage', 'SecretReplace', 'SecretSet', 'SecretUpdate', 'SemanticTurnEnd', 'SemanticTurnStart', 'SessionAgentOverridesPatch', 'SessionAgentPatch', 'SessionCreate', 'SessionData', 'SessionList', 'SessionModulePatch', 'SessionPatch', 'SessionPipelinePatch', 'SessionResponse', 'SessionStartResponse', 'SessionStopResponse', 'SessionSummary', 'SessionTransportPatch', 'SessionUpdateResponse', 'SilenceConfig', 'SipAuth', 'SipTrunkInput', 'SipTrunkOutput', 'SkipPattern', 'SpeechInterruption', 'StaticFillerContent', 'TelephonyTransport', 'TextGreeting', 'TimeRange', 'ToolExecution', 'ToolServer', 'TransferPolicy', 'TtsInput', 'TurnDetection', 'VadTurnEnd', 'VadTurnStart', 'VariableDefinition', 'VoicemailPolicy', 'AgentRequest_AgentCreateInput', 'AgentRequest_AgentPatch', 'AgentRequest_AsrInput', 'AgentRequest_AsrPatch', 'AgentRequest_AudioGreeting', 'AgentRequest_AvatarInput', 'AgentRequest_AvatarPatch', 'AgentRequest_AvatarVendor', 'AgentRequest_CascadedPipelineInput', 'AgentRequest_CascadedPipelinePatch', 'AgentRequest_CascadedTurnDetectionPatch', 'AgentRequest_DisabledInterruption', 'AgentRequest_FillerContentPatch', 'AgentRequest_FillerTrigger', 'AgentRequest_FillerTriggerPatch', 'AgentRequest_FillerWords', 'AgentRequest_FillerWordsPatch', 'AgentRequest_FunctionTool', 'AgentRequest_GeneratedFillerContent', 'AgentRequest_GreetingPatch', 'AgentRequest_InterruptionPatch', 'AgentRequest_JSONObject', 'AgentRequest_JsonValue', 'AgentRequest_KeywordInterruption', 'AgentRequest_LlmInput', 'AgentRequest_LlmPatch', 'AgentRequest_ManagedCredential', 'AgentRequest_ManualTurnBoundary', 'AgentRequest_McpServer', 'AgentRequest_Message', 'AgentRequest_PublicByokCredential', 'AgentRequest_PublicCredentialPatch', 'AgentRequest_SemanticTurnEnd', 'AgentRequest_SemanticTurnStart', 'AgentRequest_SilenceConfig', 'AgentRequest_SilenceConfigPatch', 'AgentRequest_SkipPattern', 'AgentRequest_SpeechInterruption', 'AgentRequest_StaticFillerContent', 'AgentRequest_TextGreeting', 'AgentRequest_ToolExecution', 'AgentRequest_ToolServer', 'AgentRequest_TtsInput', 'AgentRequest_TtsPatch', 'AgentRequest_TurnBoundaryPatch', 'AgentRequest_TurnDetection', 'AgentRequest_VadTurnEnd', 'AgentRequest_VadTurnStart', 'AgentRequest_VariableDefinition', 'AgentRequest_VariableDefinitionPatch', 'AgentCreateInput', 'AgentPatch', 'SessionEndCallPolicy', 'InboundEndCallPolicy', 'AgentCreateModel', 'AgentPatchRequest', 'SessionLifecycle', 'EphemeralSessionAgent', 'StartSessionResponse', 'RtcGeofence', 'RtcSessionTransport', 'SessionTransport']

@@ -7,7 +7,7 @@ import httpx
 import pytest
 from test_v3_preview import make_client
 
-from agora_agent import Agent, OpenAI, OpenAIRealtime, secret_ref
+from agora_agent import Agent, OpenAI, secret_ref
 from agora_agent.agentkit.v3 import build_body, replacement_patch
 from agora_agent.agentkit.vendors.llm import AmazonBedrock
 from agora_agent.agentkit.vendors.stt import AmazonSTT, GoogleSTT
@@ -44,23 +44,23 @@ async def test_new_runtime_update_and_auto_uid(async_):
         requests.append(request)
         return httpx.Response(200, json={"agent_session_id": "session", "create_ts": 1, "status": "RUNNING"})
     client = make_client(handler, async_)
-    agent = Agent(client=client).with_mllm(OpenAIRealtime(api_key="inline", model="gpt-realtime"))
+    agent = Agent(client=client).with_llm(OpenAI(api_key="inline", model="gpt", base_url="https://api.openai.com/v1/chat/completions"))
     session = (agent.create_async_session if async_ else agent.create_session)(channel="r", remote_uids=["customer"])
     result = session.start()
     if async_:
         await result
     body = json.loads(requests[0].content)
     assert "uid" not in body["transport"]
-    assert body["agent"]["pipeline"]["mllm"]["credential"] == {"mode": "byok", "fields": {"api_key": "inline"}}
-    properties = {"token": "renewed", "messages": [{"role": "user", "content": "Hi"}], "mllm": {"params": {"temperature": 0.4}}}
+    assert body["agent"]["pipeline"]["llm"]["credential"] == {"mode": "byok", "fields": {"api_key": "inline"}}
+    properties = {"token": "renewed", "messages": [{"role": "user", "content": "Hi"}], "llm": {"params": {"temperature": 0.4}}}
     before = copy.deepcopy(properties)
     result = session.update(properties)
     if async_:
         await result
     assert requests[-1].method == "PATCH"
-    assert json.loads(requests[-1].content) == {"transport": {"token": "renewed"}, "agent": {"overrides": {"messages": properties["messages"], "pipeline": {"mllm": properties["mllm"]}}}}
+    assert json.loads(requests[-1].content) == {"transport": {"token": "renewed"}, "agent": {"overrides": {"messages": properties["messages"], "pipeline": {"llm": properties["llm"]}}}}
     assert properties == before
-    for invalid in ({"llm": {"params": {}}, "mllm": {"params": {}}}, {"llm": {"params": {"url": "https://other"}}}, {"mllm": {"params": {"endpoint": "https://other"}}}, {"token": None}, {"instructions": "no"}):
+    for invalid in ({"mllm": {"params": {"temperature": 0.2}}}, {"llm": {"params": {}}, "mllm": {"params": {}}}, {"llm": {"params": {"url": "https://other"}}}, {"mllm": {"params": {"endpoint": "https://other"}}}, {"token": None}, {"instructions": "no"}):
         count = len(requests)
         with pytest.raises(ValueError):
             result = session.update(invalid)
@@ -193,9 +193,61 @@ async def test_messages_shortcut_is_transport_independent(async_):
             await result
 
 
-def test_realtime_params_with_legacy_messages_spelling_is_supported():
+def test_llm_params_with_legacy_messages_spelling_is_supported():
     from agora_agent.agentkit.session_backend import update_body
     messages = [{"role": "system", "content": "Updated"}]
-    assert update_body({"llm": {"system_messages": messages}, "mllm": {"params": {"temperature": 0.2}}}) == {"agent": {"overrides": {"messages": messages, "pipeline": {"mllm": {"params": {"temperature": 0.2}}}}}}
+    assert update_body({"llm": {"system_messages": messages, "params": {"temperature": 0.2}}}) == {"agent": {"overrides": {"messages": messages, "pipeline": {"llm": {"params": {"temperature": 0.2}}}}}}
     with pytest.raises(ValueError):
         update_body({"messages": messages, "llm": {"system_messages": messages}})
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_preview_rejects_mllm_before_network(async_):
+    from agora_agent import OpenAIRealtime, UnsupportedFieldError
+    client = make_client(lambda _: pytest.fail("unsupported MLLM must not reach HTTP"), async_)
+    agent = Agent(client=client).with_mllm(OpenAIRealtime(api_key="inline"))
+    with pytest.raises(UnsupportedFieldError, match="realtime pipelines are not supported"):
+        result = agent.save_async(name="realtime") if async_ else agent.save(name="realtime")
+        if async_:
+            await result
+    create = agent.create_async_session if async_ else agent.create_session
+    for options in ({}, {"agent_uid": "1", "values": {}}, {"agent_uid": "1", "idempotency_key": "start"}):
+        with pytest.raises(UnsupportedFieldError, match="realtime pipelines are not supported"):
+            create(channel="r", remote_uids=["2"], **options)
+    for pipeline in ({"mode": "realtime"}, {"mode": "cascaded", "mllm": {}}, {"mllm": None}):
+        for method, kwargs in ((client.v3.agents.create, {"agent_name": "realtime", "pipeline": pipeline}),
+                               (client.v3.agents.update, {"agent_id": "a", "if_match": '"e"', "pipeline": pipeline}),
+                               (client.v3.sessions.start_ephemeral, {"agent": {"pipeline": pipeline}, "transport": {"type": "rtc", "channel": "r", "subscribe_uids": ["2"]}})):
+            with pytest.raises(ValueError):
+                result = method(**kwargs)
+                if async_:
+                    await result
+    with pytest.raises(ValueError):
+        result = client.v3.sessions.update(agent_session_id="s", agent={"overrides": {"pipeline": {"mllm": {"params": {}}}}})
+        if async_:
+            await result
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_legacy_mllm_start_and_update_remain_supported(async_):
+    from agora_agent import OpenAIRealtime
+    requests = []
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json={"agent_id": "legacy-session"})
+    client = make_client(handler, async_)
+    agent = Agent(client=client).with_mllm(OpenAIRealtime(api_key="inline"))
+    session = (agent.create_async_session if async_ else agent.create_session)(channel="r", agent_uid="1", remote_uids=["2"], token="rtc")
+    result = session.start()
+    if async_:
+        result = await result
+    assert result == "legacy-session"
+    assert requests[-1].url.path.endswith("/join")
+    assert json.loads(requests[-1].content)["properties"]["mllm"]["api_key"] == "inline"
+    result = session.update({"mllm": {"params": {"temperature": 0.2}}})
+    if async_:
+        await result
+    assert requests[-1].url.path.endswith("/legacy-session/update")
+    assert json.loads(requests[-1].content)["properties"] == {"mllm": {"params": {"temperature": 0.2}}}

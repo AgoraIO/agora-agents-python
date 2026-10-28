@@ -133,7 +133,6 @@ def module(config, category, errors):
         "asr": {"vendor", "url", "model", "language"},
         "llm": {"vendor", "url", "style", "model", "input_modalities", "output_modalities", "max_history", "failure_message", "tools", "mcp_servers", "headers"},
         "tts": {"vendor", "url", "skip_patterns", "headers"},
-        "mllm": {"vendor", "url", "model", "input_modalities", "output_modalities", "mcp_servers", "headers"},
         "avatar": {"vendor", "url", "enabled"},
     }[category]
     # v2 provider serializers keep endpoints and ASR/LLM model choices in params.
@@ -144,8 +143,6 @@ def module(config, category, errors):
         result["url"] = params.pop("base_url")
     if category == "avatar" and "enable" in config:
         config["enabled"] = config.pop("enable")
-    if category == "mllm":
-        config.pop("enable", None)
     for field, value in config.items():
         if field not in allowed:
             errors.append(category + "." + field)
@@ -238,6 +235,8 @@ def _turn(config, interruption, errors):
 
 
 def build_body(agent, name=None):
+    if agent._mllm is not None:
+        raise UnsupportedFieldError(["mllm (realtime pipelines are not supported by the preview API)"])
     errors = []
     for field in ("sal", "advanced_features", "geofence", "labels", "rtc", "pipeline_id"):
         if getattr(agent, "_" + field, None) is not None:
@@ -247,24 +246,11 @@ def build_body(agent, name=None):
     result = {"agent_name": name if name is not None else f"agent-{time.time_ns()}"}
     if not isinstance(result["agent_name"], str) or not result["agent_name"].strip():
         raise ValueError("name must be nonempty")
-    realtime = agent._mllm is not None
-    pipeline = {"mode": "realtime" if realtime else "cascaded"}
-    if realtime:
-        for field in ("stt", "llm", "tts"):
-            if getattr(agent, "_" + field, None) is not None:
-                errors.append(field + " (realtime pipeline)")
-    conversational = dump(agent._mllm if realtime else agent._resolve_llm_config()) or {}
-    if realtime:
-        realtime_params = conversational.get("params", {})
-        if isinstance(realtime_params, dict) and "instructions" in realtime_params:
-            instructions = realtime_params.pop("instructions")
-            if not isinstance(instructions, str):
-                errors.append("mllm.params.instructions")
-            else:
-                result["instructions"] = instructions
-    messages = conversational.pop("messages" if realtime else "system_messages", None)
+    pipeline = {"mode": "cascaded"}
+    conversational = dump(agent._resolve_llm_config()) or {}
+    messages = conversational.pop("system_messages", None)
     if messages is not None:
-        source = "mllm.messages" if realtime else "llm.system_messages"
+        source = "llm.system_messages"
         if not isinstance(messages, list):
             errors.append(source)
         else:
@@ -310,54 +296,24 @@ def build_body(agent, name=None):
     elif greeting:
         errors.append("greeting_configs (requires greeting)")
     if conversational.pop("template_variables", None):
-        errors.append(("mllm" if realtime else "llm") + ".template_variables (use with_variable)")
-    td = conversational.pop("turn_detection", None) if realtime else None
-    if realtime:
-        if td:
-            td = dump(td)
-            mode = td.pop("mode", td.pop("type", None))
-            configurations = {"agora_vad": "agora_vad_config", "server_vad": "server_vad_config", "semantic_vad": "semantic_vad_config"}
-            allowed = {
-                "agora_vad": {"interrupt_duration_ms", "prefix_padding_ms", "silence_duration_ms", "threshold"},
-                "server_vad": {"prefix_padding_ms", "silence_duration_ms", "threshold", "idle_timeout_ms", "start_of_speech_sensitivity", "end_of_speech_sensitivity"},
-                "semantic_vad": {"eagerness"},
-            }
-            if not isinstance(mode, str) or mode not in configurations:
-                errors.append("mllm.turn_detection.mode")
-            else:
-                nested = td.pop(configurations[mode], {}) or {}
-                if not isinstance(nested, dict):
-                    errors.append("mllm.turn_detection." + configurations[mode])
-                    nested = {}
-                direct = {key: td.pop(key) for key in tuple(td) if key in allowed[mode]}
-                errors.extend("mllm.turn_detection." + key for key in direct if key in nested and direct[key] != nested[key])
-                errors.extend("mllm.turn_detection." + key for key in td)
-                errors.extend("mllm.turn_detection." + key for key in nested if key not in allowed[mode])
-                pipeline["turn_detection"] = {"type": mode, **nested, **direct}
-        if agent._turn_detection is not None or agent._interruption is not None:
-            errors.append("turn_detection (configure realtime vendor turn_detection)")
-    else:
-        td = _turn(agent._turn_detection, agent._interruption, errors)
-        if td:
-            pipeline["turn_detection"] = td
-    category = "mllm" if realtime else "llm"
+        errors.append("llm.template_variables (use with_variable)")
+    td = _turn(agent._turn_detection, agent._interruption, errors)
+    if td:
+        pipeline["turn_detection"] = td
     if conversational:
-        pipeline[category] = module(conversational, category, errors)
+        pipeline["llm"] = module(conversational, "llm", errors)
     for source, target in (("stt", "asr"), ("tts", "tts"), ("avatar", "avatar")):
         value = getattr(agent, "_" + source, None)
-        if target == "asr" and not realtime:
+        if target == "asr":
             language = agent._field_value(agent._turn_detection, "language")
             if value is not None or language is not None:
                 # Preserve v2 interaction-language precedence and its existing
                 # managed ASR fallback, without adding ASR to partial builders.
                 value = agent._resolve_asr_config(agent._resolve_turn_detection_config())
-        if value is not None and (not realtime or target == "avatar"):
+        if value is not None:
             pipeline[target] = module(value, target, errors)
     if "silence_config" in params:
-        if realtime:
-            errors.append("parameters.silence_config (realtime pipeline)")
-        else:
-            pipeline["silence_config"] = {"enabled": True, **params["silence_config"]}
+        pipeline["silence_config"] = {"enabled": True, **params["silence_config"]}
     if agent._filler_words is not None:
         filler = dump(agent._filler_words)
         for key, nested in (("trigger", "fixed_time_config"), ("content", "static_config")):
@@ -408,7 +364,7 @@ def replacement_patch(previous, desired, category=None):
                 if result[key].get("mode") == "managed":
                     result[key]["fields"] = None
                 continue  # Resolved credentials have read-only metadata and hide API keys.
-            result[key] = replacement_patch(old, result[key], key if key in {"asr", "llm", "tts", "mllm", "avatar"} else category)
+            result[key] = replacement_patch(old, result[key], key if key in {"asr", "llm", "tts", "avatar"} else category)
     return result
 
 
