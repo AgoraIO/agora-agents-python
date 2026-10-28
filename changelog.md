@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [v2.13.0] — 2026-10-29
 
 ### Added
 
@@ -19,10 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 - **Gemini TTS production routing** — Synchronous and asynchronous `GeminiTTS` sessions, including raw configurations, now use the configured regional production endpoint without the `gemini-live` preview gate. The implementation is registered in the global TTS catalog, while package-root and historical preview imports remain aliases with the same v2.11.0 options, defaults, validation, optional `style`, and `tts.params` wire fields. Compatibility with the generated request schema no longer depends on preview routing.
 - **Gemini TTS generated schema support** — The production vendor now uses the generated Gemini TTS shape and accepts `additional_params` and `skip_patterns` while keeping preview-era calls compatible.
-
-## [v2.13.0] — 2026-10-09
-
-### Changed
 
 - Tavus, Protoface, and LemonSlice are minimal GenericAvatar provider wrappers with default API URLs; explicit URL overrides and generic wire/session/token handling remain supported.
 - LemonSlice defaults `avatar_id` to the vendor-recommended fixed value `lemonslice` (explicit overrides remain supported). Typed `agent_id`, `agent_image_url`, `agent_image_base64`, and `aspect_ratio` serialize directly in avatar params, overriding colliding additional params. Allowed ratios are `2x3`, `9x16`, and `1x1`; unset ratio is omitted (provider default `2x3`).
