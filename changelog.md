@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased preview contract alignment
+## [v3.0.0-alpha.1] — 2026-10-28
 
 - Shared root OpenAPI JSON/YAML, local reproducible wire generator, sync/async/raw session PATCH, and cascaded-only preview contracts.
 - Realtime/MLLM configurations and runtime updates are rejected by preview APIs before network access; existing inline MLLM sessions remain supported.
@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Optional RTC UID, inbound/voicemail end-call policies, SIP IPv4 allowlists, campaign create retention, 50,000-contact / 10 MiB limits. Removed campaign retry fields are rejected.
 - Six idempotent POST operations use optional 1–256 visible ASCII keys, 24-hour replay and replay response headers. No automatic write retries or region availability gates.
 
-## Unreleased preview rollout
+### Preview rollout
 
 The current stored-agent, session and campaign preview rollout is available in the US only (PM confirmation, 2026-10-27). Availability may expand as rollout progresses.
 
