@@ -13,13 +13,13 @@ Saving stores configuration; it does not itself start a session. Call `saved.cre
 
 ## Quick start with staging
 
-Install from this repository's `feat/v3-api-preview` checkout:
+Install SDK preview `3.0.0a1`:
 
 ```sh
-python -m pip install -e .
+python -m pip install agora-agents==3.0.0a1
 ```
 
-See [installation](../getting-started/installation.md) for prerequisites. v3 is a preview branch feature; these examples do not imply that a released package contains it. The default public preview origin is `https://preview.ai.agora.io`. Configure App ID and App Certificate (or supply `auth_token`), then set:
+See [installation](../getting-started/installation.md) for prerequisites. The default public preview origin is `https://preview.ai.agora.io`. Configure App ID and App Certificate (or supply `auth_token`), then set:
 
 ```sh
 export AGORA_APP_ID='YOUR_APP_ID'
@@ -28,7 +28,7 @@ export OPENAI_API_KEY='YOUR_OPENAI_KEY'
 export DEEPGRAM_API_KEY='YOUR_DEEPGRAM_KEY'
 ```
 
-The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. Authentication is token-only: a prebuilt `auth_token` or App ID/App Certificate signing. Internal gateway headers, `X-Studio-Region` and Basic authorization overrides are rejected. Current rollout availability is described in the [release notes](../../changelog.md#unreleased-preview-rollout); the SDK does not enforce region availability.
+The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. Authentication is token-only: a prebuilt `auth_token` or App ID/App Certificate signing. Internal gateway headers, `X-Studio-Region` and Basic authorization overrides are rejected. Current rollout availability is described in the [release notes](../../changelog.md#preview-rollout); the SDK does not enforce region availability.
 
 This complete cascaded configuration stores one project secret set, then saves a reusable agent. Set creation is a one-time provisioning step; subsequent runs can update secrets separately using the [secret methods](../reference/v3.md#secrets-eight-operations).
 

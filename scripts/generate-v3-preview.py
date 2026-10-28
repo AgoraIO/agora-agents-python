@@ -7,6 +7,7 @@ import json
 import keyword
 import re
 from pathlib import Path
+from typing import Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "src/agora_agent/v3"
@@ -88,7 +89,7 @@ names = list(schemas) + ["AgentCreateModel", "AgentPatchRequest", "SessionLifecy
 lines += ["__all__ = " + repr(names), ""]
 (OUT / "types.py").write_text("\n".join(lines))
 
-classes = {key: [] for key in ("agents", "secrets", "numbers", "sessions", "campaigns")}
+classes: Dict[str, List[tuple]] = {key: [] for key in ("agents", "secrets", "numbers", "sessions", "campaigns")}
 for path, operations in spec["paths"].items():
     tail = path.split("{appid}/", 1)[1]
     resource = tail.split("/", 1)[0]
@@ -157,13 +158,13 @@ for asynchronous in (False, True):
             text += [f"class {raw_name if raw else cname}({'AsyncResource' if asynchronous else 'Resource'}):"]
             if not raw:
                 text += ['    def __init__(self, owner, options):', '        super().__init__(owner, options)', f'        self.with_raw_response = {raw_name}(owner, options)']
-            for method, args, forwarding, verb, path_expr, headers, query, fields, result in methods:
+            for method, args, forwarding, verb, path_expr, headers, query, request_fields, result in methods:
                 signature = ", ".join([qualified(a) for a in args] + ['appid: Optional[str] = None', 'request_options: Optional[dict] = None'])
                 ret = f"RawResponse[{qualified(result)}]" if raw else qualified(result)
                 text += [f"    {'async ' if asynchronous else ''}def {method}(self, *, {signature}) -> {ret}:"]
                 if raw:
                     expression = lambda value: "{" + ", ".join(repr(k) + ": " + v for k, v in value.items()) + "}"
-                    body = "{" + ", ".join(repr(k) + ": " + k for k in fields) + "}" if fields else "None"
+                    body = "{" + ", ".join(repr(k) + ": " + k for k in request_fields) + "}" if request_fields else "None"
                     text += [f"        return {'await ' if asynchronous else ''}self._request({verb!r}, f{path_expr!r}, body={body}, headers={expression(headers)}, params={expression(query)}, request_options=request_options)"]
                 else:
                     call = f"self.with_raw_response.{method}(" + ", ".join(k + "=" + k for k in forwarding + ['appid', 'request_options']) + ")"

@@ -3,6 +3,7 @@
 import typing
 
 import httpx
+from ..version import __version__
 from .http_client import AsyncHttpClient, HttpClient
 
 
@@ -27,10 +28,10 @@ class BaseClientWrapper:
 
     def get_headers(self) -> typing.Dict[str, str]:
         headers: typing.Dict[str, str] = {
-            "User-Agent": "agora-agents/v2.12.0",
+            "User-Agent": f"agora-agents/v{__version__}",
             "X-Fern-Language": "Python",
             "X-Fern-SDK-Name": "agora-agents",
-            "X-Fern-SDK-Version": "v2.12.0",
+            "X-Fern-SDK-Version": f"v{__version__}",
             **(self.get_custom_headers() or {}),
         }
         supplier = getattr(self, "_authorization_supplier", None)
