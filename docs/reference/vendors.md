@@ -110,7 +110,8 @@ llm = OpenAI(api_key='your-key', base_url='https://api.openai.com/v1/chat/comple
 |---|---|---|---|---|
 | `api_key` | `str` | Yes | — | Azure OpenAI API key |
 | `model` | `str` | Yes | — | Deployment's base model name. Emitted as `params.model`. |
-| `endpoint` | `str` | Yes | — | Azure endpoint URL |
+| `endpoint` | `str` | Unless `resource_name` is provided | `None` | Azure endpoint URL; takes precedence when both are set |
+| `resource_name` | `str` | Unless `endpoint` is provided | `None` | Azure resource name used to build the endpoint |
 | `deployment_name` | `str` | Yes | — | Azure deployment name |
 | `api_version` | `str` | No | `2024-08-01-preview` | Azure API version |
 | `temperature` | `float` | No | `None` | Sampling temperature (0.0–2.0) |
@@ -210,7 +211,7 @@ The SDK also includes named helpers for the remaining Agora-supported LLM provid
 |---|---|---|
 | `Groq` | Groq | `api_key`, `model`, `base_url` |
 | `VertexAILLM` | Google Vertex AI | `api_key`, `model`, `project_id`, `location`, `url?` |
-| `AmazonBedrock` | Amazon Bedrock | `access_key`, `secret_key`, `region`, `model` |
+| `AmazonBedrock` | Amazon Bedrock | `region`, `model`, and either `api_key` or both `access_key` and `secret_key` |
 | `Dify` | Dify | `api_key`, `url`, `model`, `user?`, `conversation_id?` |
 | `CustomLLM` | OpenAI-compatible LLM | `api_key`, `model`, `base_url` |
 
