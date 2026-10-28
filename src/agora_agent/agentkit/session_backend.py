@@ -178,11 +178,12 @@ def prepare_start_body(session):
     body = session._session_backend["body"]
     transport = body["transport"]
     signing = session._session_backend.get("signing")
-    generate = "token" not in transport or (session._session_backend.get("generated_rtc_token") and body.get("idempotency_key") is None)
+    generate = "token" not in transport or (session._session_backend.get("generated_rtc_token") and session._session_backend.get("successfully_started") and body.get("idempotency_key") is None)
     if signing and generate:
         if signing["uid"] > 4294967295:
             raise ValueError("Numeric agent_uid must fit an unsigned 32-bit RTC UID for token generation")
         from .token import generate_convo_ai_token
         transport["token"] = generate_convo_ai_token(**signing)
         session._session_backend["generated_rtc_token"] = True
+        session._session_backend["successfully_started"] = False
     return body

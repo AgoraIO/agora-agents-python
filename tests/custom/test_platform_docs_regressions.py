@@ -172,6 +172,7 @@ def test_rtc_token_identity_range_and_non_idempotent_refresh(monkeypatch):
     agent = Agent(client).with_llm(OpenAI(model="gpt-5-mini"))
     session = agent.create_ephemeral_session(channel="r", agent_uid="1", remote_uids=["2"])
     assert prepare_start_body(session)["transport"]["token"] == "1"
+    session._session_backend["successfully_started"] = True
     assert prepare_start_body(session)["transport"]["token"] == "2"
     large = agent.create_ephemeral_session(channel="r", agent_uid="4294967296", remote_uids=["2"])
     with pytest.raises(ValueError, match="32-bit"):
@@ -182,3 +183,38 @@ def test_raw_gemini_query_key_migrates_to_credentials():
     result = module({"vendor": "gemini", "url": "https://gemini.example/stream?alt=sse&key=inline", "params": {"model": "gemini"}}, "llm", [])
     assert result["credential"] == {"mode": "byok", "fields": {"api_key": "inline"}}
     assert result["url"] == "https://gemini.example/stream?alt=sse"
+
+
+@pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.asyncio
+async def test_rtc_token_refreshes_on_restart_not_failed_retry(async_, monkeypatch):
+    tokens = []
+    bodies = []
+    monkeypatch.setattr("agora_agent.agentkit.token.generate_convo_ai_token", lambda **kw: tokens.append(kw) or f"token-{len(tokens)}")
+    def handler(request):
+        if request.url.path.endswith("/stop"):
+            return httpx.Response(200, json={})
+        bodies.append(json.loads(request.content))
+        if len(bodies) == 1:
+            return httpx.Response(500, json={"reason": "Unknown", "detail": "retry"})
+        return httpx.Response(200, json={"agent_session_id": "s", "status": "RUNNING", "create_ts": 1})
+    client = make_client(handler, async_)
+    client.app_certificate = "certificate"
+    agent = Agent(client).with_llm(OpenAI(model="gpt-5-mini"))
+    create = agent.create_async_ephemeral_session if async_ else agent.create_ephemeral_session
+    session = create(channel="room", agent_uid="1", remote_uids=["2"])
+    with pytest.raises(Exception):
+        result = session.start()
+        if async_:
+            await result
+    result = session.start()
+    if async_:
+        await result
+    assert bodies[0] == bodies[1] and len(tokens) == 1
+    result = session.stop()
+    if async_:
+        await result
+    result = session.start()
+    if async_:
+        await result
+    assert bodies[-1]["transport"]["token"] == "token-2" and len(tokens) == 2

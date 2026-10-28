@@ -607,6 +607,7 @@ class AgentSession(_AgentSessionBase):
                 if not isinstance(identifier, str) or not identifier:
                     raise RuntimeError("Session response is missing agent_session_id")
                 self._agent_id = identifier
+                self._session_backend["successfully_started"] = True
                 self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
                 self._v3_state_revision += 1
                 self._v3_transition_pending = False
@@ -1063,6 +1064,7 @@ class AsyncAgentSession(_AgentSessionBase):
                 if not isinstance(identifier, str) or not identifier:
                     raise RuntimeError("Session response is missing agent_session_id")
                 self._agent_id = identifier
+                self._session_backend["successfully_started"] = True
                 self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
                 self._v3_state_revision += 1
                 self._v3_transition_pending = False
