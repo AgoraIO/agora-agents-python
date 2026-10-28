@@ -130,7 +130,9 @@ def test_rtc_token_generated_once_and_explicit_tokens_preserved(monkeypatch):
     client.app_certificate = "certificate"
     agent = Agent(client).with_llm(OpenAI(model="gpt-5.6-luna"))
     session = agent.create_ephemeral_session(channel="room", agent_uid="1", remote_uids=["2"], idempotency_key="retry")
+    client.app_certificate = "changed"
     assert prepare_start_body(session)["transport"]["token"] == "rtc-generated"
+    assert signed[0]["app_certificate"] == "certificate"
     assert prepare_start_body(session)["transport"]["token"] == "rtc-generated" and len(signed) == 1
     for uid in (None, "0", "bot"):
         other = agent.create_ephemeral_session(channel="room", agent_uid=uid, remote_uids=["customer"] if uid == "bot" else ["2"])
@@ -160,3 +162,17 @@ def test_response_metadata_fields_are_preserved():
     assert client.v3.secrets.get(name="prod")["keys"][0]["update_ts"] == 2
     assert client.v3.secrets.get(name="prod")["keys"] == ["llm"]
     assert client.v3.secrets.set_key(name="prod", key="llm", value="new", if_match='"1"')["update_ts"] == 2
+
+
+def test_rtc_token_identity_range_and_non_idempotent_refresh(monkeypatch):
+    signed = []
+    monkeypatch.setattr("agora_agent.agentkit.token.generate_convo_ai_token", lambda **kw: signed.append(kw) or str(len(signed)))
+    client = make_client(lambda _: pytest.fail("no HTTP"))
+    client.app_certificate = "cert"
+    agent = Agent(client).with_llm(OpenAI(model="gpt-5-mini"))
+    session = agent.create_ephemeral_session(channel="r", agent_uid="1", remote_uids=["2"])
+    assert prepare_start_body(session)["transport"]["token"] == "1"
+    assert prepare_start_body(session)["transport"]["token"] == "2"
+    large = agent.create_ephemeral_session(channel="r", agent_uid="4294967296", remote_uids=["2"])
+    with pytest.raises(ValueError, match="32-bit"):
+        prepare_start_body(large)

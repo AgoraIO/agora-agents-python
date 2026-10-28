@@ -111,11 +111,15 @@ def create_session(owner, *, asynchronous=False, channel=None, agent_uid=None, r
     validate_session(body)
     if idempotency_key is not None:
         body["idempotency_key"] = idempotency_key
+    certificate = getattr(client, "app_certificate", None)
+    signing = None
+    if _telephony is None and token is None and certificate and isinstance(agent_uid, str) and agent_uid.isascii() and agent_uid.isdigit() and int(agent_uid) != 0:
+        signing = {"app_id": client.app_id, "app_certificate": certificate, "channel_name": channel, "uid": int(agent_uid)}
     session_type = AsyncAgentSession if asynchronous else AgentSession
     return session_type(client=client, agent=owner, app_id=client.app_id,
                         name=reference or "", channel=channel or "", agent_uid=agent_uid,
                         remote_uids=list(remote_uids or []), debug=debug, warn=warn,
-                        _session_backend={"stored": stored, "body": copy.deepcopy(body)})
+                        _session_backend={"stored": stored, "body": copy.deepcopy(body), "signing": signing})
 
 
 def update_body(properties):
@@ -173,13 +177,12 @@ def prepare_start_body(session):
     """Generate a fixed-UID RTC token once, preserving idempotent retry bodies."""
     body = session._session_backend["body"]
     transport = body["transport"]
-    uid = transport.get("uid")
-    certificate = getattr(session._client, "app_certificate", None)
+    signing = session._session_backend.get("signing")
     generate = "token" not in transport or (session._session_backend.get("generated_rtc_token") and body.get("idempotency_key") is None)
-    if (transport.get("type") == "rtc" and generate and certificate
-            and isinstance(uid, str) and uid.isascii() and uid.isdigit() and int(uid) != 0):
+    if signing and generate:
+        if signing["uid"] > 4294967295:
+            raise ValueError("Numeric agent_uid must fit an unsigned 32-bit RTC UID for token generation")
         from .token import generate_convo_ai_token
-        transport["token"] = generate_convo_ai_token(app_id=session._client.app_id,
-            app_certificate=certificate, channel_name=transport["channel"], uid=int(uid))
+        transport["token"] = generate_convo_ai_token(**signing)
         session._session_backend["generated_rtc_token"] = True
     return body
