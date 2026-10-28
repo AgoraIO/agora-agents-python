@@ -175,8 +175,7 @@ def test_rtc_token_identity_range_and_non_idempotent_refresh(monkeypatch):
     session._session_backend["successfully_started"] = True
     assert prepare_start_body(session)["transport"]["token"] == "2"
     large = agent.create_ephemeral_session(channel="r", agent_uid="4294967296", remote_uids=["2"])
-    with pytest.raises(ValueError, match="32-bit"):
-        prepare_start_body(large)
+    assert "token" not in prepare_start_body(large)["transport"]
 
 
 def test_raw_gemini_query_key_migrates_to_credentials():

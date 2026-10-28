@@ -113,7 +113,7 @@ def create_session(owner, *, asynchronous=False, channel=None, agent_uid=None, r
         body["idempotency_key"] = idempotency_key
     certificate = getattr(client, "app_certificate", None)
     signing = None
-    if _telephony is None and token is None and certificate and isinstance(agent_uid, str) and agent_uid.isascii() and agent_uid.isdigit() and int(agent_uid) != 0:
+    if _telephony is None and token is None and certificate and isinstance(agent_uid, str) and agent_uid.isascii() and agent_uid.isdigit() and 0 < int(agent_uid) <= 4294967295:
         signing = {"app_id": client.app_id, "app_certificate": certificate, "channel_name": channel, "uid": int(agent_uid)}
     session_type = AsyncAgentSession if asynchronous else AgentSession
     return session_type(client=client, agent=owner, app_id=client.app_id,
@@ -180,8 +180,6 @@ def prepare_start_body(session):
     signing = session._session_backend.get("signing")
     generate = "token" not in transport or (session._session_backend.get("generated_rtc_token") and session._session_backend.get("successfully_started") and body.get("idempotency_key") is None)
     if signing and generate:
-        if signing["uid"] > 4294967295:
-            raise ValueError("Numeric agent_uid must fit an unsigned 32-bit RTC UID for token generation")
         from .token import generate_convo_ai_token
         transport["token"] = generate_convo_ai_token(**signing)
         session._session_backend["generated_rtc_token"] = True
