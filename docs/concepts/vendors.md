@@ -74,6 +74,7 @@ Used with `agent.with_tts()`. Each TTS vendor produces audio at a specific sampl
 | `TypecastTTS` | Typecast | `api_key`, `voice_id`, `model` | — |
 | `SarvamTTS` | Sarvam | `api_key` | — |
 | `XaiTTS` | xAI | `api_key`, `language` | Configurable |
+| `SonioxTTS` | Soniox | `api_key` | Configurable |
 
 For `RimeTTS`, omitting `credential_mode` selects BYOK validation. Set `credential_mode=CredentialMode.MANAGED` to use managed credentials. See the [RimeTTS vendor reference](../reference/vendors.md#rimetts) for both configurations.
 
@@ -84,6 +85,7 @@ Used with `agent.with_tts()` when routing to `Area.CN`. Use `MiniMaxCNTTS` and `
 | Class | Provider | Required Parameters | Sample Rate |
 |---|---|---|---|
 | `MiniMaxCNTTS` | MiniMax (CN) | `model`, `voice_id` or `timber_weights`; `key` typically required | — |
+| `MiniMaxDuplexTTS` | MiniMax Duplex (CN only) | `key`, `model`, `voice_id` | Configurable |
 | `TencentTTS` | Tencent | `app_id`, `secret_id`, `secret_key`, `voice_type` | — |
 | `BytedanceTTS` | ByteDance | `token`, `app_id`, `cluster`, `voice_type` | — |
 | `MicrosoftCNTTS` | Microsoft Azure (CN) | `key`, `region`, `voice_name` | 8000, 16000, 24000, or 48000 Hz |

@@ -8,13 +8,16 @@ from agora_agent.agentkit.vendors import (
     GenericTTS,
     OpenAI,
     OpenAIRealtime,
-    OpenAIGPTLive as ProductionOpenAIGPTLive,
     SmallestAISTT,
     SpatiusAvatar,
     XaiGrok,
     XaiSTT,
     XaiTTS,
 )
+from agora_agent.agentkit.vendors import (
+    OpenAIGPTLive as ProductionOpenAIGPTLive,
+)
+from agora_agent.cn import StepFunSTT
 
 
 def test_smallest_ai_stt_serializes_generated_contract() -> None:
@@ -397,3 +400,16 @@ def test_spatius_avatar_serializes() -> None:
             "region": "cn-beijing",
         },
     }
+
+def test_stepfun_stt_minimal_config_and_parameter_precedence() -> None:
+    assert StepFunSTT(api_key="k").to_config() == {"vendor": "stepfun", "params": {"api_key": "k"}}
+    assert StepFunSTT(api_key="k", additional_params={"api_key": "overridden", "future_param": 42}).to_config() == {
+        "vendor": "stepfun", "params": {"api_key": "k", "future_param": 42},
+    }
+
+
+def test_stepfun_stt_requires_api_key() -> None:
+    with pytest.raises(ValidationError):
+        StepFunSTT(api_key="")
+    with pytest.raises(ValidationError):
+        StepFunSTT()

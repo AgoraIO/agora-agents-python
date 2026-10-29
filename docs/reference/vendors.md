@@ -429,6 +429,17 @@ Omitting the mode retains BYOK behavior. An explicit mode is serialized as top-l
 
 `key` and `group_id` are required together for BYOK. `url` is optional. In both BYOK and managed modes, exactly one of `voice_id` or `timber_weights` must be provided. Without `key`, `model` must be one of the supported Agora-managed MiniMax models.
 
+### `SonioxTTS`
+
+Global streaming TTS helper (`vendor: "soniox"`). Only `api_key` is required. Optional fields are `base_url`, `model`, `language`, `voice`, `sample_rate`, `speed` (0.7–1.3), `reduce_silence`, `return_timestamps`, `client_reference_id`, `dump`, `skip_patterns`, and `additional_params`. Named options override matching additional parameters. Omitted values remain with the provider's defaults.
+
+<!-- snippet: executable -->
+```python
+from agora_agent import SonioxTTS
+
+tts = SonioxTTS(api_key='your-soniox-key')
+```
+
 ### `MistralTTS`
 
 | Parameter | Type | Required | Default | Description |
@@ -738,6 +749,31 @@ All CN LLM helpers reuse the `OpenAI`-compatible shape and set a different vendo
 CN TTS classes use explicit names when they differ from the global implementations. Use `MiniMaxCNTTS` and `MicrosoftCNTTS` for the CN-specific variants.
 
 All CN TTS vendor classes support `skip_patterns` and `additional_params`.
+
+#### `MiniMaxDuplexTTS`
+
+Import from `agora_agent.cn`. This helper currently has only a CN implementation and emits `vendor: "minimax_duplex"`. `key`, `model`, and `voice_id` are required; it does not infer an Agora-managed MiniMax preset or accept `timber_weights` as a voice replacement.
+
+<!-- snippet: executable -->
+```python
+from agora_agent.cn import MiniMaxDuplexTTS, StepFunSTT
+
+tts = MiniMaxDuplexTTS(
+    key='your-minimax-key',
+    model='speech-2.8-turbo',
+    voice_id='female-shaonv',
+    sample_rate=24000,
+    audio_format='pcm',
+    channels=1,
+)
+stt = StepFunSTT(api_key='your-stepfun-key')
+```
+
+Voice options `speed`, `vol`, `pitch`, `emotion`, and `latex_read` serialize under `params.voice_setting`, following the existing CN MiniMax helper. `sample_rate`, `audio_format`, and `channels` serialize under `params.audio_setting` (with `audio_format` mapped to `format`).
+
+Other optional fields are `url`, `pronunciation_dict`, `voice_modify` (`pitch`, `intensity`, `timbre`, `sound_effects`), `language_boost`, `text_normalization_mode`, `subtitle_enable`, `subtitle_type`, `continuous_sound`, `session_id`, `skip_patterns`, and `additional_params`. Explicit options override additional parameters and preserve `False` and `0`.
+
+`StepFunSTT` is a CN ASR helper (`vendor: "stepfun"`). It requires `api_key`, accepts `additional_params`, and gets the wire recognition language from the agent's turn detection configuration.
 
 #### `MiniMaxCNTTS`
 
