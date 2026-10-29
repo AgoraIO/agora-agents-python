@@ -13,10 +13,10 @@ Saving stores configuration; it does not itself start a session. Call `saved.cre
 
 ## Quick start with staging
 
-Install SDK preview `3.0.0a1`:
+Install SDK preview `3.0.0a2`:
 
 ```sh
-python -m pip install agora-agents==3.0.0a1
+python -m pip install agora-agents==3.0.0a2
 ```
 
 See [installation](../getting-started/installation.md) for prerequisites. The default public preview origin is `https://preview.ai.agora.io`. Configure App ID and App Certificate (or supply `auth_token`), then set:

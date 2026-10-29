@@ -3,7 +3,7 @@ name = "agora-agent-server-sdk"
 
 [tool.poetry]
 name = "agora-agent-server-sdk"
-version = "3.0.0a1"
+version = "3.0.0a2"
 description = "Compatibility shim for the renamed agora-agents package."
 readme = "README.md"
 authors = []
@@ -35,7 +35,7 @@ Repository = 'https://github.com/AgoraIO/agora-agents-python'
 
 [tool.poetry.dependencies]
 python = "^3.8"
-agora-agents = ">=3.0.0a1,<4.0.0"
+agora-agents = ">=3.0.0a2,<4.0.0"
 
 [build-system]
 requires = ["poetry-core"]

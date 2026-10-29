@@ -31,7 +31,7 @@ def read_compat_dependency(path: str) -> str:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--tag", help="Git release tag, such as v3.0.0-alpha.1")
+parser.add_argument("--tag", help="Git release tag, such as v3.0.0-alpha.2")
 args = parser.parse_args()
 
 root_version = read_version("pyproject.toml")

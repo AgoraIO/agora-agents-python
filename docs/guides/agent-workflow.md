@@ -2,7 +2,7 @@
 
 Configure an immutable `Agent` with providers once. Create a session when you want a running conversation, or save the configuration when you want a persistent agent and inbound-number assignments. Async clients follow the same flow with awaitable network methods.
 
-Saving and project secrets/numbers are part of SDK preview `3.0.0a1`, installed with `python -m pip install agora-agents==3.0.0a1`. Use token authentication with the public preview origin as described in the [transport setup](./v3-api-preview.md#quick-start-with-staging).
+Saving and project secrets/numbers are part of SDK preview `3.0.0a2`, installed with `python -m pip install agora-agents==3.0.0a2`. Use token authentication with the public preview origin as described in the [transport setup](./v3-api-preview.md#quick-start-with-staging).
 
 ```python
 import os
