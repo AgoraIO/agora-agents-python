@@ -8,6 +8,36 @@ from .base import BaseTTS, CartesiaSampleRate, ElevenLabsSampleRate, GoogleTTSSa
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+class SonioxTTSOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, repr=False)
+    base_url: Optional[str] = None
+    model: Optional[str] = None
+    language: Optional[str] = None
+    voice: Optional[str] = None
+    sample_rate: Optional[int] = None
+    speed: Optional[float] = Field(default=None, ge=0.7, le=1.3)
+    reduce_silence: Optional[bool] = None
+    return_timestamps: Optional[bool] = None
+    client_reference_id: Optional[str] = None
+    dump: Optional[bool] = None
+    additional_params: Optional[Dict[str, Any]] = None
+    skip_patterns: Optional[List[int]] = None
+
+
+class SonioxTTS(SonioxTTSOptions, BaseTTS):
+    """Soniox streaming TTS. Only api_key is required."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params = dict(self.additional_params or {})
+        params.update(self.model_dump(exclude_none=True, exclude={"additional_params", "skip_patterns"}))
+        config: Dict[str, Any] = {"vendor": "soniox", "params": params}
+        if self.skip_patterns is not None:
+            config["skip_patterns"] = self.skip_patterns
+        return config
+
+
 class GeminiTTSModels:
     """Gemini 3.8 Flash TTS model."""
 

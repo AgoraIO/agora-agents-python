@@ -11,6 +11,7 @@ CN_AREAS = {Area.CN}
 
 CN_ASR_VENDORS: typing.Tuple[str, ...] = (
     "fengming",
+    "stepfun",
     "tencent",
     "microsoft",
     "xfyun",
@@ -35,6 +36,7 @@ GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
 
 CN_TTS_VENDORS: typing.Tuple[str, ...] = (
     "minimax",
+    "minimax_duplex",
     "tencent",
     "bytedance",
     "microsoft",
@@ -44,6 +46,7 @@ CN_TTS_VENDORS: typing.Tuple[str, ...] = (
     "generic",
 )
 GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
+    "soniox",
     "gemini",
     "microsoft",
     "elevenlabs",
