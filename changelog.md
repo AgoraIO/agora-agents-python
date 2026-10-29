@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [v3.0.0-alpha.3] — 2026-10-29
+
 - Include the ConvoAI service in SDK-generated authorization tokens by integrating the latest production token builder fix. Regression tests verify service grants, signatures and sync/async Platform session request headers.
 - Preserve ASR provider language parameters for AssemblyAI, Google, Microsoft, Sarvam and Speechmatics, alongside the interaction language.
 - Default Sarvam TTS to `bulbul:v3`, preserving explicit model overrides.
+- Reject malformed App ID/certificate values, including whitespace.
 
 ## [v3.0.0-alpha.2] — 2026-10-29
 
