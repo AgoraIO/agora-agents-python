@@ -4,9 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [v2.13.0] — 2026-10-09
+## [v2.13.0] — 2026-10-29
+
+### Added
+
+- **RTZR global STT** — Added the global-only `RtzrSTT` AgentKit vendor with typed credentials, recognition options, vendor catalog registration, and generated request serialization.
+- **Speak parameters** — Exposed the generated `SpeakConfig`/`ParametersSpeak` types through `SessionParams` so `parameters.speak.batch` can be configured with `Agent.with_parameters()`.
 
 ### Changed
+
+- **Turn end playback metadata** — Turn analytics now expose optional `intended_playback_duration_ms` for interrupted turns. `playback_duration_ms` reports actual playback for both normal and interrupted turns. Session documentation and sync/async regression tests cover missing values, zero durations, and pagination.
+- **Sarvam TTS v2.14 parameters** — Added `speech_sample_rate`, `enable_preprocessing`, `model`, and flattened `additional_params` support. The legacy `sample_rate` input remains supported as a deprecated alias.
+ - **Generated SDK alignment** — Updated AgentKit exports, global vendor routing, request validation, avatar sample-rate handling, documentation, and feature-focused regression tests for the latest `engine-v2.14` generated API.
+
+- **Gemini TTS production routing** — Synchronous and asynchronous `GeminiTTS` sessions, including raw configurations, now use the configured regional production endpoint without the `gemini-live` preview gate. The implementation is registered in the global TTS catalog, while package-root and historical preview imports remain aliases with the same v2.11.0 options, defaults, validation, optional `style`, and `tts.params` wire fields. Compatibility with the generated request schema no longer depends on preview routing.
+- **Gemini TTS generated schema support** — The production vendor now uses the generated Gemini TTS shape and accepts `additional_params` and `skip_patterns` while keeping preview-era calls compatible.
 
 - Tavus, Protoface, and LemonSlice are minimal GenericAvatar provider wrappers with default API URLs; explicit URL overrides and generic wire/session/token handling remain supported.
 - LemonSlice defaults `avatar_id` to the vendor-recommended fixed value `lemonslice` (explicit overrides remain supported). Typed `agent_id`, `agent_image_url`, `agent_image_base64`, and `aspect_ratio` serialize directly in avatar params, overriding colliding additional params. Allowed ratios are `2x3`, `9x16`, and `1x1`; unset ratio is omitted (provider default `2x3`).

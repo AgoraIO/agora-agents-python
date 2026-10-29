@@ -20,32 +20,42 @@ class SarvamTtsParams(UncheckedBaseModel):
 
     speaker: str = pydantic.Field()
     """
-    Voice ID (e.g., anushka, abhilash, karun, hitesh, manisha, vidya, arya)
+    Speaker voice to use.
     """
 
     target_language_code: SarvamTtsParamsTargetLanguageCode = pydantic.Field()
     """
-    Target language code (e.g., en-IN)
+    Target language code in BCP-47 format (e.g., `hi-IN`, `bn-IN`, `en-IN`).
     """
 
     pitch: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Pitch adjustment for the voice
+    Pitch control for the `bulbul:v2` model.
     """
 
     pace: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Speed of speech
+    Speech speed. Defaults to `1.0`.
     """
 
     loudness: typing.Optional[float] = pydantic.Field(default=None)
     """
-    Volume level of the speech
+    Audio loudness control for the `bulbul:v2` model.
     """
 
-    sample_rate: typing.Optional[float] = pydantic.Field(default=None)
+    speech_sample_rate: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Audio sample rate in Hz
+    Output speech sample rate in Hz. Defaults to `24000`.
+    """
+
+    enable_preprocessing: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether to normalize English words and numeric entities. Defaults to `false`.
+    """
+
+    model: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    TTS model to use. Defaults to `bulbul:v3`.
     """
 
     if IS_PYDANTIC_V2:

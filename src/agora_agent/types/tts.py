@@ -11,11 +11,14 @@ from ..core.unchecked_base_model import UncheckedBaseModel, UnionMetadata
 from .amazon_tts_params import AmazonTtsParams
 from .bytedance_duplex_tts_params import BytedanceDuplexTtsParams
 from .bytedance_tts_params import BytedanceTtsParams
+from .cartesia_tts_credential_mode import CartesiaTtsCredentialMode
 from .cartesia_tts_params import CartesiaTtsParams
 from .cosyvoice_tts_params import CosyvoiceTtsParams
 from .deepgram_tts_params import DeepgramTtsParams
 from .eleven_labs_tts_params import ElevenLabsTtsParams
+from .fish_audio_tts_credential_mode import FishAudioTtsCredentialMode
 from .fish_audio_tts_params import FishAudioTtsParams
+from .gemini_tts_params import GeminiTtsParams
 from .generic_http_tts_params import GenericHttpTtsParams
 from .google_tts_params import GoogleTtsParams
 from .gradium_tts_params import GradiumTtsParams
@@ -127,6 +130,7 @@ class Tts_Murf(UncheckedBaseModel):
 
 class Tts_Cartesia(UncheckedBaseModel):
     vendor: typing.Literal["cartesia"] = "cartesia"
+    credential_mode: typing.Optional[CartesiaTtsCredentialMode] = None
     params: CartesiaTtsParams
     skip_patterns: typing.Optional[typing.List[int]] = None
 
@@ -188,6 +192,7 @@ class Tts_Rime(UncheckedBaseModel):
 
 class Tts_Fishaudio(UncheckedBaseModel):
     vendor: typing.Literal["fishaudio"] = "fishaudio"
+    credential_mode: typing.Optional[FishAudioTtsCredentialMode] = None
     params: FishAudioTtsParams
     skip_patterns: typing.Optional[typing.List[int]] = None
 
@@ -204,6 +209,21 @@ class Tts_Fishaudio(UncheckedBaseModel):
 class Tts_Google(UncheckedBaseModel):
     vendor: typing.Literal["google"] = "google"
     params: GoogleTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Tts_Gemini(UncheckedBaseModel):
+    vendor: typing.Literal["gemini"] = "gemini"
+    params: GeminiTtsParams
     skip_patterns: typing.Optional[typing.List[int]] = None
 
     if IS_PYDANTIC_V2:
@@ -412,6 +432,7 @@ Tts = typing_extensions.Annotated[
         Tts_Rime,
         Tts_Fishaudio,
         Tts_Google,
+        Tts_Gemini,
         Tts_Amazon,
         Tts_Sarvam,
         Tts_GenericHttp,

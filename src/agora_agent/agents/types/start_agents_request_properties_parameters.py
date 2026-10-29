@@ -15,11 +15,17 @@ from .start_agents_request_properties_parameters_farewell_config import (
 from .start_agents_request_properties_parameters_silence_config import (
     StartAgentsRequestPropertiesParametersSilenceConfig,
 )
+from .start_agents_request_properties_parameters_speak import StartAgentsRequestPropertiesParametersSpeak
 
 
 class StartAgentsRequestPropertiesParameters(UncheckedBaseModel):
     """
     Agent configuration parameters.
+    """
+
+    speak: typing.Optional[StartAgentsRequestPropertiesParametersSpeak] = pydantic.Field(default=None)
+    """
+    Settings for the agent's speak behavior.
     """
 
     silence_config: typing.Optional[StartAgentsRequestPropertiesParametersSilenceConfig] = pydantic.Field(default=None)

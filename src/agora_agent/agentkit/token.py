@@ -1,7 +1,7 @@
 import base64
 import hashlib
 import hmac
-import random
+import secrets
 import struct
 import time
 import typing
@@ -95,7 +95,7 @@ class GenerateConvoAITokenOptions(typing.TypedDict, total=False):
 
 # ---------------------------------------------------------------------------
 # AccessToken2 implementation (mirrors Agora's official python3 source)
-# https://github.com/AgoraIO/Tools/tree/master/DynamicKey/AgoraDynamicKey/python3
+# https://github.com/AgoraIO/Tools/tree/feature/access-token2-convoai-stt-services/DynamicKey/AgoraDynamicKey/python3
 # ---------------------------------------------------------------------------
 
 def _pack_uint16(v: int) -> bytes:
@@ -142,7 +142,7 @@ def _build_access_token2(
         The AccessToken2 string prefixed with "007".
     """
     issue_ts = int(time.time())
-    salt = random.randint(1, 99999999)
+    salt = secrets.SystemRandom().randint(1, 99999999)
 
     app_id_bytes = app_id.encode("utf-8")
     app_cert_bytes = app_certificate.encode("utf-8")
@@ -158,7 +158,7 @@ def _build_access_token2(
         + _pack_uint32(salt)
         + _pack_uint16(len(services))
     )
-    for _, svc_bytes in services:
+    for _, svc_bytes in sorted(services, key=lambda service: service[0]):
         signing_info += svc_bytes
 
     signature = hmac.new(signing, signing_info, hashlib.sha256).digest()
@@ -188,6 +188,11 @@ def _pack_service_rtm(user_id: str, privileges: typing.Dict[int, int]) -> bytes:
     )
 
 
+def _pack_service_convo_ai() -> bytes:
+    """Pack the ConvoAI service payload (service type 9)."""
+    return _pack_uint16(9) + _pack_map_uint32({})
+
+
 def _require_valid_credentials(app_id: str, app_certificate: str) -> None:
     """Reject credentials Agora will not accept, before signing anything.
 
@@ -199,11 +204,17 @@ def _require_valid_credentials(app_id: str, app_certificate: str) -> None:
 
     Credential values are never included in the message — only their lengths.
     """
-    wrong = [
-        (name, value)
-        for name, value in (("app_id", app_id), ("app_certificate", app_certificate))
-        if len(value) != AGORA_CREDENTIAL_LENGTH
-    ]
+    wrong = []
+    for name, value in (("app_id", app_id), ("app_certificate", app_certificate)):
+        if len(value) != AGORA_CREDENTIAL_LENGTH:
+            wrong.append((name, value))
+            continue
+        try:
+            bytes.fromhex(value)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"Failed to build an Agora token: {name} must be a 32-character hexadecimal value."
+            ) from None
     if not wrong:
         return
     detail = " and ".join(f"{name} is {len(value)} characters" for name, value in wrong)
@@ -245,27 +256,14 @@ def generate_rtc_token(
         The generated RTC token.
     """
     _require_valid_credentials(app_id, app_certificate)
-    try:
-        from agora_token_builder import RtcTokenBuilder  # type: ignore[import-not-found]
-
-        privilege_expire_ts = int(time.time()) + expiry_seconds
-        return RtcTokenBuilder.buildTokenWithUid(
-            app_id,
-            app_certificate,
-            channel,
-            uid,
-            role,
-            privilege_expire_ts,
-        )
-    except ImportError:
-        account = "" if uid == 0 else str(uid)
-        privileges: typing.Dict[int, int] = {1: expiry_seconds}  # kPrivilegeJoinChannel
-        if role == ROLE_PUBLISHER:
-            privileges[2] = expiry_seconds  # kPrivilegePublishAudioStream
-            privileges[3] = expiry_seconds  # kPrivilegePublishVideoStream
-            privileges[4] = expiry_seconds  # kPrivilegePublishDataStream
-        svc = _pack_service_rtc(channel, account, privileges)
-        return _build_access_token2(app_id, app_certificate, expiry_seconds, [(1, svc)])
+    account = "" if uid == 0 else str(uid)
+    privileges: typing.Dict[int, int] = {1: expiry_seconds}  # kPrivilegeJoinChannel
+    if role == ROLE_PUBLISHER:
+        privileges[2] = expiry_seconds  # kPrivilegePublishAudioStream
+        privileges[3] = expiry_seconds  # kPrivilegePublishVideoStream
+        privileges[4] = expiry_seconds  # kPrivilegePublishDataStream
+    svc = _pack_service_rtc(channel, account, privileges)
+    return _build_access_token2(app_id, app_certificate, expiry_seconds, [(1, svc)])
 
 
 def generate_convo_ai_token(
@@ -276,13 +274,14 @@ def generate_convo_ai_token(
     token_expire: int = DEFAULT_EXPIRY_SECONDS,
     privilege_expire: int = 0,
 ) -> str:
-    """Build a combined RTC + RTM token for ConvoAI REST API authentication.
+    """Build a combined RTC + RTM + ConvoAI token.
 
     The resulting token is used as: ``Authorization: agora token=<token>``
 
-    Mirrors ``RtcTokenBuilder.build_token_with_rtm`` from the official Agora
-    python3 token builder:
-    https://github.com/AgoraIO/Tools/tree/master/DynamicKey/AgoraDynamicKey/python3
+    Mirrors ``ConvoAITokenBuilder.build_token`` from the official Agora
+    python3 token builder. The ConvoAI service (type ``9``) is required for
+    ConvoAI REST API authentication:
+    https://github.com/AgoraIO/Tools/blob/feature/access-token2-convoai-stt-services/DynamicKey/AgoraDynamicKey/python3/src/convoai_token_builder.py
 
     Parameters
     ----------
@@ -293,7 +292,7 @@ def generate_convo_ai_token(
     channel_name : str
         The channel the agent will join (must match the start request).
     uid : int
-        Numeric ConvoAI participant UID. Use the RTC UID for a user, agent, or avatar.
+        Numeric ConvoAI participant UID used for both the RTC account and RTM user ID.
     token_expire : int
         Seconds until the token expires (default 86400).
     privilege_expire : int
@@ -305,21 +304,6 @@ def generate_convo_ai_token(
         The AccessToken2 string for use in the Authorization header.
     """
     _require_valid_credentials(app_id, app_certificate)
-    try:
-        from agora_token_builder import RtcTokenBuilder  # type: ignore[import-not-found]
-
-        return RtcTokenBuilder.buildTokenWithRtm(
-            app_id,
-            app_certificate,
-            channel_name,
-            _uid_to_account(uid),
-            ROLE_PUBLISHER,
-            token_expire,
-            privilege_expire,
-        )
-    except (ImportError, AttributeError):
-        pass
-
     priv_expire = privilege_expire if privilege_expire != 0 else token_expire
     account = _uid_to_account(uid)
 
@@ -335,12 +319,13 @@ def generate_convo_ai_token(
         1: token_expire,  # kPrivilegeLogin
     }
     rtm_svc = _pack_service_rtm(account, rtm_privileges)
+    convo_ai_svc = _pack_service_convo_ai()
 
     return _build_access_token2(
         app_id,
         app_certificate,
         token_expire,
-        [(1, rtc_svc), (2, rtm_svc)],
+        [(1, rtc_svc), (2, rtm_svc), (9, convo_ai_svc)],
     )
 
 

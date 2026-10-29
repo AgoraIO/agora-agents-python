@@ -10,7 +10,7 @@ Some providers may be released through a preview gateway before their production
 and `AsyncAgentSession` detect registered preview providers from the resolved start request and route the entire
 session automatically.
 
-OpenAI GPT Live, Gemini STT, and Gemini Live have graduated to the production gateway and use the normal regional
+OpenAI GPT Live, Gemini STT, Gemini Live, and Gemini TTS have graduated to the production gateway and use the normal regional
 endpoint. Existing imports from `agora_agent.agentkit.preview` remain supported as compatibility aliases.
 
 ```python
@@ -24,7 +24,7 @@ session = (
 agent_id = session.start()
 ```
 
-Preview providers use the preview base URL and `agora-feature` gate. Sessions using `GeminiSTT`, `GeminiLive`, or GPT
+Preview providers use the preview base URL and `agora-feature` gate. Sessions using `GeminiSTT`, `GeminiLive`, `GeminiTTS`, or GPT
 Live use the client's normal production regional endpoint without that header.
 
 Use the single production `GeminiLive(api_key=..., model=...)` class with `with_mllm`. The model IDs are
@@ -69,23 +69,26 @@ Add routing tests for both synchronous and asynchronous sessions when registerin
 the preview base URL, exact feature header, all lifecycle requests, caller-header precedence, and that the original
 client remains configured for production.
 
-## Gemini 3.8 Flash TTS preview
+## Gemini 3.8 Flash TTS production migration
 
 `GeminiTTS` emits `tts.vendor = "gemini"` with `api_key`, `model`, `voice`,
 and optional `style` inside `tts.params`. It defaults to `gemini-3.8-flash-tts`
-and `Puck`. Model names are sent unchanged; there is no automatic fallback
-or model rewriting.
-Model strings remain open for preview rollout changes. Blank keys are rejected.
+and `Puck`. Model names are sent unchanged; there is no automatic fallback or
+model rewriting.
+Model strings remain open for future model IDs. Blank keys are rejected.
 
-AgentSession detects the TTS vendor from the resolved request body, including
-handwritten configs, and uses the existing preview host with
-`agora-feature: gemini-live` throughout the session lifecycle. Use the retained
-session for stop/say/interrupt; the shared client remains on its normal route.
-Gemini ASR alone still uses the production route. No sample-rate or avatar
-compatibility is assumed by this preview provider.
+Existing v2.11.0 calls now use the client's configured regional production
+endpoint throughout both synchronous and asynchronous session lifecycles.
+Handwritten Gemini TTS configs follow the same route, and no preview feature
+header is added. `GeminiTTS` and `GeminiTTSModels` now live in `agentkit.vendors.tts`
+and are registered in the global vendor catalog. Imports from the package root,
+`agora_agent.agentkit.preview`, and `agora_agent.agentkit.preview.gemini_tts`
+remain aliases to the same production objects. `skip_patterns` maps to the
+generated top-level TTS field. `additional_params` is merged into `tts.params`,
+with named options taking precedence. The provider does not expose a configurable sample rate.
 
 ```python
-from agora_agent.agentkit.preview import GeminiTTS, GeminiTTSModels
+from agora_agent import GeminiTTS, GeminiTTSModels
 
 agent.with_tts(GeminiTTS(
     api_key=google_api_key,

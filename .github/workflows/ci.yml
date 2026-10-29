@@ -6,7 +6,7 @@ on:
 
 jobs:
   compile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
       - name: Compile
         run: poetry run mypy .
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
         run: poetry run pytest -rP .
 
   compat-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
   publish:
     needs: [compile, test, compat-build]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
