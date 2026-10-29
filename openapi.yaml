@@ -4,7 +4,7 @@ info:
   title: Conversational AI V3 API
   version: 3.0.0
   description: 'Public Conversational AI preview contract used by the Agent SDKs.
-    Authenticate with the existing Agora token system using Authorization: agora token=<token>.'
+    Authenticate with Agora token007 (Authorization: agora token=<token>) or HTTP Basic authentication using Customer ID and Customer Secret.'
 paths:
   "/conversational-ai/v1/projects/{appid}/agents":
     post:
@@ -8873,6 +8873,12 @@ components:
       - error
       title: SessionAnalysis
   securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: 'HTTP Basic authentication using an Agora Customer ID and Customer
+        Secret. Send Authorization: Basic <base64(customer_id:customer_secret)>.
+        This is an alternative to AgoraTokenAuth; supply one authentication method.'
     AgoraTokenAuth:
       type: apiKey
       in: header
@@ -8881,7 +8887,7 @@ components:
         ConvoAI service (service type 9); an RTC + RTM token alone is insufficient.
         Use a dedicated ConvoAI token builder. Send the complete header value: agora
         token=<token>. SDKs accept a supplied token or generate one from App ID and
-        App Certificate; Customer ID/Customer Secret authentication is not exposed.'
+        App Certificate. HTTP Basic authentication is also supported as an alternative.'
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -8916,3 +8922,4 @@ servers:
   description: Agora Conversational AI API
 security:
 - AgoraTokenAuth: []
+- BasicAuth: []

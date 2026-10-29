@@ -68,8 +68,7 @@ class Agora:
     ):
         from .core.public_auth import validate_public_headers
         validate_public_headers(headers)
-        if authorization and not authorization.lower().startswith("agora token="):
-            raise ValueError("Only Agora token authentication is supported")
+        validate_public_headers({"Authorization": authorization}, allow_empty_authorization=True)
         _defaulted_timeout = (
             timeout if timeout is not None else 60 if httpx_client is None else httpx_client.timeout.read
         )
@@ -177,8 +176,7 @@ class AsyncAgora:
     ):
         from .core.public_auth import validate_public_headers
         validate_public_headers(headers)
-        if authorization and not authorization.lower().startswith("agora token="):
-            raise ValueError("Only Agora token authentication is supported")
+        validate_public_headers({"Authorization": authorization}, allow_empty_authorization=True)
         _defaulted_timeout = (
             timeout if timeout is not None else 60 if httpx_client is None else httpx_client.timeout.read
         )

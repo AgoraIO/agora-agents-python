@@ -90,14 +90,14 @@ class Resource:
         _validate_public_headers(self.options.headers)
         merged = dict(self.options.headers)
         merged.update({k: v for k, v in headers.items() if v is not None})
-        if getattr(self.owner, "auth_mode", None) == "app-credentials":
+        if getattr(self.owner, "auth_mode", None) == "app-credentials" and not any(name.lower() == "authorization" for name in merged):
             token = generate_convo_ai_token(app_id=self.owner.app_id,
                 app_certificate=self.owner.app_certificate, channel_name="v3", uid=0)
-            merged.setdefault("Authorization", f"agora token={token}")
+            merged["Authorization"] = f"agora token={token}"
         options = dict(request_options or {})
         forbidden = {"customer_id", "customer_secret", "client_id", "client_secret", "customerId", "customerSecret", "clientId", "clientSecret", "username", "password"}
         if forbidden.intersection(options):
-            raise ValueError("Basic credential overrides are not supported")
+            raise ValueError("Configure Basic credentials with customer_id/customer_secret on the client, or an Authorization header")
         _validate_public_headers(wrapper.get_headers())
         _validate_public_headers(wrapper.get_custom_headers() or {})
         _validate_public_headers(merged)

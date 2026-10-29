@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [v3.0.0-alpha.3] — 2026-10-29
 
+- Support Basic REST authentication with `customer_id`/`customer_secret` alongside Token007 authentication in synchronous and asynchronous clients. Optional App Certificate signing remains available for RTC transport tokens.
+
 - Include the ConvoAI service in SDK-generated authorization tokens by integrating the latest production token builder fix. Regression tests verify service grants, signatures and sync/async Platform session request headers.
 - Preserve ASR provider language parameters for AssemblyAI, Google, Microsoft, Sarvam and Speechmatics, alongside the interaction language.
 - Default Sarvam TTS to `bulbul:v3`, preserving explicit model overrides.

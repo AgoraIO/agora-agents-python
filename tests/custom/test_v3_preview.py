@@ -1035,9 +1035,9 @@ async def test_default_public_origin_and_signed_token(async_):
 
 
 @pytest.mark.parametrize("field", ["customer_id", "customer_secret", "client_id", "client_secret", "customerId", "customerSecret", "clientId", "clientSecret", "username", "password"])
-def test_removed_basic_credentials_rejected_every_entrypoint(field):
+def test_partial_or_unknown_basic_credentials_rejected(field):
     for cls in (Agora, AsyncAgora):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError if field in {"customer_id", "customer_secret"} else TypeError):
             cls(area=Area.US, app_id="p", app_certificate="c", **{field: "stale"})
     client = make_client(lambda _: pytest.fail("must not send"))
     with pytest.raises(ValueError, match="Basic"):

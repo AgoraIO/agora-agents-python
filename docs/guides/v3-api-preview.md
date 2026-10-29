@@ -28,7 +28,7 @@ export OPENAI_API_KEY='YOUR_OPENAI_KEY'
 export DEEPGRAM_API_KEY='YOUR_DEEPGRAM_KEY'
 ```
 
-The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. Authentication is token-only: a prebuilt `auth_token` or App ID/App Certificate signing. Internal gateway headers, `X-Studio-Region` and Basic authorization overrides are rejected. Current rollout availability is described in the [release notes](../../changelog.md#preview-rollout); the SDK does not enforce region availability.
+The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. Authentication supports a prebuilt `auth_token`, App ID/App Certificate signing, or Basic authentication through `customer_id` and `customer_secret`. Basic credentials and `auth_token` cannot be combined. An App Certificate can accompany Basic credentials to generate RTC transport tokens without changing REST authentication. Internal gateway headers and `X-Studio-Region` remain unsupported. Current rollout availability is described in the [release notes](../../changelog.md#preview-rollout); the SDK does not enforce region availability.
 
 This complete cascaded configuration stores one project secret set, then saves a reusable agent. Set creation is a one-time provisioning step; subsequent runs can update secrets separately using the [secret methods](../reference/v3.md#secrets-eight-operations).
 

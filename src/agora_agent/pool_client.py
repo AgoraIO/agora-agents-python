@@ -20,7 +20,7 @@ from .v3 import AsyncV3Client, V3Client, V3Options
 from .v3.campaigns import AsyncCampaignsClient, CampaignsClient
 from .v3.client import AsyncNumbersClient, AsyncSecretsClient, NumbersClient, SecretsClient
 
-_AUTH_MODE = typing.Literal["app-credentials", "token"]
+_AUTH_MODE = typing.Literal["app-credentials", "token", "basic"]
 _DEBUG_LOGGER = logging.getLogger("agora_agent")
 _AreaT = typing.TypeVar("_AreaT", bound=Area)
 _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
@@ -135,6 +135,13 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         string — the SDK automatically sets the header as
         ``Authorization: agora token=<auth_token>``.
 
+    customer_id : typing.Optional[str]
+        Customer ID for Basic REST authentication; requires customer_secret.
+
+    customer_secret : typing.Optional[str]
+        Customer Secret for Basic REST authentication. Cannot be combined with auth_token.
+        An optional app_certificate remains available for RTC token signing.
+
     headers : typing.Optional[typing.Dict[str, str]]
         Additional headers to send with every request.
 
@@ -201,6 +208,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -217,6 +226,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -233,6 +244,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -258,6 +271,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -274,6 +289,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -290,6 +307,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -305,6 +324,8 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -312,24 +333,14 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
         debug: bool = False,
         v3: typing.Optional[V3Options] = None,
     ):
-        from .core.public_auth import validate_public_headers
+        from .core.public_auth import resolve_client_auth, validate_public_headers
         validate_public_headers(headers)
-        if auth_token is not None and (not isinstance(auth_token, str) or not auth_token.strip()):
-            raise ValueError("auth_token must be a nonempty raw token")
-        if auth_token is None and (not isinstance(app_certificate, str) or not app_certificate.strip()):
-            raise ValueError("app_certificate is required unless auth_token is supplied")
+        self.auth_mode, authorization = resolve_client_auth(app_certificate, auth_token, customer_id, customer_secret)
         self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
         self.app_id = app_id
         self.app_certificate = app_certificate
-
-        if auth_token is not None:
-            self.auth_mode = "token"
-            authorization = f"agora token={auth_token}"
-        else:
-            self.auth_mode = "app-credentials"
-            authorization = ""
 
         if debug and httpx_client is None:
             _DEBUG_LOGGER.setLevel(logging.DEBUG)
@@ -350,7 +361,7 @@ class Agora(BaseAgora, typing.Generic[_AreaT]):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
-        if auth_token is None:
+        if self.auth_mode == "app-credentials":
             self._client_wrapper._authorization_supplier = lambda: "agora token=" + generate_convo_ai_token(
                 app_id=self.app_id, app_certificate=typing.cast(str, self.app_certificate), channel_name="", uid=0,
             )
@@ -491,6 +502,13 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         string — the SDK automatically sets the header as
         ``Authorization: agora token=<auth_token>``.
 
+    customer_id : typing.Optional[str]
+        Customer ID for Basic REST authentication; requires customer_secret.
+
+    customer_secret : typing.Optional[str]
+        Customer Secret for Basic REST authentication. Cannot be combined with auth_token.
+        An optional app_certificate remains available for RTC token signing.
+
     headers : typing.Optional[typing.Dict[str, str]]
         Additional headers to send with every request.
 
@@ -541,6 +559,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -557,6 +577,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -573,6 +595,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -598,6 +622,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -614,6 +640,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -630,6 +658,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -645,6 +675,8 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         app_id: str,
         app_certificate: typing.Optional[str] = None,
         auth_token: typing.Optional[str] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_secret: typing.Optional[str] = None,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
         follow_redirects: typing.Optional[bool] = True,
@@ -652,24 +684,14 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
         debug: bool = False,
         v3: typing.Optional[V3Options] = None,
     ):
-        from .core.public_auth import validate_public_headers
+        from .core.public_auth import resolve_client_auth, validate_public_headers
         validate_public_headers(headers)
-        if auth_token is not None and (not isinstance(auth_token, str) or not auth_token.strip()):
-            raise ValueError("auth_token must be a nonempty raw token")
-        if auth_token is None and (not isinstance(app_certificate, str) or not app_certificate.strip()):
-            raise ValueError("app_certificate is required unless auth_token is supplied")
+        self.auth_mode, authorization = resolve_client_auth(app_certificate, auth_token, customer_id, customer_secret)
         self._v3_options = v3
         self._pool = Pool(area)
         self._area = area
         self.app_id = app_id
         self.app_certificate = app_certificate
-
-        if auth_token is not None:
-            self.auth_mode = "token"
-            authorization = f"agora token={auth_token}"
-        else:
-            self.auth_mode = "app-credentials"
-            authorization = ""
 
         if debug and httpx_client is None:
             _DEBUG_LOGGER.setLevel(logging.DEBUG)
@@ -690,7 +712,7 @@ class AsyncAgora(BaseAsyncAgora, typing.Generic[_AreaT]):
             follow_redirects=follow_redirects,
             httpx_client=httpx_client,
         )
-        if auth_token is None:
+        if self.auth_mode == "app-credentials":
             self._client_wrapper._authorization_supplier = lambda: "agora token=" + generate_convo_ai_token(
                 app_id=self.app_id, app_certificate=typing.cast(str, self.app_certificate), channel_name="", uid=0,
             )

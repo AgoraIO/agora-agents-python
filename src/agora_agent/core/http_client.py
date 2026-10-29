@@ -208,7 +208,7 @@ class HttpClient:
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
@@ -311,7 +311,7 @@ class HttpClient:
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
@@ -418,7 +418,7 @@ class AsyncHttpClient:
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},
@@ -521,7 +521,7 @@ class AsyncHttpClient:
         transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
         validate_public_headers(getattr(transport_client, "headers", {}))
         if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
-            raise ValueError("HTTP Basic auth overrides are not supported")
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
         request_headers = merge_public_headers(
             base_headers,
             headers or {},

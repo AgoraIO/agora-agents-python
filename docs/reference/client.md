@@ -26,9 +26,11 @@ client = Agora(
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `area` | `Area` | Yes | — | Region for API routing (`Area.US`, `Area.EU`, `Area.AP`, `Area.CN`) |
-| `app_id` | `str` | Yes | — | Agora App ID (app-credentials mode) |
-| `app_certificate` | `str` | Unless `auth_token` supplied | `None` | Agora App Certificate for signing |
+| `app_id` | `str` | Yes | — | Agora App ID identifying the project |
+| `app_certificate` | `str` | Unless token or Basic auth supplied | `None` | Agora App Certificate for signing |
 | `auth_token` | `str` | No | — | Pre-built raw REST token; SDK sets `Authorization: agora token=<auth_token>` |
+| `customer_id` | `str` | With `customer_secret` | `None` | Customer ID for Basic REST authentication |
+| `customer_secret` | `str` | With `customer_id` | `None` | Customer Secret for Basic REST authentication |
 | `headers` | `Dict[str, str]` | No | `None` | Additional headers sent with every request |
 | `timeout` | `float` | No | `60` | Request timeout in seconds |
 | `follow_redirects` | `bool` | No | `True` | Whether to follow HTTP redirects |
@@ -36,7 +38,7 @@ client = Agora(
 | `debug` | `bool` | No | `False` | Log HTTP requests and responses when `True` |
 | `v3` | `V3Options` | No | `None` | Preview-only origin and headers; see the [v3 reference](./v3.md) |
 
-`app_id` is required; `app_certificate` is required only when `auth_token` is omitted. Omit `auth_token` to sign REST tokens automatically, or supply a raw prebuilt token. Basic credentials are not exposed.
+`app_id` is always required. Configure either a raw `auth_token`, both `customer_id` and `customer_secret` for Basic auth, or `app_certificate` for automatic Token007 signing. Basic credentials and `auth_token` are mutually exclusive. With token or Basic REST auth, `app_certificate` is optional and can still generate RTC transport tokens. Customer ID must not contain a colon.
 
 When `area=Area.CN`, the constructor returns a `CNAgora` instance; global areas return `GlobalAgoraClient`. Both are subclasses of `Agora` and behave the same at runtime.
 
