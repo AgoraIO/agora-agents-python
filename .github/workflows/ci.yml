@@ -6,17 +6,20 @@ on:
 
 jobs:
   compile:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container: ubuntu:20.04
     steps:
+      - name: Set up Ubuntu 20.04 and Python 3.8
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git python3 python3-pip python3-venv python-is-python3
+          python --version
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
       - name: Bootstrap poetry
         run: |
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: poetry install
       - name: Release metadata check
@@ -24,17 +27,20 @@ jobs:
       - name: Compile
         run: poetry run mypy .
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container: ubuntu:20.04
     steps:
+      - name: Set up Ubuntu 20.04 and Python 3.8
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git python3 python3-pip python3-venv python-is-python3
+          python --version
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
       - name: Bootstrap poetry
         run: |
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: poetry install
 
@@ -42,17 +48,20 @@ jobs:
         run: poetry run pytest -rP .
 
   compat-build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container: ubuntu:20.04
     steps:
+      - name: Set up Ubuntu 20.04 and Python 3.8
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git python3 python3-pip python3-venv python-is-python3
+          python --version
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
       - name: Bootstrap poetry
         run: |
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install primary package
         run: poetry install
       - name: Build and verify compatibility package
@@ -74,17 +83,20 @@ jobs:
   publish:
     needs: [compile, test, compat-build]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container: ubuntu:20.04
     steps:
+      - name: Set up Ubuntu 20.04 and Python 3.8
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git python3 python3-pip python3-venv python-is-python3
+          python --version
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Set up python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
       - name: Bootstrap poetry
         run: |
           curl -sSL https://install.python-poetry.org | python - -y --version 1.5.1
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: poetry install
 
