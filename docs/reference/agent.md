@@ -263,7 +263,7 @@ Creates an `AgentSession` using the client already bound to `Agent(client=...)`.
 | `agent_uid` | `str` | Yes | UID for the agent |
 | `remote_uids` | `List[str]` | Yes | UIDs of remote participants |
 | `name` | `Optional[str]` | No | Session name sent to the Start Agent API (defaults to `agent-{timestamp}` if omitted) |
-| `token` | `Optional[str]` | No | Pre-built RTC+RTM token |
+| `token` | `Optional[str]` | No | Pre-built RTC + RTM + ConvoAI token |
 | `expires_in` | `Optional[int]` | No | Token lifetime in seconds (default: `86400` = 24 h, Agora max). Only applies when the token is auto-generated. Use `expires_in_hours()` or `expires_in_minutes()` for clarity. Valid range: 1–86400. |
 | `idle_timeout` | `Optional[int]` | No | Idle timeout in seconds |
 | `enable_string_uid` | `Optional[bool]` | No | Enable string UIDs |

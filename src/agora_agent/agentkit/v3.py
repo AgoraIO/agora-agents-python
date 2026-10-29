@@ -10,6 +10,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from ..v3 import PreconditionFailedError
 from ..v3.types import AgentResponse, NumberResponse
 
+_ASR_PROVIDER_LANGUAGE_VENDORS = {"assemblyai", "google", "microsoft", "sarvam", "speechmatics"}
+
 if TYPE_CHECKING:
     from .agent import Agent
 
@@ -107,7 +109,14 @@ def module(config, category, errors):
     if category == "asr":
         if "keywords" in config:
             params["keywords"] = config.pop("keywords")
-        language = config.get("language", params.pop("language", None))
+        language = config.get("language", params.get("language"))
+        # These recognizers require their provider language even when the
+        # conversation uses a separate block-level interaction language.
+        if vendor in _ASR_PROVIDER_LANGUAGE_VENDORS:
+            if language is not None:
+                params.setdefault("language", language)
+        else:
+            params.pop("language", None)
         if language is not None:
             config["language"] = language
         elif vendor in {"ares", "fengming"}:
@@ -332,6 +341,8 @@ def build_body(agent, name=None):
             if value is not None or language is not None:
                 value = dump(value or {"vendor": "fengming" if getattr(agent._client, "area_scope", None) == "cn" else "ares"})
                 if language is not None:
+                    if value.get("vendor") in _ASR_PROVIDER_LANGUAGE_VENDORS and value.get("language") is not None:
+                        value.setdefault("params", {}).setdefault("language", value["language"])
                     value["language"] = language
         if value is not None:
             pipeline[target] = module(value, target, errors)

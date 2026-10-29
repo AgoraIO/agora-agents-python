@@ -1148,7 +1148,7 @@ class Agent:
             if app_id is None or app_certificate is None:
                 raise ValueError("Either token or app_id+app_certificate must be provided")
             validated_expires_in = _validate_expires_in(expires_in) if expires_in is not None else None
-            # Use generate_convo_ai_token (RTC + RTM) so the token works whether or
+            # Use generate_convo_ai_token (RTC + RTM + ConvoAI) so the token works whether or
             # not the caller enables advanced_features.enable_rtm.
             token_kwargs: typing.Dict[str, typing.Any] = {}
             if validated_expires_in is not None:

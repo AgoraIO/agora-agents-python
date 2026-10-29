@@ -37,7 +37,7 @@ Model = TypeVar("Model", bound=pydantic.BaseModel)
 
 def parse_obj_as(type_: Type[T], object_: Any) -> T:
     if IS_PYDANTIC_V2:
-        adapter = pydantic.TypeAdapter(type_)  # type: ignore[attr-defined]
+        adapter: "pydantic.TypeAdapter[T]" = pydantic.TypeAdapter(type_)  # type: ignore[attr-defined]
         return adapter.validate_python(object_)
     return pydantic.parse_obj_as(type_, object_)
 

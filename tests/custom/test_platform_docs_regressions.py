@@ -3,6 +3,7 @@ import copy
 import json
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -22,7 +23,56 @@ from agora_agent import (
 )
 from agora_agent.agentkit.session_backend import prepare_start_body
 from agora_agent.agentkit.v3 import build_body, module
-from agora_agent.agentkit.vendors.stt import AssemblyAISTT, SpeechmaticsSTT
+from agora_agent.agentkit.vendors.stt import AssemblyAISTT, GoogleSTT, MicrosoftSTT, SarvamSTT, SpeechmaticsSTT
+from agora_agent.agentkit.vendors.tts import SarvamTTS
+
+
+@pytest.mark.parametrize("vendor", [
+    AssemblyAISTT(api_key=secret_ref("prod", "key"), language="fr", ws_url="wss://assembly.example"),
+    GoogleSTT(project_id="project", location="global", adc_credentials_string=secret_ref("prod", "key"), language="fr"),
+    MicrosoftSTT(key=secret_ref("prod", "key"), region="eastus", language="fr"),
+    SarvamSTT(api_key=secret_ref("prod", "key"), language="hi-IN"),
+    SpeechmaticsSTT(key=secret_ref("prod", "key"), language="fr", uri="wss://speech.example"),
+])
+@pytest.mark.parametrize("interaction_language", [None, "de-DE"])
+def test_required_provider_language_survives_platform_mapping(vendor, interaction_language):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(201, json={"agent_id": "saved", "agent_name": "languages"}, headers={"ETag": '"1"'})
+
+    agent = Agent(make_client(handler)).with_stt(vendor)
+    before = copy.deepcopy(agent.config)
+    if interaction_language:
+        agent = agent.with_turn_detection({"language": interaction_language})
+    agent.save(name="languages")
+    asr = json.loads(requests[0].content)["pipeline"]["asr"]
+    assert asr["params"]["language"] == vendor.language
+    assert asr["language"] == (interaction_language or vendor.language)
+    assert before["stt"] == agent.config["stt"]
+    assert "ws_url" not in asr["params"] and "uri" not in asr["params"]
+
+
+@pytest.mark.parametrize("vendor", ["assemblyai", "google", "microsoft", "sarvam", "speechmatics"])
+def test_raw_provider_top_level_language_preserved_before_interaction_override(vendor):
+    agent = Agent(make_client(lambda _: pytest.fail("no HTTP"))).with_stt(SimpleNamespace(to_config=lambda: {"vendor": vendor, "language": "fr", "params": {}}))
+    body = build_body(agent.with_turn_detection({"language": "de-DE"}))
+    assert body["pipeline"]["asr"]["language"] == "de-DE"
+    assert body["pipeline"]["asr"]["params"]["language"] == "fr"
+
+
+@pytest.mark.parametrize("options,expected", [
+    ({}, "bulbul:v3"),
+    ({"model": "explicit-model"}, "explicit-model"),
+    ({"additional_params": {"model": "additional-model"}}, "additional-model"),
+    ({"model": "explicit-model", "additional_params": {"model": "additional-model"}}, "explicit-model"),
+])
+def test_sarvam_model_default_and_override(options, expected):
+    tts = SarvamTTS(key=secret_ref("prod", "key"), speaker="anushka", target_language_code="hi-IN", **options)
+    assert tts.to_config()["params"]["model"] == expected
+    body = build_body(Agent(make_client(lambda _: pytest.fail("no HTTP"))).with_tts(tts))
+    assert body["pipeline"]["tts"]["params"]["model"] == expected
 
 
 def test_managed_openai_and_provider_languages_and_keywords():

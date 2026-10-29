@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+- Include the ConvoAI service in SDK-generated authorization tokens by integrating the latest production token builder fix. Regression tests verify service grants, signatures and sync/async Platform session request headers.
+- Preserve ASR provider language parameters for AssemblyAI, Google, Microsoft, Sarvam and Speechmatics, alongside the interaction language.
+- Default Sarvam TTS to `bulbul:v3`, preserving explicit model overrides.
+
 ## [v3.0.0-alpha.2] — 2026-10-29
 
 - Correct Platform provider IDs, Gemini and Bedrock credentials, ASR language/keywords/endpoints, and HeyGen mapping. Managed OpenAI model availability is validated by the service.

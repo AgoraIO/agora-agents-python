@@ -14583,7 +14583,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "Authorization",
-        "description": "An Agora token produced by the existing token system. Send the complete header value: agora token=<token>. SDKs accept a supplied token or generate one from App ID and App Certificate; Customer ID/Customer Secret authentication is not exposed."
+        "description": "An Agora AccessToken2 token. Platform session routes require the ConvoAI service (service type 9); an RTC + RTM token alone is insufficient. Use a dedicated ConvoAI token builder. Send the complete header value: agora token=<token>. SDKs accept a supplied token or generate one from App ID and App Certificate; Customer ID/Customer Secret authentication is not exposed."
       }
     },
     "parameters": {
