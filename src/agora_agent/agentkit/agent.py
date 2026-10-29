@@ -131,6 +131,7 @@ from ..agents.types.start_agents_request_properties_turn_detection_type import (
 )
 from ..agents.types.update_agents_request_properties import UpdateAgentsRequestProperties
 from ..core.pydantic_utilities import parse_obj_as
+from ..agents.types.start_agents_request_properties_parameters_speak import StartAgentsRequestPropertiesParametersSpeak
 from ..types.asr import Asr
 from ..types.llm import Llm
 from ..types.llm_style import LlmStyle as GeneratedLlmStyle
@@ -198,6 +199,8 @@ SilenceAction = StartAgentsRequestPropertiesParametersSilenceConfigAction
 FarewellConfig = StartAgentsRequestPropertiesParametersFarewellConfig
 ParametersDataChannel = StartAgentsRequestPropertiesParametersDataChannel
 ParametersAudioScenario = StartAgentsRequestPropertiesParametersAudioScenario
+SpeakConfig = StartAgentsRequestPropertiesParametersSpeak
+ParametersSpeak = SpeakConfig
 InterruptionConfig = StartAgentsRequestPropertiesInterruption
 InterruptionMode = StartAgentsRequestPropertiesInterruptionMode
 MllmTurnDetectionConfig = MllmTurnDetection
@@ -218,6 +221,7 @@ Labels = typing.Dict[str, str]
 
 
 class SessionParamsInput(typing_extensions.TypedDict, total=False):
+    speak: StartAgentsRequestPropertiesParametersSpeak
     silence_config: StartAgentsRequestPropertiesParametersSilenceConfig
     farewell_config: StartAgentsRequestPropertiesParametersFarewellConfig
     data_channel: StartAgentsRequestPropertiesParametersDataChannel

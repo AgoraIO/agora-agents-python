@@ -14,7 +14,7 @@ class CartesiaTtsParams(UncheckedBaseModel):
     Cartesia TTS configuration parameters.
     """
 
-    api_key: str = pydantic.Field()
+    api_key: typing.Optional[str] = pydantic.Field(default=None)
     """
     Cartesia API key
     """

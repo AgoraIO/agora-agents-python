@@ -17,7 +17,7 @@ class DeepgramAsrParams(UncheckedBaseModel):
     WebSocket URL for Deepgram's streaming API
     """
 
-    key: str = pydantic.Field()
+    api_key: str = pydantic.Field()
     """
     Deepgram API key
     """

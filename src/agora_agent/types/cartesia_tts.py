@@ -5,12 +5,18 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from ..core.unchecked_base_model import UncheckedBaseModel
+from .cartesia_tts_credential_mode import CartesiaTtsCredentialMode
 from .cartesia_tts_params import CartesiaTtsParams
 
 
 class CartesiaTts(UncheckedBaseModel):
     """
     Cartesia Text-to-Speech configuration (Beta).
+    """
+
+    credential_mode: typing.Optional[CartesiaTtsCredentialMode] = pydantic.Field(default=None)
+    """
+    Credential mode. When provided, must be "managed" (Agora managed mode) or "byok" (BYOK mode).
     """
 
     params: CartesiaTtsParams
