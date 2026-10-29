@@ -412,4 +412,4 @@ def test_stepfun_stt_requires_api_key() -> None:
     with pytest.raises(ValidationError):
         StepFunSTT(api_key="")
     with pytest.raises(ValidationError):
-        StepFunSTT()
+        StepFunSTT.model_validate({})

@@ -672,7 +672,8 @@ def test_minimax_duplex_full_config_matches_generated_schema() -> None:
         "skip_patterns": [],
     }
     assert tts.to_config() == expected
-    assert TypeAdapter(Tts).validate_python(expected).model_dump(exclude_none=True) == expected
+    adapter: TypeAdapter[Tts] = TypeAdapter(Tts)
+    assert adapter.validate_python(expected).model_dump(exclude_none=True) == expected
     assert tts.resolved_sample_rate == 24000
     assert extra == {"key": "overridden", "continuous_sound": True, "future_param": "kept"}
 
@@ -700,7 +701,8 @@ def test_soniox_all_options_and_parameter_precedence() -> None:
         "skip_patterns": [1],
     }
     assert tts.to_config() == expected
-    assert TypeAdapter(Tts).validate_python(expected).model_dump(exclude_none=True) == expected
+    adapter: TypeAdapter[Tts] = TypeAdapter(Tts)
+    assert adapter.validate_python(expected).model_dump(exclude_none=True) == expected
     assert tts.resolved_sample_rate == 24000
 
 
@@ -723,7 +725,7 @@ def test_soniox_requires_api_key() -> None:
     with pytest.raises(ValidationError):
         SonioxTTS(api_key="")
     with pytest.raises(ValidationError):
-        SonioxTTS()
+        SonioxTTS.model_validate({})
 
 
 @pytest.mark.parametrize("speed", [0.6, 1.4, float("nan")])
