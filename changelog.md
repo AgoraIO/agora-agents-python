@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
-
-## [v3.0.0-alpha.3] — 2026-10-29
+## [v3.0.0-alpha.3] — 2026-10-30
 
 - Support Basic REST authentication with `customer_id`/`customer_secret` alongside Token007 authentication in synchronous and asynchronous clients. Optional App Certificate signing remains available for RTC transport tokens.
 
