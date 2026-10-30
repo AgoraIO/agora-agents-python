@@ -13,6 +13,12 @@ import httpx
 from .file import File, convert_file_dict_to_httpx_tuples
 from .force_multipart import FORCE_MULTIPART
 from .jsonable_encoder import jsonable_encoder
+from .public_auth import (
+    merge_public_headers,
+    validate_effective_public_headers,
+    validate_public_headers,
+    validate_public_options,
+)
 from .query_encoder import encode_query
 from .remove_none_from_dict import remove_none_from_dict
 from .request_options import RequestOptions
@@ -192,6 +198,23 @@ class HttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
+        validate_public_options(request_options)
+        # App-certificate clients can have an empty base Authorization
+        # placeholder because sessions supply a fresh ConvoAI token per call.
+        # Explicit client/per-request overrides are validated separately.
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}) or {},
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -210,18 +233,10 @@ class HttpClient:
         if (request_files is None or len(request_files) == 0) and force_multipart:
             request_files = FORCE_MULTIPART
 
-        response = self.httpx_client.request(
+        response = _request_with_reload_headers(self.httpx_client, bool((request_options or {}).get("_strip_write_preconditions")),
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) or {} if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -289,6 +304,20 @@ class HttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.Iterator[httpx.Response]:
+        validate_public_options(request_options)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}),
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -310,15 +339,7 @@ class HttpClient:
         with self.httpx_client.stream(
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -390,6 +411,20 @@ class AsyncHttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> httpx.Response:
+        validate_public_options(request_options)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}) or {},
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -409,18 +444,10 @@ class AsyncHttpClient:
         json_body, data_body = get_request_body(json=json, data=data, request_options=request_options, omit=omit)
 
         # Add the input to each of these and do None-safety checks
-        response = await self.httpx_client.request(
+        response = await _async_request_with_reload_headers(self.httpx_client, bool((request_options or {}).get("_strip_write_preconditions")),
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) or {} if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -487,6 +514,20 @@ class AsyncHttpClient:
         omit: typing.Optional[typing.Any] = None,
         force_multipart: typing.Optional[bool] = None,
     ) -> typing.AsyncIterator[httpx.Response]:
+        validate_public_options(request_options)
+        base_headers = self.base_headers()
+        validate_public_headers(base_headers, allow_empty_authorization=True)
+        validate_public_headers(headers)
+        transport_client = getattr(self.httpx_client, "_inner", self.httpx_client)
+        validate_public_headers(getattr(transport_client, "headers", {}))
+        if isinstance(getattr(transport_client, "auth", None), httpx.BasicAuth):
+            raise ValueError("Configure Basic credentials on Agora/AsyncAgora; httpx auth would override SDK authentication")
+        request_headers = merge_public_headers(
+            base_headers,
+            headers or {},
+            (request_options or {}).get("additional_headers", {}),
+        )
+        validate_effective_public_headers(getattr(transport_client, "headers", {}), request_headers)
         base_url = self.get_base_url(base_url)
         timeout = (
             request_options.get("timeout_in_seconds")
@@ -508,15 +549,7 @@ class AsyncHttpClient:
         async with self.httpx_client.stream(
             method=method,
             url=urllib.parse.urljoin(f"{base_url}/", path),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self.base_headers(),
-                        **(headers if headers is not None else {}),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
+            headers=jsonable_encoder(remove_none_from_dict(request_headers)),
             params=encode_query(
                 jsonable_encoder(
                     remove_none_from_dict(
@@ -541,3 +574,26 @@ class AsyncHttpClient:
             timeout=timeout,
         ) as stream:
             yield stream
+
+
+def _without_write_conditions(request: httpx.Request) -> httpx.Request:
+    # Applied after httpx merges SDK and HTTP-client defaults, without mutating
+    # any shared client/header maps or losing auth, cookies and request context.
+    for name in ("If-Match", "If-None-Match", "Idempotency-Key"):
+        if name in request.headers:
+            del request.headers[name]
+    return request
+
+
+def _request_with_reload_headers(client, strip_conditions, **kwargs):
+    if not strip_conditions:
+        return client.request(**kwargs)
+    request = _without_write_conditions(client.build_request(**kwargs))
+    return client.send(request)
+
+
+async def _async_request_with_reload_headers(client, strip_conditions, **kwargs):
+    if not strip_conditions:
+        return await client.request(**kwargs)
+    request = _without_write_conditions(client.build_request(**kwargs))
+    return await client.send(request)

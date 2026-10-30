@@ -6,7 +6,7 @@ description: Iterate over paginated list endpoints.
 
 # Pagination
 
-Paginated requests return a `SyncPager` or `AsyncPager` that you can iterate over.
+Existing v2 paginated requests return a `SyncPager` or `AsyncPager` that you can iterate over. The [v3 preview](../reference/v3.md#pagination-errors-and-transport) instead returns wire dictionaries from `list()`, complete cursor pages from `iter_pages()`, and items from `iter_all()`; async clients use `async for` for the iterators.
 
 ```python
 from agora_agent import Agora, Area

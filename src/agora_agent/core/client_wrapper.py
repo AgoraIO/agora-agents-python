@@ -3,6 +3,7 @@
 import typing
 
 import httpx
+from ..version import __version__
 from .http_client import AsyncHttpClient, HttpClient
 
 
@@ -18,6 +19,7 @@ class BaseClientWrapper:
         timeout: typing.Optional[float] = None,
     ):
         self._authorization = authorization
+        self._authorization_supplier: typing.Optional[typing.Callable[[], str]] = None
         self._username = username
         self._password = password
         self._headers = headers
@@ -26,14 +28,14 @@ class BaseClientWrapper:
 
     def get_headers(self) -> typing.Dict[str, str]:
         headers: typing.Dict[str, str] = {
-            "User-Agent": "agora-agents/v2.13.0",
+            "User-Agent": f"agora-agents/v{__version__}",
             "X-Fern-Language": "Python",
             "X-Fern-SDK-Name": "agora-agents",
-            "X-Fern-SDK-Version": "v2.13.0",
+            "X-Fern-SDK-Version": f"v{__version__}",
             **(self.get_custom_headers() or {}),
         }
-        headers["Authorization"] = httpx.BasicAuth(self._get_username(), self._get_password())._auth_header
-        headers["Authorization"] = self._authorization
+        supplier = getattr(self, "_authorization_supplier", None)
+        headers["Authorization"] = supplier() if supplier is not None else self._authorization
         return headers
 
     def _get_username(self) -> str:

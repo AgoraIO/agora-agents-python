@@ -41,7 +41,11 @@ This is the primary developer-facing API. It provides:
 
 ### Fern-Generated Layer
 
-The auto-generated core provides typed HTTP methods for every Agora API endpoint. You rarely need this directly, but it is accessible via `session.raw` for advanced use cases or new endpoints that the agentkit layer does not yet cover.
+The auto-generated core provides typed HTTP methods for the existing v2 API endpoints. You rarely need this directly, but it is accessible via `session.raw` for advanced use cases or new endpoints that the agentkit layer does not yet cover.
+
+### v3 Preview Adapter
+
+`client.v3` adds typed wire dictionaries and agents/secrets/numbers/session-read resources alongside the v2 generated clients. It reuses the pool client's HTTP transport and authentication, with separate staging origin/header overrides. This is protected custom/local-generated code rather than canonical Fern output. AgentKit adds `SavedAgent` / `AsyncSavedAgent` for persisted configurations; existing session handles remain v2. See [v3 workflows](../guides/v3-api-preview.md) and [reference](../reference/v3.md).
 
 ## Sync vs. Async
 
@@ -51,6 +55,7 @@ The SDK provides two parallel client hierarchies:
 |---|---|---|
 | `Agora` | `AsyncAgora` | `httpx.Client` / `httpx.AsyncClient` |
 | `AgentSession` | `AsyncAgentSession` | Blocking calls / Coroutines |
+| `SavedAgent` (preview) | `AsyncSavedAgent` (preview) | Stored configuration and number assignment calls |
 
 ### When to Use Each
 

@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v3.0.0-alpha.3] — 2026-10-30
+
+- Support Basic REST authentication with `customer_id`/`customer_secret` alongside Token007 authentication in synchronous and asynchronous clients. Optional App Certificate signing remains available for RTC transport tokens.
+
+- Include the ConvoAI service in SDK-generated authorization tokens by integrating the latest production token builder fix. Regression tests verify service grants, signatures and sync/async Platform session request headers.
+- Preserve ASR provider language parameters for AssemblyAI, Google, Microsoft, Sarvam and Speechmatics, alongside the interaction language.
+- Default Sarvam TTS to `bulbul:v3`, preserving explicit model overrides.
+- Reject malformed App ID/certificate values, including whitespace.
+
+## [v3.0.0-alpha.2] — 2026-10-29
+
+- Correct Platform provider IDs, Gemini and Bedrock credentials, ASR language/keywords/endpoints, and HeyGen mapping. Managed OpenAI model availability is validated by the service.
+- Add explicit ephemeral-session and outbound-call helpers, full inbound call policies, RTC token generation for fixed numeric UIDs, Azure resource names, optional session analysis and secret-key metadata.
+- Fix Pydantic import configuration warnings and document Windows source checkout requirements.
+- Preserve Gemini credentials during endpoint normalization and capture RTC signing identity per session. Retain generated RTC tokens across failed-start retries, refresh them for new unkeyed session lifecycles, and leave unsupported UIDs to server provisioning.
+
+## [v3.0.0-alpha.1] — 2026-10-28
+
+- Shared root OpenAPI JSON/YAML, local reproducible wire generator, sync/async/raw session PATCH, and cascaded-only preview contracts.
+- Realtime/MLLM configurations and runtime updates are rejected by preview APIs before network access; existing inline MLLM sessions remain supported.
+- BYOK `credential.fields` preserves vendor credential names; saved writes require explicit secret references, ephemeral sessions permit inline values.
+- Optional RTC UID, inbound/voicemail end-call policies, SIP IPv4 allowlists, campaign create retention, 50,000-contact / 10 MiB limits. Removed campaign retry fields are rejected.
+- Six idempotent POST operations use optional 1–256 visible ASCII keys, 24-hour replay and replay response headers. No automatic write retries or region availability gates.
+
+### Preview rollout
+
+The current stored-agent, session and campaign preview rollout is available in the US only (PM confirmation, 2026-10-27). Availability may expand as rollout progresses.
+
 ## [v2.13.0] — 2026-10-29
 
 ### Added

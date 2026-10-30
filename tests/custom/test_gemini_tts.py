@@ -168,6 +168,7 @@ def test_production_raw_calls_preserve_per_call_headers():
         headers = {"x-request": "preserved"}
         session.raw.get("0" * 32, "agent-1", request_options={"additional_headers": headers})
         for req in requests:
+            assert req.headers["Authorization"].startswith("agora token=")
             assert "agora-feature" not in req.headers
             assert str(req.url).startswith(client.get_current_url() + "/")
         assert requests[-1].headers["x-request"] == "preserved"

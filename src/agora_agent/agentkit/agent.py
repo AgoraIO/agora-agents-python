@@ -2,92 +2,150 @@ from __future__ import annotations
 
 import time
 import typing
-import typing_extensions
 import warnings
 
+import typing_extensions
+
 if typing.TYPE_CHECKING:
-    from .agent_session import AgentSession, AsyncAgentSession
     from ..core.domain import Area
     from ..pool_client import Agora, AsyncAgora
+    from .agent_session import AgentSession, AsyncAgentSession
+    from .v3 import AsyncDeployedAgent, AsyncSavedAgent, DeployedAgent, SavedAgent
 
-from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
-from ..agents.types.start_agents_request_properties_avatar import StartAgentsRequestPropertiesAvatar
-from ..agents.types.start_agents_request_properties_avatar_vendor import StartAgentsRequestPropertiesAvatarVendor
-from ..agents.types.update_agents_request_properties import UpdateAgentsRequestProperties
+from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
+    AgentThinkAgentManagementRequestOnListeningAction,
+)
+from ..agent_management.types.agent_think_agent_management_request_on_speaking_action import (
+    AgentThinkAgentManagementRequestOnSpeakingAction,
+)
+from ..agent_management.types.agent_think_agent_management_request_on_thinking_action import (
+    AgentThinkAgentManagementRequestOnThinkingAction,
+)
+from ..agent_management.types.agent_think_agent_management_response import (
+    AgentThinkAgentManagementResponse,
+)
 from ..agents.types.get_agents_response import GetAgentsResponse
-from ..agents.types.list_agents_response import ListAgentsResponse
-from ..agents.types.list_agents_response_data_list_item import ListAgentsResponseDataListItem
-from ..agents.types.list_agents_response_data_list_item_status import ListAgentsResponseDataListItemStatus
 from ..agents.types.get_history_agents_response import GetHistoryAgentsResponse
 from ..agents.types.get_history_agents_response_contents_item import GetHistoryAgentsResponseContentsItem
 from ..agents.types.get_history_agents_response_contents_item_role import GetHistoryAgentsResponseContentsItemRole
 from ..agents.types.get_turns_agents_response import GetTurnsAgentsResponse
 from ..agents.types.get_turns_agents_response_turns_item import GetTurnsAgentsResponseTurnsItem
+from ..agents.types.list_agents_response import ListAgentsResponse
+from ..agents.types.list_agents_response_data_list_item import ListAgentsResponseDataListItem
+from ..agents.types.list_agents_response_data_list_item_status import ListAgentsResponseDataListItemStatus
 from ..agents.types.speak_agents_request_priority import SpeakAgentsRequestPriority
-from ..agents.types.start_agents_request_properties_turn_detection import StartAgentsRequestPropertiesTurnDetection
-from ..agents.types.start_agents_request_properties_turn_detection_config import StartAgentsRequestPropertiesTurnDetectionConfig
-from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeech
-from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_mode import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechMode
-from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_vad_config import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechVadConfig
-from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_keywords_config import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechKeywordsConfig
-from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_disabled_config import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechDisabledConfig
-from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_disabled_config_strategy import StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechDisabledConfigStrategy
-from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech import StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech
-from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech_mode import StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeechMode
-from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech_vad_config import StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeechVadConfig
-from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech_semantic_config import StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeechSemanticConfig
-from ..agents.types.start_agents_request_properties_turn_detection_type import StartAgentsRequestPropertiesTurnDetectionType
-from ..agents.types.start_agents_request_properties_turn_detection_interrupt_mode import StartAgentsRequestPropertiesTurnDetectionInterruptMode
-from ..agents.types.start_agents_request_properties_turn_detection_eagerness import StartAgentsRequestPropertiesTurnDetectionEagerness
+from ..agents.types.start_agents_request_properties import StartAgentsRequestProperties
+from ..agents.types.start_agents_request_properties_advanced_features import (
+    StartAgentsRequestPropertiesAdvancedFeatures,
+)
+from ..agents.types.start_agents_request_properties_avatar import StartAgentsRequestPropertiesAvatar
+from ..agents.types.start_agents_request_properties_avatar_vendor import StartAgentsRequestPropertiesAvatarVendor
+from ..agents.types.start_agents_request_properties_filler_words import StartAgentsRequestPropertiesFillerWords
+from ..agents.types.start_agents_request_properties_filler_words_content import (
+    StartAgentsRequestPropertiesFillerWordsContent,
+)
+from ..agents.types.start_agents_request_properties_filler_words_content_generated_config import (
+    StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig,
+)
+from ..agents.types.start_agents_request_properties_filler_words_content_generated_config_llm_provider import (
+    StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider,
+)
+from ..agents.types.start_agents_request_properties_filler_words_content_static_config import (
+    StartAgentsRequestPropertiesFillerWordsContentStaticConfig,
+)
+from ..agents.types.start_agents_request_properties_filler_words_content_static_config_selection_rule import (
+    StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule,
+)
+from ..agents.types.start_agents_request_properties_filler_words_trigger import (
+    StartAgentsRequestPropertiesFillerWordsTrigger,
+)
+from ..agents.types.start_agents_request_properties_filler_words_trigger_fixed_time_config import (
+    StartAgentsRequestPropertiesFillerWordsTriggerFixedTimeConfig,
+)
+from ..agents.types.start_agents_request_properties_geofence import StartAgentsRequestPropertiesGeofence
+from ..agents.types.start_agents_request_properties_interruption import StartAgentsRequestPropertiesInterruption
+from ..agents.types.start_agents_request_properties_interruption_mode import (
+    StartAgentsRequestPropertiesInterruptionMode,
+)
+from ..agents.types.start_agents_request_properties_parameters import StartAgentsRequestPropertiesParameters
+from ..agents.types.start_agents_request_properties_parameters_audio_scenario import (
+    StartAgentsRequestPropertiesParametersAudioScenario,
+)
+from ..agents.types.start_agents_request_properties_parameters_data_channel import (
+    StartAgentsRequestPropertiesParametersDataChannel,
+)
+from ..agents.types.start_agents_request_properties_parameters_farewell_config import (
+    StartAgentsRequestPropertiesParametersFarewellConfig,
+)
+from ..agents.types.start_agents_request_properties_parameters_silence_config import (
+    StartAgentsRequestPropertiesParametersSilenceConfig,
+)
+from ..agents.types.start_agents_request_properties_parameters_silence_config_action import (
+    StartAgentsRequestPropertiesParametersSilenceConfigAction,
+)
+from ..agents.types.start_agents_request_properties_rtc import StartAgentsRequestPropertiesRtc
 from ..agents.types.start_agents_request_properties_sal import StartAgentsRequestPropertiesSal
 from ..agents.types.start_agents_request_properties_sal_sal_mode import StartAgentsRequestPropertiesSalSalMode
-from ..agents.types.start_agents_request_properties_parameters import StartAgentsRequestPropertiesParameters
-from ..agents.types.start_agents_request_properties_parameters_silence_config import StartAgentsRequestPropertiesParametersSilenceConfig
-from ..agents.types.start_agents_request_properties_parameters_silence_config_action import StartAgentsRequestPropertiesParametersSilenceConfigAction
-from ..agents.types.start_agents_request_properties_parameters_farewell_config import StartAgentsRequestPropertiesParametersFarewellConfig
-from ..agents.types.start_agents_request_properties_parameters_data_channel import StartAgentsRequestPropertiesParametersDataChannel
-from ..agents.types.start_agents_request_properties_parameters_audio_scenario import StartAgentsRequestPropertiesParametersAudioScenario
+from ..agents.types.start_agents_request_properties_turn_detection import StartAgentsRequestPropertiesTurnDetection
+from ..agents.types.start_agents_request_properties_turn_detection_config import (
+    StartAgentsRequestPropertiesTurnDetectionConfig,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech import (
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeech,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech_mode import (
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeechMode,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech_semantic_config import (
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeechSemanticConfig,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_end_of_speech_vad_config import (
+    StartAgentsRequestPropertiesTurnDetectionConfigEndOfSpeechVadConfig,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech import (
+    StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeech,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_disabled_config import (
+    StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechDisabledConfig,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_disabled_config_strategy import (
+    StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechDisabledConfigStrategy,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_keywords_config import (
+    StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechKeywordsConfig,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_mode import (
+    StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechMode,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_config_start_of_speech_vad_config import (
+    StartAgentsRequestPropertiesTurnDetectionConfigStartOfSpeechVadConfig,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_eagerness import (
+    StartAgentsRequestPropertiesTurnDetectionEagerness,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_interrupt_mode import (
+    StartAgentsRequestPropertiesTurnDetectionInterruptMode,
+)
+from ..agents.types.start_agents_request_properties_turn_detection_type import (
+    StartAgentsRequestPropertiesTurnDetectionType,
+)
+from ..agents.types.update_agents_request_properties import UpdateAgentsRequestProperties
+from ..core.pydantic_utilities import parse_obj_as
 from ..agents.types.start_agents_request_properties_parameters_speak import StartAgentsRequestPropertiesParametersSpeak
-from ..agents.types.start_agents_request_properties_interruption import StartAgentsRequestPropertiesInterruption
-from ..agents.types.start_agents_request_properties_interruption_mode import StartAgentsRequestPropertiesInterruptionMode
-from ..agents.types.start_agents_request_properties_geofence import StartAgentsRequestPropertiesGeofence
-from ..agents.types.start_agents_request_properties_rtc import StartAgentsRequestPropertiesRtc
-from ..agents.types.start_agents_request_properties_advanced_features import StartAgentsRequestPropertiesAdvancedFeatures
-from ..agents.types.start_agents_request_properties_filler_words import StartAgentsRequestPropertiesFillerWords
-from ..agents.types.start_agents_request_properties_filler_words_trigger import StartAgentsRequestPropertiesFillerWordsTrigger
-from ..agents.types.start_agents_request_properties_filler_words_trigger_fixed_time_config import StartAgentsRequestPropertiesFillerWordsTriggerFixedTimeConfig
-from ..agents.types.start_agents_request_properties_filler_words_content import StartAgentsRequestPropertiesFillerWordsContent
-from ..agents.types.start_agents_request_properties_filler_words_content_static_config import StartAgentsRequestPropertiesFillerWordsContentStaticConfig
-from ..agents.types.start_agents_request_properties_filler_words_content_static_config_selection_rule import StartAgentsRequestPropertiesFillerWordsContentStaticConfigSelectionRule
-from ..agents.types.start_agents_request_properties_filler_words_content_generated_config import StartAgentsRequestPropertiesFillerWordsContentGeneratedConfig
-from ..agents.types.start_agents_request_properties_filler_words_content_generated_config_llm_provider import StartAgentsRequestPropertiesFillerWordsContentGeneratedConfigLlmProvider
-from ..types.tts import Tts
 from ..types.asr import Asr
 from ..types.llm import Llm
 from ..types.llm_style import LlmStyle as GeneratedLlmStyle
-from ..types.mllm import Mllm
-from ..types.mllm_turn_detection import MllmTurnDetection
-from ..types.mllm_turn_detection_mode import MllmTurnDetectionMode as GeneratedMllmTurnDetectionMode
-from ..types.mllm_vendor import MllmVendor as GeneratedMllmVendor
 from ..types.llm_tool import LlmTool
 from ..types.llm_tool_execution import LlmToolExecution
 from ..types.llm_tool_function import LlmToolFunction
 from ..types.llm_tool_function_parameters import LlmToolFunctionParameters
 from ..types.llm_tool_server import LlmToolServer
 from ..types.mcp_server import McpServer
-from ..agent_management.types.agent_think_agent_management_request_on_listening_action import (
-    AgentThinkAgentManagementRequestOnListeningAction,
-)
-from ..agent_management.types.agent_think_agent_management_request_on_thinking_action import (
-    AgentThinkAgentManagementRequestOnThinkingAction,
-)
-from ..agent_management.types.agent_think_agent_management_request_on_speaking_action import (
-    AgentThinkAgentManagementRequestOnSpeakingAction,
-)
-from ..agent_management.types.agent_think_agent_management_response import (
-    AgentThinkAgentManagementResponse,
-)
-from ..core.pydantic_utilities import parse_obj_as
+from ..types.mllm import Mllm
+from ..types.mllm_turn_detection import MllmTurnDetection
+from ..types.mllm_turn_detection_mode import MllmTurnDetectionMode as GeneratedMllmTurnDetectionMode
+from ..types.mllm_vendor import MllmVendor as GeneratedMllmVendor
+from ..types.tts import Tts
 from .vendors.base import BaseAvatar, BaseLLM, BaseMLLM, BaseSTT, BaseTTS
 
 # Top-level aliases
@@ -261,7 +319,7 @@ ThinkOnThinkingAction = AgentThinkAgentManagementRequestOnThinkingAction
 ThinkOnSpeakingAction = AgentThinkAgentManagementRequestOnSpeakingAction
 ThinkResponse = AgentThinkAgentManagementResponse
 
-from .token import generate_convo_ai_token, _parse_numeric_uid, _validate_expires_in
+from .token import _parse_numeric_uid, _validate_expires_in, generate_convo_ai_token
 
 TurnDetectionLanguage = typing_extensions.Literal[
     "ar-EG",
@@ -394,6 +452,8 @@ class Agent:
         from .regional_agent import CNAgent, GlobalAgent
 
         _GlobalArea = typing_extensions.Literal[Area.US, Area.EU, Area.AP]
+
+    _v3_variables: typing.Dict[str, typing.Dict[str, typing.Any]]
 
     @typing.overload
     def __new__(
@@ -864,11 +924,58 @@ class Agent:
             "greeting_configs": self._greeting_configs,
         }
 
+    def with_variable(self, name: str, definition: typing.Optional[typing.Dict[str, typing.Any]] = None, **fields: typing.Any) -> "Agent":
+        """Return a new builder with a typed v3 template/extraction variable."""
+        from .v3 import variable_definition
+        new_agent = self._clone()
+        new_agent._v3_variables = {**getattr(self, "_v3_variables", {}), name: variable_definition(name, definition, **fields)}
+        return new_agent
+
+    def save(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "SavedAgent":
+        """Save this configuration and return its persistent handle."""
+        from .v3 import save
+        return save(self, name=name, agent_id=agent_id)
+
+    async def save_async(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "AsyncSavedAgent":
+        """Save using a bound AsyncAgora client and return its persistent handle."""
+        from .v3 import save_async
+        return await save_async(self, name=name, agent_id=agent_id)
+
+    def deploy(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "DeployedAgent":
+        """Compatibility alias for save()."""
+        return self.save(name=name, agent_id=agent_id)
+
+    async def deploy_async(self, *, name: typing.Optional[str] = None, agent_id: typing.Optional[str] = None) -> "AsyncDeployedAgent":
+        """Compatibility alias for save_async()."""
+        return await self.save_async(name=name, agent_id=agent_id)
+
+    def create_ephemeral_session(self, channel: str, agent_uid: typing.Optional[str] = None,
+                                 remote_uids: typing.Optional[typing.List[str]] = None, **options) -> "AgentSession":
+        """Configure an unsaved Platform session explicitly; call start() to run it."""
+        from .session_backend import create_session
+        return create_session(self, channel=channel, agent_uid=agent_uid, remote_uids=remote_uids, **options)
+
+    def create_async_ephemeral_session(self, channel: str, agent_uid: typing.Optional[str] = None,
+                                       remote_uids: typing.Optional[typing.List[str]] = None, **options) -> "AsyncAgentSession":
+        """Async-client equivalent of create_ephemeral_session()."""
+        from .session_backend import create_session
+        return create_session(self, asynchronous=True, channel=channel, agent_uid=agent_uid, remote_uids=remote_uids, **options)
+
+    def call(self, *, from_number: str, to: str, call_policy=None, **options) -> "AgentSession":
+        """Configure an outbound phone session; call start() to place the call."""
+        from .session_backend import create_call
+        return create_call(self, from_number=from_number, to=to, call_policy=call_policy, **options)
+
+    def call_async(self, *, from_number: str, to: str, call_policy=None, **options) -> "AsyncAgentSession":
+        """Configure an outbound call using an AsyncAgora client."""
+        from .session_backend import create_call
+        return create_call(self, asynchronous=True, from_number=from_number, to=to, call_policy=call_policy, **options)
+
     def create_session(
         self,
         channel: str,
-        agent_uid: str,
-        remote_uids: typing.List[str],
+        agent_uid: typing.Optional[str] = None,
+        remote_uids: typing.Optional[typing.List[str]] = None,
         name: typing.Optional[str] = None,
         token: typing.Optional[str] = None,
         idle_timeout: typing.Optional[int] = None,
@@ -878,6 +985,16 @@ class Agent:
         expires_in: typing.Optional[int] = None,
         debug: typing.Optional[bool] = None,
         warn: typing.Optional[typing.Callable[[str], None]] = None,
+        max_duration: typing.Optional[float] = None,
+        client_reference: typing.Optional[str] = None,
+        labels: typing.Optional[typing.Dict[str, str]] = None,
+        values: typing.Optional[typing.Dict[str, typing.Union[str, int, float, bool]]] = None,
+        idempotency_key: typing.Optional[str] = None,
+        encryption: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        audio_scenario: typing.Optional[str] = None,
+        graceful_stop: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        data_policy: typing.Optional[typing.Dict[str, str]] = None,
+        geofence: typing.Optional[typing.Dict[str, str]] = None,
     ) -> "AgentSession":
         """Create a synchronous session bound to this agent configuration.
 
@@ -892,7 +1009,18 @@ class Agent:
             Optional session overrides documented on :class:`AgentSession`.
         """
         from .agent_session import AgentSession
-
+        from .session_backend import create_session, needs_session_backend
+        if remote_uids is None:
+            raise ValueError("remote_uids is required")
+        if agent_uid is None or needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy, geofence)):
+            return create_session(self, asynchronous=False, channel=channel,
+                agent_uid=agent_uid, remote_uids=remote_uids, name=name,
+                client_reference=client_reference, idle_timeout=idle_timeout,
+                max_duration=max_duration, labels=labels, token=token, values=values,
+                idempotency_key=idempotency_key, encryption=encryption, audio_scenario=audio_scenario,
+                graceful_stop=graceful_stop, data_policy=data_policy, geofence=geofence,
+                enable_string_uid=enable_string_uid, preset=preset,
+                pipeline_id=pipeline_id, expires_in=expires_in, debug=debug, warn=warn)
         resolved_client = self._client
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
@@ -920,8 +1048,8 @@ class Agent:
     def create_async_session(
         self,
         channel: str,
-        agent_uid: str,
-        remote_uids: typing.List[str],
+        agent_uid: typing.Optional[str] = None,
+        remote_uids: typing.Optional[typing.List[str]] = None,
         name: typing.Optional[str] = None,
         token: typing.Optional[str] = None,
         idle_timeout: typing.Optional[int] = None,
@@ -931,6 +1059,16 @@ class Agent:
         expires_in: typing.Optional[int] = None,
         debug: typing.Optional[bool] = None,
         warn: typing.Optional[typing.Callable[[str], None]] = None,
+        max_duration: typing.Optional[float] = None,
+        client_reference: typing.Optional[str] = None,
+        labels: typing.Optional[typing.Dict[str, str]] = None,
+        values: typing.Optional[typing.Dict[str, typing.Union[str, int, float, bool]]] = None,
+        idempotency_key: typing.Optional[str] = None,
+        encryption: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        audio_scenario: typing.Optional[str] = None,
+        graceful_stop: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        data_policy: typing.Optional[typing.Dict[str, str]] = None,
+        geofence: typing.Optional[typing.Dict[str, str]] = None,
     ) -> "AsyncAgentSession":
         """Create an async session for use with :class:`~agora_agent.AsyncAgora`.
 
@@ -939,7 +1077,18 @@ class Agent:
         name via ``name=...``; when omitted, the SDK generates ``agent-{timestamp}``.
         """
         from .agent_session import AsyncAgentSession
-
+        from .session_backend import create_session, needs_session_backend
+        if remote_uids is None:
+            raise ValueError("remote_uids is required")
+        if agent_uid is None or needs_session_backend(self) or max_duration is not None or client_reference is not None or any(value is not None for value in (labels, values, idempotency_key, encryption, audio_scenario, graceful_stop, data_policy, geofence)):
+            return create_session(self, asynchronous=True, channel=channel,
+                agent_uid=agent_uid, remote_uids=remote_uids, name=name,
+                client_reference=client_reference, idle_timeout=idle_timeout,
+                max_duration=max_duration, labels=labels, token=token, values=values,
+                idempotency_key=idempotency_key, encryption=encryption, audio_scenario=audio_scenario,
+                graceful_stop=graceful_stop, data_policy=data_policy, geofence=geofence,
+                enable_string_uid=enable_string_uid, preset=preset,
+                pipeline_id=pipeline_id, expires_in=expires_in, debug=debug, warn=warn)
         resolved_client = self._client
         if resolved_client is None:
             raise ValueError("client is required. Pass client=... to Agent(...).")
@@ -979,6 +1128,8 @@ class Agent:
         skip_vendor_validation_categories: typing.Optional[typing.AbstractSet[str]] = None,
         allow_missing_vendor_categories: typing.Optional[typing.AbstractSet[str]] = None,
     ) -> StartAgentsRequestProperties:
+        from .v3 import guard_v2
+        guard_v2(self.config)
         # Validate the MLLM + enabled-avatar combination BEFORE generating the
         # RTC token so callers get a clear, actionable error first (matches the
         # TypeScript and Go SDKs' fail-fast contract).
@@ -997,7 +1148,7 @@ class Agent:
             if app_id is None or app_certificate is None:
                 raise ValueError("Either token or app_id+app_certificate must be provided")
             validated_expires_in = _validate_expires_in(expires_in) if expires_in is not None else None
-            # Use generate_convo_ai_token (RTC + RTM) so the token works whether or
+            # Use generate_convo_ai_token (RTC + RTM + ConvoAI) so the token works whether or
             # not the caller enables advanced_features.enable_rtm.
             token_kwargs: typing.Dict[str, typing.Any] = {}
             if validated_expires_in is not None:
@@ -1107,8 +1258,10 @@ class Agent:
 
         return _start_properties_from_mapping(base_kwargs)
 
-    def _resolve_llm_config(self) -> typing.Dict[str, typing.Any]:
+    def _resolve_llm_config(self, *, platform: bool = False) -> typing.Dict[str, typing.Any]:
         llm_config = dict(self._llm or {})
+        if not platform and llm_config.get("style") == "gemini" and "key=" in llm_config.get("url", ""):
+            llm_config.pop("api_key", None)
         if self._instructions is not None and "system_messages" not in llm_config:
             llm_config["system_messages"] = [{"role": "system", "content": self._instructions}]
         if self._greeting is not None and "greeting_message" not in llm_config:
@@ -1145,6 +1298,7 @@ class Agent:
 
     def _clone(self) -> "Agent":
         new_agent = self.__class__.__new__(self.__class__, self._client)
+        new_agent._v3_variables = getattr(self, "_v3_variables", {})
         new_agent._client = self._client
         new_agent._pipeline_id = self._pipeline_id
         new_agent._llm = self._llm

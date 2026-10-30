@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import re
 import secrets
 import struct
 import time
@@ -209,12 +210,10 @@ def _require_valid_credentials(app_id: str, app_certificate: str) -> None:
         if len(value) != AGORA_CREDENTIAL_LENGTH:
             wrong.append((name, value))
             continue
-        try:
-            bytes.fromhex(value)
-        except (TypeError, ValueError):
+        if re.fullmatch(r"[0-9a-fA-F]{32}", value) is None:
             raise ValueError(
                 f"Failed to build an Agora token: {name} must be a 32-character hexadecimal value."
-            ) from None
+            )
     if not wrong:
         return
     detail = " and ".join(f"{name} is {len(value)} characters" for name, value in wrong)

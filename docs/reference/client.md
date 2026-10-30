@@ -26,18 +26,19 @@ client = Agora(
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `area` | `Area` | Yes | — | Region for API routing (`Area.US`, `Area.EU`, `Area.AP`, `Area.CN`) |
-| `app_id` | `str` | Yes* | — | Agora App ID (app-credentials mode) |
-| `app_certificate` | `str` | Yes* | — | Agora App Certificate (app-credentials mode) |
-| `customer_id` | `str` | Yes* | — | Customer ID (Basic Auth mode) |
-| `customer_secret` | `str` | Yes* | — | Customer Secret (Basic Auth mode) |
+| `app_id` | `str` | Yes | — | Agora App ID identifying the project |
+| `app_certificate` | `str` | Unless token or Basic auth supplied | `None` | Agora App Certificate for signing |
 | `auth_token` | `str` | No | — | Pre-built raw REST token; SDK sets `Authorization: agora token=<auth_token>` |
+| `customer_id` | `str` | With `customer_secret` | `None` | Customer ID for Basic REST authentication |
+| `customer_secret` | `str` | With `customer_id` | `None` | Customer Secret for Basic REST authentication |
 | `headers` | `Dict[str, str]` | No | `None` | Additional headers sent with every request |
 | `timeout` | `float` | No | `60` | Request timeout in seconds |
 | `follow_redirects` | `bool` | No | `True` | Whether to follow HTTP redirects |
 | `httpx_client` | `httpx.Client` | No | `None` | Custom httpx client instance |
 | `debug` | `bool` | No | `False` | Log HTTP requests and responses when `True` |
+| `v3` | `V3Options` | No | `None` | Preview-only origin and headers; see the [v3 reference](./v3.md) |
 
-*Provide either `app_id` + `app_certificate`, or `customer_id` + `customer_secret`. `auth_token` is mutually exclusive with `customer_id` / `customer_secret`.
+`app_id` is always required. Configure either a raw `auth_token`, both `customer_id` and `customer_secret` for Basic auth, or `app_certificate` for automatic Token007 signing. Basic credentials and `auth_token` are mutually exclusive. With token or Basic REST auth, `app_certificate` is optional and can still generate RTC transport tokens. Customer ID must not contain a colon.
 
 When `area=Area.CN`, the constructor returns a `CNAgora` instance; global areas return `GlobalAgoraClient`. Both are subclasses of `Agora` and behave the same at runtime.
 
@@ -144,3 +145,11 @@ Both `Agora` and `AsyncAgora` expose Fern-generated sub-clients as properties:
 | `client.phone_numbers` | `PhoneNumbersClient` / `AsyncPhoneNumbersClient` | Phone number management |
 
 These are lazily initialized on first access. For most use cases, prefer the [AgentSession](./session.md) API instead of calling `client.agents` directly.
+
+## v3 preview sub-client
+
+`client.v3` / `async_client.v3` provide stored agents, secrets, numbers and project-wide session reads with the owning client's transport/auth. This protected custom adapter is separate from the Fern-generated v2 resources above. See [v3 workflows](../guides/v3-api-preview.md) for staging configuration and [all 20 operations](./v3.md) for conditional headers, typed dictionary responses and cursor iterators. Preview availability requires this checkout, not an assumed PyPI release.
+
+## Project provisioning
+
+Use `client.secrets` and `client.numbers` for project provisioning (await methods with `AsyncAgora`). They share the underlying resources and transport with the advanced namespace. The [agent workflow](../guides/agent-workflow.md) combines these with `Agent.save()` and saved-handle updates. Existing `client.agents` continues to manage running sessions, so stored-agent CRUD stays available through `SavedAgent` or advanced `client.v3.agents`.

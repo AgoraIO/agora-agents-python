@@ -7,11 +7,25 @@ The Agora Conversational AI SDK provides convenient access to the Agora Conversa
 enabling you to build voice-powered AI agents with support for both cascading flows (ASR -> LLM -> TTS) 
 and multimodal flows (MLLM) for real-time audio processing.
 
+## Run or save the same agent configuration
+
+Use one `Agent` builder to configure providers, then call `create_ephemeral_session(...).start()` for an explicit Platform session or `create_session(...).start()` for a running session or `save()` for a `SavedAgent`. Async applications use `create_async_ephemeral_session()`, `create_async_session()` and `save_async()`. A saved handle owns `update(config)`, deletion, number assignment/unassignment, and client-side `list_numbers()` scans. Use `client.secrets` and `client.numbers` for provisioning, with explicit `secret_ref()` credentials for saved BYOK agents (inline keys remain valid for ephemeral sessions) and immutable `with_variable()` definitions for saved configurations.
+
+Saving and project provisioning are part of SDK preview `3.0.0a3`. Existing session behavior is preserved. Saved agents and preview ephemeral sessions support cascaded ASR/LLM/TTS only; MLLM remains available for existing inline sessions. See the [daily agent workflow](docs/guides/agent-workflow.md), [persistence transport guide](docs/guides/v3-api-preview.md), and [advanced 32-operation reference](docs/reference/v3.md) for ETags, cursor pagination, session lifecycle, limited token/messages/provider-params updates, and project queries. The shared release contract is available as [openapi.yaml](openapi.yaml). `deploy` / `DeployedAgent` remain compatibility names. Saved handles also create sessions by ID; configurations with secret references or variable definitions start ephemeral sessions. Use `client.campaigns` for typed campaign create/list/get/update/delete/pause/resume/cancel operations. REST authentication supports `auth_token`, tokens signed from App ID/App Certificate, or Basic authentication through `customer_id` and `customer_secret`. Internal gateway headers remain unsupported. The new default origin is `https://preview.ai.agora.io`, with `/conversational-ai/v1/projects/{appid}`.
+
 ## Install
 
 ```sh
-pip install agora-agents
+pip install agora-agents==3.0.0a3
 ```
+
+For source checkouts on Windows, use a short path and enable Git long paths before checkout:
+
+```sh
+git clone -c core.longpaths=true https://github.com/AgoraIO/agora-agents-python.git C:/src/agora-python
+```
+
+The generated legacy modules retain their public import names, including long filenames. A default Windows checkout in a deeply nested folder can still exceed OS/tool limits; installing the wheel avoids Git checkout limits.
 
 ## Requirements
 
@@ -20,7 +34,7 @@ pip install agora-agents
 ## Quick Start
 
 Start with the `Agent` builder: create a client with app credentials, pass it to `Agent(client=client, ...)`, choose your ASR, LLM, and TTS providers, then start a session. Omit vendor API keys for supported Agora-managed global models, or provide keys when you want BYOK.
-Set Agora interaction language with `turn_detection.language`; provider-specific STT language values remain under `asr.params`. Ares uses only the REST `asr.language` value sourced from `turn_detection.language`.
+For Platform sessions, vendor STT language maps to `pipeline.asr.language`; explicit `turn_detection.language` overrides it. Ares defaults to `en-US`. Existing Voice Agent sessions retain their language mapping.
 
 ```python
 import os
@@ -167,7 +181,7 @@ agent = Agent(client=client, turn_detection={"language": "en-US"}).with_stt(
 )
 ```
 
-Migrating from `agora-agent-server-sdk` on PyPI? Use `pip install agora-agents`; imports stay `agora_agent` — see [changelog migration notes](./changelog.md#migration-notes) or [installation guide](./docs/getting-started/installation.md#migrating-from-a-previous-package-name).
+Migrating from `agora-agent-server-sdk` on PyPI? Use `pip install agora-agents==3.0.0a3`; imports stay `agora_agent` — see [changelog migration notes](./changelog.md#migration-notes) or [installation guide](./docs/getting-started/installation.md#migrating-from-a-previous-package-name).
 
 ## BYOK
 
@@ -206,6 +220,21 @@ session = agent.create_session(
 )
 session.start()
 ```
+
+For Gemini 3.8 Live Extended Thinking, use the same single `GeminiLive` class as the regular Live model:
+
+```python
+from agora_agent import GeminiLive
+
+gemini_agent = Agent(client=client).with_mllm(GeminiLive(
+    api_key=os.environ["GOOGLE_API_KEY"],
+    model="models/gemini-3.8-live-extended-thinking",
+    thinking_level="medium",
+    greeting_message="Hello! Ready to chat.",
+))
+```
+
+Use `models/gemini-3.8-live` without `thinking_level` for the lower-latency model. Gemini sessions use the preview gateway and `agora-feature: gemini-live`; the Google key is sent as `mllm.api_key`. See the [Preview Endpoint guide](./docs/guides/preview-endpoint.md).
 
 See the [MLLM Flow guide](./docs/guides/mllm-flow.md) for full examples with Gemini Live and Vertex AI.
 

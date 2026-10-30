@@ -633,7 +633,7 @@ class SarvamTTSOptions(BaseModel):
         default=None,
         description="Normalize English words and numeric entities before synthesis",
     )
-    model: Optional[str] = Field(default=None, description="Sarvam TTS model")
+    model: Optional[str] = Field(default=None, description="Sarvam TTS model; defaults to bulbul:v3 when omitted")
     sample_rate: Optional[int] = Field(
         default=None,
         gt=0,
@@ -687,6 +687,7 @@ class SarvamTTS(SarvamTTSOptions, BaseTTS):
             params["enable_preprocessing"] = self.enable_preprocessing
         if self.model is not None:
             params["model"] = self.model
+        params.setdefault("model", "bulbul:v3")
 
         result: Dict[str, Any] = {"vendor": "sarvam", "params": params}
         if self.skip_patterns is not None:

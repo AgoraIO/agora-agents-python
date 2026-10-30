@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import argparse
 import re
 import sys
 from pathlib import Path
 from typing import NoReturn
+
+from packaging.version import InvalidVersion, Version
 
 
 def fail(message: str) -> NoReturn:
@@ -27,15 +30,25 @@ def read_compat_dependency(path: str) -> str:
     return match.group(1)
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--tag", help="Git release tag, such as v3.0.0-alpha.3")
+args = parser.parse_args()
+
 root_version = read_version("pyproject.toml")
 compat_pyproject = "compat/agora-agent-server-sdk/pyproject.toml"
 compat_version = read_version(compat_pyproject)
 compat_dependency = read_compat_dependency(compat_pyproject)
 
+try:
+    if args.tag and str(Version(args.tag)) != root_version:
+        fail(f"Release tag ({args.tag}) does not match package version ({root_version}).")
+except InvalidVersion as error:
+    fail(str(error))
+
 if compat_version != root_version:
     fail(f"Compat package version ({compat_version}) must match root package version ({root_version}).")
 
-expected_dependency = f">={root_version},<3.0.0"
+expected_dependency = f">={root_version},<{Version(root_version).major + 1}.0.0"
 if compat_dependency != expected_dependency:
     fail(f"Compat package dependency on agora-agents ({compat_dependency}) must be {expected_dependency}.")
 

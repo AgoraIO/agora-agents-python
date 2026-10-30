@@ -62,3 +62,30 @@ def test_guards_the_rtc_builder_too():
         generate_rtc_token(
             app_id=VALID_APP_ID, app_certificate="too-short", channel="demo", uid=333
         )
+
+
+@pytest.mark.parametrize("field", ["app_id", "app_certificate"])
+@pytest.mark.parametrize("invalid", [
+    "a" * 30 + "  ",
+    "  " + "a" * 30,
+    "a" * 16 + "  " + "a" * 14,
+    "a" * 30 + "\n\n",
+    "\n" + "a" * 30 + "\n",
+    "a" * 16 + "\n\t" + "a" * 14,
+    "g" * 32,
+])
+@pytest.mark.parametrize("rtc_only", [False, True])
+def test_rejects_non_hex_characters_without_exposing_credentials(field, invalid, rtc_only):
+    credentials = {"app_id": VALID_APP_ID, "app_certificate": VALID_CERTIFICATE, field: invalid}
+    with pytest.raises(ValueError, match=f"{field} must be a 32-character hexadecimal value") as excinfo:
+        if rtc_only:
+            generate_rtc_token(**credentials, channel="demo", uid=333)
+        else:
+            generate_convo_ai_token(**credentials, channel_name="demo", uid=333)
+    assert invalid not in str(excinfo.value)
+
+
+def test_accepts_uppercase_hex_credentials():
+    assert generate_convo_ai_token(
+        app_id=VALID_APP_ID.upper(), app_certificate=VALID_CERTIFICATE.upper(), channel_name="demo", uid=333
+    ).startswith("007")

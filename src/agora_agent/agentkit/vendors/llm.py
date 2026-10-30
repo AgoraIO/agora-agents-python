@@ -4,9 +4,10 @@ from ...types.llm_tool import LlmTool
 from .base import BaseLLM, McpServerInput, dump_config_models, ensure_mcp_transport
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+_OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}  # Legacy CN compatibility only.
+
 LlmGreetingConfigs = Dict[str, Any]
 LlmToolInput = Union[Dict[str, Any], LlmTool]
-_OPENAI_MANAGED_MODELS = {"gpt-4o-mini", "gpt-4.1-mini", "gpt-5-nano", "gpt-5-mini"}
 
 
 _dump_optional_model = dump_config_models
@@ -44,10 +45,6 @@ class OpenAIOptions(BaseModel):
             raise ValueError("OpenAI requires base_url when api_key is set")
         if self.api_key is None and self.base_url is not None:
             raise ValueError("OpenAI base_url is only valid when api_key is set")
-        if self.api_key is None and self.model.strip().lower() not in _OPENAI_MANAGED_MODELS:
-            raise ValueError("OpenAI requires api_key unless using a supported Agora-managed model")
-        if self.api_key is None and self.vendor is not None:
-            raise ValueError("OpenAI Agora-managed mode does not allow vendor")
         return self
 
 
@@ -90,8 +87,7 @@ class OpenAI(OpenAIOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "openai"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
@@ -107,7 +103,8 @@ class AzureOpenAIOptions(BaseModel):
 
     api_key: str = Field(..., description="Azure OpenAI API key")
     model: str = Field(..., description="Azure deployment model name")
-    endpoint: str = Field(..., description="Azure endpoint URL")
+    endpoint: Optional[str] = Field(default=None, description="Azure endpoint URL")
+    resource_name: Optional[str] = Field(default=None, description="Azure resource name; alternative to endpoint")
     deployment_name: str = Field(..., description="Azure deployment name")
     api_version: str = Field(default="2024-08-01-preview", description="Azure API version")
     temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0)
@@ -128,11 +125,18 @@ class AzureOpenAIOptions(BaseModel):
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+    @model_validator(mode="after")
+    def _validate_endpoint(self) -> "AzureOpenAIOptions":
+        if not self.endpoint and not self.resource_name:
+            raise ValueError("AzureOpenAI requires endpoint or resource_name")
+        return self
+
 
 class AzureOpenAI(AzureOpenAIOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
+        endpoint = self.endpoint or f"https://{self.resource_name}.openai.azure.com"
         url = (
-            f"{self.endpoint}/openai/deployments/"
+            f"{endpoint.rstrip('/')}/openai/deployments/"
             f"{self.deployment_name}/chat/completions"
             f"?api-version={self.api_version}"
         )
@@ -240,8 +244,7 @@ class Anthropic(AnthropicOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "anthropic"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
@@ -296,6 +299,7 @@ class Gemini(GeminiOptions, BaseLLM):
                 f"https://generativelanguage.googleapis.com/v1beta/models/"
                 f"{self.model}:streamGenerateContent?alt=sse&key={self.api_key}"
             ),
+            "api_key": self.api_key,
             "params": params,
             "style": "gemini",
             "input_modalities": self.input_modalities or ["text"],
@@ -317,8 +321,7 @@ class Gemini(GeminiOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "gemini"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
@@ -396,8 +399,7 @@ class Groq(GroqOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "groq"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
@@ -558,8 +560,7 @@ class VertexAILLM(VertexAILLMOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "vertexai"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
@@ -574,8 +575,9 @@ class VertexAILLM(VertexAILLMOptions, BaseLLM):
 class AmazonBedrockOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    access_key: str = Field(..., description="AWS access key ID")
-    secret_key: str = Field(..., description="AWS secret access key")
+    api_key: Optional[str] = Field(default=None, description="Bedrock API key")
+    access_key: Optional[str] = Field(default=None, description="AWS access key ID")
+    secret_key: Optional[str] = Field(default=None, description="AWS secret access key")
     region: str = Field(..., description="AWS region")
     model: str = Field(..., description="Amazon Bedrock model identifier")
     max_tokens: Optional[int] = Field(default=None, gt=0)
@@ -597,6 +599,15 @@ class AmazonBedrockOptions(BaseModel):
     tools: Optional[List[LlmToolInput]] = Field(default=None)
     max_history: Optional[int] = Field(default=None, gt=0, description="Maximum number of conversation history messages to cache")
 
+    @model_validator(mode="after")
+    def _validate_credentials(self) -> "AmazonBedrockOptions":
+        if self.api_key is not None:
+            if not self.api_key.strip() or self.access_key is not None or self.secret_key is not None:
+                raise ValueError("Provide a Bedrock api_key or access_key and secret_key, not both")
+        elif not self.access_key or not self.secret_key:
+            raise ValueError("Provide a Bedrock api_key or access_key and secret_key")
+        return self
+
 
 class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
     def to_config(self) -> Dict[str, Any]:
@@ -610,14 +621,17 @@ class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
 
         config: Dict[str, Any] = {
             "url": self.url or f"https://bedrock-runtime.{self.region}.amazonaws.com/model/{self.model}/converse-stream",
-            "access_key": self.access_key,
-            "secret_key": self.secret_key,
             "region": self.region,
             "model": self.model,
             "params": params,
             "style": "bedrock",
             "input_modalities": self.input_modalities or ["text"],
         }
+        if self.api_key is not None:
+            config["api_key"] = self.api_key
+        else:
+            config["access_key"] = self.access_key
+            config["secret_key"] = self.secret_key
         if self.system_messages is not None:
             config["system_messages"] = self.system_messages
         if self.headers is not None:
@@ -634,8 +648,7 @@ class AmazonBedrock(AmazonBedrockOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "amazon"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:
@@ -700,8 +713,7 @@ class Dify(DifyOptions, BaseLLM):
             config["greeting_configs"] = _dump_optional_model(self.greeting_configs)
         if self.template_variables is not None:
             config["template_variables"] = self.template_variables
-        if self.vendor is not None:
-            config["vendor"] = self.vendor
+        config["vendor"] = self.vendor or "dify"
         if self.mcp_servers is not None:
             config["mcp_servers"] = ensure_mcp_transport(self.mcp_servers)
         if self.tools is not None:

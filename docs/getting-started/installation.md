@@ -13,13 +13,13 @@ description: Install the Agora Conversational AI Python SDK.
 ## Install with pip
 
 ```sh
-pip install agora-agents
+pip install agora-agents==3.0.0a3
 ```
 
 ## Install with Poetry
 
 ```sh
-poetry add agora-agents
+poetry add agora-agents@3.0.0a3
 ```
 
 ## Imports
@@ -59,7 +59,7 @@ from agora_agent import AsyncAgora, AsyncAgentSession, Area
 | Package                        | Purpose                                                |
 | ------------------------------ | ------------------------------------------------------ |
 | `httpx` (>= 0.21.2)            | HTTP client for sync and async requests                |
-| `pydantic` (>= 1.9.2)          | Data validation for vendor configuration and API types |
+| `pydantic` (>= 2.7.1, < 3)     | Data validation for vendor configuration and API types |
 | `typing_extensions` (>= 4.0.0) | Backported type hints for Python 3.8+                  |
 
 ## Next steps

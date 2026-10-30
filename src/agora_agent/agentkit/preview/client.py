@@ -117,6 +117,7 @@ def create_preview_session_clients(
     if isinstance(source, AsyncClientWrapper):
         kwargs["httpx_client"] = typing.cast(httpx.AsyncClient, _GatedAsyncHttpxClient(source.httpx_client.httpx_client, features))
         async_wrapper = AsyncClientWrapper(**kwargs)
+        async_wrapper._authorization_supplier = getattr(source, "_authorization_supplier", None)
         return (
             AsyncAgentsClient(client_wrapper=async_wrapper),
             AsyncAgentManagementClient(client_wrapper=async_wrapper),
@@ -124,6 +125,7 @@ def create_preview_session_clients(
     if isinstance(source, SyncClientWrapper):
         kwargs["httpx_client"] = typing.cast(httpx.Client, _GatedSyncHttpxClient(source.httpx_client.httpx_client, features))
         sync_wrapper = SyncClientWrapper(**kwargs)
+        sync_wrapper._authorization_supplier = getattr(source, "_authorization_supplier", None)
         return (
             AgentsClient(client_wrapper=sync_wrapper),
             AgentManagementClient(client_wrapper=sync_wrapper),

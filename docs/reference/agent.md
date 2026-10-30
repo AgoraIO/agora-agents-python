@@ -231,6 +231,12 @@ agent = agent.with_filler_words(filler_words)
 
 `generated_config` is optional. Its `llm_provider`, `prompt`, and `fallback_strategy` fields are optional as well; when omitted, the service uses its defaults. Set `context_message_limit` to cap the number of recent messages and `history_character_limit` to cap the number of conversation-history characters passed to the filler-word model.
 
+## Save configurations (preview checkout)
+
+`with_variable(name, definition=None, **fields)` returns a new builder with a typed variable definition. `save(name=None, agent_id=None)` stores the configuration with an `Agora` client; `await save_async(...)` does so with `AsyncAgora`. Deploy arguments are keyword-only. After saving, use `saved.update(config)` to reuse its ID/name with a fresh ETag; an advanced `agent_id` argument is also supported. Updates require the same bound client object.
+
+The returned `SavedAgent` / `AsyncSavedAgent` supports loading, `update(config)`, deletion, number assignment/unassignment, and `list_numbers()` project-page scans. Saving does not start a session. `deploy()` / `deploy_async()` and the `DeployedAgent` handle names remain compatibility aliases. Existing v2 session methods below retain their behavior and reject v3 secret references. See the [v3 workflow guide](../guides/v3-api-preview.md) and [complete reference](./v3.md) for strict mapping, language precedence, secrets, pagination, conflicts and preview limits.
+
 ## `create_session()`
 
 <!-- snippet: fragment -->
@@ -257,7 +263,7 @@ Creates an `AgentSession` using the client already bound to `Agent(client=...)`.
 | `agent_uid` | `str` | Yes | UID for the agent |
 | `remote_uids` | `List[str]` | Yes | UIDs of remote participants |
 | `name` | `Optional[str]` | No | Session name sent to the Start Agent API (defaults to `agent-{timestamp}` if omitted) |
-| `token` | `Optional[str]` | No | Pre-built RTC+RTM token |
+| `token` | `Optional[str]` | No | Pre-built RTC + RTM + ConvoAI token |
 | `expires_in` | `Optional[int]` | No | Token lifetime in seconds (default: `86400` = 24 h, Agora max). Only applies when the token is auto-generated. Use `expires_in_hours()` or `expires_in_minutes()` for clarity. Valid range: 1–86400. |
 | `idle_timeout` | `Optional[int]` | No | Idle timeout in seconds |
 | `enable_string_uid` | `Optional[bool]` | No | Enable string UIDs |

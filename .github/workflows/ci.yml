@@ -102,30 +102,12 @@ jobs:
 
       - name: Verify package versions match release tag
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          ROOT_VERSION="$(poetry version -s | sed 's/^v//')"
-          COMPAT_VERSION="$(cd compat/agora-agent-server-sdk && poetry version -s | sed 's/^v//')"
-          COMPAT_DEP_VERSION="$(python -c "import re, sys; from pathlib import Path; text = Path('compat/agora-agent-server-sdk/pyproject.toml').read_text(); match = re.search(r'^agora-agents\s*=\s*\"([^\"]+)\"', text, re.M); sys.exit('agora-agents dependency not found in compat pyproject.toml') if not match else None; print(match.group(1))")"
-
-          if [ "$ROOT_VERSION" != "$TAG_VERSION" ]; then
-            echo "Root package version ($ROOT_VERSION) does not match tag version ($TAG_VERSION)."
-            exit 1
-          fi
-
-          if [ "$COMPAT_VERSION" != "$TAG_VERSION" ]; then
-            echo "Compat package version ($COMPAT_VERSION) does not match tag version ($TAG_VERSION)."
-            exit 1
-          fi
-
-          if [ "$COMPAT_DEP_VERSION" != ">=${TAG_VERSION},<3.0.0" ]; then
-            echo "Compat package dependency on agora-agents ($COMPAT_DEP_VERSION) does not match >=${TAG_VERSION},<3.0.0."
-            exit 1
-          fi
+          poetry run python scripts/check_release_workflow.py --tag "$GITHUB_REF_NAME"
 
       - name: Publish primary package to pypi
         run: |
           PACKAGE_NAME="agora-agents"
-          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(poetry version -s | sed 's/^v//')"
           STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${PACKAGE_NAME}/${PACKAGE_VERSION}/json")"
           case "$STATUS" in
             200)
@@ -146,7 +128,7 @@ jobs:
 
       - name: Wait for primary package on PyPI
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          TAG_VERSION="$(poetry version -s | sed 's/^v//')"
           PACKAGE="agora-agents"
           for attempt in $(seq 1 12); do
             if curl -fsS "https://pypi.org/pypi/${PACKAGE}/${TAG_VERSION}/json" >/dev/null; then
@@ -162,7 +144,7 @@ jobs:
       - name: Publish compatibility package to pypi
         run: |
           PACKAGE_NAME="agora-agent-server-sdk"
-          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(poetry version -s | sed 's/^v//')"
           STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${PACKAGE_NAME}/${PACKAGE_VERSION}/json")"
           case "$STATUS" in
             200)
