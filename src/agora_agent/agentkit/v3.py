@@ -4,10 +4,11 @@ from __future__ import annotations
 import copy
 import re
 import time
-from typing import TYPE_CHECKING, List, Mapping, Optional
+from typing import TYPE_CHECKING, Iterable, List, Mapping, Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from ..v3 import PreconditionFailedError
+from ..v3 import PreconditionFailedError, V3ValidationError
+from ..v3._transport import contract_violation
 from ..v3.types import AgentResponse, NumberResponse
 
 _ASR_PROVIDER_LANGUAGE_VENDORS = {"assemblyai", "google", "microsoft", "sarvam", "speechmatics"}
@@ -16,18 +17,22 @@ if TYPE_CHECKING:
     from .agent import Agent
 
 
-class UnsupportedFieldError(ValueError):
-    def __init__(self, fields):
+class UnsupportedFieldError(V3ValidationError):
+    """Builder fields that have no stored-agent equivalent; ``fields`` lists them all."""
+
+    fields: List[str]
+
+    def __init__(self, fields: Iterable[str]) -> None:
         self.fields = sorted(set(fields))
         super().__init__("Unsupported v3 fields: " + ", ".join(self.fields))
 
 
-class NumberNotFoundError(LookupError):
-    pass
+class NumberNotFoundError(V3ValidationError, LookupError):
+    """An E.164 number passed to number assignment is not registered in the project."""
 
 
-class SecretRefNotSupportedError(ValueError):
-    pass
+class SecretRefNotSupportedError(V3ValidationError):
+    """A secret reference was used on a path that cannot resolve it (v2 sessions)."""
 
 
 class SecretRef(str):
@@ -37,9 +42,9 @@ class SecretRef(str):
 def secret_ref(secret_set: str, key: str) -> SecretRef:
     pattern = r"[A-Za-z0-9_]{1,64}"
     if not isinstance(secret_set, str) or not re.fullmatch(pattern, secret_set):
-        raise ValueError("secret_set must contain 1-64 letters, digits, underscores")
+        raise V3ValidationError("secret_set must contain 1-64 letters, digits, underscores")
     if not isinstance(key, str) or not re.fullmatch(pattern, key):
-        raise ValueError("key must contain 1-64 letters, digits, underscores")
+        raise V3ValidationError("key must contain 1-64 letters, digits, underscores")
     return SecretRef(f"$secrets.{secret_set}.{key}")
 
 
@@ -58,27 +63,27 @@ def guard_v2(value):
 
 def variable_definition(name, definition=None, **fields):
     if not isinstance(name, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", name):
-        raise ValueError("Variable name must match ^[a-z][a-z0-9_]{0,63}$")
+        raise V3ValidationError("Variable name must match ^[a-z][a-z0-9_]{0,63}$")
     result = {**(definition or {}), **fields}
     unknown = set(result) - {"type", "required", "options", "extract", "description"}
     if unknown:
-        raise ValueError("Unknown variable fields: " + ", ".join(sorted(unknown)))
+        raise V3ValidationError("Unknown variable fields: " + ", ".join(sorted(unknown)))
     if result.get("type") not in ("str", "int", "float", "bool", "date", "datetime"):
-        raise ValueError("Variable type must be str, int, float, bool, date or datetime")
+        raise V3ValidationError("Variable type must be str, int, float, bool, date or datetime")
     for key in ("extract", "required"):
         if key in result and not isinstance(result[key], bool):
-            raise ValueError(key + " must be a bool")
+            raise V3ValidationError(key + " must be a bool")
     description = result.get("description")
     if description is not None and (not isinstance(description, str) or len(description) > 2000):
-        raise ValueError("description must be a string of at most 2000 characters")
+        raise V3ValidationError("description must be a string of at most 2000 characters")
     if result.get("extract") and (not isinstance(description, str) or not description.strip()):
-        raise ValueError("Extracted variables require a nonempty description")
+        raise V3ValidationError("Extracted variables require a nonempty description")
     if "options" in result:
         options = result["options"]
         if not isinstance(options, list) or not 1 <= len(options) <= 100:
-            raise ValueError("options must contain 1-100 unique primitive values")
+            raise V3ValidationError("options must contain 1-100 unique primitive values")
         if any(not isinstance(v, (str, int, float, bool)) for v in options) or len({(bool if isinstance(v, bool) else str if isinstance(v, str) else float, v) for v in options}) != len(options):
-            raise ValueError("options must contain unique primitive values")
+            raise V3ValidationError("options must contain unique primitive values")
     return copy.deepcopy(result)
 
 
@@ -277,7 +282,7 @@ def build_body(agent, name=None):
     errors.extend("parameters." + k for k in params if k != "silence_config")
     result = {"agent_name": name if name is not None else f"agent-{time.time_ns()}"}
     if not isinstance(result["agent_name"], str) or not result["agent_name"].strip():
-        raise ValueError("name must be nonempty")
+        raise V3ValidationError("name must be nonempty")
     pipeline = {"mode": "cascaded"}
     conversational = dump(agent._resolve_llm_config(platform=True)) or {}
     messages = conversational.pop("system_messages", None)
@@ -404,7 +409,7 @@ def replacement_patch(previous, desired, category=None):
 
 def _require_etag(response):
     if not response.etag:
-        raise ValueError("v3 response omitted ETag; refusing an unguarded update")
+        raise contract_violation(response, "v3 response omitted ETag; refusing an unguarded update")
     return response.etag
 
 
@@ -454,7 +459,7 @@ def _number_id(number):
     if isinstance(number, Mapping):
         return number["number_id"]
     if not isinstance(number, str) or not number.strip():
-        raise ValueError("number must be a number ID, E.164 string or v3 number object")
+        raise V3ValidationError("number must be a number ID, E.164 string or v3 number object")
     return number
 
 
@@ -463,11 +468,11 @@ def _policy(max_call_duration_seconds, max_silence_duration_ms, call_policy=None
         return None
     policy = copy.deepcopy(call_policy) if call_policy is not None else {}
     if not isinstance(policy, dict):
-        raise ValueError("call_policy must be a mapping")
+        raise V3ValidationError("call_policy must be a mapping")
     for key, value in (("max_call_duration_seconds", max_call_duration_seconds), ("max_silence_duration_ms", max_silence_duration_ms)):
         if value is not None:
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
-                raise ValueError(key + " must be a positive integer")
+                raise V3ValidationError(key + " must be a positive integer")
             policy[key] = value
     from ..v3.contract import validate
     validate(policy, {"$ref": "#/components/schemas/InboundCallPolicy"}, "call_policy")
@@ -508,7 +513,7 @@ class SavedAgent(_SavedAgentBase):
     def update(self, config: Agent, *, name: Optional[str] = None) -> SavedAgent:
         """Save a replacement configuration to this ID, preserving its name."""
         if config._client is not self._client:
-            raise ValueError("SavedAgent.update requires a configuration bound to the same client")
+            raise V3ValidationError("SavedAgent.update requires a configuration bound to the same client")
         return config.save(name=self.name if name is None else name, agent_id=self.id)
 
     def delete(self):
@@ -527,7 +532,8 @@ class SavedAgent(_SavedAgentBase):
             cursor = None
             seen = set()
             while True:
-                page = self._client.v3.numbers.list(limit=100, cursor=cursor)
+                raw = self._client.v3.numbers.with_raw_response.list(limit=100, cursor=cursor)
+                page = raw.data
                 for item in page["data"]["list"]:
                     if _normalize(item["number"]) == _normalize(identifier):
                         return item["number_id"]
@@ -535,7 +541,7 @@ class SavedAgent(_SavedAgentBase):
                     break
                 cursor = page.get("next_cursor")
                 if not cursor or cursor in seen:
-                    raise ValueError("Invalid or repeated number pagination cursor")
+                    raise contract_violation(raw, "Invalid or repeated number pagination cursor")
                 seen.add(cursor)
             raise NumberNotFoundError(f"Number {identifier} not found in project {self._client.app_id}")
         return identifier
@@ -588,7 +594,7 @@ class AsyncSavedAgent(_SavedAgentBase):
     async def update(self, config: Agent, *, name: Optional[str] = None) -> AsyncSavedAgent:
         """Save a replacement configuration to this ID, preserving its name."""
         if config._client is not self._client:
-            raise ValueError("AsyncSavedAgent.update requires a configuration bound to the same client")
+            raise V3ValidationError("AsyncSavedAgent.update requires a configuration bound to the same client")
         return await config.save_async(name=self.name if name is None else name, agent_id=self.id)
 
     async def delete(self):
@@ -607,7 +613,8 @@ class AsyncSavedAgent(_SavedAgentBase):
             cursor = None
             seen = set()
             while True:
-                page = await self._client.v3.numbers.list(limit=100, cursor=cursor)
+                raw = await self._client.v3.numbers.with_raw_response.list(limit=100, cursor=cursor)
+                page = raw.data
                 for item in page["data"]["list"]:
                     if _normalize(item["number"]) == _normalize(identifier):
                         return item["number_id"]
@@ -615,7 +622,7 @@ class AsyncSavedAgent(_SavedAgentBase):
                     break
                 cursor = page.get("next_cursor")
                 if not cursor or cursor in seen:
-                    raise ValueError("Invalid or repeated number pagination cursor")
+                    raise contract_violation(raw, "Invalid or repeated number pagination cursor")
                 seen.add(cursor)
             raise NumberNotFoundError(f"Number {identifier} not found in project {self._client.app_id}")
         return identifier

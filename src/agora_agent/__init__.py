@@ -162,6 +162,15 @@ def __dir__() -> typing.List[str]:
     return list(__all__)
 
 from .agentkit.v3 import (SavedAgent, AsyncSavedAgent, DeployedAgent, AsyncDeployedAgent, SecretRef, secret_ref, UnsupportedFieldError, NumberNotFoundError, SecretRefNotSupportedError)
-from .v3 import V3Options, PreconditionFailedError
+from .v3 import (
+    AgoraV3Error as AgoraV3Error,
+    PreconditionFailedError as PreconditionFailedError,
+    V3ApiError as V3ApiError,
+    V3ConfigurationError as V3ConfigurationError,
+    V3ConnectionError as V3ConnectionError,
+    V3Options as V3Options,
+    V3TimeoutError as V3TimeoutError,
+    V3ValidationError as V3ValidationError,
+)
 
-__all__ = sorted(set(__all__) | {"SavedAgent", "AsyncSavedAgent", "DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"} | {"V3Options", "PreconditionFailedError"})
+__all__ = sorted(set(__all__) | {"SavedAgent", "AsyncSavedAgent", "DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"} | {"V3Options", "PreconditionFailedError", "AgoraV3Error", "V3ValidationError", "V3ConfigurationError", "V3ConnectionError", "V3TimeoutError", "V3ApiError"})

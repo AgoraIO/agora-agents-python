@@ -601,12 +601,15 @@ class AgentSession(_AgentSessionBase):
             self._status = "starting"
             try:
                 resource = self._client.v3.sessions
-                method = resource.start if self._session_backend["stored"] else resource.start_ephemeral
+                raw_resource = resource.with_raw_response
+                method = raw_resource.start if self._session_backend["stored"] else raw_resource.start_ephemeral
                 from .session_backend import prepare_start_body
-                response = method(**prepare_start_body(self))
-                identifier = response.get("agent_session_id")
+                raw = method(**prepare_start_body(self))
+                response = raw.data
+                identifier = response.get("agent_session_id") if isinstance(response, dict) else None
                 if not isinstance(identifier, str) or not identifier:
-                    raise RuntimeError("Session response is missing agent_session_id")
+                    from ..v3._transport import contract_violation
+                    raise contract_violation(raw, "Session response is missing agent_session_id")
                 self._agent_id = identifier
                 self._session_backend["successfully_started"] = True
                 self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()
@@ -1058,12 +1061,15 @@ class AsyncAgentSession(_AgentSessionBase):
             self._status = "starting"
             try:
                 resource = self._client.v3.sessions
-                method = resource.start if self._session_backend["stored"] else resource.start_ephemeral
+                raw_resource = resource.with_raw_response
+                method = raw_resource.start if self._session_backend["stored"] else raw_resource.start_ephemeral
                 from .session_backend import prepare_start_body
-                response = await method(**prepare_start_body(self))
-                identifier = response.get("agent_session_id")
+                raw = await method(**prepare_start_body(self))
+                response = raw.data
+                identifier = response.get("agent_session_id") if isinstance(response, dict) else None
                 if not isinstance(identifier, str) or not identifier:
-                    raise RuntimeError("Session response is missing agent_session_id")
+                    from ..v3._transport import contract_violation
+                    raise contract_violation(raw, "Session response is missing agent_session_id")
                 self._agent_id = identifier
                 self._session_backend["successfully_started"] = True
                 self._status = "error" if str(response["status"]).upper() == "FAILED" else str(response["status"]).lower()

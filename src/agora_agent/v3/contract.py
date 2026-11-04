@@ -11,6 +11,8 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
+from .errors import V3ValidationError
+
 
 @lru_cache(maxsize=1)
 def specification():
@@ -27,7 +29,7 @@ def validate(value, schema, path="body"):
     if schema is True:
         return
     if schema is False:
-        raise ValueError(path + " is not allowed")
+        raise V3ValidationError(path + " is not allowed")
     if "$ref" in schema:
         target = specification()
         for key in schema["$ref"][2:].split("/"):
@@ -43,7 +45,7 @@ def validate(value, schema, path="body"):
                 except ValueError:
                     pass
             if count == 0 or keyword == "oneOf" and count != 1:
-                raise ValueError(path + " does not match " + keyword + " in the public contract")
+                raise V3ValidationError(path + " does not match " + keyword + " in the public contract")
     for candidate in schema.get("allOf", []):
         validate(value, candidate, path)
     if "if" in schema:
@@ -61,11 +63,11 @@ def validate(value, schema, path="body"):
         except ValueError:
             pass
         else:
-            raise ValueError(path + " contains an unsupported field combination")
+            raise V3ValidationError(path + " contains an unsupported field combination")
     if "const" in schema and not _equal(value, schema["const"]):
-        raise ValueError(path + " has an invalid constant")
+        raise V3ValidationError(path + " has an invalid constant")
     if "enum" in schema and not any(_equal(value, item) for item in schema["enum"]):
-        raise ValueError(path + " has an invalid enum value")
+        raise V3ValidationError(path + " has an invalid enum value")
     kind = schema.get("type")
     matches = {"object": isinstance(value, dict), "array": isinstance(value, list),
                "string": isinstance(value, str), "boolean": isinstance(value, bool),
@@ -73,19 +75,19 @@ def validate(value, schema, path="body"):
                "integer": isinstance(value, int) and not isinstance(value, bool),
                "number": isinstance(value, (int, float)) and not isinstance(value, bool)}
     if kind and not matches.get(kind, True):
-        raise ValueError(path + " must be " + kind)
+        raise V3ValidationError(path + " must be " + kind)
     if isinstance(value, dict):
         for key in schema.get("required", []):
             if key not in value:
-                raise ValueError(path + "." + key + " is required")
+                raise V3ValidationError(path + "." + key + " is required")
         for limit, compare in (("minProperties", lambda a, b: a < b), ("maxProperties", lambda a, b: a > b)):
             if limit in schema and compare(len(value), schema[limit]):
-                raise ValueError(path + " has an invalid number of properties")
+                raise V3ValidationError(path + " has an invalid number of properties")
         props = schema.get("properties", {})
         patterns = schema.get("patternProperties", {})
         for key, item in value.items():
             if not isinstance(key, str):
-                raise ValueError(path + " keys must be strings")
+                raise V3ValidationError(path + " keys must be strings")
             candidates = ([props[key]] if key in props else []) + [node for pattern, node in patterns.items() if re.search(pattern, key)]
             if not candidates:
                 candidates = [schema.get("additionalProperties", True)]
@@ -93,17 +95,17 @@ def validate(value, schema, path="body"):
                 validate(item, candidate, path + "." + key)
     if isinstance(value, list):
         if len(value) < schema.get("minItems", 0) or len(value) > schema.get("maxItems", math.inf):
-            raise ValueError(path + " has an invalid number of items")
+            raise V3ValidationError(path + " has an invalid number of items")
         if schema.get("uniqueItems") and any(_equal(item, previous) for index, item in enumerate(value) for previous in value[:index]):
-            raise ValueError(path + " must contain unique items")
+            raise V3ValidationError(path + " must contain unique items")
         for index, item in enumerate(value):
             validate(item, schema.get("items", {}), f"{path}[{index}]")
     if isinstance(value, str):
         if len(value) < schema.get("minLength", 0) or len(value) > schema.get("maxLength", math.inf) or "pattern" in schema and re.search(schema["pattern"], value) is None:
-            raise ValueError(path + " has an invalid length or pattern")
+            raise V3ValidationError(path + " has an invalid length or pattern")
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         if not math.isfinite(value) or value < schema.get("minimum", -math.inf) or value > schema.get("maximum", math.inf):
-            raise ValueError(path + " is outside its supported range")
+            raise V3ValidationError(path + " is outside its supported range")
 
 
 def _extras(value, *, saved=False):
@@ -115,7 +117,7 @@ def _extras(value, *, saved=False):
         if saved and isinstance(fields, dict):
             for item in fields.values():
                 if item is not None and (not isinstance(item, str) or re.fullmatch(r"\$secrets\.[A-Za-z0-9_]{1,64}\.[A-Za-z0-9_]{1,64}", item) is None):
-                    raise ValueError("Saved BYOK credentials require secret_ref values; inline credentials are allowed only for ephemeral sessions")
+                    raise V3ValidationError("Saved BYOK credentials require secret_ref values; inline credentials are allowed only for ephemeral sessions")
     if "allowed_ips" in value and value["allowed_ips"] is not None:
         for address in value["allowed_ips"]:
             try:
@@ -124,12 +126,12 @@ def _extras(value, *, saved=False):
                 if "/" in address:
                     host, prefix = address.split("/")
                     if not re.fullmatch(r"0|[1-9][0-9]?", prefix) or int(prefix) > 32:
-                        raise ValueError()
+                        raise V3ValidationError()
                     ipaddress.IPv4Address(host)
                 else:
                     ipaddress.IPv4Address(address)
             except (ValueError, TypeError):
-                raise ValueError("allowed_ips requires IPv4 addresses, IPv4 CIDRs, or '*'") from None
+                raise V3ValidationError("allowed_ips requires IPv4 addresses, IPv4 CIDRs, or '*'") from None
     for item in value.values():
         if isinstance(item, dict):
             _extras(item, saved=saved)
@@ -153,10 +155,10 @@ def validate_write(method, path, body):
                 validate(checking, schema)
                 _extras(checking, saved=tail == "agents" or tail.startswith("agents/"))
                 if tail == "campaigns" and method == "POST" and len(json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()) > 10 * 1024 * 1024:
-                    raise ValueError("Campaign create body exceeds 10 MiB")
+                    raise V3ValidationError("Campaign create body exceeds 10 MiB")
                 if tail.startswith("sessions/") and method == "PATCH":
                     pipeline = body.get("agent", {}).get("overrides", {}).get("pipeline", {})
                     for module in pipeline.values():
                         if {"url", "base_url", "api_base_url", "endpoint"}.intersection(module.get("params", {})):
-                            raise ValueError("Session update cannot change endpoint aliases")
+                            raise V3ValidationError("Session update cannot change endpoint aliases")
             return

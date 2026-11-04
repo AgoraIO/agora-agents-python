@@ -2,14 +2,23 @@
 from __future__ import annotations
 
 import os
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Generic, Mapping, Optional, TypeVar
+from typing import Any, Generic, Iterator, Mapping, Optional, Type, TypeVar
 from urllib.parse import quote, urlsplit
 
 import httpx
 from ..agentkit.token import generate_convo_ai_token
-from ..core.api_error import ApiError
 from ..core.public_auth import validate_public_headers as _validate_public_headers
+from .errors import (
+    AgoraV3Error,
+    PreconditionFailedError,
+    V3ApiError,
+    V3ConfigurationError,
+    V3ConnectionError,
+    V3TimeoutError,
+    V3ValidationError,
+)
 
 _UNSET: Any = object()
 T = TypeVar("T")
@@ -34,23 +43,60 @@ class RawResponse(Generic[T]):
         return self.headers.get("ETag")
 
 
-class PreconditionFailedError(ApiError):
-    """The server rejected an outdated If-Match. latest() reloads the resource.
+def contract_violation(raw: RawResponse[Any], violation: str) -> V3ApiError:
+    """Build the API error for a 2xx response the SDK cannot use."""
+    response = raw.response
+    return V3ApiError(
+        status_code=raw.status_code,
+        headers=dict(raw.headers or {}),
+        body=raw.data,
+        raw_body=response.content if response is not None else b"",
+        violation=violation,
+    )
 
-    With AsyncAgora, await error.latest(). No write is automatically retried.
+
+def _next_cursor(raw: RawResponse[Any], seen: set) -> Optional[str]:
+    """Return the continuation cursor, or None on the last page."""
+    page = raw.data
+    if not page.get("has_more"):
+        return None
+    cursor = page.get("next_cursor")
+    if not cursor or cursor in seen:
+        raise contract_violation(raw, "Invalid or repeated v3 pagination cursor")
+    seen.add(cursor)
+    return cursor
+
+
+@contextmanager
+def _reclassify(category: Type[AgoraV3Error]) -> Iterator[None]:
+    """Re-raise a plain ValueError from shared (v2-compatible) checks as a v3 category."""
+    try:
+        yield
+    except AgoraV3Error:
+        raise
+    except ValueError as exc:
+        raise category(str(exc)) from exc
+
+
+def _connection_error(exc: httpx.RequestError, method: str) -> V3ConnectionError:
+    """Map an HTTPX request failure to a v3 connection error; the HTTPX error stays the cause.
+
+    The message names the method and HTTPX error type only, never the request
+    URL or headers, so it cannot carry credentials.
     """
-    def latest(self):
-        return self._latest()
-
+    kind = V3TimeoutError if isinstance(exc, httpx.TimeoutException) else V3ConnectionError
+    summary = "timed out" if kind is V3TimeoutError else "could not complete"
+    detail = str(exc)
+    return kind(f"v3 {method} request {summary}: {type(exc).__name__}" + (f": {detail}" if detail else ""))
 
 
 def segment(value: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise ValueError("v3 path identifiers must be nonempty strings")
+        raise V3ValidationError("v3 path identifiers must be nonempty strings")
     # RFC 3986 permits unescaped dots in a path segment. HTTP clients and
     # proxies normalize the two dot-segments before sending the request.
     if value in (".", ".."):
-        raise ValueError("v3 path identifiers cannot be dot segments")
+        raise V3ValidationError("v3 path identifiers cannot be dot segments")
     return quote(value, safe="")
 
 
@@ -75,7 +121,7 @@ class Resource:
         from .contract import validate_write
         additional = (request_options or {}).get("additional_body_parameters", {}) or {}
         if body is None and additional and method not in {"GET", "DELETE"}:
-            raise ValueError("This operation does not accept a request body")
+            raise V3ValidationError("This operation does not accept a request body")
         validate_write(method, path, {**body, **additional} if isinstance(body, dict) else body)
         if method == "POST" and path.endswith(("/sessions", "/sessions/ephemeral")):
             from .session_contract import validate_session
@@ -89,26 +135,33 @@ class Resource:
         )
         parsed = urlsplit(base)
         if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment or parsed.username is not None or parsed.password is not None or "?" in base or "#" in base:
-            raise ValueError("v3 base_url must be an HTTP(S) origin without query or fragment")
+            raise V3ConfigurationError("v3 base_url must be an HTTP(S) origin without query or fragment")
         base = base.rstrip("/")
-        _validate_public_headers(self.options.headers)
+        with _reclassify(V3ConfigurationError):
+            _validate_public_headers(self.options.headers)
         merged = dict(self.options.headers)
         merged.update({k: v for k, v in headers.items() if v is not None})
         if getattr(self.owner, "auth_mode", None) == "app-credentials" and not any(name.lower() == "authorization" for name in merged):
-            token = generate_convo_ai_token(app_id=self.owner.app_id,
-                app_certificate=self.owner.app_certificate, channel_name="v3", uid=0)
+            with _reclassify(V3ConfigurationError):
+                token = generate_convo_ai_token(app_id=self.owner.app_id,
+                    app_certificate=self.owner.app_certificate, channel_name="v3", uid=0)
             merged["Authorization"] = f"agora token={token}"
         options = dict(request_options or {})
         forbidden = {"customer_id", "customer_secret", "client_id", "client_secret", "customerId", "customerSecret", "clientId", "clientSecret", "username", "password"}
         if forbidden.intersection(options):
-            raise ValueError("Configure Basic credentials with customer_id/customer_secret on the client, or an Authorization header")
-        _validate_public_headers(wrapper.get_headers())
-        _validate_public_headers(wrapper.get_custom_headers() or {})
-        _validate_public_headers(merged)
-        _validate_public_headers(options.get("additional_headers", {}))
+            raise V3ValidationError("Configure Basic credentials with customer_id/customer_secret on the client, or an Authorization header")
+        with _reclassify(V3ConfigurationError):
+            _validate_public_headers(wrapper.get_headers())
+            _validate_public_headers(wrapper.get_custom_headers() or {})
+        with _reclassify(V3ValidationError):
+            _validate_public_headers(merged)
+            _validate_public_headers(options.get("additional_headers", {}))
         if method == "POST" and path.endswith(("/secrets", "/numbers", "/agents")):
-            if any(k.lower() == "idempotency-key" for source in (wrapper.get_headers(), merged, options.get("additional_headers", {})) for k in source):
-                raise ValueError("Idempotency-Key is not supported for agent, secret or number creation")
+            message = "Idempotency-Key is not supported for agent, secret or number creation"
+            if any(k.lower() == "idempotency-key" for k in wrapper.get_headers()):
+                raise V3ConfigurationError(message)
+            if any(k.lower() == "idempotency-key" for source in (merged, options.get("additional_headers", {})) for k in source):
+                raise V3ValidationError(message)
         # Retrying these POSTs can create duplicate resources; staging ignores number idempotency.
         if method != "GET":
             options["max_retries"] = 0
@@ -117,13 +170,18 @@ class Resource:
 
     @staticmethod
     def _parse(response):
+        success = 200 <= response.status_code < 300
         try:
             data = response.json() if response.content else None
         except ValueError:
             data = response.text
-        if not 200 <= response.status_code < 300:
-            error = PreconditionFailedError if response.status_code == 412 else ApiError
-            raise error(status_code=response.status_code, headers=dict(response.headers), body=data)
+            if success:
+                # Every v3 endpoint returns JSON (or an empty body).
+                raise V3ApiError(status_code=response.status_code, headers=dict(response.headers), body=data,
+                                 raw_body=response.content, violation="response body is not valid JSON") from None
+        if not success:
+            error = PreconditionFailedError if response.status_code == 412 else V3ApiError
+            raise error(status_code=response.status_code, headers=dict(response.headers), body=data, raw_body=response.content)
         if isinstance(data, dict) and "agent_session_id" in data:
             data = dict(data)
             if "created_at" in data and "create_ts" not in data:
@@ -133,9 +191,16 @@ class Resource:
         return RawResponse(data=data, headers=response.headers, status_code=response.status_code, response=response)
 
     def _request(self, method, path, *, body, headers, params, request_options):
+        arguments = self._arguments(method, path, body, headers, params, request_options)
         try:
-            return self._parse(self.owner._client_wrapper.httpx_client.request(
-                **self._arguments(method, path, body, headers, params, request_options)))
+            # The shared client's remaining preflight checks (client headers,
+            # HTTPX auth, required Authorization) concern client configuration.
+            with _reclassify(V3ConfigurationError):
+                try:
+                    response = self.owner._client_wrapper.httpx_client.request(**arguments)
+                except httpx.RequestError as exc:
+                    raise _connection_error(exc, method) from exc
+            return self._parse(response)
         except PreconditionFailedError as error:
             latest_path = path.split("/keys/")[0]
             error._latest = lambda: self._request("GET", latest_path, body=None, headers={}, params={}, request_options=_reload_options(request_options)).data
@@ -143,16 +208,13 @@ class Resource:
 
     def iter_pages(self, **kwargs):
         """Yield cursor pages for this resource; list() itself returns one typed wire page."""
-        seen = set()
+        seen: set = set()
         while True:
-            page = self.list(**kwargs)
-            yield page
-            if not page.get("has_more"):
+            raw = self.with_raw_response.list(**kwargs)
+            yield raw.data
+            cursor = _next_cursor(raw, seen)
+            if cursor is None:
                 return
-            cursor = page.get("next_cursor")
-            if not cursor or cursor in seen:
-                raise ValueError("Invalid or repeated v3 pagination cursor")
-            seen.add(cursor)
             kwargs["cursor"] = cursor
 
     def iter_all(self, **kwargs):
@@ -176,9 +238,14 @@ def _reload_options(request_options):
 
 class AsyncResource(Resource):
     async def _request(self, method, path, *, body, headers, params, request_options):
+        arguments = self._arguments(method, path, body, headers, params, request_options)
         try:
-            return self._parse(await self.owner._client_wrapper.httpx_client.request(
-                **self._arguments(method, path, body, headers, params, request_options)))
+            with _reclassify(V3ConfigurationError):
+                try:
+                    response = await self.owner._client_wrapper.httpx_client.request(**arguments)
+                except httpx.RequestError as exc:
+                    raise _connection_error(exc, method) from exc
+            return self._parse(response)
         except PreconditionFailedError as error:
             async def latest():
                 response = await self._request("GET", path.split("/keys/")[0], body=None, headers={}, params={}, request_options=_reload_options(request_options))
@@ -187,16 +254,13 @@ class AsyncResource(Resource):
             raise
 
     async def iter_pages(self, **kwargs):
-        seen = set()
+        seen: set = set()
         while True:
-            page = await self.list(**kwargs)
-            yield page
-            if not page.get("has_more"):
+            raw = await self.with_raw_response.list(**kwargs)
+            yield raw.data
+            cursor = _next_cursor(raw, seen)
+            if cursor is None:
                 return
-            cursor = page.get("next_cursor")
-            if not cursor or cursor in seen:
-                raise ValueError("Invalid or repeated v3 pagination cursor")
-            seen.add(cursor)
             kwargs["cursor"] = cursor
 
     async def iter_all(self, **kwargs):
