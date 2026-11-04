@@ -80,9 +80,13 @@ class Resource:
         if method == "POST" and path.endswith(("/sessions", "/sessions/ephemeral")):
             from .session_contract import validate_session
             validate_session({**body, **((request_options or {}).get("additional_body_parameters", {}) or {})})
-        base = self.options.base_url or os.environ.get("AGORA_AGENTS_V3_BASE_URL")
-        if not base:
-            base = "https://preview.ai.agora.io"
+        # Blank values (e.g. `AGORA_AGENTS_V3_BASE_URL=` in a .env file) mean
+        # "unset"; surrounding whitespace is ignored. Matches the Go and TS SDKs.
+        base = (
+            (self.options.base_url or "").strip()
+            or os.environ.get("AGORA_AGENTS_V3_BASE_URL", "").strip()
+            or "https://preview.ai.agora.io"
+        )
         parsed = urlsplit(base)
         if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.path not in ("", "/") or parsed.query or parsed.fragment or parsed.username is not None or parsed.password is not None or "?" in base or "#" in base:
             raise ValueError("v3 base_url must be an HTTP(S) origin without query or fragment")

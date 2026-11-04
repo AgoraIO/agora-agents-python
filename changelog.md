@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 - Add `generate_client_token` for front-end token routes. It grants RTC and RTM only, with no ConvoAI service, so client tokens cannot authenticate ConvoAI REST calls. It accepts a numeric UID or a string user account.
+- Treat a blank or whitespace-only `V3Options.base_url` or `AGORA_AGENTS_V3_BASE_URL` value as unset instead of raising an origin error, and ignore surrounding whitespace. This matches the Go and TypeScript SDKs.
 
 ## [v3.0.0-alpha.3] — 2026-10-30
 
