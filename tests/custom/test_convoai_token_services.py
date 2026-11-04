@@ -14,7 +14,7 @@ import httpx
 import pytest
 
 from agora_agent import Agent, Agora, Area, AsyncAgora, AsyncSavedAgent, OpenAI, SavedAgent
-from agora_agent.agentkit.token import generate_convo_ai_token
+from agora_agent.agentkit.token import generate_client_token, generate_convo_ai_token
 
 
 def decode_token(token):
@@ -114,3 +114,25 @@ async def test_platform_session_routes_receive_convoai_authorization(async_, sav
         await http.aclose()
     else:
         http.close()
+
+
+@pytest.mark.parametrize("uid,account,privilege_ttl", [(42, "42", 0), ("user-a", "user-a", 120)])
+def test_client_token_grants_rtc_and_rtm_without_convo_ai(uid, account, privilege_ttl):
+    token = generate_client_token("a" * 32, "b" * 32, "room", uid, 600, privilege_ttl)
+    app_id, expiry, services = decode_token(token)
+    assert app_id == "a" * 32 and expiry == 600
+    assert services == {
+        1: ({key: privilege_ttl or 600 for key in (1, 2, 3, 4)}, ["room", account]),
+        2: ({1: 600}, [account]),
+    }
+
+
+@pytest.mark.parametrize("uid", [0, "0", "", "000"])
+def test_client_token_rejects_uid_that_cannot_be_rtm_user_id(uid):
+    with pytest.raises(ValueError, match="nonzero and nonempty"):
+        generate_client_token("a" * 32, "b" * 32, "room", uid)
+
+
+def test_client_token_names_malformed_credential():
+    with pytest.raises(ValueError, match="app_id is 33 characters"):
+        generate_client_token("a" * 33, "b" * 32, "room", 1)

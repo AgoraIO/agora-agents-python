@@ -87,3 +87,23 @@ print(client.auth_mode)  # "basic"
 The same options work with `AsyncAgora`. Both credentials must be nonempty, and Customer ID must not contain a colon. Do not combine them with `auth_token`. The SDK sends `Authorization: Basic <base64(customer_id:customer_secret)>` on REST requests, including saved-agent and ephemeral sessions. An optional App Certificate signs RTC tokens without replacing Basic REST authentication.
 
 For low-level overrides, a valid Basic `Authorization` header is accepted in request options. Configure credentials on the SDK client instead of attaching `httpx.BasicAuth` to the underlying HTTP client, which would silently override SDK authentication.
+
+## Client tokens
+
+Browsers and apps need their own token to join the channel and log in to RTM, which carries agent transcripts and state. Mint it on your server with `generate_client_token`:
+
+```python
+import os
+
+from agora_agent import generate_client_token
+
+token = generate_client_token(
+    app_id=os.environ["AGORA_APP_ID"],
+    app_certificate=os.environ["AGORA_APP_CERTIFICATE"],
+    channel_name="my-room",
+    uid=100,  # or a string user account; also the RTM user ID
+    token_expire=3600,
+)
+```
+
+The token grants RTC (publisher) and RTM login only. Never hand a client a token from `generate_convo_ai_token`: its ConvoAI service authenticates REST calls, so a client holding it could control agents in your project. Keep ConvoAI tokens on the server.

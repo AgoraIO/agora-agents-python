@@ -141,9 +141,11 @@ from .constants import (
 )
 from .regional_agent import CNAgent, GlobalAgent, RegionalAgent
 from .token import (
+    GenerateClientTokenOptions,
     GenerateConvoAITokenOptions,
     GenerateTokenOptions,
     MAX_EXPIRY_SECONDS,
+    generate_client_token,
     generate_convo_ai_token,
     generate_rtc_token,
     expires_in_hours,
@@ -401,6 +403,8 @@ __all__ = [
     "GenerateTokenOptions",
     "generate_convo_ai_token",
     "GenerateConvoAITokenOptions",
+    "generate_client_token",
+    "GenerateClientTokenOptions",
     "MAX_EXPIRY_SECONDS",
     "expires_in_hours",
     "expires_in_minutes",
