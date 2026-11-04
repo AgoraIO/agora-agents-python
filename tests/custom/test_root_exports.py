@@ -19,6 +19,7 @@ def test_root_exports_match_agentkit_for_common_symbols() -> None:
         "SpatiusAvatar",
         "AgentPresets",
         "generate_rtc_token",
+        "generate_client_token",
         "CredentialMode",
         "DataChannel",
     ):
