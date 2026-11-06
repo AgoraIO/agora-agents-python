@@ -13,13 +13,13 @@ description: Install the Agora Conversational AI Python SDK.
 ## Install with pip
 
 ```sh
-pip install agora-agents==3.0.0a3
+pip install agora-agents==3.0.0a4
 ```
 
 ## Install with Poetry
 
 ```sh
-poetry add agora-agents@3.0.0a3
+poetry add agora-agents@3.0.0a4
 ```
 
 ## Imports
