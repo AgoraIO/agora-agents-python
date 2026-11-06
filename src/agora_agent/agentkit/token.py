@@ -94,6 +94,15 @@ class GenerateConvoAITokenOptions(typing.TypedDict, total=False):
     privilege_expire: int
 
 
+class GenerateClientTokenOptions(typing.TypedDict, total=False):
+    app_id: str
+    app_certificate: str
+    channel_name: str
+    uid: typing.Union[int, str]
+    token_expire: int
+    privilege_expire: int
+
+
 # ---------------------------------------------------------------------------
 # AccessToken2 implementation (mirrors Agora's official python3 source)
 # https://github.com/AgoraIO/Tools/tree/feature/access-token2-convoai-stt-services/DynamicKey/AgoraDynamicKey/python3
@@ -325,6 +334,66 @@ def generate_convo_ai_token(
         app_certificate,
         token_expire,
         [(1, rtc_svc), (2, rtm_svc), (9, convo_ai_svc)],
+    )
+
+
+def generate_client_token(
+    app_id: str,
+    app_certificate: str,
+    channel_name: str,
+    uid: typing.Union[int, str],
+    token_expire: int = DEFAULT_EXPIRY_SECONDS,
+    privilege_expire: int = 0,
+) -> str:
+    """Build an RTC + RTM token for a front-end client.
+
+    Use this in token routes that hand tokens to browsers or apps. The token
+    joins the RTC channel as a publisher and logs in to RTM, the data channel
+    for agent transcripts and state. It carries no ConvoAI service, so it cannot
+    authenticate ConvoAI REST calls. Use :func:`generate_convo_ai_token` for
+    server-side REST authentication and agent tokens instead.
+
+    Parameters
+    ----------
+    app_id : str
+        Agora App ID.
+    app_certificate : str
+        Agora App Certificate.
+    channel_name : str
+        The channel the client will join.
+    uid : int or str
+        The client's RTC UID or string user account. It is also the RTM user
+        ID, so it must be nonzero and nonempty.
+    token_expire : int
+        Seconds until the token expires (default 86400).
+    privilege_expire : int
+        Seconds until RTC privileges expire; 0 means same as token_expire
+        (default 0). RTM login keeps the token lifetime.
+
+    Returns
+    -------
+    str
+        The AccessToken2 string for the client.
+    """
+    _require_valid_credentials(app_id, app_certificate)
+    account = uid if isinstance(uid, str) else _uid_to_account(uid)
+    if account.strip("0") == "":
+        raise ValueError("uid must be nonzero and nonempty: it is also the RTM user ID")
+    priv_expire = privilege_expire if privilege_expire != 0 else token_expire
+    rtc_privileges: typing.Dict[int, int] = {
+        1: priv_expire,  # kPrivilegeJoinChannel
+        2: priv_expire,  # kPrivilegePublishAudioStream
+        3: priv_expire,  # kPrivilegePublishVideoStream
+        4: priv_expire,  # kPrivilegePublishDataStream
+    }
+    return _build_access_token2(
+        app_id,
+        app_certificate,
+        token_expire,
+        [
+            (1, _pack_service_rtc(channel_name, account, rtc_privileges)),
+            (2, _pack_service_rtm(account, {1: token_expire})),  # kPrivilegeLogin
+        ],
     )
 
 

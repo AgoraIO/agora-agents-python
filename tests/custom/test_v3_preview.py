@@ -1298,6 +1298,29 @@ def test_public_avatar_vendor_keys_use_write_only_credential_envelope(vendor, re
 
 
 @pytest.mark.parametrize("async_", [False, True])
+@pytest.mark.parametrize(
+    ("option", "env", "host"),
+    [
+        ("", "", "preview.ai.agora.io"),
+        ("  ", " \t", "preview.ai.agora.io"),
+        (" ", "https://env.example", "env.example"),
+        (None, "  https://env.example/  ", "env.example"),
+        (" https://opt.example ", "https://env.example", "opt.example"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_blank_base_url_values_mean_unset(monkeypatch, async_, option, env, host):
+    monkeypatch.setenv("AGORA_AGENTS_V3_BASE_URL", env)
+    calls = []
+    client = make_client(lambda r: calls.append(r) or httpx.Response(200, json={}), async_)
+    client._v3_options = V3Options(base_url=option)
+    result = client.v3.agents.list()
+    if async_:
+        await result
+    assert calls[0].url.host == host
+
+
+@pytest.mark.parametrize("async_", [False, True])
 @pytest.mark.parametrize("origin", ["https://customer:secret@preview.ai.agora.io", "https://preview.ai.agora.io?", "https://preview.ai.agora.io#"])
 @pytest.mark.asyncio
 async def test_public_origin_rejects_embedded_credentials(async_, origin):

@@ -22,6 +22,7 @@ if typing.TYPE_CHECKING:
         GlobalAgent,
         McpServerConfig,
         RegionalAgent,
+        generate_client_token,
         generate_rtc_token,
         GenerateTokenOptions,
         # Global (non-CN) vendor classes — re-exported from agentkit for static typing so
@@ -106,6 +107,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "agents": ".agents",
     "core": ".core",
     "create_pool": ".core.domain",
+    "generate_client_token": ".agentkit",
     "generate_rtc_token": ".agentkit",
     "phone_numbers": ".phone_numbers",
     "telephony": ".telephony",
@@ -128,6 +130,7 @@ _ROOT_ALL = (
     "agents",
     "core",
     "create_pool",
+    "generate_client_token",
     "generate_rtc_token",
     "phone_numbers",
     "telephony",
@@ -159,6 +162,15 @@ def __dir__() -> typing.List[str]:
     return list(__all__)
 
 from .agentkit.v3 import (SavedAgent, AsyncSavedAgent, DeployedAgent, AsyncDeployedAgent, SecretRef, secret_ref, UnsupportedFieldError, NumberNotFoundError, SecretRefNotSupportedError)
-from .v3 import V3Options, PreconditionFailedError
+from .v3 import (
+    AgoraV3Error as AgoraV3Error,
+    PreconditionFailedError as PreconditionFailedError,
+    V3ApiError as V3ApiError,
+    V3ConfigurationError as V3ConfigurationError,
+    V3ConnectionError as V3ConnectionError,
+    V3Options as V3Options,
+    V3TimeoutError as V3TimeoutError,
+    V3ValidationError as V3ValidationError,
+)
 
-__all__ = sorted(set(__all__) | {"SavedAgent", "AsyncSavedAgent", "DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"} | {"V3Options", "PreconditionFailedError"})
+__all__ = sorted(set(__all__) | {"SavedAgent", "AsyncSavedAgent", "DeployedAgent", "AsyncDeployedAgent", "SecretRef", "secret_ref", "UnsupportedFieldError", "NumberNotFoundError", "SecretRefNotSupportedError"} | {"V3Options", "PreconditionFailedError", "AgoraV3Error", "V3ValidationError", "V3ConfigurationError", "V3ConnectionError", "V3TimeoutError", "V3ApiError"})

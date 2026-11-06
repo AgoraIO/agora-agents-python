@@ -28,7 +28,7 @@ export OPENAI_API_KEY='YOUR_OPENAI_KEY'
 export DEEPGRAM_API_KEY='YOUR_DEEPGRAM_KEY'
 ```
 
-The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. Authentication supports a prebuilt `auth_token`, App ID/App Certificate signing, or Basic authentication through `customer_id` and `customer_secret`. Basic credentials and `auth_token` cannot be combined. An App Certificate can accompany Basic credentials to generate RTC transport tokens without changing REST authentication. Internal gateway headers and `X-Studio-Region` remain unsupported. Current rollout availability is described in the [release notes](../../changelog.md#preview-rollout); the SDK does not enforce region availability.
+The default base is `https://preview.ai.agora.io`; the SDK appends `/conversational-ai/v1/projects/{appid}`. Optional `V3Options(base_url=...)` or `AGORA_AGENTS_V3_BASE_URL` overrides accept an origin without path/query/fragment. A blank or whitespace-only value counts as unset, and surrounding whitespace is ignored. Authentication supports a prebuilt `auth_token`, App ID/App Certificate signing, or Basic authentication through `customer_id` and `customer_secret`. Basic credentials and `auth_token` cannot be combined. An App Certificate can accompany Basic credentials to generate RTC transport tokens without changing REST authentication. Internal gateway headers and `X-Studio-Region` remain unsupported. Current rollout availability is described in the [release notes](../../changelog.md#preview-rollout); the SDK does not enforce region availability.
 
 This complete cascaded configuration stores one project secret set, then saves a reusable agent. Set creation is a one-time provisioning step; subsequent runs can update secrets separately using the [secret methods](../reference/v3.md#secrets-eight-operations).
 
@@ -122,7 +122,7 @@ try:
                             instructions="Updated support instructions")
 except PreconditionFailedError as error:
     latest = error.latest()  # GET current data; does not repeat the write.
-    print(error.status_code, error.headers.get("agora-request-id"), latest)
+    print(error.status_code, error.reason, error.request_id, latest)
 
 page = client.v3.sessions.list(limit=20, status="RUNNING", channel="room")
 if page["has_more"]:
@@ -132,9 +132,42 @@ for number in client.numbers.iter_all(limit=100):
     print(number["number_id"])
 ```
 
-`iter_pages()` yields complete pages with `data.count`, `data.list`, `has_more` and `next_cursor`; `iter_all()` yields their items. Both reject missing or repeated continuation cursors. Cursor state is opaque: keep the same filters on subsequent requests. `list()` itself fetches one page. Session reads default to running sessions at the backend; request a historical filter such as `status="STOPPED,FAILED"` when needed. Iteration preserves the chosen filter rather than implicitly scanning every status.
+`iter_pages()` yields complete pages with `data.count`, `data.list`, `has_more` and `next_cursor`; `iter_all()` yields their items. A missing or repeated continuation cursor raises `V3ApiError` with the page's 2xx status and `violation` set. Cursor state is opaque: keep the same filters on subsequent requests. `list()` itself fetches one page. Session reads default to running sessions at the backend; request a historical filter such as `status="STOPPED,FAILED"` when needed. Iteration preserves the chosen filter rather than implicitly scanning every status.
 
-A 412 raises `PreconditionFailedError`, a subclass of `ApiError`; other HTTP failures raise `ApiError`. Both retain status, response headers and body (including server `detail` / `reason`). `latest()` reloads the affected resource; a secret-key conflict reloads its set. It preserves authentication/context headers while stripping all SDK, per-request and HTTP-client default `If-Match`, `If-None-Match` and `Idempotency-Key` headers from the reload. It returns normal parsed data rather than a raw response. To obtain the new ETag for a deliberate retry, GET through `.with_raw_response` again.
+A 412 raises `PreconditionFailedError`, a subclass of `V3ApiError` (and therefore of `ApiError`); other non-2xx responses, and 2xx responses that violate the API contract, raise `V3ApiError`. Both retain status, response headers and body and expose the server `detail` / `reason` and the `Agora-Request-Id` as `request_id`. `latest()` reloads the affected resource; a secret-key conflict reloads its set. It preserves authentication/context headers while stripping all SDK, per-request and HTTP-client default `If-Match`, `If-None-Match` and `Idempotency-Key` headers from the reload. It returns normal parsed data rather than a raw response. To obtain the new ETag for a deliberate retry, GET through `.with_raw_response` again.
+
+## Handling errors
+
+Every error a v3 operation raises, from `client.v3.*` and from the AgentKit save, session and number helpers, derives from `AgoraV3Error` and belongs to exactly one category. Each category also inherits the built-in exception that code caught before, so existing handlers keep working.
+
+| Exception | Also an instance of | Raised when | Typical response |
+|---|---|---|---|
+| `V3ValidationError` | `ValueError` | Input is rejected locally before any request: identifiers, bodies, secret names and references, `Idempotency-Key` values, unsupported builder fields, conflicting options. `UnsupportedFieldError`, `SecretRefNotSupportedError` and `NumberNotFoundError` are subclasses. | Fix the call; retrying fails again. |
+| `V3ConfigurationError` | `ValueError` | The client is misconfigured: invalid `V3Options.base_url` / `AGORA_AGENTS_V3_BASE_URL`, internal or malformed client headers, missing authorization, HTTPX client `auth`. | Fix the deployment configuration. |
+| `V3ConnectionError` | `ConnectionError` | The request did not complete: DNS, refused or reset connection, TLS, protocol error, aborted body. The `httpx` error is `__cause__`. | A write may or may not have been applied; read before retrying it. |
+| `V3TimeoutError` | `V3ConnectionError`, `TimeoutError` | Connect, read, write or pool timeout. | As for connection errors. |
+| `V3ApiError` | `ApiError` | Non-2xx responses and 2xx responses that violate the API contract (body that is not JSON, missing or repeated pagination cursor, missing `ETag` before a guarded update, session start without `agent_session_id`). Exposes `status_code` (the real status, 2xx included), `headers` (lower-case names), `body` (parsed JSON or text), `raw_body`, `detail`, `reason`, `request_id` and `violation` (set only for 2xx contract violations). | Branch on `status_code` / `reason`; quote `request_id` to support. |
+| `PreconditionFailedError` | `V3ApiError` | HTTP 412 on a conditional write. | Call `latest()` and decide whether to retry. |
+
+```python
+from agora_agent import (AgoraV3Error, PreconditionFailedError, V3ApiError,
+                         V3ConnectionError, V3ValidationError)
+
+try:
+    support = client.v3.agents.get(agent_id=agent_id)
+except V3ValidationError as error:   # bad input; nothing was sent
+    print("invalid request:", error)
+except V3ConnectionError as error:   # includes V3TimeoutError
+    print("network failure:", error, "caused by", repr(error.__cause__))
+except PreconditionFailedError as error:
+    print("stale ETag; latest is", error.latest())
+except V3ApiError as error:
+    print(error.status_code, error.reason, error.detail, error.request_id)
+except AgoraV3Error as error:        # V3ConfigurationError: fix the deployment
+    print("v3 client misconfigured:", error)
+```
+
+Messages never include tokens, credentials or `Authorization` values. Python's own `TypeError` for an unknown keyword argument, and the `TypeError` raised when `save()` / `save_async()` receive the other client kind, are not wrapped. Session-handle state errors (`RuntimeError`, and `NotImplementedError` for operations that stored or ephemeral sessions do not support) are unchanged. v2 and generated (non-v3) resources keep raising plain `ApiError`, `ValueError` and `httpx` exceptions.
 
 ## Async applications
 

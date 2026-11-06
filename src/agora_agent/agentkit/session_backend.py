@@ -2,6 +2,8 @@
 import copy
 import math
 
+from ..v3.errors import V3ValidationError
+
 
 def needs_session_backend(agent):
     def contains(value):
@@ -30,23 +32,26 @@ def create_session(owner, *, asynchronous=False, channel=None, agent_uid=None, r
         raise TypeError("Session requires AsyncAgora" if asynchronous else "Session requires Agora")
     if idempotency_key is not None:
         from ..core.public_auth import validate_public_headers
-        validate_public_headers({"Idempotency-Key": idempotency_key})
+        try:
+            validate_public_headers({"Idempotency-Key": idempotency_key})
+        except ValueError as exc:
+            raise V3ValidationError(str(exc)) from exc
     if client_reference is not None:
-        raise ValueError("client_reference has been removed; use labels for application metadata")
+        raise V3ValidationError("client_reference has been removed; use labels for application metadata")
     invalid = [key for key, value in unsupported.items() if value is not None]
     if invalid:
-        raise ValueError("Unsupported session options: " + ", ".join(sorted(invalid)))
+        raise V3ValidationError("Unsupported session options: " + ", ".join(sorted(invalid)))
     if _telephony is not None:
         if any(value is not None for value in (channel, agent_uid, remote_uids, token, encryption, audio_scenario, geofence)):
-            raise ValueError("RTC options cannot be combined with a phone call")
+            raise V3ValidationError("RTC options cannot be combined with a phone call")
         body = {"transport": copy.deepcopy(_telephony)}
     else:
         if not isinstance(channel, str) or not channel.strip():
-            raise ValueError("channel must be nonempty")
+            raise V3ValidationError("channel must be nonempty")
         if agent_uid is not None and (not isinstance(agent_uid, str) or not agent_uid.strip()):
-            raise ValueError("agent_uid must be nonempty")
+            raise V3ValidationError("agent_uid must be nonempty")
         if not isinstance(remote_uids, list) or any(not isinstance(v, str) or not v.strip() for v in remote_uids):
-            raise ValueError("remote_uids must be a list of nonempty strings")
+            raise V3ValidationError("remote_uids must be a list of nonempty strings")
         body = {"transport": {"type": "rtc", "channel": channel, "subscribe_uids": list(remote_uids)}}
         if agent_uid is not None:
             body["transport"]["uid"] = agent_uid
@@ -67,7 +72,7 @@ def create_session(owner, *, asynchronous=False, channel=None, agent_uid=None, r
     for key, value in (("idle_timeout_ms", idle_timeout), ("max_duration_ms", max_duration)):
         if value is not None:
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0 or value * 1000 != int(value * 1000):
-                raise ValueError(key + " must be a nonnegative duration in seconds with millisecond precision")
+                raise V3ValidationError(key + " must be a nonnegative duration in seconds with millisecond precision")
             lifecycle[key] = int(value * 1000)
     if graceful_stop is not None:
         lifecycle["graceful_stop"] = copy.deepcopy(graceful_stop)
@@ -83,25 +88,25 @@ def create_session(owner, *, asynchronous=False, channel=None, agent_uid=None, r
         inline._labels = None
         inline._parameters = {k: v for k, v in params.items() if k not in {"opt_out", "farewell_config", "audio_scenario"}}
         if "opt_out" in params and not isinstance(params["opt_out"], bool):
-            raise ValueError("parameters.opt_out must be bool")
+            raise V3ValidationError("parameters.opt_out must be bool")
         if data_policy is None and "opt_out" in params:
             body["data_policy"] = {"retention": "none" if params["opt_out"] else "30_days"}
         if _telephony is not None and ("audio_scenario" in params or owner._geofence is not None):
-            raise ValueError("RTC settings cannot be combined with a phone call")
+            raise V3ValidationError("RTC settings cannot be combined with a phone call")
         if audio_scenario is None and "audio_scenario" in params:
             body["transport"]["audio_scenario"] = params["audio_scenario"]
         if graceful_stop is None and "farewell_config" in params:
             farewell = params["farewell_config"]
             unknown = set(farewell) - {"graceful_enabled", "graceful_timeout_seconds"}
             if unknown:
-                raise ValueError("Unsupported farewell settings: " + ", ".join(sorted(unknown)))
+                raise V3ValidationError("Unsupported farewell settings: " + ", ".join(sorted(unknown)))
             graceful = {}
             if "graceful_enabled" in farewell:
                 graceful["enabled"] = farewell["graceful_enabled"]
             if "graceful_timeout_seconds" in farewell:
                 seconds = farewell["graceful_timeout_seconds"]
                 if isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or not math.isfinite(seconds) or seconds * 1000 != int(seconds * 1000):
-                    raise ValueError("Invalid farewell timeout in seconds")
+                    raise V3ValidationError("Invalid farewell timeout in seconds")
                 graceful["timeout_ms"] = int(seconds * 1000)
             body.setdefault("lifecycle", {})["graceful_stop"] = graceful
         agent = build_body(inline)
@@ -127,7 +132,7 @@ def update_body(properties):
     from ..v3.contract import validate_write
     value = properties.model_dump(exclude_unset=True) if hasattr(properties, "model_dump") else copy.deepcopy(properties)
     if not isinstance(value, dict) or set(value) - {"token", "messages", "llm"}:
-        raise ValueError("Preview session update supports token, messages and llm.params only; MLLM is not supported")
+        raise V3ValidationError("Preview session update supports token, messages and llm.params only; MLLM is not supported")
     result = {}
     if "token" in value:
         result["transport"] = {"token": value["token"]}
@@ -137,10 +142,10 @@ def update_body(properties):
     if "llm" in value:
         module = value["llm"]
         if not isinstance(module, dict) or set(module) - {"params", "system_messages"}:
-            raise ValueError("Session update supports only provider params and llm.system_messages")
+            raise V3ValidationError("Session update supports only provider params and llm.system_messages")
         if "system_messages" in module:
             if "messages" in overrides:
-                raise ValueError("Supply messages or llm.system_messages, not both")
+                raise V3ValidationError("Supply messages or llm.system_messages, not both")
             overrides["messages"] = module["system_messages"]
         if "params" in module:
             overrides["pipeline"] = {"llm": {"params": module["params"]}}
@@ -157,7 +162,11 @@ def legacy_update_body(properties):
         return properties
     from ..v3.contract import validate
     messages = value.pop("messages")
-    validate(messages, {"type": "array", "items": {"$ref": "#/components/schemas/Message"}}, "messages")
+    try:
+        validate(messages, {"type": "array", "items": {"$ref": "#/components/schemas/Message"}}, "messages")
+    except V3ValidationError as exc:
+        # This shortcut also serves v2 sessions, whose errors stay plain ValueError.
+        raise ValueError(str(exc)) from None
     llm = value.get("llm", {})
     if not isinstance(llm, dict) or "system_messages" in llm:
         raise ValueError("Supply messages or llm.system_messages, not both")
