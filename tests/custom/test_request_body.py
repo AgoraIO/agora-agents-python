@@ -1358,8 +1358,8 @@ def test_byok_azure_openai_realtime_mllm_params() -> None:
 
     props = build_properties(agent)
 
+    assert props["advanced_features"] == {"enable_mllm": True}
     assert props["mllm"] == {
-        "enable": True,
         "url": "AZURE_URL",
         "api_key": "APIKEY",
         "messages": [
@@ -1410,8 +1410,8 @@ def test_byok_qwen_omni_mllm_allows_omitting_turn_detection() -> None:
 
     props = build_properties(agent)
 
+    assert props["advanced_features"] == {"enable_mllm": True}
     assert props["mllm"] == {
-        "enable": True,
         "vendor": "qwen_omni",
         "url": "wss://dashscope.aliyuncs.com/api-ws/v1/realtime",
         "api_key": "xxxxxxxx",
@@ -1574,11 +1574,11 @@ def test_gpt_live_keeps_mcp_on_mllm_and_main_parameters_outside_vendor_params():
     props = json.loads(request.content)["properties"]
     assert props["mllm"]["mcp_servers"] == servers
     assert props["llm"] is None
-    assert props["advanced_features"]["enable_tools"] is True
+    assert props["advanced_features"] == {"enable_tools": True, "enable_mllm": True}
     assert props["parameters"]["silence_config"] == silence
     assert props["mllm"]["params"]["prompt"] == "Be brief"
     assert "alpha_selector" not in props["mllm"]["params"]
-    assert props["mllm"]["enable"] is True
+    assert "enable" not in props["mllm"]
     assert "turn_detection" not in props
     assert "mcp_servers" not in props["mllm"]["params"]
     assert "silence_config" not in props["mllm"]["params"]

@@ -105,7 +105,7 @@ agent = Agent(client=client).with_stt(DeepgramSTT(api_key='your-key', language='
 
 ### `with_mllm(vendor: BaseMLLM) -> Agent`
 
-Set the MLLM vendor for multimodal flow. Calling `with_mllm()` automatically sets `mllm.enable = True`. MLLM sessions do not require TTS, STT, or LLM vendors.
+Set the MLLM vendor for multimodal flow. An agent with an MLLM sends `advanced_features.enable_mllm: true`, merged with any `advanced_features` you set, and never sends `mllm.enable` (it suppresses RTM `message.metrics`; the SDK drops it from custom vendor configs). MLLM sessions do not require TTS, STT, or LLM vendors.
 
 <!-- snippet: fragment -->
 ```python

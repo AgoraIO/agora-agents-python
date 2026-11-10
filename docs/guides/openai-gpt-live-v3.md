@@ -23,13 +23,12 @@ Set MCP servers on `OpenAIGPTLive`; they serialize as `mllm.mcp_servers`. Enable
 
 ## Request placement
 
-GPT Live places MCP at `properties.mllm.mcp_servers`, the tool gate at `properties.advanced_features.enable_tools`, and silence settings at `properties.parameters.silence_config`. MCP and MAIN settings are outside `properties.mllm.params`.
+GPT Live places MCP at `properties.mllm.mcp_servers`, the tool gate at `properties.advanced_features.enable_tools`, and silence settings at `properties.parameters.silence_config`. As for every MLLM, the SDK turns MLLM on with `properties.advanced_features.enable_mllm` and never sends `mllm.enable`. MCP and MAIN settings are outside `properties.mllm.params`.
 
 ```json
 {
   "properties": {
     "mllm": {
-      "enable": true,
       "vendor": "openai_gpt_live",
       "api_key": "<alpha-enabled-key>",
       "url": "wss://api.openai.com/v1/live/sessions",
@@ -46,7 +45,7 @@ GPT Live places MCP at `properties.mllm.mcp_servers`, the tool gate at `properti
         "transport": "streamable_http"
       }]
     },
-    "advanced_features": {"enable_tools": true}
+    "advanced_features": {"enable_tools": true, "enable_mllm": true}
   }
 }
 ```
