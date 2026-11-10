@@ -354,5 +354,5 @@ agent_id = session.start()
 
 - [Agent Reference](../reference/agent.md) — full API signatures
 - [Cascading Flow](./cascading-flow.md) — ASR → LLM → TTS setup
-- [MLLM Flow](./mllm-flow.md) — multimodal flow with `mllm.enable`
+- [MLLM Flow](./mllm-flow.md) — multimodal flow with `advanced_features.enable_mllm`
 - [Regional Routing](./regional-routing.md) — client area and geofence

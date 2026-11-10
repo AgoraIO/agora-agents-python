@@ -540,25 +540,10 @@ class Agent:
         # at ``to_properties`` / ``AgentSession.start`` so callers can still
         # configure both for tests, debugging, or disabled-avatar use cases.
         new_agent = self._clone()
+        # ``mllm.enable`` is never stored or sent; ``to_properties`` turns MLLM
+        # on through ``advanced_features.enable_mllm`` instead. See
+        # ``_resolved_mllm_config`` for why.
         new_agent._mllm = vendor.to_config()
-        if isinstance(new_agent._mllm, dict):
-            new_agent._mllm["enable"] = True
-        if isinstance(new_agent._advanced_features, dict):
-            advanced_features = {key: value for key, value in new_agent._advanced_features.items() if key != "enable_mllm"}
-            new_agent._advanced_features = typing.cast(AdvancedFeatures, advanced_features) if advanced_features else None
-        elif isinstance(new_agent._advanced_features, StartAgentsRequestPropertiesAdvancedFeatures):
-            advanced_features_model = self._copy_model_update(
-                new_agent._advanced_features,
-                {"enable_mllm": None},
-            )
-            if (
-                advanced_features_model.enable_rtm is None
-                and advanced_features_model.enable_sal is None
-                and advanced_features_model.enable_tools is None
-            ):
-                new_agent._advanced_features = None
-            else:
-                new_agent._advanced_features = advanced_features_model
         return new_agent
 
     def with_avatar(self, vendor: BaseAvatar) -> "Agent":
@@ -730,6 +715,55 @@ class Agent:
         if hasattr(value, "copy"):
             return value.copy(update=update)
         raise TypeError(f"Object of type {type(value).__name__} does not support model copying")
+
+    def _resolved_mllm_config(self) -> typing.Optional[typing.Dict[str, typing.Any]]:
+        """Return the ``mllm`` object as it goes on the wire.
+
+        ``mllm.enable`` is always dropped, including when a caller passes it
+        through a raw or custom vendor config. MLLM is turned on through
+        ``advanced_features.enable_mllm`` instead (see
+        :meth:`_resolved_advanced_features`). When ``mllm.enable`` is in the
+        join body, with or without ``advanced_features.enable_mllm``, the
+        server does not deliver RTM ``message.metrics`` (for example ttfb).
+        Audio and transcripts are unaffected, so the loss is silent.
+        """
+        if self._mllm is None:
+            return None
+        mllm_config = {key: value for key, value in dict(self._mllm).items() if key != "enable"}
+        if self._greeting is not None:
+            mllm_config.setdefault("greeting_message", self._greeting)
+        if self._failure_message is not None:
+            mllm_config.setdefault("failure_message", self._failure_message)
+        return mllm_config
+
+    def _resolved_advanced_features(self, mllm_mode: bool) -> typing.Optional[AdvancedFeatures]:
+        """Return ``advanced_features`` as it goes on the wire.
+
+        In MLLM mode ``enable_mllm`` is forced to ``True`` and merged with any
+        caller-supplied flags such as ``enable_rtm``. On the cascading path
+        ``enable_mllm`` is removed so an ASR + LLM + TTS session never asks the
+        server for MLLM.
+        """
+        features = self._advanced_features
+        if mllm_mode:
+            if features is None:
+                return StartAgentsRequestPropertiesAdvancedFeatures(enable_mllm=True)
+            if isinstance(features, dict):
+                return typing.cast(AdvancedFeatures, {**features, "enable_mllm": True})
+            return self._copy_model_update(features, {"enable_mllm": True})
+
+        if features is None or self._field_value(features, "enable_mllm") is None:
+            return features
+        if isinstance(features, dict):
+            remaining = {key: value for key, value in features.items() if key != "enable_mllm"}
+            return typing.cast(AdvancedFeatures, remaining) if remaining else None
+        remaining_model = self._copy_model_update(features, {"enable_mllm": None})
+        dumped = (
+            remaining_model.model_dump(exclude_none=True)
+            if hasattr(remaining_model, "model_dump")
+            else remaining_model.dict(exclude_none=True)
+        )
+        return remaining_model if dumped else None
 
     def _resolved_parameters(self) -> typing.Optional[typing.Union[SessionParams, SessionParamsInput]]:
         parameters = self._parameters
@@ -982,8 +1016,7 @@ class Agent:
         # Validate the MLLM + enabled-avatar combination BEFORE generating the
         # RTC token so callers get a clear, actionable error first (matches the
         # TypeScript and Go SDKs' fail-fast contract).
-        mllm_flag = isinstance(self._mllm, dict) and self._mllm.get("enable") is True
-        is_mllm_mode = bool(mllm_flag or self._mllm is not None)
+        is_mllm_mode = self._mllm is not None
         avatar_enabled = (
             isinstance(self._avatar, dict) and self._avatar.get("enable") is not False
         )
@@ -1021,8 +1054,6 @@ class Agent:
             base_kwargs["idle_timeout"] = idle_timeout
         if enable_string_uid is not None:
             base_kwargs["enable_string_uid"] = enable_string_uid
-        if self._mllm is not None:
-            base_kwargs["mllm"] = self._mllm
         if self._turn_detection is not None:
             base_kwargs["turn_detection"] = self._turn_detection
         if self._interruption is not None:
@@ -1031,8 +1062,9 @@ class Agent:
             base_kwargs["sal"] = self._sal
         if self._avatar is not None:
             base_kwargs["avatar"] = self._avatar
-        if self._advanced_features is not None:
-            base_kwargs["advanced_features"] = self._advanced_features
+        advanced_features = self._resolved_advanced_features(is_mllm_mode)
+        if advanced_features is not None:
+            base_kwargs["advanced_features"] = advanced_features
         parameters = self._resolved_parameters()
         if parameters is not None:
             if isinstance(parameters, dict):
@@ -1049,12 +1081,8 @@ class Agent:
             base_kwargs["filler_words"] = self._filler_words
 
         if is_mllm_mode:
-            if self._mllm is not None:
-                mllm_config = dict(self._mllm)
-                if self._greeting is not None:
-                    mllm_config.setdefault("greeting_message", self._greeting)
-                if self._failure_message is not None:
-                    mllm_config.setdefault("failure_message", self._failure_message)
+            mllm_config = self._resolved_mllm_config()
+            if mllm_config is not None:
                 base_kwargs["mllm"] = mllm_config
                 if mllm_config.get("vendor") == "openai_gpt_live" and "turn_detection" in base_kwargs:
                     warnings.warn(

@@ -92,8 +92,10 @@ class BaseMLLM(BaseModel, ABC):
     """Abstract base class for all MLLM (multimodal LLM) vendor implementations.
 
     When an MLLM is configured via :meth:`~agora_agent.agentkit.Agent.with_mllm`,
-    the ``mllm.enable`` flag is set on the request and the ``llm``/``tts`` fields
-    are omitted. Subclasses must implement :meth:`to_config` to return a dict
+    the request sets ``advanced_features.enable_mllm`` and omits the
+    ``llm``/``tts`` fields. ``mllm.enable`` is never sent, even if
+    :meth:`to_config` returns it: that flag stops RTM ``message.metrics`` from
+    arriving. Subclasses must implement :meth:`to_config` to return a dict
     that maps to the ``mllm`` field of the payload.
     """
 

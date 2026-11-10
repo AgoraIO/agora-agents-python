@@ -207,7 +207,7 @@ def test_avatar_sample_rate_validation_uses_wrapper_sample_rate():
     assert agent.tts_sample_rate == 16000
 
 
-def test_with_mllm_removes_deprecated_advanced_features_enable_mllm():
+def test_with_mllm_merges_enable_mllm_into_caller_advanced_features():
     properties = (
         Agent(
             test_client(),
@@ -226,15 +226,14 @@ def test_with_mllm_removes_deprecated_advanced_features_enable_mllm():
     )
 
     assert properties.mllm is not None
-    assert properties.mllm.enable is True
+    assert properties.mllm.enable is None
     assert properties.mllm.greeting_message == "hello from agent"
     assert properties.mllm.failure_message == "try again"
     mllm_dump = properties.mllm.model_dump(exclude_none=True)
     assert "max_history" not in mllm_dump
     assert properties.advanced_features is not None
     af_dump = properties.advanced_features.model_dump(exclude_none=True)
-    assert "enable_mllm" not in af_dump
-    assert af_dump.get("enable_rtm") is True
+    assert af_dump == {"enable_mllm": True, "enable_rtm": True}
 
 
 def test_bound_client_allows_region_incompatible_llm_at_builder_time():
@@ -338,7 +337,9 @@ def test_to_properties_allows_mllm_with_disabled_avatar_and_no_tts():
         )
     )
 
-    assert properties.mllm is not None and properties.mllm.enable is True
+    assert properties.mllm is not None and properties.mllm.enable is None
+    assert properties.advanced_features is not None
+    assert properties.advanced_features.enable_mllm is True
     assert properties.tts is None
     assert properties.llm is None
     assert properties.asr is None
@@ -357,7 +358,9 @@ def test_to_properties_mllm_without_tts_or_llm_succeeds():
         )
     )
 
-    assert properties.mllm is not None and properties.mllm.enable is True
+    assert properties.mllm is not None and properties.mllm.enable is None
+    assert properties.advanced_features is not None
+    assert properties.advanced_features.enable_mllm is True
     assert properties.tts is None
     assert properties.llm is None
     assert properties.asr is None

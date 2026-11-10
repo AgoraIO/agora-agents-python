@@ -355,10 +355,7 @@ class _AgentSessionBase:
         return value
 
     def _is_mllm_mode(self) -> bool:
-        mllm = self._agent.mllm
-        if isinstance(mllm, dict) and mllm.get("enable") is True:
-            return True
-        return mllm is not None
+        return self._agent.mllm is not None
 
     def _build_start_properties(
         self,
@@ -380,14 +377,10 @@ class _AgentSessionBase:
         self._enrich_avatar_for_session(properties)
 
         if self._is_mllm_mode():
-            if self._agent.mllm is not None:
-                mllm = self._dump_model(self._agent.mllm)
-                if not isinstance(mllm, dict):
-                    mllm = {}
-                if self._agent.greeting is not None:
-                    mllm.setdefault("greeting_message", self._agent.greeting)
-                if self._agent.failure_message is not None:
-                    mllm.setdefault("failure_message", self._agent.failure_message)
+            # Same config to_properties built: ``mllm.enable`` dropped and
+            # ``advanced_features.enable_mllm`` already set on ``properties``.
+            mllm = self._dump_model(self._agent._resolved_mllm_config())  # noqa: SLF001
+            if isinstance(mllm, dict):
                 properties["mllm"] = mllm
             return properties
 

@@ -19,7 +19,7 @@ MLLM vendors supported by AgentKit:
 
 ## Enable MLLM Mode
 
-Call `agent.with_mllm(vendor)` to enable MLLM mode. The builder sets `mllm.enable = True` automatically. MLLM sessions do not require TTS, STT, or LLM vendors. Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline.
+Call `agent.with_mllm(vendor)` to enable MLLM mode. The SDK turns MLLM on by sending `advanced_features.enable_mllm: true`, merged with any `advanced_features` you set (for example `enable_rtm`). It never sends `mllm.enable`, and drops it if a custom vendor config returns it: with `mllm.enable` in the start body, alone or alongside `enable_mllm`, RTM `message.metrics` (such as ttfb) never arrive, although audio and transcripts work. Cascading sessions never get `enable_mllm`. MLLM sessions do not require TTS, STT, or LLM vendors. Avatars are currently supported only with the cascading ASR + LLM + TTS pipeline.
 
 Set the agent instance name when you create the session:
 

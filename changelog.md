@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- **RTM metrics missing in MLLM sessions** — MLLM sessions now enable MLLM with `advanced_features.enable_mllm: true` and no longer send `mllm.enable`. Live tests on production (`models/gemini-3.8-live`) showed that with `mllm.enable` in the start body, RTM `message.metrics` (such as ttfb) never arrived, even with `enable_rtm`, while audio and transcripts worked. This applies to every MLLM vendor. `enable_mllm` is merged with any caller `advanced_features` such as `enable_rtm`, and `mllm.enable` is dropped if a custom vendor config returns it. Cascading sessions never send `enable_mllm`; a caller-set `enable_mllm` is dropped there. This reverses the v1.4.0 change and works around a suspected API issue that has been reported.
+
 ## [v2.13.1] — 2026-11-06
 
 ### Added
