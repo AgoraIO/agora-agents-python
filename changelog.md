@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.14.0] — 2026-11-11
+
+### Added
+
+- **Soniox TTS** — Added the global `SonioxTTS` AgentKit provider with typed streaming speech options, speed validation, additional parameters, and skip patterns. Only `api_key` is required; omitted options use provider defaults.
+- **MiniMax Duplex TTS** — Added `agora_agent.cn.MiniMaxDuplexTTS` with voice, audio, pronunciation, and voice modification settings. BYOK credentials, a model, and `voice_id` are required; fractional voice multipliers and explicit `False` values are preserved.
+- **StepFun ASR** — Added `agora_agent.cn.StepFunSTT` with `api_key` and additional parameters. Generated ASR/TTS types and regional vendor routing support all three new providers.
+
 ## [v2.13.1] — 2026-11-06
 
 ### Added
