@@ -80,6 +80,7 @@ if typing.TYPE_CHECKING:
         RimeTTS,
         SarvamSTT,
         SarvamTTS,
+        SonioxTTS,
         SmallestAISTT,
         SmallestAITTS,
         SpeechmaticsSTT,

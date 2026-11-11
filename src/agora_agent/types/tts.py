@@ -24,6 +24,7 @@ from .google_tts_params import GoogleTtsParams
 from .gradium_tts_params import GradiumTtsParams
 from .hume_ai_tts_params import HumeAiTtsParams
 from .microsoft_tts_params import MicrosoftTtsParams
+from .minimax_duplex_tts_params import MinimaxDuplexTtsParams
 from .minimax_tts_params import MinimaxTtsParams
 from .mistral_tts_params import MistralTtsParams
 from .murf_tts_params import MurfTtsParams
@@ -32,6 +33,7 @@ from .rime_tts_credential_mode import RimeTtsCredentialMode
 from .rime_tts_params import RimeTtsParams
 from .sarvam_tts_params import SarvamTtsParams
 from .smallest_ai_tts_params import SmallestAiTtsParams
+from .soniox_tts_params import SonioxTtsParams
 from .stepfun_tts_params import StepfunTtsParams
 from .tencent_tts_params import TencentTtsParams
 from .typecast_tts_params import TypecastTtsParams
@@ -101,6 +103,23 @@ class Tts_Elevenlabs(UncheckedBaseModel):
 class Tts_Minimax(UncheckedBaseModel):
     vendor: typing.Literal["minimax"] = "minimax"
     params: MinimaxTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Tts_MinimaxDuplex(UncheckedBaseModel):
+    vendor: typing.Literal["minimax_duplex"] = "minimax_duplex"
+    batch: typing.Optional[bool] = None
+    enable_words: typing.Optional[bool] = None
+    params: MinimaxDuplexTtsParams
     skip_patterns: typing.Optional[typing.List[int]] = None
 
     if IS_PYDANTIC_V2:
@@ -418,6 +437,21 @@ class Tts_Smallestai(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Tts_Soniox(UncheckedBaseModel):
+    vendor: typing.Literal["soniox"] = "soniox"
+    params: SonioxTtsParams
+    skip_patterns: typing.Optional[typing.List[int]] = None
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Tts = typing_extensions.Annotated[
     typing.Union[
         Tts_Tencent,
@@ -425,6 +459,7 @@ Tts = typing_extensions.Annotated[
         Tts_Microsoft,
         Tts_Elevenlabs,
         Tts_Minimax,
+        Tts_MinimaxDuplex,
         Tts_Murf,
         Tts_Cartesia,
         Tts_Openai,
@@ -445,6 +480,7 @@ Tts = typing_extensions.Annotated[
         Tts_Mistral,
         Tts_Typecast,
         Tts_Smallestai,
+        Tts_Soniox,
     ],
     UnionMetadata(discriminant="vendor"),
 ]

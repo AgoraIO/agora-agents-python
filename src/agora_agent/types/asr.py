@@ -22,6 +22,7 @@ from .rtzr_asr_params import RtzrAsrParams
 from .sarvam_asr_params import SarvamAsrParams
 from .smallest_ai_asr_params import SmallestAiAsrParams
 from .speechmatics_asr_params import SpeechmaticsAsrParams
+from .stepfun_asr_params import StepfunAsrParams
 from .tencent_asr_params import TencentAsrParams
 from .x_ai_asr_params import XAiAsrParams
 from .xfyun_asr_params import XfyunAsrParams
@@ -301,6 +302,21 @@ class Asr_Smallestai(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Asr_Stepfun(UncheckedBaseModel):
+    vendor: typing.Literal["stepfun"] = "stepfun"
+    language: typing.Optional[AsrLanguage] = None
+    params: StepfunAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Asr = typing_extensions.Annotated[
     typing.Union[
         Asr_Ares,
@@ -321,6 +337,7 @@ Asr = typing_extensions.Annotated[
         Asr_XfyunBigmodel,
         Asr_XfyunDialect,
         Asr_Smallestai,
+        Asr_Stepfun,
     ],
     UnionMetadata(discriminant="vendor"),
 ]

@@ -16,6 +16,22 @@ from .tts import BaseTTS as _BaseTTSCompat
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+class StepFunSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, repr=False)
+    additional_params: Optional[Dict[str, Any]] = None
+
+
+class StepFunSTT(StepFunSTTOptions, _BaseSTTCompat):
+    """StepFun ASR for mainland China."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params = dict(self.additional_params or {})
+        params["api_key"] = self.api_key
+        return {"vendor": "stepfun", "params": params}
+
+
 class TencentSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -433,6 +449,64 @@ class MicrosoftTTS(MicrosoftTTSOptions, _BaseTTSCompat):
         if self.skip_patterns is not None:
             result["skip_patterns"] = self.skip_patterns
         return result
+
+
+class MiniMaxDuplexTTSOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str = Field(..., min_length=1, repr=False)
+    model: str = Field(..., min_length=1)
+    voice_id: str = Field(..., min_length=1)
+    url: Optional[str] = None
+    speed: Optional[float] = None
+    vol: Optional[float] = None
+    pitch: Optional[float] = None
+    emotion: Optional[str] = None
+    latex_read: Optional[bool] = None
+    sample_rate: Optional[int] = None
+    audio_format: Optional[str] = None
+    channels: Optional[int] = None
+    pronunciation_dict: Optional[Dict[str, Any]] = None
+    voice_modify: Optional[Dict[str, Any]] = None
+    language_boost: Optional[str] = None
+    text_normalization_mode: Optional[str] = None
+    subtitle_enable: Optional[bool] = None
+    subtitle_type: Optional[str] = None
+    continuous_sound: Optional[bool] = None
+    session_id: Optional[str] = None
+    additional_params: Optional[Dict[str, Any]] = None
+    skip_patterns: Optional[List[int]] = None
+
+
+class MiniMaxDuplexTTS(MiniMaxDuplexTTSOptions, _BaseTTSCompat):
+    """MiniMax duplex streaming TTS, currently available only in mainland China."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = dict(self.additional_params or {})
+        voice_setting: Dict[str, Any] = {"voice_id": self.voice_id}
+        for field in ("speed", "vol", "pitch", "emotion", "latex_read"):
+            value = getattr(self, field)
+            if value is not None:
+                voice_setting[field] = value
+        params.update({"key": self.key, "model": self.model, "voice_setting": voice_setting})
+        audio_setting: Dict[str, Any] = {}
+        for field, wire_field in (("sample_rate", "sample_rate"), ("audio_format", "format"), ("channels", "channels")):
+            value = getattr(self, field)
+            if value is not None:
+                audio_setting[wire_field] = value
+        if audio_setting:
+            params["audio_setting"] = audio_setting
+        for field in (
+            "url", "pronunciation_dict", "voice_modify", "language_boost", "text_normalization_mode",
+            "subtitle_enable", "subtitle_type", "continuous_sound", "session_id",
+        ):
+            value = getattr(self, field)
+            if value is not None:
+                params[field] = value
+        config: Dict[str, Any] = {"vendor": "minimax_duplex", "params": params}
+        if self.skip_patterns is not None:
+            config["skip_patterns"] = self.skip_patterns
+        return config
 
 
 class MiniMaxTTSOptions(BaseModel):

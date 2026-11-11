@@ -50,6 +50,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SonioxTTS,
     SmallestAITTS,
     TypecastTTS,
     XaiTTS,
@@ -109,6 +110,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
         "xai": XaiGrok,
     },
     tts={
+        "soniox": SonioxTTS,
         "gemini": GeminiTTS,
         "microsoft": MicrosoftTTS,
         "elevenlabs": ElevenLabsTTS,
@@ -142,6 +144,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
 CN_VENDOR_NAMESPACE = VendorNamespace(
     asr={
         "fengming": cn_vendors.FengmingSTT,
+        "stepfun": cn_vendors.StepFunSTT,
         "tencent": cn_vendors.TencentSTT,
         "microsoft": cn_vendors.MicrosoftSTT,
         "xfyun": cn_vendors.XfyunSTT,
@@ -159,6 +162,7 @@ CN_VENDOR_NAMESPACE = VendorNamespace(
     },
     tts={
         "minimax": cn_vendors.MiniMaxTTS,
+        "minimax_duplex": cn_vendors.MiniMaxDuplexTTS,
         "tencent": cn_vendors.TencentTTS,
         "bytedance": cn_vendors.BytedanceTTS,
         "microsoft": cn_vendors.MicrosoftTTS,
