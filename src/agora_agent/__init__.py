@@ -22,6 +22,7 @@ if typing.TYPE_CHECKING:
         GlobalAgent,
         McpServerConfig,
         RegionalAgent,
+        generate_client_token,
         generate_rtc_token,
         GenerateTokenOptions,
         # Global (non-CN) vendor classes — re-exported from agentkit for static typing so
@@ -107,6 +108,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "agents": ".agents",
     "core": ".core",
     "create_pool": ".core.domain",
+    "generate_client_token": ".agentkit",
     "generate_rtc_token": ".agentkit",
     "phone_numbers": ".phone_numbers",
     "telephony": ".telephony",
@@ -129,6 +131,7 @@ _ROOT_ALL = (
     "agents",
     "core",
     "create_pool",
+    "generate_client_token",
     "generate_rtc_token",
     "phone_numbers",
     "telephony",

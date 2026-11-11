@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.13.1] — 2026-11-06
+
+### Added
+
+- `generate_client_token`, exported from `agora_agent` and `agora_agent.agentkit`, for front-end token routes. It grants RTC and RTM only, with no ConvoAI service, so client tokens cannot authenticate ConvoAI REST calls. `uid` accepts a numeric UID or a string user account.
+
 ## [v2.13.0] — 2026-10-29
 
 ### Added
