@@ -13,11 +13,14 @@ from .ares_asr_params import AresAsrParams
 from .asr_language import AsrLanguage
 from .assembly_ai_asr_params import AssemblyAiAsrParams
 from .deepgram_asr_params import DeepgramAsrParams
+from .eleven_labs_asr_params import ElevenLabsAsrParams
 from .fengming_asr_params import FengmingAsrParams
+from .fish_audio_asr_params import FishAudioAsrParams
 from .gemini_asr_params import GeminiAsrParams
 from .google_asr_params import GoogleAsrParams
 from .microsoft_asr_params import MicrosoftAsrParams
 from .open_ai_asr_params import OpenAiAsrParams
+from .qwen_asr_params import QwenAsrParams
 from .rtzr_asr_params import RtzrAsrParams
 from .sarvam_asr_params import SarvamAsrParams
 from .smallest_ai_asr_params import SmallestAiAsrParams
@@ -317,6 +320,51 @@ class Asr_Stepfun(UncheckedBaseModel):
             extra = pydantic.Extra.allow
 
 
+class Asr_Elevenlabs(UncheckedBaseModel):
+    vendor: typing.Literal["elevenlabs"] = "elevenlabs"
+    language: typing.Optional[AsrLanguage] = None
+    params: ElevenLabsAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_Fishaudio(UncheckedBaseModel):
+    vendor: typing.Literal["fishaudio"] = "fishaudio"
+    language: typing.Optional[AsrLanguage] = None
+    params: FishAudioAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
+class Asr_Qwen(UncheckedBaseModel):
+    vendor: typing.Literal["qwen"] = "qwen"
+    language: typing.Optional[AsrLanguage] = None
+    params: QwenAsrParams
+
+    if IS_PYDANTIC_V2:
+        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
+    else:
+
+        class Config:
+            frozen = True
+            smart_union = True
+            extra = pydantic.Extra.allow
+
+
 Asr = typing_extensions.Annotated[
     typing.Union[
         Asr_Ares,
@@ -338,6 +386,9 @@ Asr = typing_extensions.Annotated[
         Asr_XfyunDialect,
         Asr_Smallestai,
         Asr_Stepfun,
+        Asr_Elevenlabs,
+        Asr_Fishaudio,
+        Asr_Qwen,
     ],
     UnionMetadata(discriminant="vendor"),
 ]
