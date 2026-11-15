@@ -26,6 +26,7 @@ from test_helpers import test_client
 
 from agora_agent import (
     Agent,
+    AgentClient,
     Agora,
     AmazonBedrock,
     AmazonSTT,
@@ -74,7 +75,7 @@ from agora_agent import (
 )
 from agora_agent.agentkit import AgentSession
 from agora_agent.agentkit.presets import resolve_session_presets
-from agora_agent.cn import QwenOmni
+from agora_agent.cn import MiniMaxDuplexTTS, QwenOmni, StepFunSTT
 from agora_agent.types.speechmatics_asr_params import SpeechmaticsAsrParams
 
 # ---------------------------------------------------------------------------
@@ -1619,3 +1620,18 @@ def test_generated_filler_words_context_limits_reach_request_properties() -> Non
     assert generated is not None
     assert generated.context_message_limit == 6
     assert generated.history_character_limit == 1200
+
+def test_cn_agent_preserves_duplex_and_stepfun_in_generated_properties() -> None:
+    client = AgentClient(area=Area.CN, app_id="0" * 32, app_certificate="1" * 32)
+    tts = MiniMaxDuplexTTS(key="k", model="speech-2.8-turbo", voice_id="v", subtitle_enable=False)
+    props = (
+        Agent(client=client, turn_detection={"language": "zh-CN"})
+        .with_stt(StepFunSTT(api_key="step-key"))
+        .with_llm(OpenAI(model="gpt-4o-mini"))
+        .with_tts(tts)
+        .to_properties(channel="room", token="token", agent_uid="1", remote_uids=["100"])
+        .model_dump(exclude_none=True)
+    )
+    assert props["tts"] == tts.to_config()
+    assert props["asr"] == {"vendor": "stepfun", "params": {"api_key": "step-key"}, "language": "zh-CN"}
+    assert "minimax_speech_2_8_turbo" not in props.get("preset", [])

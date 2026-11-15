@@ -82,3 +82,23 @@ print(client.auth_mode)  # "token"
 ```
 
 `auth_token` is mutually exclusive with `customer_id` / `customer_secret`.
+
+## Client tokens
+
+Browsers and apps need their own token to join the channel and log in to RTM, which carries agent transcripts and state. Mint it on your server with `generate_client_token`:
+
+```python
+import os
+
+from agora_agent import generate_client_token
+
+token = generate_client_token(
+    app_id=os.environ["AGORA_APP_ID"],
+    app_certificate=os.environ["AGORA_APP_CERTIFICATE"],
+    channel_name="my-room",
+    uid=100,  # or a string user account; also the RTM user ID
+    token_expire=3600,
+)
+```
+
+The token grants RTC (publisher) and RTM login only. Never hand a client a token from `generate_convo_ai_token`: its ConvoAI service authenticates REST calls, so a client holding it could control agents in your project. Keep ConvoAI tokens on the server.

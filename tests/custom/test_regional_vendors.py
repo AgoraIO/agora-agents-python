@@ -16,13 +16,14 @@ from agora_agent import (
     RtzrSTT,
     SmallestAISTT,
     SmallestAITTS,
+    SonioxTTS,
     SpatiusAvatar,
     TencentSTT,
     XaiGrok,
     XaiSTT,
     XaiTTS,
 )
-from agora_agent.agentkit.regional_agent import GlobalSTT, GlobalTTS
+from agora_agent.agentkit.regional_agent import CNSTT, CNTTS, GlobalSTT, GlobalTTS
 from agora_agent.agentkit.vendors.catalog import CN_VENDOR_NAMESPACE, GLOBAL_VENDOR_NAMESPACE
 from agora_agent.agentkit.vendors.namespaces import CNSTTVendors, CNTTSVendors, GlobalSTTVendors, GlobalTTSVendors
 from agora_agent.agentkit.vendors.region import (
@@ -33,6 +34,7 @@ from agora_agent.agentkit.vendors.region import (
     GLOBAL_AVATAR_VENDORS,
     GLOBAL_TTS_VENDORS,
 )
+from agora_agent.cn import MiniMaxDuplexTTS, StepFunSTT
 
 
 def _client(area: Area) -> AgentClient:
@@ -283,3 +285,16 @@ def test_smallest_ai_configs_reach_global_request_properties() -> None:
     assert properties.asr.params.sentence_timestamps == "false"
     assert properties.asr.params.eou_timeout_ms == 480
     assert properties.tts is not None and properties.tts.vendor == "smallestai"
+
+def test_speech_vendor_regional_catalogs_and_type_unions() -> None:
+    assert CN_VENDOR_NAMESPACE.tts["minimax_duplex"] is CNTTSVendors.minimax_duplex is MiniMaxDuplexTTS
+    assert CN_VENDOR_NAMESPACE.asr["stepfun"] is CNSTTVendors.stepfun is StepFunSTT
+    assert GLOBAL_VENDOR_NAMESPACE.tts["soniox"] is GlobalTTSVendors.soniox is SonioxTTS
+    assert "minimax_duplex" in CN_TTS_VENDORS
+    assert "minimax_duplex" not in GLOBAL_TTS_VENDORS
+    assert "minimax_duplex" not in GLOBAL_VENDOR_NAMESPACE.tts
+    assert "stepfun" in CN_ASR_VENDORS
+    assert MiniMaxDuplexTTS in get_args(CNTTS)
+    assert MiniMaxDuplexTTS not in get_args(GlobalTTS)
+    assert StepFunSTT in get_args(CNSTT)
+    assert SonioxTTS in get_args(GlobalTTS)

@@ -47,6 +47,7 @@ from .tts import (
     GenericTTS,
     RimeTTS,
     SarvamTTS,
+    SonioxTTS,
     SmallestAITTS,
     TypecastTTS,
     XaiTTS,
@@ -70,6 +71,7 @@ class GlobalSTTVendors:
 
 
 class CNSTTVendors:
+    stepfun = cn_vendors.StepFunSTT
     fengming = cn_vendors.FengmingSTT
     tencent = cn_vendors.TencentSTT
     microsoft = cn_vendors.MicrosoftSTT
@@ -111,6 +113,7 @@ class CNMLLMVendors:
 
 
 class GlobalTTSVendors:
+    soniox = SonioxTTS
     gemini = GeminiTTS
     microsoft = MicrosoftTTS
     elevenlabs = ElevenLabsTTS
@@ -134,6 +137,7 @@ class GlobalTTSVendors:
 
 
 class CNTTSVendors:
+    minimax_duplex = cn_vendors.MiniMaxDuplexTTS
     minimax = cn_vendors.MiniMaxTTS
     tencent = cn_vendors.TencentTTS
     bytedance = cn_vendors.BytedanceTTS

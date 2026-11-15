@@ -2,6 +2,7 @@ import json
 
 import httpx
 import pytest
+from pydantic import TypeAdapter, ValidationError
 
 from agora_agent import (
     Agent,
@@ -26,8 +27,11 @@ from agora_agent import (
     RimeTTS,
     SarvamTTS,
     SmallestAITTS,
+    SonioxTTS,
     TypecastTTS,
 )
+from agora_agent.cn import MiniMaxDuplexTTS
+from agora_agent.types.tts import Tts
 
 
 def test_smallest_ai_tts_serializes_generated_contract() -> None:
@@ -639,3 +643,92 @@ def _capture_start_request(tts) -> dict:
 )
 def test_tts_http_request_preserves_vendor_specific_wire_keys(tts, expected_tts: dict) -> None:
     assert _capture_start_request(tts) == expected_tts
+
+def test_minimax_duplex_full_config_matches_generated_schema() -> None:
+    extra = {"key": "overridden", "continuous_sound": True, "future_param": "kept"}
+    tts = MiniMaxDuplexTTS(
+        key="mm-key", model="speech-2.8-turbo", voice_id="female-shaonv",
+        url="wss://api.minimax.cn/ws/v1/t2a_v2_bidi",
+        speed=1.2, vol=0, pitch=0, emotion="happy", latex_read=False,
+        sample_rate=24000, audio_format="pcm", channels=1,
+        pronunciation_dict={"tone": ["测试/(ce4)(shi4)"]},
+        voice_modify={"pitch": 0, "intensity": 0, "timbre": 0, "sound_effects": "spacious_echo"},
+        language_boost="Chinese", text_normalization_mode="basic",
+        subtitle_enable=False, subtitle_type="word", continuous_sound=False,
+        session_id="session-1", skip_patterns=[], additional_params=extra,
+    )
+    expected = {
+        "vendor": "minimax_duplex",
+        "params": {
+            "key": "mm-key", "model": "speech-2.8-turbo", "url": "wss://api.minimax.cn/ws/v1/t2a_v2_bidi",
+            "voice_setting": {"voice_id": "female-shaonv", "speed": 1.2, "vol": 0, "pitch": 0, "emotion": "happy", "latex_read": False},
+            "audio_setting": {"sample_rate": 24000, "format": "pcm", "channels": 1},
+            "pronunciation_dict": {"tone": ["测试/(ce4)(shi4)"]},
+            "voice_modify": {"pitch": 0, "intensity": 0, "timbre": 0, "sound_effects": "spacious_echo"},
+            "language_boost": "Chinese", "text_normalization_mode": "basic",
+            "subtitle_enable": False, "subtitle_type": "word", "continuous_sound": False,
+            "session_id": "session-1", "future_param": "kept",
+        },
+        "skip_patterns": [],
+    }
+    assert tts.to_config() == expected
+    adapter: TypeAdapter[Tts] = TypeAdapter(Tts)
+    assert adapter.validate_python(expected).model_dump(exclude_none=True) == expected
+    assert tts.resolved_sample_rate == 24000
+    assert extra == {"key": "overridden", "continuous_sound": True, "future_param": "kept"}
+
+
+def test_minimax_duplex_minimal_config_omits_optional_fields() -> None:
+    assert MiniMaxDuplexTTS(key="k", model="m", voice_id="v").to_config() == {
+        "vendor": "minimax_duplex", "params": {"key": "k", "model": "m", "voice_setting": {"voice_id": "v"}},
+    }
+
+
+def test_soniox_all_options_and_parameter_precedence() -> None:
+    tts = SonioxTTS(
+        api_key="k", base_url="wss://tts.soniox.com", model="model", language="en", voice="voice",
+        sample_rate=24000, speed=0.7, reduce_silence=False, return_timestamps=False,
+        client_reference_id="ref", dump=False, skip_patterns=[1],
+        additional_params={"api_key": "overridden", "reduce_silence": True, "future_param": 42},
+    )
+    expected = {
+        "vendor": "soniox",
+        "params": {
+            "api_key": "k", "base_url": "wss://tts.soniox.com", "model": "model", "language": "en", "voice": "voice",
+            "sample_rate": 24000, "speed": 0.7, "reduce_silence": False, "return_timestamps": False,
+            "client_reference_id": "ref", "dump": False, "future_param": 42,
+        },
+        "skip_patterns": [1],
+    }
+    assert tts.to_config() == expected
+    adapter: TypeAdapter[Tts] = TypeAdapter(Tts)
+    assert adapter.validate_python(expected).model_dump(exclude_none=True) == expected
+    assert tts.resolved_sample_rate == 24000
+
+
+def test_soniox_minimal_config_omits_optional_fields() -> None:
+    assert SonioxTTS(api_key="k").to_config() == {"vendor": "soniox", "params": {"api_key": "k"}}
+
+
+@pytest.mark.parametrize("field", ["key", "model", "voice_id"])
+def test_minimax_duplex_requires_key_model_and_voice(field: str) -> None:
+    options = {"key": "k", "model": "m", "voice_id": "v"}
+    options[field] = ""
+    with pytest.raises(ValidationError):
+        MiniMaxDuplexTTS(**options)
+    del options[field]
+    with pytest.raises(ValidationError):
+        MiniMaxDuplexTTS(**options)
+
+
+def test_soniox_requires_api_key() -> None:
+    with pytest.raises(ValidationError):
+        SonioxTTS(api_key="")
+    with pytest.raises(ValidationError):
+        SonioxTTS.model_validate({})
+
+
+@pytest.mark.parametrize("speed", [0.6, 1.4, float("nan")])
+def test_soniox_rejects_invalid_speed(speed: float) -> None:
+    with pytest.raises(ValidationError):
+        SonioxTTS(api_key="k", speed=speed)
