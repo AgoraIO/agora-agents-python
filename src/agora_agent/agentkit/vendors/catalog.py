@@ -18,6 +18,8 @@ from .llm import (
 )
 from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIGPTLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
+    ElevenLabsSTT,
+    FishAudioSTT,
     AmazonSTT,
     AresSTT,
     AssemblyAISTT,
@@ -76,6 +78,8 @@ class VendorNamespace:
 
 GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
     asr={
+        "elevenlabs": ElevenLabsSTT,
+        "fishaudio": FishAudioSTT,
         "ares": AresSTT,
         "deepgram": DeepgramSTT,
         "microsoft": MicrosoftSTT,
@@ -143,6 +147,7 @@ GLOBAL_VENDOR_NAMESPACE = VendorNamespace(
 
 CN_VENDOR_NAMESPACE = VendorNamespace(
     asr={
+        "qwen": cn_vendors.QwenSTT,
         "fengming": cn_vendors.FengmingSTT,
         "stepfun": cn_vendors.StepFunSTT,
         "tencent": cn_vendors.TencentSTT,

@@ -10,6 +10,7 @@ AreaScope = typing_extensions.Literal["cn", "global"]
 CN_AREAS = {Area.CN}
 
 CN_ASR_VENDORS: typing.Tuple[str, ...] = (
+    "qwen",
     "fengming",
     "stepfun",
     "tencent",
@@ -19,6 +20,8 @@ CN_ASR_VENDORS: typing.Tuple[str, ...] = (
     "xfyun_dialect",
 )
 GLOBAL_ASR_VENDORS: typing.Tuple[str, ...] = (
+    "elevenlabs",
+    "fishaudio",
     "ares",
     "deepgram",
     "microsoft",

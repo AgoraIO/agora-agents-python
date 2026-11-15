@@ -16,6 +16,22 @@ from .tts import BaseTTS as _BaseTTSCompat
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+class QwenSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, repr=False, description="Qwen ASR API key")
+    additional_params: Optional[Dict[str, Any]] = None
+
+
+class QwenSTT(QwenSTTOptions, _BaseSTTCompat):
+    """Qwen ASR for mainland China."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params = dict(self.additional_params or {})
+        params["api_key"] = self.api_key
+        return {"vendor": "qwen", "params": params}
+
+
 class StepFunSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -24,6 +24,7 @@ from .agentkit.vendors.cn import (
     MiniMaxDuplexTTS,
     MiniMaxTTS,
     QwenOmni,
+    QwenSTT,
     SenseTimeAvatar,
     SpatiusAvatar,
     StepFunSTT,
@@ -38,6 +39,7 @@ from .agentkit.vendors.cn import (
 
 __all__ = [
     # STT
+    "QwenSTT",
     "FengmingSTT",
     "MicrosoftSTT",
     "StepFunSTT",
