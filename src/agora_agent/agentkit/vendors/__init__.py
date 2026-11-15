@@ -39,6 +39,7 @@ from .cn import (
     MiniMaxDuplexTTS,
     MiniMaxTTS as MiniMaxCNTTS,
     QwenOmni,
+    QwenSTT,
     SenseTimeAvatar,
     SpatiusAvatar,
     StepFunSTT,
@@ -51,6 +52,8 @@ from .cn import (
     XfyunSTT,
 )
 from .stt import (
+    ElevenLabsSTT,
+    FishAudioSTT,
     AmazonSTT,
     AresSTT,
     AssemblyAISTT,
@@ -144,6 +147,9 @@ __all__ = [
     "StepFunTTS",
     "StepFunSTT",
     "SpeechmaticsSTT",
+    "ElevenLabsSTT",
+    "FishAudioSTT",
+    "QwenSTT",
     "DeepgramSTT",
     "MicrosoftSTT",
     "MicrosoftCNSTT",

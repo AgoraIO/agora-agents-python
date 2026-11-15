@@ -119,6 +119,9 @@ top-level `asr.keywords`. Both vendors also accept `additional_params`, serializ
 | Class | Provider | Required Parameters |
 |---|---|---|
 | `SpeechmaticsSTT` | Speechmatics | `key`, `language`; deprecated `api_key` remains supported |
+| `ElevenLabsSTT` | ElevenLabs (global) | `api_key`; optional `additional_params` |
+| `FishAudioSTT` | Fish Audio (global) | `api_key`; optional `additional_params` |
+| `QwenSTT` | Qwen (CN; import from `agora_agent.cn`) | `api_key`; optional `additional_params` |
 | `DeepgramSTT` | Deepgram | `model` for Agora-managed `nova-2`/`nova-3`; `api_key` for BYOK; `language?`, `keyterm?` |
 | `MicrosoftSTT` | Microsoft Azure | `key`, `region`, `language` |
 | `OpenAISTT` | OpenAI | `api_key` |

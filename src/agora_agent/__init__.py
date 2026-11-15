@@ -45,6 +45,8 @@ if typing.TYPE_CHECKING:
         DeepgramTTS,
         Dify,
         ElevenLabsTTS,
+        ElevenLabsSTT,
+        FishAudioSTT,
         FishAudioTTS,
         Gemini,
         GeminiSTT,

@@ -15,6 +15,8 @@ from .llm import (
 )
 from .mllm import AzureOpenAIRealtime, GeminiLive, OpenAIGPTLive, OpenAIRealtime, VertexAI, XaiGrok
 from .stt import (
+    ElevenLabsSTT,
+    FishAudioSTT,
     AmazonSTT,
     AresSTT,
     AssemblyAISTT,
@@ -55,6 +57,8 @@ from .tts import (
 
 
 class GlobalSTTVendors:
+    elevenlabs = ElevenLabsSTT
+    fishaudio = FishAudioSTT
     ares = AresSTT
     deepgram = DeepgramSTT
     microsoft = MicrosoftSTT
@@ -71,6 +75,7 @@ class GlobalSTTVendors:
 
 
 class CNSTTVendors:
+    qwen = cn_vendors.QwenSTT
     stepfun = cn_vendors.StepFunSTT
     fengming = cn_vendors.FengmingSTT
     tencent = cn_vendors.TencentSTT

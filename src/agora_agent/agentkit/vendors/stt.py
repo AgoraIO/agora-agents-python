@@ -23,6 +23,38 @@ _SMALLEST_AI_BOOLEAN_PARAMS = (
 )
 
 
+class ElevenLabsSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, repr=False, description="ElevenLabs ASR API key")
+    additional_params: Optional[Dict[str, Any]] = None
+
+
+class ElevenLabsSTT(ElevenLabsSTTOptions, BaseSTT):
+    """ElevenLabs ASR for global deployments."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params = dict(self.additional_params or {})
+        params["api_key"] = self.api_key
+        return {"vendor": "elevenlabs", "params": params}
+
+
+class FishAudioSTTOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., min_length=1, repr=False, description="Fish Audio ASR API key")
+    additional_params: Optional[Dict[str, Any]] = None
+
+
+class FishAudioSTT(FishAudioSTTOptions, BaseSTT):
+    """Fish Audio ASR for global deployments."""
+
+    def to_config(self) -> Dict[str, Any]:
+        params = dict(self.additional_params or {})
+        params["api_key"] = self.api_key
+        return {"vendor": "fishaudio", "params": params}
+
+
 class SpeechmaticsSTTOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
