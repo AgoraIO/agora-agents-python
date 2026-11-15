@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
+from typing import Type, Union
 
 import httpx
 import pytest
@@ -44,6 +45,8 @@ from agora_agent import (
     DeepgramTTS,
     Dify,
     ElevenLabsTTS,
+    ElevenLabsSTT,
+    FishAudioSTT,
     FillerWordsConfig,
     FillerWordsContent,
     FillerWordsContentGeneratedConfig,
@@ -75,7 +78,7 @@ from agora_agent import (
 )
 from agora_agent.agentkit import AgentSession
 from agora_agent.agentkit.presets import resolve_session_presets
-from agora_agent.cn import MiniMaxDuplexTTS, QwenOmni, StepFunSTT
+from agora_agent.cn import MiniMaxDuplexTTS, QwenOmni, QwenSTT, StepFunSTT
 from agora_agent.types.speechmatics_asr_params import SpeechmaticsAsrParams
 
 # ---------------------------------------------------------------------------
@@ -1620,6 +1623,46 @@ def test_generated_filler_words_context_limits_reach_request_properties() -> Non
     assert generated is not None
     assert generated.context_message_limit == 6
     assert generated.history_character_limit == 1200
+
+@pytest.mark.parametrize(
+    "provider,vendor,area",
+    [(ElevenLabsSTT, "elevenlabs", Area.US), (FishAudioSTT, "fishaudio", Area.US), (QwenSTT, "qwen", Area.CN)],
+)
+def test_asr_start_request_preserves_additional_params(
+    provider: Type[Union[ElevenLabsSTT, FishAudioSTT, QwenSTT]], vendor: str, area: Area,
+) -> None:
+    requests = []
+
+    def record(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"agent_id": "agent-1"})
+
+    client = AgentClient(
+        area=area, app_id="0" * 32, app_certificate="1" * 32,
+        httpx_client=httpx.Client(transport=httpx.MockTransport(record)),
+    )
+    additional = {"api_key": "ignored", "enabled": False, "keywords": []}
+    stt = provider(api_key="asr-key", additional_params=additional)
+    agent = (
+        Agent(client, turn_detection={"language": "zh-CN"}).with_stt(stt)
+        .with_llm(OpenAI(model="gpt-4o-mini"))
+        .with_tts(ElevenLabsTTS(
+            key="tts-key", voice_id="voice", model_id="eleven_flash_v2_5", base_url="wss://api.elevenlabs.io/v1",
+        ))
+    )
+    props = agent.to_properties(
+        channel="room", token="rtc-token", agent_uid="1", remote_uids=["100"],
+    )
+    expected = {
+        "vendor": vendor, "language": "zh-CN",
+        "params": {"api_key": "asr-key", "enabled": False, "keywords": []},
+    }
+    assert props.model_dump(exclude_none=True)["asr"] == expected
+    agent.create_session(channel="room", token="rtc-token", agent_uid="1", remote_uids=["100"]).start()
+    assert len(requests) == 1
+    assert json.loads(requests[0].content)["properties"]["asr"] == expected
+    assert additional["api_key"] == "ignored"
+
 
 def test_cn_agent_preserves_duplex_and_stepfun_in_generated_properties() -> None:
     client = AgentClient(area=Area.CN, app_id="0" * 32, app_certificate="1" * 32)
