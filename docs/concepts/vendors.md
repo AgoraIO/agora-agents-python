@@ -139,7 +139,7 @@ Used with `agent.with_stt()` when routing to `Area.CN`.
 
 | Class | Provider | Required Parameters |
 |---|---|---|
-| `QwenSTT` | Qwen (import from `agora_agent.cn`) | `api_key`; optional `additional_params` |
+| `QwenSTT` | Qwen | `api_key`; optional `additional_params` |
 | `FengmingSTT` | Fengming | — (all optional) |
 | `TencentSTT` | Tencent | `key`, `app_id`, `secret`, `engine_model_type`, `voice_id` |
 | `MicrosoftCNSTT` | Microsoft Azure (CN) | `key`, `region`, `language` |
