@@ -1,4 +1,4 @@
-from typing import get_args
+from typing import Type, Union, get_args
 
 import pytest
 
@@ -7,6 +7,8 @@ from agora_agent import (
     AgentClient,
     Area,
     DeepgramSTT,
+    ElevenLabsSTT,
+    FishAudioSTT,
     GenericTTS,
     GradiumTTS,
     MiniMaxCNTTS,
@@ -34,7 +36,7 @@ from agora_agent.agentkit.vendors.region import (
     GLOBAL_AVATAR_VENDORS,
     GLOBAL_TTS_VENDORS,
 )
-from agora_agent.cn import MiniMaxDuplexTTS, StepFunSTT
+from agora_agent.cn import MiniMaxDuplexTTS, QwenSTT, StepFunSTT
 
 
 def _client(area: Area) -> AgentClient:
@@ -230,6 +232,29 @@ def test_xai_grok_remains_mllm_vendor() -> None:
 
     assert agent.__class__.__name__ == "GlobalAgent"
     assert agent.mllm is not None and agent.mllm["vendor"] == "xai"
+
+
+@pytest.mark.parametrize("provider,vendor", [(ElevenLabsSTT, "elevenlabs"), (FishAudioSTT, "fishaudio")])
+def test_global_asr_catalogs(provider: Type[Union[ElevenLabsSTT, FishAudioSTT]], vendor: str) -> None:
+    assert GLOBAL_VENDOR_NAMESPACE.asr[vendor] is provider
+    assert vendor not in CN_VENDOR_NAMESPACE.asr
+    assert getattr(GlobalSTTVendors, vendor) is provider
+    assert not hasattr(CNSTTVendors, vendor)
+    assert provider in get_args(GlobalSTT)
+    assert provider not in get_args(CNSTT)
+    assert vendor in GLOBAL_ASR_VENDORS
+    assert vendor not in CN_ASR_VENDORS
+
+
+def test_qwen_is_a_cn_asr_provider() -> None:
+    assert CN_VENDOR_NAMESPACE.asr["qwen"] is QwenSTT
+    assert "qwen" not in GLOBAL_VENDOR_NAMESPACE.asr
+    assert CNSTTVendors.qwen is QwenSTT
+    assert not hasattr(GlobalSTTVendors, "qwen")
+    assert QwenSTT in get_args(CNSTT)
+    assert QwenSTT not in get_args(GlobalSTT)
+    assert "qwen" in CN_ASR_VENDORS
+    assert "qwen" not in GLOBAL_ASR_VENDORS
 
 
 def test_rtzr_is_registered_as_a_global_stt_vendor() -> None:

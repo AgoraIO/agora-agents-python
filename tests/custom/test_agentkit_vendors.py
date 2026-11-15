@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from agora_agent import OpenAIGPTLive
+from agora_agent import ElevenLabsSTT, FishAudioSTT, OpenAIGPTLive
 from agora_agent.agentkit.vendors import (
     AnamAvatar,
     GenericAvatar,
@@ -17,7 +17,7 @@ from agora_agent.agentkit.vendors import (
 from agora_agent.agentkit.vendors import (
     OpenAIGPTLive as ProductionOpenAIGPTLive,
 )
-from agora_agent.cn import StepFunSTT
+from agora_agent.cn import QwenSTT, StepFunSTT
 
 
 def test_smallest_ai_stt_serializes_generated_contract() -> None:
@@ -406,6 +406,13 @@ def test_stepfun_stt_minimal_config_and_parameter_precedence() -> None:
     assert StepFunSTT(api_key="k", additional_params={"api_key": "overridden", "future_param": 42}).to_config() == {
         "vendor": "stepfun", "params": {"api_key": "k", "future_param": 42},
     }
+
+
+@pytest.mark.parametrize("provider", [ElevenLabsSTT, FishAudioSTT, QwenSTT])
+def test_stt_requires_non_empty_api_key(provider) -> None:
+    for invalid in ({}, {"api_key": ""}):
+        with pytest.raises(ValidationError, match="api_key"):
+            provider(**invalid)
 
 
 def test_stepfun_stt_requires_api_key() -> None:

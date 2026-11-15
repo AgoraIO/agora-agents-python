@@ -70,28 +70,6 @@ tts = MiniMaxCNTTS(
 
 ---
 
-## Engine v2.16 ASR vendors
-
-| Class | Import | Wire vendor | Scope |
-|---|---|---|---|
-| `ElevenLabsSTT` | `agora_agent` | `elevenlabs` | global |
-| `FishAudioSTT` | `agora_agent` | `fishaudio` | global |
-| `QwenSTT` | `agora_agent.cn` | `qwen` | cn |
-
-All three require a non-empty `api_key` and accept optional `additional_params`. The explicit key takes precedence over `additional_params["api_key"]`. Configure recognition language through the agent's `turn_detection.language`; AgentKit writes REST `asr.language` from it (default `en-US`).
-
-<!-- snippet: executable -->
-```python
-from agora_agent import ElevenLabsSTT, FishAudioSTT
-from agora_agent.cn import QwenSTT
-
-elevenlabs = ElevenLabsSTT(api_key="your-elevenlabs-key")
-fishaudio = FishAudioSTT(api_key="your-fishaudio-key")
-qwen = QwenSTT(api_key="your-dashscope-key")
-```
-
-Pass the desired provider to `.with_stt()` on your agent. Set `turn_detection={"language": "zh-CN"}` on the agent for Chinese recognition.
-
 ## LLM Vendors
 
 `greeting_configs` accepts either a dict or `LlmGreetingConfigs`. In v2.7, `greeting_configs.interruptable=False` makes the greeting uninterruptible; `True` follows the global `interruption` settings.
@@ -569,6 +547,38 @@ Global-only Smallest AI text-to-speech provider (`tts.vendor: "smallestai"`).
 
 Use `turn_detection.language` for Agora interaction language; it defaults to `en-US`. Provider-specific language values remain under `asr.params` and may use a different format. If `with_stt()` is omitted, AgentKit defaults to `AresSTT` for global clients and `FengmingSTT` for `Area.CN` clients. AgentKit populates REST `asr.language` from `turn_detection.language`.
 
+### `ElevenLabsSTT`
+
+Global ElevenLabs ASR provider (`asr.vendor: "elevenlabs"`). The explicit key takes precedence over `additional_params["api_key"]`.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Non-empty ElevenLabs ASR API key |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional provider parameters |
+
+<!-- snippet: executable -->
+```python
+from agora_agent import ElevenLabsSTT
+
+stt = ElevenLabsSTT(api_key="your-elevenlabs-key")
+```
+
+### `FishAudioSTT`
+
+Global Fish Audio ASR provider (`asr.vendor: "fishaudio"`). The explicit key takes precedence over `additional_params["api_key"]`.
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Non-empty Fish Audio ASR API key |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional provider parameters |
+
+<!-- snippet: executable -->
+```python
+from agora_agent import FishAudioSTT
+
+stt = FishAudioSTT(api_key="your-fishaudio-key")
+```
+
 ### `SpeechmaticsSTT`
 
 | Parameter | Type | Required | Default | Description |
@@ -892,6 +902,22 @@ Other optional fields are `url`, `pronunciation_dict`, `voice_modify` (`pitch`, 
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### CN STT Vendors
+
+#### `QwenSTT`
+
+Mainland China Qwen ASR provider (`asr.vendor: "qwen"`). The explicit key takes precedence over `additional_params["api_key"]`. Set the agent's `turn_detection={"language": "zh-CN"}` for Chinese recognition; AgentKit writes REST `asr.language` from it (default `en-US`).
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `api_key` | `str` | Yes | — | Non-empty DashScope API key |
+| `additional_params` | `Dict[str, Any]` | No | `None` | Additional Qwen ASR parameters |
+
+<!-- snippet: executable -->
+```python
+from agora_agent.cn import QwenSTT
+
+stt = QwenSTT(api_key="your-dashscope-key")
+```
 
 #### `TencentSTT`
 
