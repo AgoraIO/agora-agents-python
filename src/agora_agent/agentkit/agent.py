@@ -102,7 +102,6 @@ MllmVendor = GeneratedMllmVendor
 AvatarConfig = StartAgentsRequestPropertiesAvatar
 AvatarVendor = StartAgentsRequestPropertiesAvatarVendor
 TurnDetectionConfig = StartAgentsRequestPropertiesTurnDetection
-TurnDetectionInput = typing.Union[TurnDetectionConfig, typing.Dict[str, typing.Any]]
 SalConfig = StartAgentsRequestPropertiesSal
 SalMode = StartAgentsRequestPropertiesSalSalMode
 AdvancedFeatures = StartAgentsRequestPropertiesAdvancedFeatures
@@ -334,6 +333,78 @@ TURN_DETECTION_LANGUAGE_VALUES: typing.Tuple[TurnDetectionLanguage, ...] = (
     "vi-VN",
 )
 _TURN_DETECTION_LANGUAGES = set(TURN_DETECTION_LANGUAGE_VALUES)
+
+# Semantic end of speech supports only English and Chinese.
+SemanticEndOfSpeechLanguage = typing_extensions.Literal["en-IN", "en-US", "zh-CN", "zh-HK", "zh-TW"]
+_SEMANTIC_END_OF_SPEECH_LANGUAGES = set(typing_extensions.get_args(SemanticEndOfSpeechLanguage))
+
+# One language, or a list of languages for a multi-language session. A list is
+# sent to asr.language as one comma-separated string.
+TurnDetectionLanguages = typing.Union[TurnDetectionLanguage, typing.Sequence[TurnDetectionLanguage]]
+
+
+class _TurnDetectionDictBase(typing_extensions.TypedDict, total=False):
+    mode: typing_extensions.Literal["default"]
+    type: str
+    interrupt_mode: str
+    interrupt_duration_ms: float
+    interrupt_keywords: typing.List[str]
+    prefix_padding_ms: int
+    silence_duration_ms: int
+    threshold: float
+    create_response: bool
+    interrupt_response: bool
+    eagerness: str
+
+
+class _VadEndOfSpeechDict(typing_extensions.TypedDict, total=False):
+    mode: typing_extensions.Literal["vad", "manual"]
+    vad_config: typing.Any
+    semantic_config: typing.Any
+
+
+class _SemanticEndOfSpeechDict(typing_extensions.TypedDict, total=False):
+    mode: typing_extensions.Required[typing_extensions.Literal["semantic"]]
+    vad_config: typing.Any
+    semantic_config: typing.Any
+
+
+class _VadTurnDetectionNestedConfigDict(typing_extensions.TypedDict, total=False):
+    speech_threshold: float
+    start_of_speech: typing.Any
+    end_of_speech: _VadEndOfSpeechDict
+
+
+class _SemanticTurnDetectionNestedConfigDict(typing_extensions.TypedDict, total=False):
+    speech_threshold: float
+    start_of_speech: typing.Any
+    end_of_speech: typing_extensions.Required[_SemanticEndOfSpeechDict]
+
+
+class TurnDetectionDict(_TurnDetectionDictBase, total=False):
+    """Turn detection as a dict, with VAD, manual, or unset end of speech.
+
+    ``language`` takes one BCP-47 tag or a list of tags. With more than one
+    language and no ``end_of_speech.mode``, AgentKit sends ``mode = "vad"``.
+    """
+
+    language: TurnDetectionLanguages
+    config: _VadTurnDetectionNestedConfigDict
+
+
+class SemanticTurnDetectionDict(_TurnDetectionDictBase, total=False):
+    """Turn detection as a dict, with semantic end of speech.
+
+    Semantic end of speech takes one English or Chinese language, not a list.
+    Type checkers (mypy, pyright) report a list here as an error, and AgentKit
+    raises ``ValueError`` at runtime.
+    """
+
+    language: SemanticEndOfSpeechLanguage
+    config: typing_extensions.Required[_SemanticTurnDetectionNestedConfigDict]
+
+
+TurnDetectionInput = typing.Union[TurnDetectionConfig, TurnDetectionDict, SemanticTurnDetectionDict]
 
 
 def _dump_optional_model(value: typing.Any) -> typing.Any:
@@ -1025,6 +1096,13 @@ class Agent:
             base_kwargs["mllm"] = self._mllm
         if self._turn_detection is not None:
             base_kwargs["turn_detection"] = self._turn_detection
+            language = self._field_value(self._turn_detection, "language")
+            if language is not None and not isinstance(language, str):
+                # MLLM sessions send turn_detection as given, apart from joining a language list.
+                base_kwargs["turn_detection"] = {
+                    **_dump_optional_model(self._turn_detection),
+                    "language": ",".join(dict.fromkeys(language)),
+                }
         if self._interruption is not None:
             base_kwargs["interruption"] = self._interruption
         if self._sal is not None:
@@ -1121,7 +1199,9 @@ class Agent:
             llm_config["max_history"] = self._max_history
         return llm_config
 
-    def _resolve_asr_config(self, turn_detection_config: TurnDetectionInput) -> typing.Dict[str, typing.Any]:
+    def _resolve_asr_config(
+        self, turn_detection_config: typing.Union[TurnDetectionConfig, typing.Mapping[str, typing.Any]]
+    ) -> typing.Dict[str, typing.Any]:
         asr_config = dict(self._stt or {})
         if not asr_config:
             area_scope = getattr(self._client, "area_scope", None)
@@ -1129,19 +1209,45 @@ class Agent:
         asr_config["language"] = self._field_value(turn_detection_config, "language")
         return asr_config
 
-    def _resolve_turn_detection_config(self) -> TurnDetectionConfig:
-        existing_turn_detection_language = self._field_value(self._turn_detection, "language")
-        language = (
-            existing_turn_detection_language
-            if existing_turn_detection_language is not None
-            else DEFAULT_TURN_DETECTION_LANGUAGE
-        )
-        language = _validate_turn_detection_language(language)
-        if self._turn_detection is None:
-            return StartAgentsRequestPropertiesTurnDetection(language=language)
-        if isinstance(self._turn_detection, dict):
-            return typing.cast(TurnDetectionConfig, {**self._turn_detection, "language": language})
-        return self._copy_model_update(self._turn_detection, {"language": language})
+    def _resolve_turn_detection_config(self) -> typing.Dict[str, typing.Any]:
+        """Validate turn detection and resolve ``language`` to the wire string.
+
+        Defaults ``language`` to en-US. Semantic end of speech takes one English
+        or Chinese language. Several languages with no end-of-speech mode fall
+        back to silence VAD.
+        """
+        turn_detection: typing.Dict[str, typing.Any] = dict(_dump_optional_model(self._turn_detection) or {})
+        language = turn_detection.get("language")
+        if language is None:
+            language = DEFAULT_TURN_DETECTION_LANGUAGE
+        is_list = not isinstance(language, str)
+        languages = list(dict.fromkeys(language)) if is_list else [language]
+        if not languages:
+            raise ValueError("turn_detection.language must not be an empty list")
+        for item in languages:
+            _validate_turn_detection_language(item)
+
+        config = dict(_dump_optional_model(turn_detection.get("config")) or {})
+        end_of_speech = dict(_dump_optional_model(config.get("end_of_speech")) or {})
+        eos_mode = end_of_speech.get("mode")
+        if eos_mode == "semantic":
+            if is_list:
+                raise ValueError(
+                    "turn_detection.language cannot be a list when end_of_speech.mode is semantic; "
+                    "use one English or Chinese language, or use end_of_speech.mode vad. "
+                    "Otherwise the service silently uses VAD instead of semantic end of speech"
+                )
+            if language not in _SEMANTIC_END_OF_SPEECH_LANGUAGES:
+                raise ValueError(
+                    "Semantic end_of_speech supports only English and Chinese languages; "
+                    f"got turn_detection.language: {language}. "
+                    "Otherwise the service silently uses VAD instead of semantic end of speech"
+                )
+
+        turn_detection["language"] = ",".join(languages)
+        if len(languages) > 1 and eos_mode is None:
+            turn_detection["config"] = {**config, "end_of_speech": {**end_of_speech, "mode": "vad"}}
+        return turn_detection
 
     def _clone(self) -> "Agent":
         new_agent = self.__class__.__new__(self.__class__, self._client)

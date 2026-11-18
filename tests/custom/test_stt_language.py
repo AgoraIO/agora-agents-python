@@ -256,3 +256,85 @@ def test_assemblyai_params_stay_nested_and_asr_language_comes_from_turn_detectio
         },
     }
     assert props["turn_detection"] == {"language": "fr-FR"}
+
+
+def test_turn_detection_language_list_joins_into_asr_language_and_falls_back_to_vad() -> None:
+    props = properties(base_agent().with_turn_detection({"language": ["en-US", "es-ES", "en-US"]}))
+
+    assert props["asr"]["vendor"] == "ares"
+    assert props["asr"]["language"] == "en-US,es-ES"
+    assert props["turn_detection"]["language"] == "en-US,es-ES"
+    assert props["turn_detection"]["config"]["end_of_speech"]["mode"] == "vad"
+
+
+def test_turn_detection_language_list_keeps_caller_vad_config() -> None:
+    props = properties(
+        base_agent().with_turn_detection(
+            {
+                "language": ["en-US", "hi-IN"],
+                "config": {
+                    "speech_threshold": 0.5,
+                    "end_of_speech": {"mode": "vad", "vad_config": {"silence_duration_ms": 640}},
+                },
+            }
+        )
+    )
+
+    assert props["asr"]["language"] == "en-US,hi-IN"
+    assert props["turn_detection"]["config"]["speech_threshold"] == 0.5
+    assert props["turn_detection"]["config"]["end_of_speech"] == {
+        "mode": "vad",
+        "vad_config": {"silence_duration_ms": 640},
+    }
+
+
+def test_turn_detection_language_list_works_with_pydantic_model() -> None:
+    config = TurnDetectionConfig(language=["en-US", "fr-FR"])  # type: ignore[call-arg]
+    props = properties(base_agent().with_turn_detection(config))
+
+    assert props["asr"]["language"] == "en-US,fr-FR"
+    assert props["turn_detection"]["config"]["end_of_speech"]["mode"] == "vad"
+
+
+def test_turn_detection_one_item_list_behaves_like_single_language() -> None:
+    props = properties(base_agent().with_turn_detection({"language": ["ja-JP"]}))
+
+    assert props["asr"]["language"] == "ja-JP"
+    assert "config" not in props["turn_detection"]
+
+
+def test_semantic_end_of_speech_allows_one_english_or_chinese_language() -> None:
+    props = properties(
+        base_agent().with_turn_detection({"language": "zh-CN", "config": {"end_of_speech": {"mode": "semantic"}}})
+    )
+
+    assert props["asr"]["language"] == "zh-CN"
+    assert props["turn_detection"]["config"]["end_of_speech"]["mode"] == "semantic"
+
+
+@pytest.mark.parametrize(
+    "turn_detection, message",
+    [
+        (
+            {"language": ["en-US", "zh-CN"], "config": {"end_of_speech": {"mode": "semantic"}}},
+            "cannot be a list",
+        ),
+        ({"language": "fr-FR", "config": {"end_of_speech": {"mode": "semantic"}}}, "only English and Chinese"),
+        ({"language": []}, "must not be an empty list"),
+        ({"language": ["en-US", "xx-XX"]}, "Invalid turn_detection.language: xx-XX"),
+    ],
+)
+def test_turn_detection_language_errors(turn_detection: dict, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        properties(base_agent().with_turn_detection(turn_detection))  # type: ignore[arg-type]
+
+
+def test_mllm_turn_detection_language_list_is_joined() -> None:
+    from agora_agent import OpenAIRealtime
+
+    agent = Agent(test_client(), turn_detection={"language": ["en-US", "es-ES"]}).with_mllm(
+        OpenAIRealtime(api_key="key", model="gpt-4o-realtime-preview")
+    )
+    props = properties(agent)
+
+    assert props["turn_detection"]["language"] == "en-US,es-ES"
