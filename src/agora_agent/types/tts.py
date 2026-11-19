@@ -22,7 +22,6 @@ from .gemini_tts_params import GeminiTtsParams
 from .generic_http_tts_params import GenericHttpTtsParams
 from .google_tts_params import GoogleTtsParams
 from .gradium_tts_params import GradiumTtsParams
-from .hume_ai_tts_params import HumeAiTtsParams
 from .microsoft_tts_params import MicrosoftTtsParams
 from .minimax_duplex_tts_params import MinimaxDuplexTtsParams
 from .minimax_tts_params import MinimaxTtsParams
@@ -166,21 +165,6 @@ class Tts_Cartesia(UncheckedBaseModel):
 class Tts_Openai(UncheckedBaseModel):
     vendor: typing.Literal["openai"] = "openai"
     params: OpenAiTtsParams
-    skip_patterns: typing.Optional[typing.List[int]] = None
-
-    if IS_PYDANTIC_V2:
-        model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
-    else:
-
-        class Config:
-            frozen = True
-            smart_union = True
-            extra = pydantic.Extra.allow
-
-
-class Tts_Humeai(UncheckedBaseModel):
-    vendor: typing.Literal["humeai"] = "humeai"
-    params: HumeAiTtsParams
     skip_patterns: typing.Optional[typing.List[int]] = None
 
     if IS_PYDANTIC_V2:
@@ -463,7 +447,6 @@ Tts = typing_extensions.Annotated[
         Tts_Murf,
         Tts_Cartesia,
         Tts_Openai,
-        Tts_Humeai,
         Tts_Rime,
         Tts_Fishaudio,
         Tts_Google,
