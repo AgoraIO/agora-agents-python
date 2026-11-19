@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v2.14.1] — 2026-11-18
+
+### Fixed
+
+- **Multi-language turn detection** — `turn_detection["language"]` rejected multiple languages, although the API supports them. It now accepts one language or a non-empty list, such as `["en-US", "es-ES"]`. AgentKit sends a list to `asr.language` and `turn_detection.language` as a comma-separated string, without duplicates. When the list has more than one language and `config.end_of_speech.mode` is unset, AgentKit sends `end_of_speech.mode: "vad"`. New exported types: `TurnDetectionLanguages`, `SemanticEndOfSpeechLanguage`, `TurnDetectionDict`, and `SemanticTurnDetectionDict`.
+- **Semantic end-of-speech languages** — Semantic end of speech supports one English or Chinese language only (`en-US`, `en-IN`, `zh-CN`, `zh-HK`, `zh-TW`). With a list or any other language, the service silently used VAD instead, so the setting had no effect. AgentKit now raises `ValueError`. For dict configs, mypy and pyright also report these configs as type errors. Use one English or Chinese language, or set `end_of_speech.mode: "vad"`.
+
+### Changed
+
+- The dict form of `with_turn_detection()` and `Agent(turn_detection=...)` is typed with `TurnDetectionDict | SemanticTurnDetectionDict` instead of `Dict[str, Any]`. Runtime behavior is unchanged; a variable annotated `Dict[str, Any]` may now need a cast for type checkers.
+
 ## [v2.14.0] — 2026-11-11
 
 ### Added

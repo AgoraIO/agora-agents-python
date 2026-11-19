@@ -133,6 +133,15 @@ agent = agent.with_avatar(HeyGenAvatar(api_key='your-key', quality='medium', ago
 
 Override cascading-flow turn detection settings. Use `language` for the Agora interaction language, `config.start_of_speech` and `config.end_of_speech` for SOS/EOS detection, `with_interruption()` for interruption behavior, and MLLM vendor `turn_detection` for MLLM turn detection.
 
+`language` takes one language or a list. AgentKit sends a list to `asr.language` as one comma-separated string. When the list has more than one language and `config.end_of_speech.mode` is unset, AgentKit sends `end_of_speech.mode: "vad"` (silence VAD).
+
+Semantic end of speech supports one English or Chinese language only (`en-US`, `en-IN`, `zh-CN`, `zh-HK`, `zh-TW`). For dict configs, mypy and pyright report a list, or any other language, with `end_of_speech.mode: "semantic"` as a type error. AgentKit also raises `ValueError` at runtime.
+
+```python
+# Sends asr.language "en-US,es-ES" and end_of_speech.mode "vad"
+agent = agent.with_turn_detection({"language": ["en-US", "es-ES"]})
+```
+
 Pause-state detection is configured under semantic end-of-speech:
 
 ```python
