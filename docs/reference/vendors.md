@@ -20,7 +20,7 @@ Construct vendors directly from `agora_agent`, then bind a client with `Agent(cl
 
 | Area | STT classes | LLM classes | MLLM classes | TTS classes | Avatar classes |
 |---|---|---|---|---|---|
-| `Area.US`, `Area.EU`, `Area.AP` | `ElevenLabsSTT`, `FishAudioSTT`, `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GeminiTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `HumeAITTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar`, `Tavus`, `Protoface`, `LemonSlice` |
+| `Area.US`, `Area.EU`, `Area.AP` | `ElevenLabsSTT`, `FishAudioSTT`, `DeepgramSTT`, `SpeechmaticsSTT`, `MicrosoftSTT`, `OpenAISTT`, `GeminiSTT`, `GoogleSTT`, `AmazonSTT`, `AssemblyAISTT`, `AresSTT`, `SarvamSTT`, `XaiSTT` | `OpenAI`, `AzureOpenAI`, `Anthropic`, `Gemini`, `Groq`, `VertexAILLM`, `AmazonBedrock`, `Dify`, `CustomLLM` | `OpenAIRealtime`, `AzureOpenAIRealtime`, `GeminiLive`, `VertexAI`, `XaiGrok` | `ElevenLabsTTS`, `MicrosoftTTS`, `OpenAITTS`, `CartesiaTTS`, `GeminiTTS`, `GoogleTTS`, `AmazonTTS`, `DeepgramTTS`, `GradiumTTS`, `MistralTTS`, `TypecastTTS`, `RimeTTS`, `FishAudioTTS`, `MiniMaxTTS`, `MurfTTS`, `SarvamTTS`, `GenericTTS`, `XaiTTS` | `LiveAvatarAvatar`, `HeyGenAvatar`, `AkoolAvatar`, `AnamAvatar`, `GenericAvatar`, `Tavus`, `Protoface`, `LemonSlice` |
 | `Area.CN` | `QwenSTT`, `FengmingSTT`, `TencentSTT`, `MicrosoftCNSTT`, `XfyunSTT`, `XfyunBigModelSTT`, `XfyunDialectSTT` | `AliyunLLM`, `BytedanceLLM`, `DeepSeekLLM`, `TencentLLM` | `QwenOmni` | `MiniMaxCNTTS`, `TencentTTS`, `BytedanceTTS`, `MicrosoftCNTTS`, `CosyVoiceTTS`, `BytedanceDuplexTTS`, `StepFunTTS`, `GenericTTS` | `SenseTimeAvatar`, `SpatiusAvatar` |
 
 Global example:
@@ -337,19 +337,6 @@ option is exposed.
 | `voice_id` | `str` | No | `None` | Gradium voice identifier |
 | `sample_rate` | `int` | No | `None` | Audio sample rate in Hz |
 | `additional_params` | `Dict[str, Any]` | No | `None` | Additional Gradium TTS parameters, flattened into `params` |
-| `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
-
-### `HumeAITTS`
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `key` | `str` | Yes | — | Hume AI API key |
-| `voice_id` | `str` | Yes | — | Hume AI voice ID |
-| `provider` | `str` | Yes | — | Voice provider type, such as `CUSTOM_VOICE` or `HUME_AI` |
-| `config_id` | `str` | No | `None` | Configuration ID |
-| `base_url` | `str` | No | `None` | Base URL |
-| `speed` | `float` | No | `None` | Playback speed |
-| `trailing_silence` | `float` | No | `None` | Trailing silence in seconds |
 | `skip_patterns` | `List[int]` | No | `None` | Skip patterns |
 
 ### `RimeTTS`

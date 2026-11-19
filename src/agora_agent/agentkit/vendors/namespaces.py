@@ -40,7 +40,6 @@ from .tts import (
     GeminiTTS,
     GoogleTTS,
     GradiumTTS,
-    HumeAITTS,
     MicrosoftTTS,
     MiniMaxTTS,
     MistralTTS,
@@ -126,7 +125,6 @@ class GlobalTTSVendors:
     murf = MurfTTS
     cartesia = CartesiaTTS
     openai = OpenAITTS
-    humeai = HumeAITTS
     rime = RimeTTS
     fishaudio = FishAudioTTS
     google = GoogleTTS

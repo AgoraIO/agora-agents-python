@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [v2.15.0] — 2026-11-19
 
+### Breaking Changes
+
+- **Hume TTS support removed** — Hume retired its legacy TTS API on 2026-11-13. As a result, Agents SDK removes support for Hume TTS in AgentKit. Applications using Hume TTS must migrate to another supported TTS provider.
+
 ### Added
 
 - **ElevenLabs ASR** — Added the global `ElevenLabsSTT` provider with a required API key and additional parameters for Engine v2.16.
