@@ -4,13 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [v2.15.0] — 2026-11-19
 
 ### Breaking Changes
 
 - **Hume TTS support removed** — Hume retired its legacy TTS API on 2026-11-13. As a result, Agents SDK removes support for Hume TTS in AgentKit. Applications using Hume TTS must migrate to another supported TTS provider.
-
-## [v2.15.0] — 2026-11-19
 
 ### Added
 
