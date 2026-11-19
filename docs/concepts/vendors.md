@@ -62,7 +62,6 @@ Used with `agent.with_tts()`. Each TTS vendor produces audio at a specific sampl
 | `GoogleTTS` | Google Cloud | `key`, `voice_name` | — |
 | `GeminiTTS` | Google Gemini TTS | `api_key`; model and voice have defaults | — |
 | `AmazonTTS` | Amazon Polly | `access_key`, `secret_key`, `region`, `voice_id`, `engine` | — |
-| `HumeAITTS` | Hume AI | `key`, `voice_id`, `provider` | — |
 | `RimeTTS` | Rime | `model_id`; BYOK also requires `key` and `speaker`, managed requires `base_url` | — |
 | `FishAudioTTS` | Fish Audio | `reference_id`, `backend`; `key` unless `credential_mode="managed"` | — |
 | `MurfTTS` | Murf | `key`, `voice_id`, `model` | — |

@@ -63,7 +63,6 @@ if typing.TYPE_CHECKING:
         GoogleTTS,
         Groq,
         HeyGenAvatar,
-        HumeAITTS,
         LiveAvatarAvatar,
         MicrosoftSTT,
         MicrosoftTTS,

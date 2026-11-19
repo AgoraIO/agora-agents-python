@@ -17,7 +17,6 @@ from agora_agent import (
     FishAudioTTS,
     GoogleTTS,
     GradiumTTS,
-    HumeAITTS,
     MicrosoftTTS,
     MiniMaxTTS,
     MistralTTS,
@@ -155,12 +154,6 @@ def test_tts_vendor_params_match_generated_core_shapes() -> None:
 
     assert OpenAITTS(voice="coral").to_config()["params"] == {
         "voice": "coral",
-    }
-
-    assert HumeAITTS(key="hume-key", voice_id="voice", provider="CUSTOM_VOICE").to_config()["params"] == {
-        "key": "hume-key",
-        "voice_id": "voice",
-        "provider": "CUSTOM_VOICE",
     }
 
     assert MiniMaxTTS(key="minimax-key", group_id="group", model="speech-02-turbo", voice_id="voice").to_config()["params"] == {

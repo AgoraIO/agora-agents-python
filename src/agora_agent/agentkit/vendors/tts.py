@@ -381,46 +381,6 @@ class GradiumTTS(GradiumTTSOptions, BaseTTS):
         return result
 
 
-class HumeAITTSOptions(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    key: str = Field(..., description="Hume AI API key")
-    config_id: Optional[str] = Field(default=None, description="Configuration ID")
-    voice_id: str = Field(..., description="Hume AI voice ID")
-    base_url: Optional[str] = Field(default=None, description="Base URL")
-    provider: str = Field(..., description="Voice provider type")
-    speed: Optional[float] = Field(default=None, description="Playback speed")
-    trailing_silence: Optional[float] = Field(default=None, description="Trailing silence in seconds")
-    skip_patterns: Optional[List[int]] = Field(default=None)
-
-
-class HumeAITTS(HumeAITTSOptions, BaseTTS):
-    @property
-    def sample_rate(self) -> Optional[int]:
-        return None
-
-    def to_config(self) -> Dict[str, Any]:
-        params: Dict[str, Any] = {
-            "key": self.key,
-            "voice_id": self.voice_id,
-            "provider": self.provider,
-        }
-
-        if self.config_id is not None:
-            params["config_id"] = self.config_id
-        if self.base_url is not None:
-            params["base_url"] = self.base_url
-        if self.speed is not None:
-            params["speed"] = self.speed
-        if self.trailing_silence is not None:
-            params["trailing_silence"] = self.trailing_silence
-
-        result: Dict[str, Any] = {"vendor": "humeai", "params": params}
-        if self.skip_patterns is not None:
-            result["skip_patterns"] = self.skip_patterns
-        return result
-
-
 class RimeTTSOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -58,7 +58,6 @@ from agora_agent import (
     GoogleSTT,
     GoogleTTS,
     Groq,
-    HumeAITTS,
     MicrosoftSTT,
     MicrosoftTTS,
     MiniMaxTTS,
@@ -1116,16 +1115,6 @@ def test_byok_deepgram_tts_params() -> None:
     assert props["tts"]["vendor"] == "deepgram"
     assert props["tts"]["params"]["api_key"] == "dg-tts-key"
     assert props["tts"]["params"]["model"] == "aura-2-thalia-en"
-
-
-def test_byok_humeai_tts_params() -> None:
-    agent = Agent(test_client()).with_tts(
-        HumeAITTS(key="hume-key", voice_id="voice", provider="CUSTOM_VOICE")
-    )
-    props = build_properties(agent, allow_missing={"asr", "llm"})
-    assert props["tts"]["vendor"] == "humeai"
-    assert props["tts"]["params"]["key"] == "hume-key"
-    assert props["tts"]["params"]["voice_id"] == "voice"
 
 
 def test_byok_rime_tts_params() -> None:

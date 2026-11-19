@@ -57,7 +57,6 @@ GLOBAL_TTS_VENDORS: typing.Tuple[str, ...] = (
     "murf",
     "cartesia",
     "openai",
-    "humeai",
     "rime",
     "fishaudio",
     "google",
