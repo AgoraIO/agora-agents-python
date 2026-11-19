@@ -16,6 +16,7 @@ from .vendors.cn import (
     MicrosoftSTT as MicrosoftCNSTT,
     MicrosoftTTS as MicrosoftCNTTS,
     QwenOmni,
+    QwenSTT,
     SenseTimeAvatar,
     SpatiusAvatar,
     StepFunTTS,
@@ -28,6 +29,8 @@ from .vendors.cn import (
     XfyunSTT,
 )
 from .vendors.stt import (
+    ElevenLabsSTT,
+    FishAudioSTT,
     AmazonSTT,
     AresSTT,
     AssemblyAISTT,
@@ -79,13 +82,15 @@ from .vendors.tts import (
 )
 from .vendors.avatar import AkoolAvatar, AnamAvatar, GenericAvatar, HeyGenAvatar, LiveAvatarAvatar
 
-CNSTT = typing.Union[TencentSTT, FengmingSTT, MicrosoftCNSTT, XfyunSTT, XfyunBigModelSTT, XfyunDialectSTT, StepFunSTT]
+CNSTT = typing.Union[TencentSTT, FengmingSTT, MicrosoftCNSTT, XfyunSTT, XfyunBigModelSTT, XfyunDialectSTT, StepFunSTT, QwenSTT]
 CNTTS = typing.Union[MiniMaxCNTTS, MiniMaxDuplexTTS, TencentTTS, BytedanceTTS, MicrosoftCNTTS, CosyVoiceTTS, BytedanceDuplexTTS, StepFunTTS, GenericTTS]
 CNLLM = typing.Union[AliyunLLM, BytedanceLLM, DeepSeekLLM, TencentLLM]
 CNMLLM = QwenOmni
 CNAvatar = typing.Union[SenseTimeAvatar, SpatiusAvatar]
 
 GlobalSTT = typing.Union[
+    ElevenLabsSTT,
+    FishAudioSTT,
     AresSTT,
     DeepgramSTT,
     MicrosoftSTT,
